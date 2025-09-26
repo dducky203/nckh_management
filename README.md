@@ -18,6 +18,7 @@ Dự án được xây dựng theo mô hình Client-Server với:
 ## 🛠️ Công nghệ sử dụng
 
 ### Frontend
+
 - **React 19.1.1** - Thư viện JavaScript để xây dựng giao diện người dùng
 - **Vite** - Build tool nhanh cho development và production
 - **TypeScript** - Superset của JavaScript với kiểm tra kiểu tĩnh
@@ -27,6 +28,7 @@ Dự án được xây dựng theo mô hình Client-Server với:
 - **Emotion** - CSS-in-JS library
 
 ### Backend
+
 - **Spring Boot 3.4.3** - Framework Java để phát triển ứng dụng web
 - **Spring Security** - Bảo mật và xác thực
 - **Spring Data JPA** - Object-Relational Mapping
@@ -39,6 +41,7 @@ Dự án được xây dựng theo mô hình Client-Server với:
 - **Lombok** - Giảm boilerplate code
 
 ### Database & Tools
+
 - **MariaDB/MySQL** - Hệ quản trị cơ sở dữ liệu
 - **Maven** - Quản lý dependencies và build
 - **Docker Compose** - Container orchestration
@@ -98,6 +101,7 @@ docker-compose up -d
 
 1. Cài đặt MariaDB hoặc MySQL
 2. Tạo database:
+
 ```sql
 CREATE DATABASE nckh CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
@@ -105,11 +109,13 @@ CREATE DATABASE nckh CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ### 3. Cấu hình Backend
 
 1. Điều hướng đến thư mục server:
+
 ```bash
 cd server
 ```
 
 2. Cấu hình database trong `src/main/resources/application.yml`:
+
 ```yaml
 spring:
   datasource:
@@ -119,6 +125,7 @@ spring:
 ```
 
 3. Cấu hình email (tùy chọn):
+
 ```yaml
 spring:
   mail:
@@ -129,10 +136,12 @@ spring:
 ```
 
 4. Thêm file `credentials.json` cho Google Sheets API (nếu sử dụng):
+
    - Đặt file trong `src/main/resources/`
    - Tham khao: [Google Sheets API Setup](https://developers.google.com/sheets/api/quickstart/java)
 
 5. Cài đặt dependencies và chạy:
+
 ```bash
 # Windows
 mvnw clean install
@@ -148,21 +157,25 @@ Backend sẽ chạy tại: `http://localhost:8080`
 ### 4. Cấu hình Frontend
 
 1. Điều hướng đến thư mục client:
+
 ```bash
 cd client
 ```
 
 2. Cài đặt dependencies:
+
 ```bash
 npm install
 ```
 
 3. Tạo file `.env` (nếu cần):
+
 ```env
 VITE_API_BASE_URL=http://localhost:8080
 ```
 
 4. Chạy development server:
+
 ```bash
 npm run dev
 ```
@@ -204,12 +217,15 @@ mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ## 🔧 Cấu hình môi trường
 
 ### Development
+
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:8081`
 - Database: `localhost:3307`
 
 ### Production
+
 Cần cấu hình thêm:
+
 - Environment variables
 - SSL certificates
 - Database connection pooling
@@ -219,6 +235,7 @@ Cần cấu hình thêm:
 ## 📚 API Documentation
 
 Sau khi chạy backend, có thể truy cập:
+
 - REST API: `http://localhost:8081/api`
 - Thymeleaf views: `http://localhost:8080`
 
