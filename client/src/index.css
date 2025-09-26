@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  
+}
+
+.clip-green {
+  clip-path: polygon(0 0, 100% 0, 96% 100%, 0 100%);
+}
+
+.clip-yellow {
+     clip-path: polygon(13px 0, 100% 0, 100% 100%, 0 100%);
+}
+

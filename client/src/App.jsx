@@ -1,0 +1,225 @@
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+
+// Context Providers
+import { AuthProvider } from "./context/AuthContext";
+
+// Layout
+import Layout from "./components/layout/Layout";
+
+// Pages
+import Home from "./pages/Home";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import NotFound from "./pages/NotFound";
+import Unauthorized from "./pages/Unauthorized";
+import ResearchProjects from "./pages/ResearchProjects";
+import EventsUpcoming from "./pages/EventsUpcoming";
+
+// Components
+import ProtectedRoute from "./components/common/ProtectedRoute";
+import { ToastProvider } from "./context/ToastContext";
+
+function App() {
+  useEffect(() => {
+    // Initialize app on mount
+    console.log("FITA Management App initialized successfully!");
+  }, []);
+
+  return (
+    <AuthProvider>
+      <Router>
+        <ToastProvider>
+          <Routes>
+            {/* Public routes - không cần đăng nhập */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
+
+            {/* Routes with layout */}
+            <Route
+              path="/*"
+              element={
+                <Layout>
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/contact" element={<Contact />} />
+
+                    {/* Research Activities Routes - Yêu cầu đăng nhập */}
+                    <Route
+                      path="/research/projects"
+                      element={
+                        <ProtectedRoute>
+                          <ResearchProjects />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/research/publications"
+                      element={
+                        <ProtectedRoute>
+                          <div className="p-8 text-center">
+                            Trang công bố khoa học
+                          </div>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/research/conferences"
+                      element={
+                        <ProtectedRoute>
+                          <div className="p-8 text-center">
+                            Trang hội nghị khoa học
+                          </div>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/research/competitions"
+                      element={
+                        <ProtectedRoute>
+                          <div className="p-8 text-center">
+                            Trang cuộc thi khoa học
+                          </div>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/research/seminars"
+                      element={
+                        <ProtectedRoute>
+                          <div className="p-8 text-center">
+                            Trang seminar & workshop
+                          </div>
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* Events Routes */}
+                    <Route
+                      path="/events/upcoming"
+                      element={<EventsUpcoming />}
+                    />
+                    <Route
+                      path="/events/ongoing"
+                      element={
+                        <div className="p-8 text-center">
+                          Sự kiện đang diễn ra
+                        </div>
+                      }
+                    />
+                    <Route
+                      path="/events/past"
+                      element={
+                        <div className="p-8 text-center">Sự kiện đã qua</div>
+                      }
+                    />
+                    <Route
+                      path="/events/academic"
+                      element={
+                        <div className="p-8 text-center">Sự kiện học thuật</div>
+                      }
+                    />
+                    <Route
+                      path="/events/cultural"
+                      element={
+                        <div className="p-8 text-center">Sự kiện văn hóa</div>
+                      }
+                    />
+                    <Route
+                      path="/events/career"
+                      element={
+                        <div className="p-8 text-center">
+                          Sự kiện nghề nghiệp
+                        </div>
+                      }
+                    />
+
+                    {/* News Route */}
+                    <Route
+                      path="/news"
+                      element={
+                        <div className="p-8 text-center">Trang tin tức</div>
+                      }
+                    />
+
+                    {/* Placeholder routes for FITA functionality */}
+                    <Route
+                      path="/event/showE/:userId"
+                      element={
+                        <div className="p-8 text-center">
+                          Trang xem/tạo sự kiện
+                        </div>
+                      }
+                    />
+                    <Route
+                      path="/event/showEvManagement"
+                      element={
+                        <div className="p-8 text-center">
+                          Trang quản lý sự kiện
+                        </div>
+                      }
+                    />
+                    <Route
+                      path="/user/resume/:userId"
+                      element={
+                        <div className="p-8 text-center">
+                          Trang hồ sơ người dùng
+                        </div>
+                      }
+                    />
+                    <Route
+                      path="/user/manager"
+                      element={
+                        <div className="p-8 text-center">
+                          Trang quản lý nhân sự
+                        </div>
+                      }
+                    />
+                    <Route
+                      path="/news/managerNews"
+                      element={
+                        <div className="p-8 text-center">
+                          Trang quản lý tin tức
+                        </div>
+                      }
+                    />
+                    <Route
+                      path="/news/yourNews/:userId"
+                      element={
+                        <div className="p-8 text-center">
+                          Trang tin tức của bạn
+                        </div>
+                      }
+                    />
+                    <Route
+                      path="/event/statistics"
+                      element={
+                        <div className="p-8 text-center">Trang thống kê</div>
+                      }
+                    />
+                    <Route
+                      path="/ncm/normStatistics/:userId/:year"
+                      element={
+                        <div className="p-8 text-center">
+                          Trang định mức hoạt động
+                        </div>
+                      }
+                    />
+
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Layout>
+              }
+            />
+          </Routes>
+        </ToastProvider>
+      </Router>
+    </AuthProvider>
+  );
+}
+
+export default App;
