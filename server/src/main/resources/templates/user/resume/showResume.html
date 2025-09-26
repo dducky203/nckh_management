@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{/user/index}">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<section class="showcase"  layout:fragment="content">
+    <div style="margin-left: 11rem;">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li th:each="item, stat : ${breadcrumbs}"
+                    th:classappend="${stat.last} ? 'breadcrumb-item active' : 'breadcrumb-item'">
+                    <a style="text-decoration: none" th:if="${!stat.last}" th:href="@{${item.url}}" th:text="${item.label}"></a>
+                    <span th:if="${stat.last}" th:text="${item.label}"></span>
+                </li>
+            </ol>
+        </nav>
+    </div>
+    <div style="position: fixed;top: 150px;left: 10px;">
+        <a th:href="${'/'}" class="btn btn-primary" style="background-color: #0d6efd">Quay lại</a>
+    </div>
+    <div class="container" >
+        <div class="row_content">
+            <div class="row">
+                <div class="col-12">
+                    <h4  th:text="'Họ và tên : '+${user.getName()}"></h4>
+                    <h4 th:if="${user.getPower()==4}" th:text="'Mã sinh viên : '+${resume.getCode()}"></h4>
+                    <h4 th:if="${user.getPower()==1 or user.getPower()==2 or user.getPower()==3}" th:text="'Mã cán bộ : '+${resume.getCode()}"></h4>
+                    <p th:if="${user.getPower() == 1}">Chức vụ: Trưởng khoa</p>
+                    <p th:if="${user.getPower() == 2}">Chức vụ: Phó khoa</p>
+                    <p th:if="${user.getPower() == 3}">Chức vụ: Cán bộ khoa</p>
+
+                    <p th:text="'email : '+${resume.getEmail()}"></p>
+                    <p th:text="'Số điện thoại : '+${resume.getPhone()}"></p>
+                    <p th:text="'Địa chỉ : : '+${resume.getAddress()}"></p>
+                    <p th:text="'Ngày sinh : '+${resume.getBirthday()}"></p>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        <a th:href="@{'/user/resume/repair/'+${session.saveUser.getId()}}"
+                           class="btn btn-primary" style="background-color: #0dcaf0">
+                            Sửa thông tin
+                        </a>
+                        <a th:href="@{'/user/resume/repairPass/'+${session.saveUser.getId()}}"
+                           class="btn btn-primary" style="background-color: #0dcaf0">
+                            Thay đổi mật khẩu
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 mb-4" th:if="${ncmListWrapper != null}">
+            <div  th:object="${ncmListWrapper}" lang="en">
+                <table border="1" cellspacing="0" cellpadding="8" style="border-collapse: collapse; width: 100%;">
+                    <thead>
+                    <tr>
+                        <th>Loại hoạt động</th>
+                        <th>Hoạt động</th>
+                        <th>Định mức</th>
+                        <th>Vai trò</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="item, iterStat : *{ncmList}" th:id="'row-' + ${iterStat.index}" th:if="${item.year==2025}">
+                        <!-- Hidden fields -->
+                        <input type="hidden" th:field="*{ncmList[__${iterStat.index}__].id}" />
+                        <input type="hidden" th:field="*{ncmList[__${iterStat.index}__].idUser}" />
+                        <input type="hidden" th:field="*{ncmList[__${iterStat.index}__].idOperatingStandard}" />
+                        <input type="hidden" th:field="*{ncmList[__${iterStat.index}__].name}" />
+                        <input type="hidden" th:field="*{ncmList[__${iterStat.index}__].catalog}" />
+
+                        <!-- Loại hoạt động -->
+                        <td th:text="${item.catalog}" ></td>
+                        <!-- Hoạt động -->
+                        <td th:text="${item.name}" ></td>
+
+                        <!-- Định mức -->
+                        <td>
+                            <input type="number" step="0.01"
+                                   th:field="*{ncmList[__${iterStat.index}__].norm}"
+                                   style="width: 80px;" />
+                        </td>
+
+                        <!-- Vai trò hoạt động -->
+                        <td>
+                            <select th:field="*{ncmList[__${iterStat.index}__].roleOfActivity}" style="width: 120px;" onchange="checkForDuplicate(this)">
+                                <option value="">--</option>
+                                <option value="1">Chủ trì</option>
+                                <option value="2">Thư ký</option>
+                                <option value="3">Thành viên</option>
+                            </select>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <br>
+                <h5 >Tổng định mức bạn cần đạt được : <span th:text="${totalNorm}"></span></h5>
+            </div>
+
+        </div>
+    </div>
+</section>
+</body>
+</html>

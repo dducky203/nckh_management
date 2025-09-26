@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Biểu đồ cảm biến</title>
+    <meta charset="UTF-8">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 2rem;
+            color: #333;
+        }
+
+        h2, h3 {
+            color: #1e2a38;
+        }
+
+        .content-container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .form-box {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: flex-end;
+            margin-bottom: 2rem;
+        }
+
+        .form-box label {
+            display: block;
+            margin-bottom: 0.3rem;
+            font-weight: 600;
+        }
+
+        .form-box input, .form-box button {
+            padding: 0.5rem 0.8rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .form-box button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .form-box button:hover {
+            background-color: #0056b3;
+        }
+
+        .warning {
+            color: red;
+            font-weight: bold;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            width: 100%;
+            margin-bottom: 3rem;
+        }
+
+        canvas {
+            margin: 0 auto;
+            width: 90% !important;
+            height: auto !important;
+            background: #fff;
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<div class="content-container">
+    <div style="position: fixed;top: 150px;left: 2px;">
+        <a th:href="@{'/'}" style="background-color: #0d6efd;padding: 5px;text-decoration: none;color: white"><b><</b></a>
+    </div>
+
+    <h2>Chọn ngày:</h2>
+    <form method="get" th:action="@{/sheet}" class="form-box">
+        <div>
+            <label for="selectedDate">Ngày:</label>
+            <input type="date" id="dateInput" name="selectedDate" th:value="${selectedDate}" required />
+        </div>
+        <button type="submit">Xem dữ liệu</button>
+    </form>
+
+    <!-- THÔNG BÁO: Không có dữ liệu -->
+    <div th:if="${labels != null} and ${labels.size()} == 0" class="warning">
+        ⚠ Không có dữ liệu cho ngày đã chọn
+    </div>
+
+    <!-- VẼ BIỂU ĐỒ NẾU CÓ DỮ LIỆU -->
+    <div th:if="${labels != null} and ${labels.size()} > 0">
+        <h3>Biểu đồ Nhiệt độ & Độ ẩm</h3>
+        <div class="chart-container">
+            <canvas id="chart1"></canvas>
+        </div>
+
+        <h3>Biểu đồ MQ5, MQ6, MQ7</h3>
+        <div class="chart-container">
+            <canvas id="chart2"></canvas>
+        </div>
+
+        <form method="get" th:action="@{/sheet}" class="form-box">
+            <div>
+                <label for="selectedDate">Chọn ngày:</label>
+                <input type="date" id="selectedDate" name="selectedDate" th:value="${selectedDate}" required />
+            </div>
+
+            <div>
+                <label for="fromTime">Từ:</label>
+                <input type="time" id="fromTime" name="fromTime" th:value="${fromTime}" step="1" />
+            </div>
+
+            <div>
+                <label for="toTime">Đến:</label>
+                <input type="time" id="toTime" name="toTime" th:value="${toTime}" step="1" />
+            </div>
+
+            <div>
+                <button type="submit">Xem dữ liệu</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    // TỰ ĐỘNG SET NGÀY HÔM NAY VÀO INPUT (nếu chưa có)
+    window.addEventListener('DOMContentLoaded', () => {
+        const input = document.getElementById('dateInput');
+        if (!input.value) {
+            const today = new Date().toISOString().split('T')[0]; // yyyy-MM-dd
+            input.value = today;
+        }
+    });
+
+    /*<![CDATA[*/
+    const labels = [[${labels}]];
+    const temps = [[${temps}]];
+    const humidity = [[${humidity}]];
+    const mq5 = [[${mq5}]];
+    const mq6 = [[${mq6}]];
+    const mq7 = [[${mq7}]];
+
+    if (labels.length > 0) {
+        new Chart(document.getElementById('chart1'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'Nhiệt độ (°C)', data: temps, borderColor: 'red', tension: 0.3 },
+                    { label: 'Độ ẩm (%)', data: humidity, borderColor: 'blue', tension: 0.3 }
+                ]
+            },
+            options: {
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                }
+            }
+        });
+
+        new Chart(document.getElementById('chart2'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'MQ5', data: mq5, borderColor: 'green', tension: 0.3 },
+                    { label: 'MQ6', data: mq6, borderColor: 'orange', tension: 0.3 },
+                    { label: 'MQ7', data: mq7, borderColor: 'purple', tension: 0.3 }
+                ]
+            },
+            options: {
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                }
+            }
+        });
+    }
+    /*]]>*/
+</script>
+
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Form Ngày sinh chuẩn</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            background-color: #f8f8f8;
+            padding: 50px;
+        }
+
+        .form-group {
+            position: relative;
+            width: 300px;
+            margin-bottom: 30px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 12px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background-color: transparent;
+            outline: none;
+            color: #000;
+            position: relative;
+            z-index: 2;
+            font-family: inherit;
+        }
+
+        label {
+            position: absolute;
+            left: 12px;
+            top: 14px;
+            color: #999;
+            font-size: 16px;
+            pointer-events: none;
+            transition: 0.2s ease all;
+            background: #f8f8f8;
+            padding: 0 4px;
+            z-index: 3;
+            font-family: inherit;
+        }
+
+        input:focus + label,
+        input:not(:placeholder-shown) + label {
+            top: -10px;
+            left: 8px;
+            font-size: 12px;
+            color: #333;
+        }
+
+        .placeholder-overlay {
+            position: absolute;
+            top: 14px;
+            left: 12px;
+            font-size: 16px;
+            color: #ccc;
+            pointer-events: none;
+            font-family: inherit;
+            z-index: 1;
+            white-space: pre;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-group">
+    <input type="text" id="dob" maxlength="10" autocomplete="off" />
+    <label for="dob">Ngày sinh</label>
+    <div class="placeholder-overlay" id="placeholder">DD/MM/YYYY</div>
+</div>
+
+<p th:text="'total norm id user 2, year 2024 = '+${totalNorm}"></p>
+<div th:each="n :${norms}">
+    <p th:text="${n}"></p>
+</div>
+
+<script>
+    const input = document.getElementById('dob');
+    const placeholder = document.getElementById('placeholder');
+
+    input.addEventListener('input', () => {
+        const digits = input.value.replace(/\D/g, ''); // chỉ lấy số
+        let formatted = '';
+
+        if (digits.length > 0) {
+            formatted = digits.substring(0, 2);
+        }
+        if (digits.length >= 3) {
+            formatted += '/' + digits.substring(2, 4);
+        }
+        if (digits.length >= 5) {
+            formatted += '/' + digits.substring(4, 8);
+        }
+
+        input.value = formatted;
+
+        // Tạo placeholder động
+        const full = 'DD/MM/YYYY';
+        let dynamic = '';
+
+        for (let i = 0; i < full.length; i++) {
+            dynamic += formatted[i] ? formatted[i] : full[i];
+        }
+
+        placeholder.textContent = dynamic;
+    });
+
+    input.addEventListener('focus', () => {
+        placeholder.style.color = '#ccc';
+    });
+
+    input.addEventListener('blur', () => {
+        if (!input.value) {
+            placeholder.textContent = 'DD/MM/YYYY';
+        }
+    });
+</script>
+
+</body>
+</html>

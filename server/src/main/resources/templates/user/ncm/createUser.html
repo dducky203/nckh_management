@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{/user/index}">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div th:replace="user/header :: header"></div>
+<section class="showcase" style="margin-top: 3rem" layout:fragment="content">
+    <div class="container" th:if="${session.saveUser!=null}">
+        <div style="position: fixed;top: 150px;left: 20px;">
+            <a th:href="@{'/ncm'}" class="btn btn-primary" >Quay lại</a>
+            <br><br>
+        </div>
+        <div class="row" >
+            <form th:action="@{/ncm/saveCreateUser}" method="post" enctype="multipart/form-data">
+                <div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+</body>
+</html>

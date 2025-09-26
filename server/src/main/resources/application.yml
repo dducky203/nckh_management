@@ -1,0 +1,32 @@
+spring:
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: 44444ace@gmail.com
+    password: qzxc pqik tdog brxu
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  application:
+    name: "KLTN"
+  datasource:
+    url: jdbc:mariadb://localhost:3307/nckh?allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: "duong"
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+upload:
+  dir: "src/main/resources/static/file/"
+
+jwt:
+  secret: "nckh_management_secret_key_2024_secure_authentication_token_for_api"
+  expiration: 86400000 # 24 hours in milliseconds

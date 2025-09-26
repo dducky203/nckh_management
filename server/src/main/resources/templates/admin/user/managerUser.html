@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{/admin/index}"
+>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <!-- Bootstrap icons-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet" type="text/css" />
+    <!-- Google fonts-->
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css" />
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link th:href="@{/user/css/styles.css}" rel="stylesheet" />
+    <style>
+        /* Đảm bảo reset các padding/margin cơ bản */
+        ul, li {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        /* Bố cục dòng */
+        .row {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        /* Tiêu đề loại tiêu chí */
+        .col-12 h5 {
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        /* Danh sách dropdown mặc định ẩn */
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            background-color: #ffffff;
+            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.1);
+            min-width: 200px;
+            z-index: 1000;
+            border-radius: 6px;
+            padding: 10px 0;
+        }
+
+        /* Khi hover vào h5 thì hiện dropdown-menu */
+        .col-12:hover .dropdown-menu {
+            display: block;
+        }
+
+        /* Các mục trong dropdown */
+        .dropdown-item {
+            display: block;
+            padding: 10px 20px;
+            color: #333;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f0f0f0;
+            color: #000;
+        }
+        .criteria-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .criteria-item {
+            display: inline-block;
+            padding: 8px 12px;
+            border: 1px solid #007bff;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #007bff;
+            background-color: #f8f9fa;
+            transition: background-color 0.2s;
+            max-width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .criteria-item:hover {
+            background-color: #e2e6ea;
+        }
+
+        /* Nếu tiêu chí dài thì xuống dòng */
+        .criteria-item.long-text {
+            white-space: normal;
+            flex: 1 1 100%;
+        }
+
+
+    </style>
+</head>
+<body>
+<div th:replace="user/header :: header"></div>
+<section class="showcase" style="margin-top: 3rem" layout:fragment="content">
+    <div class="container" th:if="${session.saveAdmin!=null}">
+<!--        <div style="">-->
+<!--            <nav aria-label="breadcrumb">-->
+<!--                <ol class="breadcrumb">-->
+<!--                    <li th:each="item, stat : ${breadcrumbs}"-->
+<!--                        th:classappend="${stat.last} ? 'breadcrumb-item active' : 'breadcrumb-item'">-->
+<!--                        <a style="text-decoration: none" th:if="${!stat.last}" th:href="@{${item.url}}" th:text="${item.label}"></a>-->
+<!--                        <span th:if="${stat.last}" th:text="${item.label}"></span>-->
+<!--                    </li>-->
+<!--                </ol>-->
+<!--            </nav>-->
+<!--        </div>-->
+
+        <h3>Danh sách các hồ sơ nhân sự :</h3>
+        <br>
+        <h5 class="mb-2" >Nhóm nghiên cứu</h5>
+        <!-- power -->
+        <div class="col-12 mb-4" >
+            <div>
+                <!-- Danh sách tiêu chí con -->
+                <div class="criteria-wrapper">
+                    <div th:each="g : ${groups}">
+                        <a class="criteria-item"
+                           th:text="${g.groupName}"
+                           th:classappend="${#strings.length(g.groupName) > 30} ? ' long-text' : ''"
+                           th:href="@{'/ad/managerGroup/'+${g.id}}">
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="row" >
+            <!-- power -->
+            <h5 class="mb-2" th:value="1">Trưởng khoa</h5>
+            <div class="col-12 mb-4" >
+                <div>
+                    <!-- Danh sách tiêu chí con -->
+                    <div class="criteria-wrapper">
+                        <div th:each="u : ${users1}">
+                            <a class="criteria-item"
+                               th:text="${u.getName()}+' - '+${u.getUsername()}"
+                               th:classappend="${#strings.length(u.getUsername()+u.getName()) > 30} ? ' long-text' : ''"
+                               th:href="@{'/ad/managerUser/mResume/'+${u.getId()}}">
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- power -->
+            <h5 class="mb-2" th:value="2">Phó khoa</h5>
+            <div class="col-12 mb-4" >
+                <div>
+                    <!-- Danh sách tiêu chí con -->
+                    <div class="criteria-wrapper">
+                        <div th:each="u : ${users2}">
+                            <a class="criteria-item"
+                               th:text="${u.getName()}+' - '+${u.getUsername()}"
+                               th:classappend="${#strings.length(u.getUsername()+u.getName()) > 30} ? ' long-text' : ''"
+                               th:href="@{'/ad/managerUser/mResume/'+${u.getId()}}">
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- power -->
+            <h5 class="mb-2" th:value="3">Cán bộ khoa</h5>
+            <div class="col-12 mb-4" >
+                <!-- Danh sách tiêu chí con -->
+                <div class="criteria-wrapper">
+                    <div th:each="u : ${users3}">
+                        <a class="criteria-item"
+                           th:text="${u.getName()}+' - '+${u.getUsername()}"
+                           th:classappend="${#strings.length(u.getUsername()+u.getName()) > 25} ? ' long-text' : ''"
+                           th:href="@{'/ad/managerUser/mResume/'+${u.getId()}}">
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- power -->
+            <h5 class="mb-2" th:value="4">Sinh viên</h5>
+            <div class="col-12 mb-4" >
+                <!-- Danh sách tiêu chí con -->
+                <div class="criteria-wrapper">
+                    <div th:each="u : ${users4}">
+                        <a class="criteria-item"
+                           th:text="${u.getName()}+' - '+${u.getUsername()}"
+                           th:classappend="${#strings.length(u.getUsername()+u.getName()) > 25} ? ' long-text' : ''"
+                           th:href="@{'ad/managerUser/mResume/'+${u.getId()}}">
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

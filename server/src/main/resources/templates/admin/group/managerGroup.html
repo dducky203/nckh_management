@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{/admin/index}"
+>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <!-- Bootstrap icons-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet" type="text/css" />
+    <!-- Google fonts-->
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css" />
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link th:href="@{/assets/user/css/styles.css}" rel="stylesheet" />
+
+
+    <!-- Select2 CSS + JS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+
+    <style>
+        /* Đảm bảo reset các padding/margin cơ bản */
+        ul, li {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        /* Bố cục dòng */
+        .row {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        /* Tiêu đề loại tiêu chí */
+        .col-12 h5 {
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        /* Danh sách dropdown mặc định ẩn */
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            background-color: #ffffff;
+            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.1);
+            min-width: 200px;
+            z-index: 1000;
+            border-radius: 6px;
+            padding: 10px 0;
+        }
+
+        /* Khi hover vào h5 thì hiện dropdown-menu */
+        .col-12:hover .dropdown-menu {
+            display: block;
+        }
+
+        /* Các mục trong dropdown */
+        .dropdown-item {
+            display: block;
+            padding: 10px 20px;
+            color: #333;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f0f0f0;
+            color: #000;
+        }
+        .criteria-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .criteria-item {
+            display: inline-block;
+            padding: 8px 12px;
+            border: 1px solid #007bff;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #007bff;
+            background-color: #f8f9fa;
+            transition: background-color 0.2s;
+            max-width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .criteria-item:hover {
+            background-color: #e2e6ea;
+        }
+
+        /* Nếu tiêu chí dài thì xuống dòng */
+        .criteria-item.long-text {
+            white-space: normal;
+            flex: 1 1 100%;
+        }
+
+
+    </style>
+</head>
+<body>
+<section class="showcase" style="margin-top: 3rem" layout:fragment="content">
+    <div class="container" th:if="${session.saveAdmin!=null}">
+        <h3>Danh sách nhóm <span th:text="${group.get().groupName}"></span> : </h3>
+        <a class="btn btn-success" th:href="@{'/ad/managerGroup/statistics/pie/'+${idGroup}}">Thống kê</a>
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal">Thêm</button>
+        <a class="btn btn-success" th:href="@{'/ad/managerGroup/detail/'+${idGroup}}">Chi tiết nhóm</a>
+        <a class="btn btn-success" th:href="@{'/ad/managerGroup/addMemberLY/'+${idGroup}}">Thêm thành viên năm trước</a>
+        <div class="row" >
+            <form method="get" th:action="@{/ad/managerGroup/{idGroup}(idGroup=${idGroup})}">
+                <label for="year">Nhập năm:</label>
+                <input type="number" id="year" name="year" th:value="${year}" min="2000" max="2100" required>
+                <button type="submit">Xem</button>
+            </form>
+            <!-- power -->
+            <h5 class="mb-2" >Trưởng nhóm</h5>
+            <div class="col-12 mb-4" >
+                <div>
+                    <!-- Danh sách tiêu chí con -->
+                    <div  class="criteria-wrapper">
+                        <div th:each="u : ${ncm}" th:if="${u.getRoleOfTeam() ==1 and u.idGroup.id==idGroup and u.status==1}">
+                            <div class="criteria-item">
+                                <a class="criteria-item"
+                                   style="border: none"
+                                   th:text="${u.getIdUser().name}+' - '+${u.getIdUser().username}"
+                                   th:classappend="${#strings.length(u.getIdUser().name+u.getIdUser().name) > 30} ? ' long-text' : ''"
+                                   th:href="@{'/ad/managerGroup/userInGroup/'+${idGroup}+'/'+${u.idUser.id}+'/'+${year}}">
+                                </a>
+                                <a class="criteria-item" style="border: none"
+                                   th:if="${year == currentYear}"
+                                   onclick="return confirm('Bạn có chắc chắn muốn xoá người dùng này không?');"
+                                   th:href="@{'/ad/managerGroup/remove/'+${u.idUser.id}+'/'+${year}}" >❌</a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row" >
+                <!-- power -->
+                <h5 class="mb-2" >Thư kí</h5>
+                <div class="col-12 mb-4" >
+                    <div>
+                        <!-- Danh sách tiêu chí con -->
+                        <div th:each="u : ${ncm}" th:if="${u.getRoleOfTeam() ==2 and u.idGroup.id==idGroup and u.status==1}">
+                            <div class="criteria-item">
+                                <a class="criteria-item"
+                                   style="border: none"
+                                   th:text="${u.getIdUser().name}+' - '+${u.getIdUser().username}"
+                                   th:classappend="${#strings.length(u.getIdUser().name+u.getIdUser().name) > 30} ? ' long-text' : ''"
+                                   th:href="@{'/ad/managerGroup/userInGroup/'+${idGroup}+'/'+${u.idUser.id}+'/'+${year}}">
+                                </a>
+                                <a class="criteria-item" style="border: none"
+                                   th:if="${year == currentYear}"
+                                   onclick="return confirm('Bạn có chắc chắn muốn xoá người dùng này không?');"
+                                   th:href="@{'/ad/managerGroup/remove/'+${u.idUser.id}+'/'+${year}}" >❌</a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row" >
+                <!-- power -->
+                <h5 class="mb-2" >Thành viên</h5>
+                <div class="col-12 mb-4" >
+                    <!-- Danh sách tiêu chí con -->
+                    <div class="criteria-wrapper" >
+                        <div th:each="u : ${ncm}" th:if="${u.getRoleOfTeam() ==3 and u.idGroup.id==idGroup and u.status==1}">
+                            <div class="criteria-item">
+                                <a class="criteria-item"
+                                   style="border: none"
+                                   th:text="${u.idUser.name} + ' - ' + ${u.idUser.username}"
+                                   th:classappend="${#strings.length(u.idUser.name + u.idUser.username) > 30} ? ' long-text' : ''"
+                                   th:href="@{'/ad/managerGroup/userInGroup/'+${idGroup}+'/'+${u.idUser.id}+'/'+${year}}">
+                                </a>
+                                <a class="criteria-item" style="border: none"
+                                   th:if="${year == currentYear}"
+                                   onclick="return confirm('Bạn có chắc chắn muốn xoá người dùng này không?');"
+                                   th:href="@{'/ad/managerGroup/remove/'+${u.idUser.id}+'/'+${year}}" >❌</a>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Modal thêm người và hoạt động -->
+        <div class="modal fade" id="addUserModal"
+             tabindex="-1" aria-labelledby="addUserModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+                <form th:action="@{'/ad/managerGroup/saveCreateUser/'+${idGroup}}" method="post">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addUserModalLabel">Thêm người và hoạt động</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- Thông tin người dùng -->
+                            <div class="mb-3">
+                                <label class="form-label">Tên người</label>
+                                <!--                                <input list="userSelect" id="userNameInput" name="name" class="form-control" required />-->
+                                <select id="userSelect" name="userId" class="form-select" style="width: 100%">
+                                    <option></option> <!-- Placeholder -->
+                                    <option th:each="u : ${allUsers}"
+                                            th:if="${!existingUserIds.contains(u.id) && u.power!=4}"
+                                            th:value="${u.id}"
+                                            th:text="${u.name} + ' - ' + ${u.username}"
+                                    >
+                                    </option>
+                                </select>
+
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Chức vụ</label>
+                                <select class="form-select" name="role" required>
+                                    <option value="3">Thành viên</option>
+                                    <option value="1">Trưởng nhóm</option>
+                                    <option value="2">Thư ký</option>
+                                </select>
+                            </div>
+
+                            <!-- Danh sách hoạt động -->
+                            <table class="table table-bordered" id="activitiesTable">
+                                <thead>
+                                <tr>
+                                    <th>Hoạt động</th>
+                                    <th>Định mức</th>
+                                    <th>Vai trò</th>
+                                    <th>Xóa</th>
+                                </tr>
+                                </thead>
+                                <tbody id="activitiesBody">
+                                <!-- Dòng mẫu để clone -->
+                                <tr class="activity-row d-none">
+                                    <td>
+                                        <select class="form-select select2" name="idOperatingStandards[]">
+                                            <option th:each="std : ${operatingStandard}"
+                                                    th:value="${std.id}"
+                                                    th:text="${std.catalog} + ' - ' + ${std.name}">
+                                            </option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="number" step="0.01" class="form-control" name="norms[]" required/>
+                                    </td>
+                                    <td style="width: 13%">
+                                        <!-- Hidden input để đảm bảo luôn submit -->
+                                        <input type="hidden" name="roleOfActivities[]" value="null" />
+
+                                        <select class="form-select" style="font-size: 12px"  name="roleOfActivities[]">
+                                            <option value=""></option>
+                                            <option value="1">Chủ trì</option>
+                                            <option value="2">Thư ký</option>
+                                            <option value="3">Thành viên</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-danger btn-sm" onclick="removeActivityRow(this)">❌</button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-secondary" onclick="addActivityRow()">➕ Thêm hoạt động</button>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary" id="saveBtn">Lưu</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+</body>
+</html>

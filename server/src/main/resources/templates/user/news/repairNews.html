@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{/user/index}">
+<head>
+    <meta charset="UTF-8">
+    <title>Đăng tin</title>
+    <style>
+        #news-form {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        #news-form label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        #news-form input[type="text"],
+        #news-form textarea {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #news-form input[type="file"] {
+            margin-top: 8px;
+        }
+        #news-form button {
+            margin-top: 20px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #news-form button:hover {
+            background-color: #0056b3;
+        }
+        #preview {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            gap: 10px;
+            min-height: 100px;
+            border: 2px dashed #ccc;
+            padding: 10px;
+        }
+        .preview-image {
+            position: relative;
+        }
+        .preview-image img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #aaa;
+        }
+        .remove-btn {
+            position: absolute;
+            top: -20px;
+            right: 1px;
+            background-color: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
+            line-height: 18px;
+            text-align: center;
+            cursor: pointer;
+            padding: 0;
+        }
+        .remove-btn:hover {
+            background: red;
+        }
+    </style>
+</head>
+<body>
+<section style="margin-top: 3rem;margin-bottom: 2rem" layout:fragment="content">
+    <div class="container">
+        <form id="news-form" th:action="@{'/news/saveRepairedNews/' + ${news.id}}" method="POST" enctype="multipart/form-data">
+            <label for="title">Tiêu đề:</label>
+            <input type="text" id="title" name="title" th:value="${news.title}" required>
+
+            <label for="content">Nội dung:</label>
+            <textarea id="content" name="content" rows="6" required
+                      th:text="${news.content}"></textarea>
+
+            <!-- Hiển thị ảnh đã có -->
+            <label>Ảnh đã đăng:</label>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                <div th:each="img : ${newsImages}" style="position: relative; display: inline-block;">
+                    <img th:src="@{'/file/' + ${img.imageName}}" width="120" height="80"
+                         style="border: 2px solid #d1d1d1; border-radius: 4px;" />
+
+                    <!-- Nút xóa ảnh -->
+                    <button type="button" class="remove-image-btn"
+                            style="position: absolute;background-color: red;
+                            right: 0px;
+                            top: -20px;
+                            color: white;
+                            border: none;
+                            border-radius: 4px;
+                            cursor: pointer;"
+                            th:onclick="'removeImage(this, '+${img.id}+')'">×</button>
+                </div>
+                <script>
+                    // Mảng lưu các ID ảnh cần xóa
+                    const deletedImageIds = [];
+
+                    function removeImage(button, imageId) {
+                        // Thêm vào danh sách ID ảnh cần xóa
+                        deletedImageIds.push(imageId);
+
+                        // Ẩn ảnh trong giao diện
+                        button.parentElement.remove();
+                    }
+
+                    // Trước khi submit form, tạo input hidden gửi danh sách ID ảnh cần xóa
+                    document.getElementById("news-form").addEventListener("submit", function (e) {
+                        const input = document.createElement("input");
+                        input.type = "hidden";
+                        input.name = "deletedImageIds";
+                        input.value = deletedImageIds.join(",");
+                        this.appendChild(input);
+                    });
+                </script>
+            </div>
+
+
+            <!-- Upload thêm ảnh mới -->
+            <label for="images">Ảnh mới (có thể chọn nhiều):</label>
+            <input type="file" name="images" id="images" accept="image/*" multiple>
+
+            <div id="preview"></div>
+
+            <button type="submit" style="padding: 10px 20px;background-color: #007BFF;">Cập nhật tin</button>
+        </form>
+
+    </div>
+</section>
+
+
+
+</body>
+</html>

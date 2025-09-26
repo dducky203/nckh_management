@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <meta name="description" content="" />
+        <meta name="author" content="" />
+        <title>Trang chủ</title>
+        <!-- Favicon-->
+        <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+        <!-- Bootstrap icons-->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet" type="text/css" />
+        <!-- Google fonts-->
+        <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css" />
+        <!-- Core theme CSS (includes Bootstrap)-->
+        <link th:href="@{/assets/user/css/styles.css}" rel="stylesheet" />
+
+        <!-- CSS select ncm-->
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+        <style>
+            /*gioi han do dai */
+            #addUserModal table td:nth-child(1) {
+                width: 70%;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+            .banner-slider {
+                position: relative;
+                width: 100%;
+                max-width: 1000px;
+                height: 400px;
+                overflow: hidden;
+                margin: 0 auto;
+            }
+
+            .slides {
+                display: flex;
+                width: 100%;
+                height: 100%;
+                transition: transform 0.5s ease-in-out;
+            }
+
+            .slide {
+                flex-shrink: 0;
+                width: 100%;
+                height: 100%;
+                position: relative;
+            }
+
+            .slide img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+            }
+
+            .countdown-overlay {
+                position: absolute;
+                bottom: 10px;
+                right: 10px;
+                background-color: rgba(0,0,0,0.6);
+                color: white;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 14px;
+                font-family: monospace;
+            }
+
+
+            .countdown {
+                background-color: #000;
+                color: #00FF00;
+                padding: 10px 20px;
+                border-radius: 10px;
+                font-size: 20px;
+                font-family: 'Digital-7', 'Courier New', Courier, monospace;
+                text-align: center;
+                letter-spacing: 2px;
+                box-shadow: 0 0 10px #00FF00, 0 0 20px #00FF00;
+                display: inline-block;
+                min-width: 220px;
+            }
+
+            /* Tùy chọn thêm: font LED Digital */
+            @font-face {
+                font-family: 'Digital-7';
+                src: url('https://fonts.cdnfonts.com/s/23497/Digital7.woff') format('woff');
+            }
+
+            textarea {
+                width: 200%;
+                overflow-y: hidden; /* Ẩn thanh cuộn */
+                resize: none; /* Không cho resize thủ công nếu bạn muốn */
+                box-sizing: border-box;
+            }
+
+            .line-footer {
+                width: 100%;
+                display: block;
+                background: #066140;
+                float: left;
+                height: 5px;
+                position: relative;
+                margin: 5px 0px;
+            }
+            .footer .line-footer:before {
+                background: #f6a309;
+                top: -5px;
+            }
+            .line-footer:before, .footer .line-footer:after {
+                height: 5px;
+                content: "";
+                width: 100%;
+                position: absolute;
+                left: 0;
+            }
+            .line-footer:after {
+                background: #4e3636;
+                bottom: -5px;
+            }
+            .i-lineLeft{
+                width: 35%;
+                float: left;
+                height: 8px;
+                position: absolute;
+                background-image: linear-gradient(to right, #609346, #addc96);
+                z-index: 1;
+                bottom: -8px;
+            }
+            .i-lineRight{
+                width: 65%;
+                right: 0;
+                height: 8px;
+                position: absolute;
+                background-image: linear-gradient(to right, #f09b1a, #ecbd47);
+                bottom: 0px;
+                z-index: 1;
+            }
+            .i-lineLeft::after {
+                content: "";
+                position: absolute;
+                right: -7.75px;
+                width: 8px;
+                height: 8px;
+                background: #addc96;
+                clip-path: polygon(0 100%, 100% 0, 0 0);
+                z-index: 2;
+            }
+            .i-lineRight::before {
+                content: "";
+                position: absolute;
+                left: -8.2px;
+                bottom: -0.5px;
+                width: 8px;
+                height: 8px;
+                background-image: linear-gradient(to right, #f09b1a, #f09b1a);
+                clip-path: polygon(0 100%, 100% 0%, 100% 100%);
+                z-index: 2;
+            }
+            .showcase .container{
+                margin-top: 3rem;min-height: 400px
+            }
+            .row_content{
+                margin: 2rem;
+                border: 1px solid #d5d5d5;
+                border-radius: 10px;
+                padding: 2rem;
+
+            }
+            .content {
+                overflow: auto;
+                height: 150px;
+            }
+            pre {
+                white-space: pre-wrap;  /* Giữ nguyên định dạng văn bản và tự động xuống dòng */
+                word-wrap: break-word;  /* Ngắt từ dài nếu cần */
+                padding: 10px;          /* Thêm khoảng cách bên trong thẻ */
+                overflow: hidden;       /* Tránh cuộn văn bản nếu nó quá dài */
+            }
+            input {
+                transition: width 0.3s ease;
+            }
+            .showcase label{
+                margin-bottom: 1.5rem;
+            }
+            .name-list {
+                display: flex;
+                flex-wrap: wrap;          /* Cho phép các mục xuống dòng khi không đủ không gian */
+                gap: 10px;                /* Khoảng cách giữa các mục */
+                padding: 0;
+                list-style: none;
+                max-height: 200px;        /* Giới hạn chiều cao tối đa cho danh sách */
+                overflow-y: auto;         /* Hiển thị thanh cuộn dọc khi danh sách dài */
+            }
+
+            .name-list li {
+                overflow-x: auto;
+                flex: 1 0 30%;            /* Mỗi mục chiếm khoảng 1/3 chiều rộng của dòng */
+                max-width: 33%;           /* Giới hạn chiều rộng tối đa cho mỗi mục */
+                background-color: #f0f0f0;
+                padding: 5px 10px;
+                border-radius: 4px;
+                text-align: center;
+                display: flex;
+                justify-content: space-between;  /* Đưa tên và nút Xoá về hai đầu */
+                align-items: center;      /* Căn giữa theo chiều dọc */
+                box-sizing: border-box;
+
+            }
+
+            .name-list li span {
+                white-space: nowrap;
+                overflow-x: auto;
+                display: inline-block;
+                scrollbar-width: none; /* Firefox */
+                -ms-overflow-style: none; /* IE and Edge */
+            }
+            .name-list li span::-webkit-scrollbar {
+                display: none; /* Chrome, Safari and Opera */
+            }
+            .name-list li button.btn-remove {
+                background-color: #ff4d4f;
+                border: none;
+                color: white;
+                border-radius: 4px;
+                padding: 4px 8px;
+                cursor: pointer;
+                font-size: 12px;
+            }
+            #searchResults{
+                gap: 10px;                /* Khoảng cách giữa các mục */
+                padding: 0;
+                list-style: none;
+                max-height: 200px;        /* Giới hạn chiều cao tối đa cho danh sách */
+                overflow-y: auto;
+            }
+        </style>
+    </head>
+    <body>
+<!--        header-->
+        <div th:replace="~{user/header :: header}"></div>
+<!--        end header -->
+        <div class="container" >
+            <ul class="nav nav-tabs" style="width: 90%;margin: 0 auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link " th:href="@{'/'}">Trang chủ</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link " th:href="@{/intro}">Giới thiệu</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link " th:href="@{/news/showNews}">Tin tức</a>
+                </li>
+                <!-- Loại isEvent == 0 -->
+                <li class="nav-item dropdown"  >
+                    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false"
+                       th:text="'Các hoạt động NCKH'">Hoạt động NCKH</a>
+                    <ul class="dropdown-menu" style="max-height: 200px;overflow-y: auto">
+                        <li th:each="type : ${nonEventTypes}" >
+                            <a class="dropdown-item" th:href="@{'/filter/type/'+${type.getId()} }" th:text="${type.getName()}"></a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Loại isEvent == 1 -->
+                <li class="nav-item dropdown"  >
+                    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false"
+                       th:text="'Các hoạt động sự kiện'">Hoạt động sự kiện</a>
+                    <ul class="dropdown-menu" style="max-height: 200px;overflow-y: auto">
+                        <li th:each="type : ${eventTypes}">
+                            <a class="dropdown-item" th:href="@{'/filter/type/'+${type.getId()} }" th:text="${type.getName()}"></a>
+                        </li>
+                    </ul>
+                </li>
+<!--                <li class="nav-item dropdown">-->
+<!--                    <a class="nav-link " th:href="@{#}">Liên hệ</a>-->
+<!--                </li>-->
+                <li class="nav-item dropdown">
+                    <a class="nav-link " th:href="@{/sheet}">Sản phẩm</a>
+                </li>
+
+            </ul>
+        </div>
+        <!-- Image Showcases-->
+        <section class="showcase"  layout:fragment="content">
+
+            <!--            banner-->
+            <div class="banner-slider" style="margin-top: 2rem" th:if="${bannerDTOs.size() >=1}">
+                <div class="slides" id="slideContainer">
+                    <div class="slide" th:each="dto : ${bannerDTOs}" th:if="${dto.eventId.status==2 && dto.eventId.isDelete==1}">
+                        <a th:href="@{'/event/detail/' + ${dto.eventId.id}}">
+                            <img th:src="@{'/file/'+${dto.image}}" alt="image" />
+                        </a>
+
+                        <div class="countdown-overlay">
+                            <span class="countdown"
+                                  th:attr="data-event-time=${#temporals.format(dto.dateTimeOfEvent, 'yyyy-MM-dd''T''HH:mm:ss')}">
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--            end banner -->
+
+            <div class="container" >
+                <div class="row_content" th:each="e: ${events}" th:if="${e.isDelete==1 && e.status==2}">
+                    <div class="row" th:attr="id='event-' + ${e.getId()}">
+                        <div class="col-9">
+                            <h4 th:text="${e.getEventName()}"></h4>
+                        </div>
+                        <div class="col-3">
+                            <div th:each="remainingE : ${remainingEvents}">
+                                <div th:if="${e.getId() == remainingE.id}">
+                                    <span class="countdown"
+                                          th:attr="data-event-time=${#temporals.format(remainingE.dateTimeOfEvent, 'yyyy-MM-dd''T''HH:mm:ss')}">
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-2" th:if="${e.getIdRoom() != null}">
+                                <p >Địa điểm :<span th:text="${e.getIdRoom().roomName}"></span></p>
+                            </div>
+
+                            <div class="col-4" th:if="${@thymeleafUtil.isShowEventDate(e.getIdOperatingStandard2())}">
+                                <p>Thời gian diễn ra : <span th:text="${#temporals.format(e.getDateOfEvent(), 'dd/MM/yyyy')}"></span></p>
+                            </div>
+                            <div class="col-4" th:unless="${@thymeleafUtil.isShowEventDate(e.getIdOperatingStandard2())}">
+                                <p>Thời gian đăng : <span th:text="${#temporals.format(e.getCreateDate(), 'dd/MM/yyyy')}"></span></p>
+                            </div>
+                            <div class="col-4">
+                                <a th:href="@{'/event/detail/'+${e.getId()}}">xem thêm</a>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <nav aria-label="Page navigation example" style="margin-left: 9.5rem" >
+                <p >Bạn đang ở trang thứ <span th:text="${events.getNumber()+1}"></span></p>
+                <ul class="pagination">
+                    <li class="page-item"><a class="page-link" th:href="@{/(size=${pageSize}, page=1)}" style="text-decoration: none">Trang đầu</a></li>
+                    <div th:if="${events.totalPages > 0}"
+                         th:each="pageNumber : ${pageNumbers}">
+                        <li class="page-link" >
+                            <a th:href="@{/(size=${events.size}, page=${pageNumber})}"
+                               th:text="${pageNumber}"
+                               th:class="${pageNumber==events.number + 1} ? active"
+                               style="text-decoration: none"
+                               class="page-link"
+                            ></a>
+                        </li>
+                    </div>
+                    <li class="page-item"><a class="page-link" style="text-decoration: none" th:href="@{/(size=${events.size}, page=${maxPageNumber})}">Trang cuối</a></li>
+                </ul>
+            </nav>
+        </section>
+
+        <!-- Footer-->
+        <footer class="footer bg-light">
+            <div class="line-footer"></div>
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-6 h-100 text-center text-lg-start my-auto">
+                        <ul class="list-inline mb-2">
+                            <li class="list-inline-item">HVNHọc viện
+                                Nông nghiệp Việt Nam
+                            </li>
+                            <li class="list-inline-item">⋅</li>
+                            <li class="list-inline-item">Địa chỉ: Trâu Qùy - Gia Lâm - Hà Nội</li>
+                            <li class="list-inline-item">⋅</li>
+                            <li class="list-inline-item">Điện thoại: 84.024.62617586 - webmaster@vnua.edu.vn</li>
+
+                        </ul>
+                        <p class="text-muted small mb-4 mb-lg-0">&copy; Your Website 2023. All Rights Reserved.</p>
+                    </div>
+                    <div class="col-lg-6 h-100 text-center text-lg-end my-auto">
+                        <ul class="list-inline mb-0">
+                            <li class="list-inline-item me-4">
+                                <a href="https://www.facebook.com/hocviennongnghiep"><i class="bi-facebook fs-3"></i></a>
+                            </li>
+                            <li class="list-inline-item">
+                                <a href="https://www.youtube.com/channel/UC_O9ofPYoZ_zYvWuE8ITMeg"><i class="bi-youtube fs-3"></i></a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        <!-- jQuery (phải đứng trước) -->
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <!-- Bootstrap core JS-->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- JS select ncm -->
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <!-- Core theme JS-->
+        <script th:src="@{/assets/user/js/scripts.js}"></script>
+<!--        <script src="https://cdn.startbootstrap.com/sb-forms-latest.js"></script>-->
+        <script>
+
+            let typeOfCriteria_isEvent  = document.getElementById("typeOfCriteria_isEvent")?.value==="true";
+            let guestUsers = [];
+            let memberUsers = [];
+            let guestIds = document.getElementById("guestIdsInput")?.value.split(',').filter(Boolean).map(Number);
+            let memberIds = document.getElementById("memberIdsInput")?.value.split(',').filter(Boolean).map(Number);
+
+            const inputs = document.querySelectorAll('.autoWidthInput');
+            let ncmIndex = /*[[${ncmListWrapper != null and ncmListWrapper.ncmList != null ? #lists.size(ncmListWrapper.ncmList) : 0}]]*/ 0;
+
+            // slide
+            document.addEventListener('DOMContentLoaded', function () {
+                const slidesContainer = document.querySelector('.slides');
+                const slides = document.querySelectorAll('.slide');
+                const slideCount = slides.length;
+
+                if (slidesContainer && slideCount > 0) {
+                    let currentIndex = 0;
+
+                    setInterval(() => {
+                        currentIndex = (currentIndex + 1) % slideCount;
+                        slidesContainer.style.transform = `translateX(-${currentIndex * 100}%)`;
+                    }, 3000); // đổi ảnh sau mỗi 3 giây
+                }
+            });
+
+            // count tgian con lai dien ra su kien
+            function startCountdown() {
+                console.log("Đếm ngược bắt đầu");
+                const elements = document.querySelectorAll('.countdown');
+
+                elements.forEach(el => {
+                    const timeAttr = el.getAttribute('data-event-time');
+                    if (!timeAttr) {
+                        console.warn("Không tìm thấy data-event-time cho phần tử:", el);
+                        return;
+                    }
+
+                    const eventTime = new Date(timeAttr).getTime();
+                    if (isNaN(eventTime)) {
+                        console.error("Lỗi: data-event-time không hợp lệ:", timeAttr);
+                        return;
+                    }
+
+                    const timer = setInterval(() => {
+                        const now = new Date().getTime();
+                        const diff = eventTime - now;
+
+                        if (diff <= 0) {
+                            el.innerText = "00:00:00";
+                            el.style.color = '#f00';  // chuyển sang đỏ khi hết giờ
+                            clearInterval(timer);
+                            return;
+                        }
+
+                        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                        const formattedTime =
+                            (days > 0 ? `${days}d ` : '') +
+                            String(hours).padStart(2, '0') + ':' +
+                            String(minutes).padStart(2, '0') + ':' +
+                            String(seconds).padStart(2, '0');
+
+                        el.innerText = formattedTime;
+                    }, 1000);
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', startCountdown);
+
+            // banner dung chung voi phan dem thoi gian
+            document.addEventListener('DOMContentLoaded', function () {
+                const countdowns = document.querySelectorAll('.countdown');
+
+                countdowns.forEach(el => {
+                    const timeAttr = el.getAttribute('data-event-time');
+                    const eventTime = new Date(timeAttr).getTime();
+                    if (isNaN(eventTime)) return;
+
+                    const timer = setInterval(() => {
+                        const now = new Date().getTime();
+                        const diff = eventTime - now;
+
+                        if (diff <= 0) {
+                            el.style.display = 'none';
+                            clearInterval(timer);
+                            return;
+                        }
+
+                        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                        const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+                        el.innerText = `${d}d ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                    }, 1000);
+                });
+            });
+
+
+            // Hàm tính toán độ rộng dựa trên nội dung
+            const MAX_WIDTH = 500;
+
+            function setInputWidth(input) {
+                // Tạo một element tạm để đo kích thước nội dung
+                const span = document.createElement('span');
+                span.style.visibility = 'hidden';
+                span.style.position = 'absolute';
+                span.style.whiteSpace = 'pre';
+                span.style.font = window.getComputedStyle(input).font;
+
+                span.textContent = input.value || input.placeholder || '';
+                document.body.appendChild(span);
+
+                // Lấy chiều rộng cần thiết và giới hạn ở 500px
+                const width = Math.min(span.offsetWidth + 10, MAX_WIDTH); // cộng thêm 10px cho padding
+                input.style.width = width +30+ 'px';
+
+                document.body.removeChild(span);
+            }
+
+            // Gán sự kiện input cho các thẻ input và thiết lập độ rộng ban đầu
+            inputs.forEach(input => {
+                setInputWidth(input); // Đặt độ rộng ban đầu
+
+                input.addEventListener('input', () => {
+                    setInputWidth(input); // Cập nhật độ rộng khi người dùng nhập
+                });
+            });
+
+            function autoResizeTextarea(textarea) {
+                textarea.style.height = 'auto'; // Đặt lại chiều cao để tính toán lại
+                textarea.style.height = textarea.scrollHeight + 'px'; // Đặt chiều cao dựa trên nội dung
+            }
+
+            // Gán sự kiện cho tất cả textarea
+            document.querySelectorAll('textarea').forEach(textarea => {
+                autoResizeTextarea(textarea); // Thiết lập ban đầu
+                textarea.addEventListener('input', () => autoResizeTextarea(textarea));
+            });
+
+            // show file name
+            function displayFileName() {
+                var fileInput = document.getElementById("fileInput");
+                var fileName = fileInput.files[0] ? fileInput.files[0].name : "";
+                document.getElementById("fileName").textContent = "Tên tệp: " + fileName;
+            }
+            // list dsach room
+            function toggleRoomList() {
+                const roomList = document.getElementById('roomList');
+                roomList.style.display = roomList.style.display === 'none' ? 'block' : 'none';
+            }
+            // show image
+            document.addEventListener("DOMContentLoaded", function () {
+                const input = document.getElementById("newImageInput");
+                if (input) {
+                    input.addEventListener("change", function (event) {
+                        const [file] = event.target.files;
+                        if (file) {
+                            const preview = document.getElementById("newImagePreview");
+                            preview.src = URL.createObjectURL(file);
+                            preview.style.display = "inline-block";
+                        }
+                    });
+                }
+            });
+
+            // search guest or member
+            // // Hàm để đồng bộ danh sách với các input ẩn khi tải trang
+            window.addEventListener("DOMContentLoaded", () => {
+                document.querySelectorAll("#guestList li").forEach(li => {
+                    const id = parseInt(li.getAttribute("data-id"));
+                    const name = li.querySelector("span").textContent.trim();
+                    guestUsers.push({ id, name });
+                });
+
+                document.querySelectorAll("#memberList li").forEach(li => {
+                    const id = parseInt(li.getAttribute("data-id"));
+                    const name = li.querySelector("span").textContent.trim();
+                    memberUsers.push({ id, name });
+                });
+
+                updateHiddenInputs();
+            });
+
+            // Hàm tìm kiếm người dùng
+            function searchUsers() {
+                const keyword = document.getElementById("searchInput").value;
+                if (!keyword.trim()) return;
+
+                fetch(`/api/search-users?keyword=${encodeURIComponent(keyword)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        const resultsDiv = document.getElementById("searchResults");
+                        resultsDiv.innerHTML = "";
+
+                        if (data.length === 0) {
+                            resultsDiv.innerHTML = "<p>Không tìm thấy người dùng nào</p>";
+                            return;
+                        }
+
+                        data.forEach(user => {
+                            const container = document.createElement("div");
+                            container.style.marginBottom = "10px";
+
+                            const userName = user.name;
+                            const code = user.username;
+                            container.textContent = userName + " - "+code+" ";
+
+                            // Kiểm tra nếu người dùng đã có trong danh sách khách mời hoặc thành viên
+                            const isGuest = guestIds.includes(user.id);
+                            const isMember = memberIds.includes(user.id);
+
+                            if (!isGuest && !isMember) {
+                                // Chỉ hiển thị nút "Thêm làm khách" nếu typeOfCriteria_isEvent === true
+                                if (typeOfCriteria_isEvent === true) {
+                                    const btnGuest = document.createElement("button");
+                                    btnGuest.textContent = "Thêm làm khách";
+                                    btnGuest.onclick = (event) => {
+                                        event.preventDefault();
+                                        addUser(userName, 'guest', user.id);
+                                    };
+                                    container.appendChild(btnGuest);
+                                }
+
+                                // Nút "Thêm làm thành viên" luôn hiển thị nếu chưa là khách hoặc thành viên
+                                const btnMember = document.createElement("button");
+                                btnMember.textContent = "Thêm làm thành viên";
+                                btnMember.onclick = (event) => {
+                                    event.preventDefault();
+                                    addUser(userName, 'member', user.id);
+                                };
+                                container.appendChild(btnMember);
+                            } else {
+                                // Nếu đã là khách hoặc thành viên thì hiển thị nhãn thay vì nút
+                                const tag = document.createElement("span");
+                                tag.textContent = isGuest ? "(Đã là khách)" : "(Đã là thành viên)";
+                                tag.style.fontStyle = "italic";
+                                tag.style.color = "#888";
+                                container.appendChild(tag);
+                            }
+
+                            resultsDiv.appendChild(container);
+                        });
+                    });
+            }
+
+
+            // Hàm thêm người vào danh sách
+            function addUser(name, type, id) {
+                const user = { id, name };
+
+                if (type === 'guest') {
+                    if (memberUsers.some(u => u.id === id)) {
+                        alert("Người này đã là thành viên, không thể thêm làm khách.");
+                        return;
+                    }
+                    if (!guestUsers.some(u => u.id === id)) {
+                        guestUsers.push(user);
+                        updateList('guestList', guestUsers, 'guest');
+                    }
+                }
+
+                if (type === 'member') {
+                    if (guestUsers.some(u => u.id === id)) {
+                        alert("Người này đã là khách, không thể thêm làm thành viên.");
+                        return;
+                    }
+                    if (!memberUsers.some(u => u.id === id)) {
+                        memberUsers.push(user);
+                        updateList('memberList', memberUsers, 'member');
+                    }
+                }
+
+                updateHiddenInputs();
+                updateRoleSelections();
+            }
+
+            // Cập nhật danh sách UI với mảng đối tượng
+            function updateList(elementId, users, type) {
+                const ul = document.getElementById(elementId);
+                ul.innerHTML = "";
+
+                users.forEach(user => {
+                    const li = document.createElement("li");
+                    li.setAttribute("data-id", user.id);
+                    li.classList.add(`${type}-item`);
+
+                    const span = document.createElement("span");
+                    span.textContent = `${user.name}`;
+
+                    const btnRemove = document.createElement("button");
+                    btnRemove.textContent = "Xoá";
+                    btnRemove.className = "btn-remove";
+                    btnRemove.onclick = () => removeUser(user.id, type);
+
+                    li.appendChild(span);
+                    li.appendChild(btnRemove);
+                    ul.appendChild(li);
+                });
+            }
+
+            // Cập nhật lại input ẩn
+            function updateHiddenInputs() {
+                const guestIdsInput = document.getElementById("guestIdsInput");
+                const guestNamesInput = document.getElementById("guestNamesInput");
+                const memberIdsInput = document.getElementById("memberIdsInput");
+                const memberNamesInput = document.getElementById("memberNamesInput");
+
+                if (guestIdsInput) guestIdsInput.value = guestUsers.map(u => u.id).join(',');
+                if (guestNamesInput) guestNamesInput.value = guestUsers.map(u => u.name).join(',');
+                if (memberIdsInput) memberIdsInput.value = memberUsers.map(u => u.id).join(',');
+                if (memberNamesInput) memberNamesInput.value = memberUsers.map(u => u.name).join(',');
+            }
+
+            // Hàm xóa người khỏi danh sách
+            function removeUser(id, type) {
+                if (type === 'guest') {
+                    guestUsers = guestUsers.filter(user => user.id !== id);
+                    updateList('guestList', guestUsers, 'guest');
+                }
+
+                if (type === 'member') {
+                    memberUsers = memberUsers.filter(user => user.id !== id);
+                    updateList('memberList', memberUsers, 'member');
+                }
+
+                updateHiddenInputs();
+                updateRoleSelections();
+            }
+
+            // Hàm xóa người dùng khi từ Thymeleaf
+            function removeUserThymeleaf(button, type) {
+                const li = button.closest("li");
+                const userId = parseInt(li.getAttribute("data-id"));
+                const eventId = parseInt(li.parentElement.getAttribute("data-eventId"));
+
+                fetch(`/api/remove-user/${userId}?eventId=${eventId}&type=${type}`, {
+                    method: 'DELETE'
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Xóa phần tử khỏi UI
+                            li.remove();
+
+                            // Cập nhật lại guestIds hoặc memberIds
+                            if (type === "guest") {
+                                const index = guestIds.indexOf(userId);
+                                if (index !== -1) guestIds.splice(index, 1);
+                            } else if (type === "member") {
+                                const index = memberIds.indexOf(userId);
+                                if (index !== -1) memberIds.splice(index, 1);
+                            }
+
+                            // Cập nhật lại input ẩn
+                            document.getElementById("guestIdsInput").value = guestIds.join(',');
+                            document.getElementById("memberIdsInput").value = memberIds.join(',');
+                        } else {
+                            alert("Lỗi khi xóa người dùng: " + data.message);
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert("Có lỗi khi xóa người dùng.");
+                    });
+            }
+            // alert thong bao xoa hoat dong
+            function markRowDeleted(button) {
+                if (confirm("Bạn có chắc chắn muốn xóa hoạt động này không?")) {
+                    const row = button.closest("tr");
+                    if (row) {
+                        // Ẩn dòng khỏi mắt người dùng
+                        row.style.display = 'none';
+                        // Tìm input hidden 'deleted' trong dòng đó và đặt thành true
+                        const deletedInput = row.querySelector("input[name$='.deleted']");
+                        if (deletedInput) {
+                            deletedInput.value = true;
+                        }
+                    }
+                }
+            }
+
+            // them dong moi (repair dinh muc)
+            function addNewRow() {
+                const tableBody = document.querySelector('tbody');
+                const template = document.querySelector('#ncm-template');
+                const newRow = template.cloneNode(true);
+                newRow.style.display = '';
+                newRow.removeAttribute('id');
+
+                const index = tableBody.querySelectorAll('tr').length - 1; // exclude template row
+
+                // Cập nhật name cho các field
+                const inputs = newRow.querySelectorAll('input, select');
+                inputs.forEach(input => {
+                    if (input.type !== 'button') {
+                        const fieldName = input.getAttribute('data-field');
+                        if (fieldName) {
+                            input.setAttribute('name', `ncmList[${index}].${fieldName}`);
+                        }
+                    }
+                });
+
+                tableBody.appendChild(newRow);
+            }
+
+
+            // thêm/xoá dòng hoạt động
+            document.addEventListener("DOMContentLoaded", function () {
+                const modal = document.getElementById("addUserModal");
+                modal.addEventListener('show.bs.modal', function () {
+                    const existingRows = document.querySelectorAll("#activitiesBody .activity-row:not(.d-none)");
+                    if (existingRows.length === 0) {
+                        addActivityRow();
+                    }
+                });
+            });
+            document.getElementById("saveBtn").addEventListener("click", function () {
+                const rows = document.querySelectorAll(".activity-row:not(.d-none)");
+                rows.forEach(row => {
+                    const select = row.querySelector("select[name='roleOfActivities[]']");
+                    if (!select || !select.value) {
+                        // alert("Bạn chưa chọn vai trò cho 1 hoạt động.");
+                    }
+                });
+            });
+
+            function addActivityRow() {
+                const tableBody = document.getElementById("activitiesBody");
+                const template = document.querySelector(".activity-row.d-none");
+
+                if (!template) {
+                    console.error("Không tìm thấy dòng mẫu activity-row để clone!");
+                    return;
+                }
+
+                const newRow = template.cloneNode(true);
+                newRow.classList.remove("d-none");
+                newRow.classList.add("cloned-row"); // Thêm class để tiện debug
+                tableBody.appendChild(newRow);
+            }
+            //
+
+            function removeActivityRow(btn) {
+                const row = btn.closest("tr");
+                row.remove();
+            }
+
+            // select ncm
+            document.addEventListener("DOMContentLoaded", function () {
+                $('#addUserModal').on('shown.bs.modal', function () {
+                    $('#userSelect').select2({
+                                                 dropdownParent: $('#addUserModal'), // quan trọng nếu trong modal
+                                                 placeholder: "Chọn người dùng...",
+                                                 allowClear: true,
+                                                 width: '100%'
+                                             });
+                });
+            });
+            // Xóa dòng mẫu trước khi submit (at ncm)
+            document.addEventListener("DOMContentLoaded", function () {
+                const saveBtn = document.getElementById('saveBtn');
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', function () {
+                        document.querySelectorAll('.activity-row.d-none').forEach(row => row.remove());
+                    });
+                } else {
+                    console.warn('Không tìm thấy nút #saveBtn trong DOM.');
+                }
+            });
+
+
+            // create event (id OS2 =25 26 27 28)
+            function updateRoleSelections() {
+                const leaderSelect = document.getElementById("leaderSelect");
+                const secretarySelect = document.getElementById("secretarySelect");
+
+                // Clear existing options
+                leaderSelect.innerHTML = '<option value="">-- Chọn --</option>';
+                secretarySelect.innerHTML = '<option value="">-- Chọn --</option>';
+
+                // Populate options
+                memberUsers.forEach(user => {
+                    const leaderOption = document.createElement("option");
+                    leaderOption.value = user.id;
+                    leaderOption.textContent = user.name;
+
+                    const secretaryOption = leaderOption.cloneNode(true);
+
+                    leaderSelect.appendChild(leaderOption);
+                    secretarySelect.appendChild(secretaryOption);
+                });
+
+                // Thêm logic để đảm bảo không chọn trùng
+                leaderSelect.addEventListener("change", function () {
+                    if (leaderSelect.value && leaderSelect.value === secretarySelect.value) {
+                        alert("Một người không thể vừa là Trưởng nhóm vừa là Thư ký.");
+                        leaderSelect.value = "";
+                    }
+                });
+
+                secretarySelect.addEventListener("change", function () {
+                    if (secretarySelect.value && secretarySelect.value === leaderSelect.value) {
+                        alert("Một người không thể vừa là Trưởng nhóm vừa là Thư ký.");
+                        secretarySelect.value = "";
+                    }
+                });
+            }
+
+            // create news
+            document.addEventListener('DOMContentLoaded', function () {
+                const input = document.getElementById('images');
+                const preview = document.getElementById('preview');
+                const form = document.getElementById('news-form');
+
+                let selectedFiles = [];
+
+                function generateId() {
+                    return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+                }
+
+                function renderPreview() {
+                    preview.innerHTML = '';
+
+                    selectedFiles.forEach(file => {
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'preview-image';
+                        wrapper.dataset.id = file._id;
+
+                        const img = document.createElement('img');
+                        const btn = document.createElement('button');
+                        btn.className = 'remove-btn';
+                        btn.innerText = '✕';
+                        btn.type = 'button';
+
+                        btn.addEventListener('click', () => {
+                            selectedFiles = selectedFiles.filter(f => f._id !== file._id);
+                            renderPreview();
+                        });
+
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            img.src = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+
+                        wrapper.appendChild(img);
+                        wrapper.appendChild(btn);
+                        preview.appendChild(wrapper);
+                    });
+                }
+
+                input.addEventListener('change', function () {
+                    const files = Array.from(this.files);
+                    files.forEach(file => file._id = generateId());
+                    selectedFiles = selectedFiles.concat(files);
+                    renderPreview();
+                    input.value = ''; // clear file input
+                });
+
+                // Drag and drop support
+                preview.addEventListener('dragover', function (e) {
+                    e.preventDefault();
+                    preview.style.backgroundColor = "#f0f8ff";
+                });
+
+                preview.addEventListener('dragleave', function (e) {
+                    e.preventDefault();
+                    preview.style.backgroundColor = "";
+                });
+
+                preview.addEventListener('drop', function (e) {
+                    e.preventDefault();
+                    preview.style.backgroundColor = "";
+                    const dropped = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+                    dropped.forEach(file => file._id = generateId());
+                    selectedFiles = selectedFiles.concat(dropped);
+                    renderPreview();
+                });
+
+                form.addEventListener('submit', function () {
+                    const dataTransfer = new DataTransfer();
+                    selectedFiles.forEach(file => dataTransfer.items.add(file));
+                    input.files = dataTransfer.files;
+                });
+            });
+        </script>
+    </body>
+</html>
