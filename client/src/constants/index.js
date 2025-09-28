@@ -1,7 +1,4 @@
 // Application constants
-export const APP_NAME = "MyApp";
-export const APP_VERSION = "1.0.0";
-
 export const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // API endpoints
@@ -30,29 +27,7 @@ export const STORAGE_KEYS = {
   LANGUAGE: "language",
 };
 
-// Theme colors
-export const THEME_COLORS = {
-  blue: {
-    name: "Xanh dương",
-    value: "blue",
-  },
-  green: {
-    name: "Xanh lá",
-    value: "green",
-  },
-  red: {
-    name: "Đỏ",
-    value: "red",
-  },
-  purple: {
-    name: "Tím",
-    value: "purple",
-  },
-  orange: {
-    name: "Cam",
-    value: "orange",
-  },
-};
+
 
 // Navigation routes
 export const ROUTES = {
@@ -145,16 +120,12 @@ export const SUCCESS_MESSAGES = {
 };
 
 export default {
-  APP_NAME,
-  APP_VERSION,
   API_ENDPOINTS,
   STORAGE_KEYS,
-  THEME_COLORS,
   ROUTES,
   VALIDATION_RULES,
   HTTP_STATUS,
   PAGINATION,
-  FILE_UPLOAD,
   DATE_FORMATS,
   ERROR_MESSAGES,
   SUCCESS_MESSAGES,

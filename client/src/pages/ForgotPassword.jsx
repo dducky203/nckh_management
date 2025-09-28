@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@mui/material";
 import { Email } from "@mui/icons-material";
+import logoFita from "../assets/logo_fita.png";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -42,18 +43,19 @@ const ForgotPassword = () => {
       setMessage("Có lỗi xảy ra khi gửi yêu cầu");
     } finally {
       setIsLoading(false);
+      
     }
   };
 
   // Redirect function not needed anymore as we use Link components
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div  className="min-h-screen flex items-center justify-center bg-gray-200 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 border-2 p-8 shadow-md rounded-lg bg-gray-50  border-gray-300">
         <div>
           <img
             className="mx-auto h-12 w-auto"
-            src="/src/assets/logo_fita.png"
+            src={logoFita}
             alt="FITA Logo"
           />
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -159,12 +161,6 @@ const ForgotPassword = () => {
           </form>
         )}
 
-        <div className="mt-4 text-xs text-gray-500 text-center">
-          <p>
-            <strong>Lưu ý:</strong> Đây là chức năng demo. Trong môi trường thực tế, 
-            một email sẽ được gửi đến địa chỉ email của bạn với hướng dẫn đặt lại mật khẩu.
-          </p>
-        </div>
       </div>
     </div>
   );

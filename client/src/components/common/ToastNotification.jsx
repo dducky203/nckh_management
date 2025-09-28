@@ -63,14 +63,17 @@ const ToastNotification = ({
       padding: '12px 16px',
       width: '100%',
       alignItems: 'center'
+     
     };
 
     const typeStyles = {
       success: {
-        backgroundColor: 'rgba(3, 70, 87, 0.05)',
+        backgroundColor: '#10B981',
+        color: 'white',
+        fontWeight: 700,
         borderLeft: `4px solid green`,
         '& .MuiAlert-icon': {
-          color: mainColor
+          color: 'white'
         }
       },
       error: {

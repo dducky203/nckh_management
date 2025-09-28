@@ -1,4 +1,5 @@
 import { FacebookOutlined, Instagram, YouTube } from "@mui/icons-material";
+import logoFita from "../../assets/logo_fita.png";
 
 const Footer = () => {
   const socialLinks = [
@@ -50,7 +51,7 @@ const Footer = () => {
 
         <div className="w-28 h-14 flex items-center justify-center">
           <img
-            src="/src/assets/logo_fita.png"
+            src={logoFita}
             alt="Logo FITA"
             className="object-contain"
             loading="lazy"

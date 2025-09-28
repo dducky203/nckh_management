@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { Visibility, VisibilityOff, Person } from "@mui/icons-material";
 import { Button } from "@mui/material";
+import logoFita from "../assets/logo_fita.png";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -31,7 +32,7 @@ const Login = () => {
     try {
       // Sử dụng login từ AuthContext
       const result = await login(formData.username, formData.password);
-      
+
       if (result.success) {
         // Redirect to home or previous page
         const from = location.state?.from?.pathname || "/";
@@ -82,12 +83,12 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-200 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8  border-2 p-8 shadow-md rounded-lg  bg-gray-50 border-gray-300">
         <div>
           <img
             className="mx-auto h-12 w-auto"
-            src="/src/assets/logo_fita.png"
+            src={logoFita}
             alt="FITA Logo"
           />
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -166,9 +167,9 @@ const Login = () => {
               fullWidth
               disabled={isLoading}
               sx={{
-                bgcolor: 'mainColor', 
-                '&:hover': { bgcolor: 'rgba(32, 108, 158, 0.9)' },
-                py: 1
+                bgcolor: "mainColor",
+                "&:hover": { bgcolor: "rgba(32, 108, 158, 0.9)" },
+                py: 1,
               }}
             >
               {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}

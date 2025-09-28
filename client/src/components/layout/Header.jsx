@@ -15,12 +15,16 @@ import {
   Email,
   ChevronRight,
   KeyboardArrowDown,
+  Login,
 } from "@mui/icons-material";
+
 import { EVENT_CATEGORIES, RESEARCH_CATEGORIES } from "../../utils";
 import { AuthContext } from "../../context/AuthContext";
 import { logout } from "../../utils/cookieUtils";
 import { useToast } from "../../context/ToastContext";
 import Modal from "../common/Modal";
+import logoFita from "../../assets/logo_fita.png";
+import noAvatarImg from "../../assets/no-avatar-user.png";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -55,6 +59,7 @@ const Header = () => {
 
   // Lấy thông tin người dùng và các hàm từ AuthContext
   const { user } = useContext(AuthContext);
+  // const user = { id: 1, name: "Nguyễn Văn A", email: "nguyenvana@example.com" };
   // console.log({ user, isAuthenticated, isAdmin, isManager });
 
   const toggleDropdown = (dropdownName) => {
@@ -85,15 +90,11 @@ const Header = () => {
           <div className="flex justify-between text-white items-center py-2">
             <div className="flex-shrink-0">
               <Link to="/">
-                <img
-                  className="h-16 w-auto"
-                  src="/src/assets/logo_fita.png"
-                  alt="Logo FITA"
-                />
+                <img className="h-16 w-auto" src={logoFita} alt="Logo FITA" />
               </Link>
             </div>
 
-            <div className="text-center py-3">
+            <div className={`${user ? "ml-20" : ""} text-center py-3`}>
               <h1 className="text-xl md:text-2xl font-bold">
                 Khoa Công Nghệ Thông Tin
               </h1>
@@ -110,28 +111,23 @@ const Header = () => {
                     onClick={() => toggleDropdown("user-menu")}
                     className="flex items-center space-x-2 text-white hover:text-blue-200 transition-colors px-2 py-1.5 rounded-md"
                   >
-                    <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-mainColor rounded-full flex items-center justify-center">
-                      <span className="text-white font-medium text-sm">U</span>
+                    <div>
+                      <img
+                        src={user.avatar || noAvatarImg}
+                        alt={user.name}
+                        className="w-10 h-10 border-green-400 border-2 rounded-full"
+                      />
                     </div>
                     <div className="flex items-center">
                       <span className="font-medium text-sm whitespace-nowrap">
                         Xin chào, {user.name}
                       </span>
-                      <svg
+                      <KeyboardArrowDown
                         className={`w-4 h-4 ml-1 transition-transform duration-200 ${
                           activeDropdown === "user-menu" ? "rotate-180" : ""
                         }`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
+                        fontSize="small"
+                      />
                     </div>
                   </button>
 
@@ -143,22 +139,11 @@ const Header = () => {
                         : "opacity-0 invisible translate-y-2"
                     }`}
                   >
-                    <div className="p-2 border-b border-gray-100">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-1000 rounded-full flex items-center justify-center">
-                          <span className="text-white font-medium text-sm">
-                            U
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-800 text-sm">
-                            {user.name}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {user.email || "chua co email"}
-                          </p>
-                        </div>
-                      </div>
+                    <div className="py-2 px-4 border-b border-gray-100">
+                      <p className="font-medium text-gray-800 text-sm">
+                        {user.name}
+                      </p>
+                      <p className="text-xs text-gray-500">{user.email}</p>
                     </div>
 
                     <div className="py-1">
@@ -228,19 +213,7 @@ const Header = () => {
                   className="relative bg-gradient-to-r from-[blue] to-purple-1000 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-lg hover:shadow-xl hover:scale-105 transform transition-all duration-300 border"
                 >
                   <span className="flex items-center space-x-1">
-                    <svg
-                      className="w-3.5 h-3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
-                      />
-                    </svg>
+                    <Login className="w-3.5 h-3.5" />
                     <span>Đăng nhập</span>
                   </span>
                 </Link>

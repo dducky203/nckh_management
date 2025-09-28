@@ -152,7 +152,7 @@ mvnw spring-boot:run
 ./mvnw spring-boot:run
 ```
 
-Backend sẽ chạy tại: `http://localhost:8080`
+Backend sẽ chạy tại: `http://localhost:8081`
 
 ### 4. Cấu hình Frontend
 
@@ -171,7 +171,7 @@ npm install
 3. Tạo file `.env` (nếu cần):
 
 ```env
-VITE_API_BASE_URL=http://localhost:8080
+VITE_API_BASE_URL=http://localhost:8081
 ```
 
 4. Chạy development server:

@@ -11,7 +11,7 @@ export const ToastProvider = ({ children }) => {
 
   // Xử lý nhiều toast cùng lúc
   const showToast = (message, type = 'success', duration = 3000, position = {
-    vertical: 'bottom',
+    vertical: 'top',
     horizontal: 'right',
   }) => {
     const id = Date.now();

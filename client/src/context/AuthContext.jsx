@@ -66,7 +66,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [ncm, setNcm] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const currentYear = 2024;
+  const currentYear = new Date().getFullYear();
 
   // Initialize auth state from cookies
   useEffect(() => {
