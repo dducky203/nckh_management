@@ -55,51 +55,53 @@ public class LoginController {
     public String login() {
         return "login";
     }
+
     // check login user
     @PostMapping("/checkLogin")
-    public String login(@RequestParam("username") String username,
+    public void login(@RequestParam("username") String username,
                         @RequestParam("password") String password,
                         Model model,
-                        HttpSession session) {
-
-        User user = loginService.checkLoginUser(username, password);
-        if (user == null) {
-            Admin admin = loginService.checkLoginAdmin(username, password);
-            if (admin == null) {
-                model.addAttribute("message", "Sai tài khoản hoặc mật khẩu");
-                return "login";
-            } else {
-                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                        admin.getUsername(), null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
-                SecurityContextHolder.getContext().setAuthentication(auth);
-
-
-                session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
-                        SecurityContextHolder.getContext());
-
-                session.setAttribute("saveAdmin", admin);
-                return commonAdController.enterAdmin(model);
-            }
-        }
-
-        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                user.getUsername(), null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
-        SecurityContextHolder.getContext().setAuthentication(auth);
-
-        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
-                SecurityContextHolder.getContext());
-
-        session.setAttribute("saveUser", user);
-        // Lọc NCM theo người dùng và năm hiện tại
-        NcmDTO currentNcm = ncmService.getNcmByUserId(user.getId())
-                .stream()
-                .filter(ncm -> ncm.getYear() == LocalDate.now().getYear())
-                .findFirst()
-                .orElse(null);
-
-        // Đưa vào session nếu tồn tại
-        if (currentNcm != null)         session.setAttribute("saveNcm", currentNcm);
-        return "redirect:/user";
+                        HttpSession session)
+    {
+//
+//        User user = loginService.checkLoginUser(username, password);
+//        if (user == null) {
+//            Admin admin = loginService.checkLoginAdmin(username, password);
+//            if (admin == null) {
+//                model.addAttribute("message", "Sai tài khoản hoặc mật khẩu");
+//                return "login";
+//            } else {
+//                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+//                        admin.getUsername(), null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+//                SecurityContextHolder.getContext().setAuthentication(auth);
+//
+//
+//                session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+//                        SecurityContextHolder.getContext());
+//
+//                session.setAttribute("saveAdmin", admin);
+//                return commonAdController.enterAdmin(model);
+//            }
+//        }
+//
+//        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+//                user.getUsername(), null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
+//        SecurityContextHolder.getContext().setAuthentication(auth);
+//
+//        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+//                SecurityContextHolder.getContext());
+//
+//        session.setAttribute("saveUser", user);
+//        // Lọc NCM theo người dùng và năm hiện tại
+//        NcmDTO currentNcm = ncmService.getNcmByUserId(user.getId())
+//                .stream()
+//                .filter(ncm -> ncm.getYear() == LocalDate.now().getYear())
+//                .findFirst()
+//                .orElse(null);
+//
+//        // Đưa vào session nếu tồn tại
+//        if (currentNcm != null)         session.setAttribute("saveNcm", currentNcm);
+//        return "redirect:/user";
     }
 
 

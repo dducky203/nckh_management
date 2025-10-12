@@ -1,22 +1,29 @@
-package com.example.server.controller.api;
+package com.example.server.controller.authentication;
 
-import com.example.server.DTO.NcmDTO;
-import com.example.server.domain.Admin;
+import com.example.server.DTO.UserDTO;
+import com.example.server.DTO.login.LoginRequestDTO;
+import com.example.server.DTO.login.LoginResponseDTO;
+import com.example.server.domain.Resume;
 import com.example.server.domain.User;
+import com.example.server.exception.LoginFailedException;
+import com.example.server.repository.UserRepository;
 import com.example.server.service.JwtService;
 import com.example.server.service.LoginService;
 import com.example.server.service.NcmService;
+import com.example.server.service.SHA_256_password;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/login")
+@RequestMapping("/auth")
 @CrossOrigin(origins = "*") // Enable CORS for React frontend
 public class LoginRestController {
     
@@ -28,67 +35,46 @@ public class LoginRestController {
     
     @Autowired
     private JwtService jwtService;
-    
-    @PostMapping
-    public ResponseEntity<Map<String, Object>> login(
-            @RequestBody Map<String, String> credentials) {
+
+
+    @PostMapping(value = "/login")
+    public ResponseEntity<?> login(
+           @Valid @RequestBody LoginRequestDTO credentials) {
         
-        String username = credentials.get("username");
-        String password = credentials.get("password");
-        Map<String, Object> response = new HashMap<>();
-        
-        // Check user login
-        User user = loginService.checkLoginUser(username, password);
-        if (user == null) {
-            // Check admin login
-            Admin admin = loginService.checkLoginAdmin(username, password);
-            if (admin == null) {
-                response.put("success", false);
-                response.put("message", "Sai tài khoản hoặc mật khẩu");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-            } else {
-                // Generate JWT token for admin
-                String token = jwtService.generateToken(admin.getUsername(), "admin", admin.getId());
-                
-                // Return admin data with token
-                response.put("success", true);
-                response.put("userType", "admin");
-                response.put("token", token);
-                response.put("userData", Map.of(
-                    "id", admin.getId(),
-                    "username", admin.getUsername(),
-                    "name", admin.getName()
-                ));
-                return ResponseEntity.ok(response);
-            }
+        String username = credentials.getUsername();
+        String password = credentials.getPassword();
+
+        User user = loginService.checkLoginUser(username ,password);
+
+        if(user == null){
+            throw new LoginFailedException("Tài khoản hoặc mật khẩu không chính xác!");
+        }else{
+            // Generate JWT token for user
+            String token = jwtService.generateToken(user.getUsername(), user.getIdRole().getName(), user.getId());
+            UserDTO userInfo = new UserDTO();
+            userInfo.setId(user.getId());
+            userInfo.setName(user.getName());
+            userInfo.setUsername(user.getUsername());
+            userInfo.setEmail(user.getIdResume().getEmail());
+            userInfo.setPower(user.getPower());
+            userInfo.setRole(user.getIdRole().getName());
+            userInfo.setTitle(user.getIdTitle().getName());
+            return ResponseEntity.ok(new LoginResponseDTO(true, "Đăng nhập thành công",token ,userInfo));
         }
+
+
+//        // Get current NCM for the user and include if exists
+//        NcmDTO currentNcm = ncmService.getNcmByUserId(user.getId())
+//                .stream()
+//                .filter(ncm -> ncm.getYear() == LocalDate.now().getYear())
+//                .findFirst()
+//                .orElse(null);
+//
+//        if (currentNcm != null) {
+//            response.put("ncmData", currentNcm);
+//        }
         
-        // Generate JWT token for user
-        String token = jwtService.generateToken(user.getUsername(), "user", user.getId());
-        
-        // Return user data with token
-        response.put("success", true);
-        response.put("userType", "user");
-        response.put("token", token);
-        response.put("userData", Map.of(
-            "id", user.getId(),
-            "username", user.getUsername(),
-            "name", user.getName(),
-            "power", user.getPower()
-        ));
-        
-        // Get current NCM for the user and include if exists
-        NcmDTO currentNcm = ncmService.getNcmByUserId(user.getId())
-                .stream()
-                .filter(ncm -> ncm.getYear() == LocalDate.now().getYear())
-                .findFirst()
-                .orElse(null);
-        
-        if (currentNcm != null) {
-            response.put("ncmData", currentNcm);
-        }
-        
-        return ResponseEntity.ok(response);
+
     }
     
     @Autowired
@@ -108,7 +94,7 @@ public class LoginRestController {
         
         User user = loginService.checkForgotPass(username);
         if (user != null) {
-            com.example.server.domain.Resume resume = resumeRepository.findByIdUser(user.getId());
+            Resume resume = resumeRepository.findByIdUser(user.getId());
             String pass = managerUserController.generateRandomPassword(8);
             managerUserController.sendPasswordForgotEmail(user.getUsername(), resume.getEmail(), pass);
             user.setPassword(pass);
@@ -123,13 +109,28 @@ public class LoginRestController {
         
         return ResponseEntity.ok(response);
     }
-    
+
     @PostMapping("/logout")
-    public ResponseEntity<Map<String, Object>> logout() {
+    public ResponseEntity<Map<String, Object>> logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("message", "Đã đăng xuất thành công");
-        
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+
+//            // Phương pháp 1: Thêm token vào blacklist/revoked token storage
+//            jwtService.addToBlacklist(token);
+
+            // Hoặc Phương pháp 2: Nếu dùng Spring Security + JWT, invalidate session
+            SecurityContextHolder.clearContext();
+
+            response.put("success", true);
+            response.put("message", "Đã đăng xuất thành công");
+        } else {
+            response.put("success", false);
+            response.put("message", "Không tìm thấy token hợp lệ");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
         return ResponseEntity.ok(response);
     }
     

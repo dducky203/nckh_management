@@ -1,10 +1,11 @@
 // Application constants
 export const API_BASE_URL = import.meta.env.VITE_API_URL;
+export const JWT_EXPIRATION_DAYS = Number(import.meta.env.VITE_JWT_EXPIRATION_DAYS) || 1;
 
 // API endpoints
 export const API_ENDPOINTS = {
   AUTH: {
-    LOGIN: "/api/login",
+    LOGIN: "/auth/login",
     REGISTER: "/auth/register",
     LOGOUT: "/auth/logout",
     REFRESH: "/auth/refresh",

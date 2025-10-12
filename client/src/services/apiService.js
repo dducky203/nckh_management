@@ -27,6 +27,8 @@ const getAuthHeaders = () => {
 // Generic API request function
 const apiRequest = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
+  console.log({url});
+  
 
   const config = {
     headers: getAuthHeaders(),
@@ -111,7 +113,7 @@ export const apiService = {
 
 // Specific API endpoints
 export const authAPI = {
-  login: (credentials) => apiService.post("/api/login", credentials),
+  login: (credentials) => apiService.post("/auth/login", credentials),
   register: (userData) => apiService.post("/auth/register", userData),
   logout: () => apiService.post("/auth/logout"),
   refreshToken: () => apiService.post("/auth/refresh"),

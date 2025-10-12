@@ -59,8 +59,6 @@ const Header = () => {
 
   // Lấy thông tin người dùng và các hàm từ AuthContext
   const { user } = useContext(AuthContext);
-  // const user = { id: 1, name: "Nguyễn Văn A", email: "nguyenvana@example.com" };
-  // console.log({ user, isAuthenticated, isAdmin, isManager });
 
   const toggleDropdown = (dropdownName) => {
     setActiveDropdown(activeDropdown === dropdownName ? null : dropdownName);
@@ -165,14 +163,16 @@ const Header = () => {
                         <span>Quản lý sự kiện</span>
                       </Link>
 
-                      <Link
-                        to="/staff/manage"
-                        className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                        onClick={() => setActiveDropdown(null)}
-                      >
-                        <People className="w-4 h-4 mr-2 text-gray-400" />
-                        <span>Quản lý nhân sự</span>
-                      </Link>
+                      {user.role === "admin" && (
+                        <Link
+                          to="/staff/manage"
+                          className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
+                          onClick={() => setActiveDropdown(null)}
+                        >
+                          <People className="w-4 h-4 mr-2 text-gray-400" />
+                          <span>Quản lý nhân sự</span>
+                        </Link>
+                      )}
 
                       <Link
                         to="/news/my"

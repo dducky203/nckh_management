@@ -3,6 +3,7 @@ package com.example.server.service;
 import com.example.server.domain.Guest;
 import com.example.server.domain.Member;
 import com.example.server.domain.User;
+import com.example.server.helpers.CustomUserDetails;
 import com.example.server.repository.GuestRepository;
 import com.example.server.repository.MemberRepository;
 import com.example.server.repository.UserRepository;
@@ -13,6 +14,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.FluentQuery;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,7 +24,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
     @Autowired
     UserRepository userRepository;
     @Autowired
@@ -31,6 +35,16 @@ public class UserService {
     public UserService(GuestRepository guestRepository, MemberRepository memberRepository) {
         this.guestRepository = guestRepository;
         this.memberRepository = memberRepository;
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        // Logic tìm user trong database của bạn
+        // và trả về một đối tượng implement UserDetails (ví dụ: lớp User của bạn)
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy người dùng với username: " + username));
+
+        return new CustomUserDetails(user);
     }
 
     public boolean isGuest(Integer userId) {

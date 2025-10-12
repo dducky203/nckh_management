@@ -12,6 +12,8 @@ const authService = {
   login: async (username, password) => {
     try {
       const response = await authAPI.login({ username, password });
+      console.log({response});
+      
 
       // Xử lý cấu trúc phản hồi từ backend: { userData: {...}, token: "..." }
       if (response && response.token) {

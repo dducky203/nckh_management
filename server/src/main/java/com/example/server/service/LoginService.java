@@ -6,7 +6,9 @@ import com.example.server.domain.User;
 import com.example.server.repository.AdminRepository;
 import com.example.server.repository.ResumeRepository;
 import com.example.server.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -15,39 +17,29 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class LoginService {
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
     @Autowired
     AdminRepository adminRepository;
     @Autowired
-    ResumeRepository resumeRepository;
+    private ResumeRepository resumeRepository;
+    @Autowired
+    PasswordEncoder passwordEncoder;
+
 
     // get user by username and password
-    public User checkLoginUser(String username, String inputPassword) {
-        // Tìm user theo username
-        User user = userRepository.findByUsername(username);
+    public User checkLoginUser(String username ,String inputPassword ) {
 
+        User user = userRepository.findByUsernameOrEmail(username) ;
         if (user == null) return null;
-
-        String hashedInput = SHA_256_password.SHA_password(inputPassword);
-
-        // TH1: mật khẩu trong DB đã mã hóa → so sánh bản SHA
-        if (user.getPassword().equals(hashedInput)) {
-            return user;
+        else {
+            String hashedInput = SHA_256_password.SHA_password(inputPassword);
+            if(!(hashedInput.equals(user.getPassword()))) return null;
+            else return user;
         }
-
-        // TH2: mật khẩu trong DB là raw (chưa mã hóa) → so sánh trực tiếp
-        if (user.getPassword().equals(inputPassword)) {
-            // Nếu đúng → mã hóa và lưu lại
-            user.setPassword(hashedInput);
-            userRepository.save(user);
-            return user;
-        }
-
-        // Không đúng cả 2 → sai mật khẩu
-        return null;
     }
 
 

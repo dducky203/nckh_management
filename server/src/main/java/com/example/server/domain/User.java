@@ -4,8 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.checkerframework.common.aliasing.qual.Unique;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.Serializable;
 import java.time.Instant;
@@ -16,7 +18,7 @@ import java.util.Date;
 @Setter
 @Entity
 @Table(name = "user")
-public class User extends EntityBase implements Serializable {
+public class User extends EntityBase implements Serializable  {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
@@ -42,6 +44,7 @@ public class User extends EntityBase implements Serializable {
 //    private LocalDate updateDate;
 
     @Column(name = "username", length = 250)
+    @Unique
     private String username;
 
     @Column(name = "password", length = 250)
@@ -49,6 +52,17 @@ public class User extends EntityBase implements Serializable {
 
     @Column(name = "power")
     private Integer power;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @JoinColumn(
+            name = "username",
+            referencedColumnName = "code",
+            insertable = false,
+            updatable = false
+    )
+    private Resume idResume;
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
