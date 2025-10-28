@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@mui/material";
 import { Email } from "@mui/icons-material";
-import logoFita from "../assets/logo_fita.png";
+import logoFita from "../../assets/logo_fita.png";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");

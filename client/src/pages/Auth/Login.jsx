@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { useAuth } from "../context/useAuth";
+import { useAuth } from "../../context/useAuth";
 import { Visibility, VisibilityOff, Person } from "@mui/icons-material";
 import { Button } from "@mui/material";
-import logoFita from "../assets/logo_fita.png";
+import logoFita from "../../assets/logo_fita.png";
 
 const Login = () => {
   const [formData, setFormData] = useState({

@@ -1,6 +1,56 @@
 // Application constants
 export const API_BASE_URL = import.meta.env.VITE_API_URL;
 export const JWT_EXPIRATION_DAYS = Number(import.meta.env.VITE_JWT_EXPIRATION_DAYS) || 1;
+export const ITEMS_PER_PAGE = 15;
+
+
+export const formatDate = (dateString) => {
+  if (!dateString) return 'Không có thông tin';
+  
+  try {
+    const date = new Date(dateString);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return 'Ngày không hợp lệ';
+    }
+    
+    return date.toLocaleDateString('vi-VN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'Lỗi định dạng ngày';
+  }
+};
+
+
+export const formatDateTime = (dateString) => {
+  if (!dateString) return 'Không có thông tin';
+  
+  try {
+    const date = new Date(dateString);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return 'Ngày giờ không hợp lệ';
+    }
+    
+    return date.toLocaleString('vi-VN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch (error) {
+    console.error('Error formatting datetime:', error);
+    return 'Lỗi định dạng ngày giờ';
+  }
+};
+
 
 // API endpoints
 export const API_ENDPOINTS = {

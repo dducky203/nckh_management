@@ -1,18 +1,21 @@
 package com.example.server.service;
 
+import com.example.server.DTO.users.UserDetailsDTO;
 import com.example.server.domain.Guest;
 import com.example.server.domain.Member;
+import com.example.server.domain.Resume;
 import com.example.server.domain.User;
 import com.example.server.helpers.CustomUserDetails;
+import com.example.server.mapper.UserMapper;
 import com.example.server.repository.GuestRepository;
 import com.example.server.repository.MemberRepository;
+import com.example.server.repository.ResumeRepository;
 import com.example.server.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -31,16 +34,85 @@ public class UserService implements UserDetailsService {
     GuestRepository guestRepository;
     @Autowired
     MemberRepository memberRepository;
+    @Autowired
+    ResumeRepository resumeRepository;
+    @Autowired
+    UserMapper userMapper;
 
     public UserService(GuestRepository guestRepository, MemberRepository memberRepository) {
         this.guestRepository = guestRepository;
         this.memberRepository = memberRepository;
+
+    }
+
+
+    public void updateUser (UserDetailsDTO request){
+//                "id": 30,
+//                "username": "6660553",
+//                "name": "Ngô Văn Minh 2",
+//                "email": "ngominh0411032@gmail.com",
+//                "role": "user",
+//                "power": 4,
+//                "title": "Sinh Viên",
+//                "inActive": true,
+//                "isDeleted": true,
+//                "createdAt": "2025-09-06T13:50:42.000+00:00",
+//                "address": "Trâu Quỳ - Gia Lâm - Hà Nội",
+//                "birthday": "2003-04-04T00:00:00.000+00:00",
+//                "phone": "0123456789"
+        // Tìm user
+        User user = userRepository.findByIdUser(request.getId());
+        if (user == null) {
+            throw new RuntimeException("Người dùng không tồn tại với ID: " + request.getId());
+        }
+
+        // Cập nhật thông tin User
+
+            user.setName(request.getName());
+
+
+            // Kiểm tra username trùng lặp
+            User existingUser = userRepository.findByUsernameOrEmail(request.getUsername());
+            if (existingUser != null && !existingUser.getId().equals(request.getId())) {
+                throw new RuntimeException("Tên đăng nhập đã tồn tại");
+            }
+            user.setUsername(request.getUsername());
+
+
+            user.setPower(request.getPower());
+
+
+
+        // Lưu user
+        userRepository.save(user);
+
+        // Cập nhật thông tin Resume
+        Resume resume = resumeRepository.findByIdUser(request.getId());
+        if (resume == null) {
+            // Tạo mới resume nếu chưa có
+            resume = new Resume();
+            resume.setIdUser(user);
+            resume.setCode(user.getUsername());
+        }
+
+
+            resume.setEmail(request.getEmail());
+
+
+            resume.setPhone(request.getPhone());
+
+
+        // Lưu resume
+        resumeRepository.save(resume);
+
+        // Trả về UserDTO đã cập nhật
+        User updatedUser = userRepository.findByIdUser(user.getId());
+
+
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // Logic tìm user trong database của bạn
-        // và trả về một đối tượng implement UserDetails (ví dụ: lớp User của bạn)
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy người dùng với username: " + username));
 

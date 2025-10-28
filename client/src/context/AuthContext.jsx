@@ -5,36 +5,36 @@ import authService from "../services/authService";
 const AuthContext = createContext();
 
 // Mock user data for demo
-const mockUsers = {
-  admin: {
-    id: 1,
-    name: "Admin User",
-    email: "admin@fita.com",
-    power: 1, // Admin
-    avatar: "/avatars/admin.jpg",
-  },
-  manager: {
-    id: 2,
-    name: "Manager User",
-    email: "manager@fita.com",
-    power: 2, // Manager
-    avatar: "/avatars/manager.jpg",
-  },
-  member: {
-    id: 3,
-    name: "Member User",
-    email: "member@fita.com",
-    power: 3, // Member
-    avatar: "/avatars/member.jpg",
-  },
-  guest: {
-    id: 4,
-    name: "Guest User",
-    email: "guest@fita.com",
-    power: 4, // Guest
-    avatar: "/avatars/guest.jpg",
-  },
-};
+// const mockUsers = {
+//   admin: {
+//     id: 1,
+//     name: "Admin User",
+//     email: "admin@fita.com",
+//     power: 1, // Admin
+//     avatar: "/avatars/admin.jpg",
+//   },
+//   manager: {
+//     id: 2,
+//     name: "Manager User",
+//     email: "manager@fita.com",
+//     power: 2, // Manager
+//     avatar: "/avatars/manager.jpg",
+//   },
+//   member: {
+//     id: 3,
+//     name: "Member User",
+//     email: "member@fita.com",
+//     power: 3, // Member
+//     avatar: "/avatars/member.jpg",
+//   },
+//   guest: {
+//     id: 4,
+//     name: "Guest User",
+//     email: "guest@fita.com",
+//     power: 4, // Guest
+//     avatar: "/avatars/guest.jpg",
+//   },
+// };
 
 // Mock NCM (Nhóm Công Tác Member) data
 const mockNcmData = {
@@ -73,7 +73,6 @@ export const AuthProvider = ({ children }) => {
     const userData = getUserInfo();
     if (userData) {
       setUser(userData);
-      // Set NCM data if exists
       if (mockNcmData[userData.id]) {
         setNcm(mockNcmData[userData.id]);
       }
@@ -101,9 +100,11 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error("Login error:", error);
+      
+      // ✅ QUAN TRỌNG: Trả về object với success: false
       return {
         success: false,
-        error: error.message || "Thông tin đăng nhập không chính xác",
+        error: error.message || "Tài khoản hoặc mật khẩu không chính xác",
       };
     } finally {
       setIsLoading(false);
@@ -112,76 +113,35 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      // Gọi service để đăng xuất
       await authService.logout();
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      // Reset state
       setUser(null);
       setNcm(null);
     }
   };
 
-  const updateProfile = async (updatedData) => {
-    try {
-      // Gọi API để cập nhật thông tin người dùng
-      const response = await authService.getCurrentUser();
-
-      if (response) {
-        const updatedUser = { ...user, ...updatedData };
-        setUser(updatedUser);
-        return { success: true };
-      }
-      return { success: false, error: "Không thể cập nhật thông tin" };
-    } catch (error) {
-      console.error("Update profile error:", error);
-      return {
-        success: false,
-        error: error.message || "Không thể cập nhật thông tin",
-      };
-    }
+  const updateUser = (updatedData) => {
+    setUser((prevUser) => ({
+      ...prevUser,
+      ...updatedData,
+    }));
   };
-
-  // Helper functions
-  const isAuthenticated = () => user !== null;
-
-  const hasPermission = (requiredPower) => {
-    return user && user.power <= requiredPower;
-  };
-
-  const isAdmin = () => user && user.power === 1;
-  const isManager = () => user && user.power === 2;
-  const isMember = () => user && user.power === 3;
-  const isGuest = () => user && user.power === 4;
-
-  const hasNcmRole = (role) => {
-    return ncm && ncm.roleOfTeam === role;
-  };
-
-  const isTeamLeader = () => hasNcmRole(1);
-  const isSecretary = () => hasNcmRole(2);
-  const isTeamMember = () => hasNcmRole(3);
 
   const value = {
     user,
     ncm,
-    currentYear,
     isLoading,
+    currentYear,
     login,
     logout,
-    updateProfile,
-    // Helper functions
-    isAuthenticated,
-    hasPermission,
-    isAdmin,
-    isManager,
-    isMember,
-    isGuest,
-    isTeamLeader,
-    isSecretary,
-    isTeamMember,
-    hasNcmRole,
+    updateUser,
+    isAuthenticated: () => !!user,
+    hasPermission: (requiredPower) => {
+      if (!user) return false;
+      return user.power <= requiredPower;
+    },
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -63,15 +63,14 @@ public class User extends EntityBase implements Serializable  {
     )
     private Resume idResume;
 
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     @JoinColumn(name = "id_title")
     private Title idTitle;
 
     @Column(name = "in_active")
-    private boolean inActive  = false;
+    private Boolean inActive  = false;
     @Column(name = "is_deleted")
-    private boolean isDeleted = false;
+    private Boolean isDeleted = false;
 
 }

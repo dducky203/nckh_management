@@ -11,16 +11,18 @@ import Layout from "./components/layout/Layout";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
-import Login from "./pages/Login";
-import ForgotPassword from "./pages/ForgotPassword";
+import Login from "./pages/Auth/Login";
+import ForgotPassword from "./pages/Auth/ForgotPassword";
 import NotFound from "./pages/NotFound";
-import Unauthorized from "./pages/Unauthorized";
-import ResearchProjects from "./pages/ResearchProjects";
-import EventsUpcoming from "./pages/EventsUpcoming";
+import Unauthorized from "./pages/Auth/Unauthorized";
+import ResearchProjects from "./pages/ResearchActivity/ResearchProjects";
+import EventsUpcoming from "./pages/Events/EventsUpcoming";
 
 // Components
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import { ToastProvider } from "./context/ToastContext";
+import Profile from "./pages/Users/Profile";
+import UserManagement from "./pages/Users/UserManagement";
 
 function App() {
   useEffect(() => {
@@ -47,8 +49,24 @@ function App() {
                     <Route path="/" element={<Home />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/contact" element={<Contact />} />
-
                     {/* Research Activities Routes - Yêu cầu đăng nhập */}
+                    <Route
+                      path="/profile"
+                      element={
+                        <ProtectedRoute>
+                          <Profile />
+                        </ProtectedRoute>
+                      }
+                    />
+                   
+                    <Route
+                      path="/user/manager"
+                      element={
+                        // <ProtectedRoute>
+                          <UserManagement />
+                        // </ProtectedRoute>
+                      }
+                    />
                     <Route
                       path="/research/projects"
                       element={
@@ -97,7 +115,6 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
-
                     {/* Events Routes */}
                     <Route
                       path="/events/upcoming"
@@ -137,7 +154,6 @@ function App() {
                         </div>
                       }
                     />
-
                     {/* News Route */}
                     <Route
                       path="/news"
@@ -145,7 +161,6 @@ function App() {
                         <div className="p-8 text-center">Trang tin tức</div>
                       }
                     />
-
                     {/* Placeholder routes for FITA functionality */}
                     <Route
                       path="/event/showE/:userId"
@@ -209,7 +224,6 @@ function App() {
                         </div>
                       }
                     />
-
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Layout>

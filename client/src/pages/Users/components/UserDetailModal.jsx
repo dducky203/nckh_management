@@ -1,0 +1,203 @@
+import React from "react";
+import {
+  Close,
+  Person,
+  Email,
+  Phone,
+  Badge,
+  School,
+  LocationOn,
+  Cake,
+  AccessTime,
+  CheckCircle,
+  Cancel,
+  Delete,
+} from "@mui/icons-material";
+import { formatDate, formatDateTime } from "../../../constants";
+
+const UserDetailModal = ({ isOpen, onClose, user }) => {
+  console.log("UserDetailModal user:", user);
+
+  if (!isOpen || !user) return null;
+
+  const getRoleLabel = (power) => {
+    const roles = {
+      1: "Trưởng khoa",
+      2: "Phó khoa",
+      3: "Cán bộ khoa",
+      4: "Sinh viên",
+    };
+    return roles[power] || "Không xác định";
+  };
+
+  const getStatusBadge = (user) => {
+   
+    if (!user.isDeleted) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-red-100 text-red-800">
+          <Delete className="w-3 h-3" />
+          Đã xóa
+        </span>
+      );
+    }
+    
+    if (!user.inActive) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-yellow-100 text-yellow-800">
+          <Cancel className="w-3 h-3" />
+          Không hoạt động
+        </span>
+      );
+    }
+    
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800">
+        <CheckCircle className="w-3 h-3" />
+        Hoạt động
+      </span>
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[85vh]">
+        {/* Header - Compact */}
+        <div className="flex items-center justify-between p-4 border-b bg-white rounded-t-lg">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Chi tiết người dùng
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md hover:bg-gray-100"
+          >
+            <Close className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div
+          className="p-4 overflow-y-auto"
+          style={{ maxHeight: "calc(85vh - 8rem)" }}
+        >
+          {/* Avatar & Status - Compact */}
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-16 h-16 rounded bg-mainColor text-white flex items-center justify-center text-xl font-bold shadow-md">
+              {user.name?.charAt(0).toUpperCase() || "U"}
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold text-gray-900">
+                {user.name || "Không có tên"}
+              </h4>
+              <div className="flex items-center gap-2 mt-1">
+                {getStatusBadge(user)}
+                <span className="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800">
+                  {getRoleLabel(user.power)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+         
+          <div className="space-y-3">
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg">
+                <Badge className="text-gray-400 w-4 h-4 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-gray-500">Mã người dùng</p>
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user.username || "N/A"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg">
+                <School className="text-gray-400 w-4 h-4 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-gray-500">Chức danh</p>
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user.title || "Chưa có"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+          
+            <div className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg">
+              <Email className="text-gray-400 w-4 h-4 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-gray-500">Email</p>
+                <p className="text-sm font-medium text-gray-900 break-all">
+                  {user.email || "Không có thông tin"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg">
+              <Phone className="text-gray-400 w-4 h-4 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-gray-500">Số điện thoại</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {user.phone}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg">
+              <LocationOn className="text-gray-400 w-4 h-4 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-gray-500">Địa chỉ</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {user.address}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              <div className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg">
+                <Cake className="text-gray-400 w-4 h-4 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-gray-500">Ngày sinh</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {formatDate(user.birthday)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                <AccessTime className="text-gray-400 w-4 h-4 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-gray-500">Ngày tạo tài khoản</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {formatDateTime(user.createdAt)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+          
+            <div className="mt-4 p-3 border-l-4 border-blue-500 bg-blue-50 rounded">
+              <div className="flex items-center gap-2">
+                <Badge className="text-blue-600 w-4 h-4" />
+                <span className="text-xs font-medium text-blue-800">
+                  Cấp độ quyền hạn: Level {user.power} ({user.role})
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+    
+        <div className="flex justify-end gap-2 p-4 border-t bg-gray-50 rounded-b-lg">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mainColor transition-colors"
+          >
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default UserDetailModal;

@@ -1,7 +1,5 @@
-package com.example.server.DTO;
+package com.example.server.DTO.users;
 
-import com.example.server.domain.Role;
-import com.example.server.domain.Title;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -15,5 +13,7 @@ public class UserDTO {
     private String role;
     private Integer power;
     private String title;
+    private Boolean inActive;
+    private Boolean isDeleted;
 
 }

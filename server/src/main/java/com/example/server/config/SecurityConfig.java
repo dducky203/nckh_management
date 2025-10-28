@@ -41,9 +41,9 @@ public class SecurityConfig {
 //                                "/public/**"
                         ).permitAll()
                         // Tùy chọn: tắt xác thực, cho phép mọi request
-                        .anyRequest().permitAll()
+//                        .anyRequest().permitAll()
                         // Hoặc yêu cầu xác thực nếu cần
-//                         .anyRequest().authenticated()
+                         .anyRequest().authenticated()
                 )
                 .csrf(AbstractHttpConfigurer::disable)
                 // Thêm JwtAuthenticationFilter để xử lý token JWT
@@ -54,7 +54,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "https://rfc5lt36-5173.asse.devtunnels.ms"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);

@@ -35,12 +35,12 @@ public class Admin extends EntityBase implements Serializable {
 
     @Column(name = "password", length = 250)
     private String password;
-//
+    //
 //    @Column(name = "power")
 //    private Integer power;
-@Column(name = "in_active")
-private boolean inActive  = false;
+    @Column(name = "in_active")
+    private Boolean inActive = false;
     @Column(name = "is_deleted")
-    private boolean isDeleted = false;
+    private Boolean isDeleted = false;
 
 }

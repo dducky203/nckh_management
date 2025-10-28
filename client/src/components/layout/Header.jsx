@@ -113,7 +113,7 @@ const Header = () => {
                       <img
                         src={user.avatar || noAvatarImg}
                         alt={user.name}
-                        className="w-10 h-10 border-green-400 border-2 rounded-full"
+                        className={`${user.role === "admin" ? "border-green-400" : "border-[#ef9d1d]"} w-10 p-[2px] h-10 border-2 rounded-full`}
                       />
                     </div>
                     <div className="flex items-center">
@@ -165,7 +165,7 @@ const Header = () => {
 
                       {user.role === "admin" && (
                         <Link
-                          to="/staff/manage"
+                          to="/user/manager"
                           className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
                           onClick={() => setActiveDropdown(null)}
                         >
