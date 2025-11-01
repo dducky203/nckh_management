@@ -1,4 +1,4 @@
-import { VALIDATION_RULES, ERROR_MESSAGES } from '../constants';
+import { VALIDATION_RULES, ERROR_MESSAGES } from "../constants";
 
 // Email validation
 export const validateEmail = (email) => {
@@ -56,9 +56,11 @@ export const validateConfirmPassword = (password, confirmPassword) => {
 };
 
 // Required field validation
-export const validateRequired = (value, fieldName = '') => {
-  if (!value || (typeof value === 'string' && !value.trim())) {
-    return fieldName ? `${fieldName} là bắt buộc` : ERROR_MESSAGES.FORM.REQUIRED;
+export const validateRequired = (value, fieldName = "") => {
+  if (!value || (typeof value === "string" && !value.trim())) {
+    return fieldName
+      ? `${fieldName} là bắt buộc`
+      : ERROR_MESSAGES.FORM.REQUIRED;
   }
   return null;
 };
@@ -66,11 +68,11 @@ export const validateRequired = (value, fieldName = '') => {
 // Generic form validation
 export const validateForm = (data, rules) => {
   const errors = {};
-  
-  Object.keys(rules).forEach(field => {
+
+  Object.keys(rules).forEach((field) => {
     const value = data[field];
     const fieldRules = rules[field];
-    
+
     for (const rule of fieldRules) {
       const error = rule(value);
       if (error) {
@@ -79,10 +81,10 @@ export const validateForm = (data, rules) => {
       }
     }
   });
-  
+
   return {
     isValid: Object.keys(errors).length === 0,
-    errors
+    errors,
   };
 };
 

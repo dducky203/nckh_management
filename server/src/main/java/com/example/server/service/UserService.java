@@ -1,22 +1,25 @@
 package com.example.server.service;
 
 import com.example.server.DTO.users.UserDetailsDTO;
-import com.example.server.domain.Guest;
-import com.example.server.domain.Member;
-import com.example.server.domain.Resume;
-import com.example.server.domain.User;
+import com.example.server.DTO.users.UserRequest;
+import com.example.server.domain.*;
+import com.example.server.exception.ErrorException;
 import com.example.server.helpers.CustomUserDetails;
+import com.example.server.mapper.ResumeMapper;
 import com.example.server.mapper.UserMapper;
 import com.example.server.repository.GuestRepository;
 import com.example.server.repository.MemberRepository;
 import com.example.server.repository.ResumeRepository;
 import com.example.server.repository.UserRepository;
+import com.example.server.utils.DateTimeConstant;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.query.FluentQuery;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -38,6 +41,9 @@ public class UserService implements UserDetailsService {
     ResumeRepository resumeRepository;
     @Autowired
     UserMapper userMapper;
+    @Autowired
+    ResumeMapper resumeMapper;
+
 
     public UserService(GuestRepository guestRepository, MemberRepository memberRepository) {
         this.guestRepository = guestRepository;
@@ -45,76 +51,50 @@ public class UserService implements UserDetailsService {
 
     }
 
+    @Transactional
+    public void createUser(UserRequest request) {
+        Optional<User> user = userRepository.findByUsernameOrEmail(request.getUsername(), request.getEmail());
+        if (user.isEmpty()) {
+            Resume resumeSaved = resumeRepository.save(resumeMapper.toEntity(request));
 
-    public void updateUser (UserDetailsDTO request){
-//                "id": 30,
-//                "username": "6660553",
-//                "name": "Ngô Văn Minh 2",
-//                "email": "ngominh0411032@gmail.com",
-//                "role": "user",
-//                "power": 4,
-//                "title": "Sinh Viên",
-//                "inActive": true,
-//                "isDeleted": true,
-//                "createdAt": "2025-09-06T13:50:42.000+00:00",
-//                "address": "Trâu Quỳ - Gia Lâm - Hà Nội",
-//                "birthday": "2003-04-04T00:00:00.000+00:00",
-//                "phone": "0123456789"
-        // Tìm user
-        User user = userRepository.findByIdUser(request.getId());
-        if (user == null) {
-            throw new RuntimeException("Người dùng không tồn tại với ID: " + request.getId());
-        }
+            User userSaved = userMapper.toEntity(request);
+            userSaved.setPassword(SHA_256_password.GM_SHA_password(DateTimeConstant.toDate(request.getBirthday())));
+            if (request.getIdRole() == null) userSaved.setIdRole(new Role(2));
+            else userSaved.setIdRole(new Role(request.getIdRole().getId()));
+            userSaved.setIdTitle(new Title(request.getIdTitle().getId()));
+            userSaved.setIdResume(new Resume(resumeSaved.getId()));
+            userRepository.save(userSaved);
 
-        // Cập nhật thông tin User
-
-            user.setName(request.getName());
+        } else throw new ErrorException("Username hoặc Email đã tồn tại", HttpStatus.BAD_REQUEST);
+    }
 
 
-            // Kiểm tra username trùng lặp
-            User existingUser = userRepository.findByUsernameOrEmail(request.getUsername());
-            if (existingUser != null && !existingUser.getId().equals(request.getId())) {
-                throw new RuntimeException("Tên đăng nhập đã tồn tại");
-            }
-            user.setUsername(request.getUsername());
+    public void updateUser(UserRequest request) {
 
-
-            user.setPower(request.getPower());
-
-
-
-        // Lưu user
-        userRepository.save(user);
-
-        // Cập nhật thông tin Resume
-        Resume resume = resumeRepository.findByIdUser(request.getId());
-        if (resume == null) {
-            // Tạo mới resume nếu chưa có
-            resume = new Resume();
-            resume.setIdUser(user);
-            resume.setCode(user.getUsername());
-        }
-
-
-            resume.setEmail(request.getEmail());
-
-
-            resume.setPhone(request.getPhone());
-
-
-        // Lưu resume
-        resumeRepository.save(resume);
-
-        // Trả về UserDTO đã cập nhật
-        User updatedUser = userRepository.findByIdUser(user.getId());
+//        User existingUser = userRepository.findById(request.getId())
+//                .orElseThrow(() -> new ErrorException("User không tồn tại", HttpStatus.NOT_FOUND));
+//        if(existingUser != null){
+//            User userSaved = userMapper.toEntity(request);
+//            userSaved.setPassword(SHA_256_password.GM_SHA_password(existingUser.getPassword());
+//            if (request.getIdRole() == null) userSaved.setIdRole(new Role(2));
+//            else userSaved.setIdRole(new Role(request.getIdRole().getId()));
+//            userSaved.setIdTitle(new Title(request.getIdTitle().getId()));
+//            userRepository.save(userSaved);
+//
+//            Resume profile = resumeRepository.findByIdUser(existingUser.getId());
+//            Resume resumeSaved = resumeMapper.toEntity(request);
+//            resumeSaved.setIdUser(new User(profile.getIdUser().getId());
+//            resumeRepository.save(resumeSaved);
+//
+//        }
 
 
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy người dùng với username: " + username));
+        User user = userRepository.findByUsername(username);
+        if (user == null) throw new UsernameNotFoundException("Không tìm thấy người dùng với username: " + username);
 
         return new CustomUserDetails(user);
     }

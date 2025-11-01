@@ -35,7 +35,6 @@ const UserManagement = () => {
   const toast = useToast();
   const abortControllerRef = useRef(null);
 
-  // Fetch users from API - stable function without dependencies
   const fetchUsers = useCallback(async () => {
     // Cancel previous request if exists
     if (abortControllerRef.current) {
@@ -48,7 +47,7 @@ const UserManagement = () => {
     try {
       setLoading(true);
       setError(null); // Clear previous errors
-      
+
       const params = {
         page: currentPage,
         size: ITEMS_PER_PAGE,
@@ -74,7 +73,7 @@ const UserManagement = () => {
       console.log("API Parameters:", params);
 
       const response = await userService.getAllUsers(params, {
-        signal: abortControllerRef.current.signal
+        signal: abortControllerRef.current.signal,
       });
 
       // Only update state if request wasn't aborted
@@ -86,19 +85,19 @@ const UserManagement = () => {
       }
     } catch (error) {
       // Don't show error if request was aborted
-      if (error.name === 'AbortError') {
-        console.log('Request was aborted');
+      if (error.name === "AbortError") {
+        console.log("Request was aborted");
         return;
       }
 
       console.error("Lỗi khi tải danh sách users:", error);
-      
+
       // Only show toast once, not on every rerender
       if (!error.isShown) {
-        setError(error.message || 'Không thể kết nối đến server');
+        setError(error.message || "Không thể kết nối đến server");
         error.isShown = true;
       }
-      
+
       // Reset data on error
       setUsers([]);
       setTotalPages(0);
@@ -108,8 +107,7 @@ const UserManagement = () => {
     }
   }, [currentPage, filterPower, filterStatus, searchTerm]);
 
-
-  console.log({users})
+  console.log({ users });
 
   // Effect để handle tất cả data fetching
   useEffect(() => {
@@ -134,7 +132,6 @@ const UserManagement = () => {
     };
   }, []);
 
- 
   const startIndex = currentPage * ITEMS_PER_PAGE;
   const endIndex = Math.min(startIndex + users.length, totalItems);
 
@@ -155,7 +152,7 @@ const UserManagement = () => {
     setFilterPower(value);
     setCurrentPage(0);
     setError(null); // Clear error when filter changes
-    
+
     if (searchTerm.trim()) {
       setSearchTerm("");
     }
@@ -191,19 +188,22 @@ const UserManagement = () => {
       setLoading(true);
       if (editingUser) {
         // TODO: Implement update user API call
-        // await userService.updateUser(editingUser.id, formData);
         console.log("Update user with data:", formData);
         toast.success("Cập nhật người dùng thành công!");
       } else {
-        // TODO: Implement create user API call
-        // await userService.createUser(formData);
-        console.log("Create user with data:", formData);
+        // Tạo user mới
+        await userService.createUser(formData);
         toast.success("Thêm người dùng thành công!");
       }
       fetchUsers(); // Refresh data
+      return true; // Thành công
     } catch (error) {
       console.error("Error saving user:", error);
-      toast.error("Có lỗi xảy ra khi lưu thông tin người dùng");
+      toast.error(
+        error.response?.data?.message ||
+          "Có lỗi xảy ra khi lưu thông tin người dùng"
+      );
+      return false; // Thất bại
     } finally {
       setLoading(false);
     }
@@ -213,8 +213,6 @@ const UserManagement = () => {
     if (window.confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
       try {
         setLoading(true);
-        // TODO: Implement delete user API call
-        // await userService.deleteUser(userId);
         console.log("Delete user with id:", userId);
         toast.success("Xóa người dùng thành công!");
         fetchUsers(); // Refresh data
@@ -352,7 +350,9 @@ const UserManagement = () => {
                 <span className="text-white text-xs">!</span>
               </div>
               <div>
-                <p className="text-red-800 font-medium">Không thể tải dữ liệu</p>
+                <p className="text-red-800 font-medium">
+                  Không thể tải dữ liệu
+                </p>
                 <p className="text-red-600 text-sm">{error}</p>
               </div>
             </div>
@@ -361,7 +361,7 @@ const UserManagement = () => {
               className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
               disabled={loading}
             >
-              {loading ? 'Đang thử lại...' : 'Thử lại'}
+              {loading ? "Đang thử lại..." : "Thử lại"}
             </button>
           </div>
         </div>
@@ -379,7 +379,9 @@ const UserManagement = () => {
               <span className="text-2xl">⚠️</span>
             </div>
             <p className="text-lg font-medium mb-2">Không thể tải dữ liệu</p>
-            <p className="text-sm mb-4">Vui lòng kiểm tra kết nối mạng hoặc liên hệ quản trị viên</p>
+            <p className="text-sm mb-4">
+              Vui lòng kiểm tra kết nối mạng hoặc liên hệ quản trị viên
+            </p>
             <button
               onClick={handleRetry}
               className="px-4 py-2 bg-mainColor text-white rounded-md hover:bg-opacity-90 transition-colors"
@@ -398,7 +400,6 @@ const UserManagement = () => {
           />
         )}
 
-        {/* Pagination - Only show if no error and has data */}
         {!error && totalItems > 0 && (
           <div className="px-6 py-4 border-t border-gray-200">
             <div className="flex items-center justify-between">

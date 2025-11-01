@@ -1,13 +1,15 @@
 package com.example.server.controller.admin;
 
 import com.example.server.DTO.users.UserDetailsDTO;
+import com.example.server.DTO.users.UserRequest;
 import com.example.server.controller.user.CommonController;
 import com.example.server.controller.user.EmailController;
 import com.example.server.domain.*;
 import com.example.server.mapper.UserMapper;
 import com.example.server.repository.*;
-import com.example.server.DTO.users.UserDTO;
+import com.example.server.service.UserService;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,10 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.SecureRandom;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -49,6 +48,8 @@ public class ManagerUserController {
     GroupRepository groupRepository;
     @Autowired
     private UserMapper userMapper;
+    @Autowired
+    private UserService userService;
 
     @GetMapping("/get-all-user")
     @ResponseBody
@@ -125,58 +126,13 @@ public class ManagerUserController {
         }
     }
 
-
-
-    @PostMapping("/createUser")
-    public String createUser(Model model, @RequestParam String name,
-            @RequestParam String username,
-            @RequestParam(required = false) Integer power,
-            @RequestParam(required = false) Integer id_title,
-
-            @RequestParam(required = false) String email,
-            @RequestParam(required = false) String phone,
-            @RequestParam(required = false) String address,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate birthday) {
-        // Tạo mật khẩu random
-        String rawPassword = generateRandomPassword(8);
-        List<User> users = userRepository.findAll();
-        for (User user : users) {
-            if (user.getUsername().equals(username)) {
-                model.addAttribute("message", "Tài khoản đang bị trùng tài khoản đăng nhập");
-                return "/admin/user/createUser";
-            }
-        }
-        // Tạo user
-        User user = new User();
-        user.setName(name);
-        user.setUsername(username);
-        user.setPassword(rawPassword);
-        user.setIdRole(roleRepository.findById(2).get());
-        user.setPower(power);
-        if (power == 4) {
-            user.setIdTitle(null);
-        } else
-            user.setIdTitle(titleRepository.findById(id_title).get());
-
-        // user.setCreateDate(LocalDate.now());
-        // user.setUpdateDate(null);
-        userRepository.save(user);
-
-        // Tạo resume
-        Resume resume = new Resume();
-        resume.setIdUser(user);
-        resume.setCode(user.getUsername());
-        resume.setEmail(email);
-        resume.setPhone(phone);
-        resume.setAddress(address);
-        resume.setBirthday(birthday);
-
-        resumeRepository.save(resume);
-        // Gửi email chứa mật khẩu
-        sendPasswordEmail(user.getUsername(), email, rawPassword);
-
-        return "redirect:/ad";
+    @PostMapping("/create")
+    public ResponseEntity<?> createUser(@Valid @RequestBody UserRequest request) {
+        userService.createUser(request);
+        return ResponseEntity.ok("Tạo mới user thành công!");
     }
+
+
 
     // random pass
     public String generateRandomPassword(int length) {
@@ -207,57 +163,16 @@ public class ManagerUserController {
         emailController.sendEmail(toEmail, subject, bodyGuest);
     }
 
-    // manager user
-    @GetMapping("/manager")
-    public String manager(Model model, HttpSession session) {
-        List<Group> groups = groupRepository.findAll();
-        List<User> users = userRepository.findAll();
-
-        List<User> powerUser1 = new ArrayList<>();
-        List<User> powerUser2 = new ArrayList<>();
-        List<User> powerUser3 = new ArrayList<>();
-        List<User> powerUser4 = new ArrayList<>();
-        for (User user : users) {
-            if (user.getPower() != null) {
-                if (user.getPower() == 1)
-                    powerUser1.add(user);
-                if (user.getPower() == 2)
-                    powerUser2.add(user);
-                if (user.getPower() == 3)
-                    powerUser3.add(user);
-                if (user.getPower() == 4)
-                    powerUser4.add(user);
-            }
-        }
-        model.addAttribute("users1", powerUser1);
-        model.addAttribute("users2", powerUser2);
-        model.addAttribute("users3", powerUser3);
-        model.addAttribute("users4", powerUser4);
-        model.addAttribute("groups", groups);
-
-        return "admin/user/managerUser";
-    }
-
-    @GetMapping("/mResume/{idUser}")
-    public ResponseEntity<?> managerResume(@PathVariable Integer idUser, Model model) {
-
-        // model.addAttribute("user",userRepository.findByIdUser(idUser));
-        // model.addAttribute("resume",resumeRepository.findByIdUser(idUser));
-        // return "admin/user/repairResume";
-        User user = userRepository.findByIdUser(idUser);
-        return new ResponseEntity<User>(user, HttpStatus.OK);
-    }
-
     // save resume
     @PostMapping("/mSaveResume/{idUser}")
     public String saveResume(@PathVariable Integer idUser,
-            @RequestParam(name = "power") Integer power,
-            @RequestParam(name = "name") String name,
-            @RequestParam(name = "email") String email,
-            @RequestParam(name = "phone") String phone,
-            @RequestParam(name = "address") String address,
-            @RequestParam(name = "birthday") LocalDate birthday,
-            Model model) {
+                             @RequestParam(name = "power") Integer power,
+                             @RequestParam(name = "name") String name,
+                             @RequestParam(name = "email") String email,
+                             @RequestParam(name = "phone") String phone,
+                             @RequestParam(name = "address") String address,
+                             @RequestParam(name = "birthday") LocalDate birthday,
+                             Model model) {
         model.addAttribute("user", userRepository.findByIdUser(idUser));
         model.addAttribute("resume", resumeRepository.findByIdUser(idUser));
         User user = userRepository.findByIdUser(idUser);

@@ -2,7 +2,9 @@ package com.example.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.checkerframework.common.aliasing.qual.Unique;
 import org.springframework.data.annotation.CreatedDate;
@@ -16,9 +18,11 @@ import java.util.Date;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "user")
-public class User extends EntityBase implements Serializable  {
+public class User extends EntityBase implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
@@ -31,18 +35,6 @@ public class User extends EntityBase implements Serializable  {
     @JoinColumn(name = "id_role")
     private Role idRole;
 
-
-//    @CreatedDate
-////    @Temporal(TemporalType.TIMESTAMP)
-//    @Column(name = "create_date", nullable = false, updatable = false,  insertable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-//    private LocalDate createDate;
-
-
-//    @LastModifiedDate
-////    @Temporal(TemporalType.TIMESTAMP)
-//    @Column(name = "update_date", nullable = false, updatable = false,  insertable = false,   columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-//    private LocalDate updateDate;
-
     @Column(name = "username", length = 250)
     @Unique
     private String username;
@@ -54,13 +46,7 @@ public class User extends EntityBase implements Serializable  {
     private Integer power;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-    @JoinColumn(
-            name = "username",
-            referencedColumnName = "code",
-            insertable = false,
-            updatable = false
-    )
+    @JoinColumn(name = "id_resume")
     private Resume idResume;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -69,8 +55,12 @@ public class User extends EntityBase implements Serializable  {
     private Title idTitle;
 
     @Column(name = "in_active")
-    private Boolean inActive  = false;
+    private Boolean inActive = false;
     @Column(name = "is_deleted")
     private Boolean isDeleted = false;
 
+
+    public User(Integer id) {
+        this.id = id;
+    }
 }

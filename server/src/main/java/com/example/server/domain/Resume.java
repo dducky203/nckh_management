@@ -1,16 +1,21 @@
 package com.example.server.domain;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.checkerframework.common.aliasing.qual.Unique;
 import org.hibernate.annotations.processing.Pattern;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.Date;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "resume")
 public class Resume extends EntityBase implements Serializable {
@@ -19,17 +24,15 @@ public class Resume extends EntityBase implements Serializable {
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_user")
-    private User idUser;
+//    @OneToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "id_user")
+//    @Unique
+//    private User idUser;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_admin")
-    private Admin idAdmin;
-
-    @Column(name = "code", nullable = false)
     @Unique
-    private String code;
+    private Admin idAdmin;
 
     @Column(name = "email", nullable = false, length = 100)
     @Unique
@@ -44,5 +47,9 @@ public class Resume extends EntityBase implements Serializable {
 
     @Column(name = "birthday", nullable = false)
     private LocalDate birthday;
+
+    public Resume(Integer id) {
+        this.id = id;
+    }
 
 }

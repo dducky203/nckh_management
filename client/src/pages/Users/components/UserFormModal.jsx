@@ -1,17 +1,22 @@
-import { useState, useEffect } from 'react';
-import { Close, Save, Visibility, VisibilityOff } from '@mui/icons-material';
-import { useToast } from '../../../context/ToastContext';
+import { useState, useEffect } from "react";
+import { Close, Save, Visibility, VisibilityOff } from "@mui/icons-material";
+import { useToast } from "../../../context/ToastContext";
+import { roleStringToInt, titleStringToInt } from "../../../utils/helpers";
+import { formatDateForInput } from "../../../utils/dateHelpers";
 
 const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
   const toast = useToast();
-  const [showPassword, setShowPassword] = useState(false);
+
   const [formData, setFormData] = useState({
-    username: '',
-    name: '',
-    email: '',
-    phone: '',
-    password: '',
-    power: 4
+    username: "",
+    name: "",
+    email: "",
+    phone: "",
+    birthday: "",
+    address: "",
+    power: 4,
+    idRole: 2,
+    idTitle: 5,
   });
 
   useEffect(() => {
@@ -20,37 +25,40 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
         username: user.username,
         name: user.name,
         email: user.email,
-        phone: user.phone || '',
-        password: '',
-        power: user.power
+        phone: user.phone || "",
+        birthday: formatDateForInput(user.birthday),
+        address: user.address || "",
+        power: user.power,
+        idRole: roleStringToInt(user.idRole),
+        idTitle: titleStringToInt(user.idTitle),
       });
     } else {
       setFormData({
-        username: '',
-        name: '',
-        email: '',
-        phone: '',
-        password: '',
-        power: 4
+        username: "",
+        name: "",
+        email: "",
+        phone: "",
+        birthday: "",
+        address: "",
+        power: 4,
+        idRole: 2,
+        idTitle: 5,
       });
     }
   }, [user, isOpen]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.username || !formData.name || !formData.email) {
-      toast.error('Vui lòng điền đầy đủ thông tin bắt buộc!');
+      toast.error("Vui lòng điền đầy đủ thông tin bắt buộc!");
       return;
     }
 
-    if (!user && !formData.password) {
-      toast.error('Vui lòng nhập mật khẩu!');
-      return;
+    const success = await onSave(formData);
+    if (success) {
+      onClose();
     }
-
-    onSave(formData);
-    onClose();
   };
 
   if (!isOpen) return null;
@@ -61,7 +69,7 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
         {/* Header */}
         <div className="sticky top-0 bg-white flex items-center justify-between p-4 border-b">
           <h3 className="text-base font-semibold">
-            {user ? 'Chỉnh sửa người dùng' : 'Thêm người dùng mới'}
+            {user ? "Chỉnh sửa người dùng" : "Thêm người dùng mới"}
           </h3>
           <button
             onClick={onClose}
@@ -82,7 +90,9 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
               <input
                 type="text"
                 value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, username: e.target.value })
+                }
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
                 placeholder="Nhập mã người dùng"
                 disabled={!!user}
@@ -98,7 +108,9 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
               <input
                 type="text"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
                 placeholder="Nhập họ và tên"
                 required
@@ -113,7 +125,9 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
               <input
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
                 placeholder="Nhập email"
                 required
@@ -128,45 +142,79 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
               <input
                 type="tel"
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
                 placeholder="Nhập số điện thoại"
               />
             </div>
 
-            {/* Password */}
+            {/* Birthday */}
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
-                Mật khẩu {!user && <span className="text-red-500">*</span>}
-                {user && <span className="text-gray-500 text-xs ml-1">(Để trống nếu không đổi)</span>}
+                Ngày sinh
               </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor pr-10"
-                  placeholder="Nhập mật khẩu"
-                  required={!user}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <VisibilityOff className="w-4 h-4" /> : <Visibility className="w-4 h-4" />}
-                </button>
-              </div>
+              <input
+                type="date"
+                value={formData.birthday}
+                onChange={(e) =>
+                  setFormData({ ...formData, birthday: e.target.value })
+                }
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
+              />
             </div>
 
-            {/* Role */}
+            {/* Address */}
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Địa chỉ
+              </label>
+              <input
+                type="text"
+                value={formData.address}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
+                placeholder="Nhập địa chỉ"
+              />
+            </div>
+          </div>
+
+          {/* idRole, Power, idTitle - Full width row with 3 equal columns */}
+          <div className="grid grid-cols-3 gap-3 mt-3">
+            {/* idRole */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                idRole <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.idRole}
+                onChange={(e) =>
+                  setFormData({ ...formData, idRole: parseInt(e.target.value) })
+                }
+                className="w-full font-bold px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
+                required
+              >
+                <option value={1}>idRole ADMIN</option>
+                <option value={2}>idRole USER</option>
+              </select>
+            </div>
+
+            {/* Power */}
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 Vai trò <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.power}
-                onChange={(e) => setFormData({ ...formData, power: parseInt(e.target.value) })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    power: parseInt(e.target.value),
+                  })
+                }
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
                 required
               >
@@ -174,6 +222,30 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
                 <option value={2}>Phó khoa</option>
                 <option value={3}>Cán bộ</option>
                 <option value={4}>Sinh viên</option>
+              </select>
+            </div>
+
+            {/* idTitle */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Học vị <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.idTitle}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    idTitle: parseInt(e.target.value),
+                  })
+                }
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
+                required
+              >
+                <option value={1}>GS/PGS</option>
+                <option value={2}>TS</option>
+                <option value={3}>THS</option>
+                <option value={4}>KS/CN</option>
+                <option value={5}>Sinh viên</option>
               </select>
             </div>
           </div>
@@ -192,7 +264,7 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
               className="flex items-center gap-2 px-4 py-2 text-sm bg-mainColor text-white rounded-md hover:bg-opacity-90 transition-colors"
             >
               <Save className="w-4 h-4" />
-              {user ? 'Cập nhật' : 'Thêm mới'}
+              {user ? "Cập nhật" : "Thêm mới"}
             </button>
           </div>
         </form>

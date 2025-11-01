@@ -12,6 +12,6 @@ public interface ResumeRepository extends JpaRepository<Resume, Integer> {
     Resume findByIdUser(Integer idUser);
 
     // find by idAdmin for resume
-//    @Query(value = SQL.FIND_BY_IDUSER,nativeQuery = true)
+    @Query("SELECT r FROM Resume r WHERE r.idAdmin = ?1")
     Resume findByIdAdmin(Admin idAdmin);
 }

@@ -27,7 +27,6 @@ const UserTable = ({
   // Lấy thông tin người dùng và các hàm từ AuthContext
   const { user: currentUser } = useContext(AuthContext);
 
-  // const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
 
   const getRoleLabel = (power) => {
     const roles = {
@@ -50,13 +49,13 @@ const UserTable = ({
   };
 
   const getStatusBadge = (user) => {
-    if (!user.isDeleted) {
+    if (user.isDeleted) {
       return {
         label: "Đã xóa",
         className: "bg-red-100 text-red-800",
       };
     }
-    if (!user.inActive) {
+    if (user.inActive) {
       return {
         label: "Không hoạt động",
         className: "bg-yellow-100 text-yellow-800",
@@ -246,7 +245,7 @@ const UserTable = ({
                           <Visibility fontSize="small" />
                         </button>
 
-                        {user.isDeleted ? (
+                        {!user.isDeleted ? (
                           <>
                             <button
                               onClick={() => onEdit(user)}

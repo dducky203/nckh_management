@@ -3,6 +3,7 @@ package com.example.server.controller.user;
 import com.example.server.DTO.SuccessResponseDTO;
 import com.example.server.DTO.users.UserDTO;
 import com.example.server.DTO.users.UserDetailsDTO;
+import com.example.server.DTO.users.UserRequest;
 import com.example.server.domain.User;
 import com.example.server.exception.ErrorException;
 import com.example.server.mapper.UserMapper;
@@ -62,7 +63,7 @@ public class UserController {
 
     // save resume
     @PostMapping("/update-profile")
-    public ResponseEntity<?> updateUser(@RequestBody UserDetailsDTO request) {
+    public ResponseEntity<?> updateUser(@RequestBody UserRequest request) {
 
         User user = userRepository.findByIdUser(request.getId());
 

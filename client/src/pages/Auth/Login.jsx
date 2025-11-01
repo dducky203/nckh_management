@@ -29,9 +29,33 @@ const Login = () => {
     setError("");
     setIsLoading(true);
 
+    // Validation
+    const username = formData.username.trim();
+    const password = formData.password.trim();
+
+    // Kiểm tra username và password không được trống
+    if (!username) {
+      setError("Tên đăng nhập không được để trống");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!password) {
+      setError("Mật khẩu không được để trống");
+      setIsLoading(false);
+      return;
+    }
+
+    // Kiểm tra username phải nhiều hơn 5 ký tự
+    if (username.length <= 4) {
+      setError("Tên đăng nhập phải có nhiều hơn 5 ký tự");
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      // Sử dụng login từ AuthContext
-      const result = await login(formData.username, formData.password);
+      // Sử dụng login từ AuthContext với dữ liệu đã trim
+      const result = await login(username, password);
 
       if (result.success) {
         // Redirect to home or previous page
@@ -50,26 +74,26 @@ const Login = () => {
 
   const demoAccounts = [
     {
-      email: "admin@fita.com",
-      password: "admin",
+      email: "admin123",
+      password: "password123",
       role: "Admin (Quản trị)",
       power: 1,
     },
     {
-      email: "manager@fita.com",
-      password: "manager",
+      email: "manager456",
+      password: "manager789",
       role: "Manager (Quản lý)",
       power: 2,
     },
     {
-      email: "member@fita.com",
-      password: "member",
+      email: "member789",
+      password: "member456",
       role: "Member (Thành viên)",
       power: 3,
     },
     {
-      email: "guest@fita.com",
-      password: "guest",
+      email: "guest123",
+      password: "guest789",
       role: "Guest (Khách)",
       power: 4,
     },
@@ -86,11 +110,7 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-200 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8  border-2 p-8 shadow-md rounded-lg  bg-gray-50 border-gray-300">
         <div>
-          <img
-            className="mx-auto h-12 w-auto"
-            src={logoFita}
-            alt="FITA Logo"
-          />
+          <img className="mx-auto h-12 w-auto" src={logoFita} alt="FITA Logo" />
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Đăng nhập vào tài khoản
           </h2>
@@ -100,9 +120,12 @@ const Login = () => {
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="space-y-4">
             <div>
-              <label htmlFor="username" className="sr-only">
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Tài khoản
               </label>
               <input
@@ -111,12 +134,40 @@ const Login = () => {
                 required
                 value={formData.username}
                 onChange={handleChange}
-                className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-mainColor focus:border-mainColor focus:z-10 sm:text-sm"
-                placeholder="Tài khoản"
+                className={`relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor focus:border-mainColor sm:text-sm ${
+                  formData.username.trim() &&
+                  formData.username.trim().length <= 4
+                    ? "border-red-300 bg-red-50"
+                    : formData.username.trim() &&
+                      formData.password.trim() &&
+                      formData.username.trim().toLowerCase() ===
+                        formData.password.trim().toLowerCase()
+                    ? "border-red-300 bg-red-50"
+                    : "border-gray-300"
+                }`}
+                placeholder="Nhập tên đăng nhập"
               />
+              {formData.username.trim() &&
+                formData.username.trim().length <= 4 && (
+                  <p className="text-red-500 text-xs mt-1">
+                    Tên đăng nhập phải có nhiều hơn 5 ký tự
+                  </p>
+                )}
+              {formData.username.trim() &&
+                formData.password.trim() &&
+                formData.username.trim().toLowerCase() ===
+                  formData.password.trim().toLowerCase() && (
+                  <p className="text-red-500 text-xs mt-1">
+                    Tên đăng nhập và mật khẩu không được giống nhau
+                  </p>
+                )}
             </div>
+
             <div className="relative">
-              <label htmlFor="password" className="sr-only">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Mật khẩu
               </label>
               <input
@@ -126,12 +177,20 @@ const Login = () => {
                 required
                 value={formData.password}
                 onChange={handleChange}
-                className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-mainColor focus:border-mainColor focus:z-10 sm:text-sm"
-                placeholder="Mật khẩu"
+                className={`relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor focus:border-mainColor pr-10 sm:text-sm ${
+                  formData.username.trim() &&
+                  formData.password.trim() &&
+                  formData.username.trim().toLowerCase() ===
+                    formData.password.trim().toLowerCase()
+                    ? "border-red-300 bg-red-50"
+                    : "border-gray-300"
+                }`}
+                placeholder="Nhập mật khẩu"
               />
               <button
                 type="button"
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-mainColor hover:text-mainColor/80 focus:outline-none"
+                style={{ top: "24px" }}
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
@@ -165,10 +224,18 @@ const Login = () => {
               type="submit"
               variant="contained"
               fullWidth
-              disabled={isLoading}
+              disabled={
+                isLoading ||
+                !formData.username.trim() ||
+                !formData.password.trim() ||
+                formData.username.trim().length <= 4 ||
+                formData.username.trim().toLowerCase() ===
+                  formData.password.trim().toLowerCase()
+              }
               sx={{
                 bgcolor: "mainColor",
                 "&:hover": { bgcolor: "rgba(32, 108, 158, 0.9)" },
+                "&:disabled": { bgcolor: "rgba(156, 163, 175, 0.5)" },
                 py: 1,
               }}
             >
@@ -200,7 +267,9 @@ const Login = () => {
               >
                 <div className="flex flex-col items-start">
                   <span className="font-semibold">{account.role}</span>
-                  <span className="text-xs text-gray-500">{account.email}</span>
+                  <span className="text-xs text-gray-500">
+                    User: {account.email}
+                  </span>
                 </div>
                 <div className="text-xs text-mainColor">
                   Power: {account.power}
@@ -217,6 +286,14 @@ const Login = () => {
             <p>• Member có thể xem/tạo sự kiện</p>
             <p>• Guest có quyền hạn chế</p>
             <p>• Mỗi role sẽ hiển thị menu khác nhau</p>
+            <div className="mt-2 pt-2 border-t border-gray-200">
+              <p>
+                <strong>Yêu cầu đăng nhập:</strong>
+              </p>
+              <p>• Tên đăng nhập phải có nhiều hơn 5 ký tự</p>
+              <p>• Tên đăng nhập và mật khẩu không được giống nhau</p>
+              <p>• Không được để trống hoặc chỉ có dấu cách</p>
+            </div>
           </div>
         </div>
       </div>

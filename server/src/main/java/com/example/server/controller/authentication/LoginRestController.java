@@ -3,12 +3,15 @@ package com.example.server.controller.authentication;
 import com.example.server.DTO.users.UserDTO;
 import com.example.server.DTO.login.LoginRequestDTO;
 import com.example.server.DTO.login.LoginResponseDTO;
+import com.example.server.DTO.users.UserDetailsDTO;
 import com.example.server.domain.Resume;
 import com.example.server.domain.User;
 import com.example.server.exception.LoginFailedException;
+import com.example.server.mapper.UserMapper;
 import com.example.server.service.JwtService;
 import com.example.server.service.LoginService;
 import com.example.server.service.NcmService;
+import com.example.server.utils.DateTimeConstant;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,6 +30,9 @@ public class LoginRestController {
     
     @Autowired
     private LoginService loginService;
+
+    @Autowired
+    private UserMapper userMapper;
     
     @Autowired
     private NcmService ncmService;
@@ -37,6 +44,7 @@ public class LoginRestController {
     @PostMapping(value = "/login")
     public ResponseEntity<?> login(
            @Valid @RequestBody LoginRequestDTO credentials) {
+
         
         String username = credentials.getUsername();
         String password = credentials.getPassword();
@@ -48,14 +56,7 @@ public class LoginRestController {
         }else{
             // Generate JWT token for user
             String token = jwtService.generateToken(user.getUsername(), user.getIdRole().getName(), user.getId());
-            UserDTO userInfo = new UserDTO();
-            userInfo.setId(user.getId());
-            userInfo.setName(user.getName());
-            userInfo.setUsername(user.getUsername());
-            userInfo.setEmail(user.getIdResume().getEmail());
-            userInfo.setPower(user.getPower());
-            userInfo.setRole(user.getIdRole().getName());
-            userInfo.setTitle(user.getIdTitle().getName());
+            UserDetailsDTO userInfo = userMapper.toUserDetailDTO(user);
             return ResponseEntity.ok(new LoginResponseDTO(true, "Đăng nhập thành công",token ,userInfo));
         }
 

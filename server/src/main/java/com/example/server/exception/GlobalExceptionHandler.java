@@ -28,13 +28,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationErrors(MethodArgumentNotValidException ex) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", false);
-        response.put("message", ex.getBindingResult().getFieldError().getDefaultMessage());
-        return ResponseEntity.badRequest().body(response);
-    }
+//    @ExceptionHandler(MethodArgumentNotValidException.class)
+//    public ResponseEntity<Map<String, Object>> handleValidationErrors(MethodArgumentNotValidException ex) {
+//        Map<String, Object> response = new HashMap<>();
+//        response.put("success", false);
+//        response.put("message", ex.getBindingResult().getFieldError().getDefaultMessage());
+//        return ResponseEntity.badRequest().body(response);
+//    }
 
     @ExceptionHandler(ErrorException.class)
     public  ResponseEntity<Map<String, Object>> handleErrorException(ErrorException ex, HttpServletRequest request) {
@@ -45,7 +45,26 @@ public class GlobalExceptionHandler {
         response.put("timestamp", LocalDateTime.now());
         return ResponseEntity.status(ex.getStatus()).body(response);
     }
+    
+    
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidationErrors(
+            MethodArgumentNotValidException ex,
+            HttpServletRequest request
+    ) {
+        Map<String, Object> errors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(error ->
+                errors.put(error.getField(), error.getDefaultMessage())
+        );
 
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("path", request.getRequestURI());
+        response.put("timestamp", LocalDateTime.now());
+        response.put("errors", errors); 
+
+        return ResponseEntity.badRequest().body(response);
+    }
 
 
     @ExceptionHandler(JwtException.class)

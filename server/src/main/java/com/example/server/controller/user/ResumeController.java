@@ -17,6 +17,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -83,8 +84,8 @@ public class ResumeController {
         Resume resume = resumeRepository.findByIdUser(idUser);
         if (resume == null){
             resume = new Resume();
-            resume.setIdUser(userRepository.findByIdUser(idUser));
-            resume.setCode(userRepository.findByIdUser(idUser).getUsername());
+//            resume.setIdUser(userRepository.findByIdUser(idUser));
+//            resume.setCode(userRepository.findByIdUser(idUser).getUsername());
             resume.setEmail(email);
             resume.setPhone(phone);
             resume.setAddress(address);

@@ -1,5 +1,5 @@
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/useAuth';
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../context/useAuth";
 
 /**
  * Bảo vệ các trang yêu cầu xác thực

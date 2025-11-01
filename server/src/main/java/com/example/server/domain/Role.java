@@ -1,13 +1,17 @@
 package com.example.server.domain;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.io.Serializable;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "role")
 public class Role extends EntityBase implements Serializable {
@@ -21,5 +25,9 @@ public class Role extends EntityBase implements Serializable {
 
     @Column(name = "notes", length = 250)
     private String notes;
+
+    public Role(Integer id) {
+        this.id = id;
+    }
 
 }

@@ -42,15 +42,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             // Bỏ qua kiểm tra cho các endpoint công khai
             String path = request.getServletPath();
-            if (path.startsWith("/auth/") || path.contains("/public/")) {
+            if (path.startsWith("/auth/") || path.contains("/public/") ) {
                 filterChain.doFilter(request, response);
                 return;
             }
 
             final String authHeader = request.getHeader("Authorization");
-            
-            // Nếu không có token hoặc không đúng format, cho phép request tiếp tục
-            // Các endpoint yêu cầu xác thực sẽ được xử lý bởi SecurityFilterChain
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 filterChain.doFilter(request, response);
                 return;

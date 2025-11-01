@@ -16,7 +16,6 @@ import {
 import { formatDate, formatDateTime } from "../../../constants";
 
 const UserDetailModal = ({ isOpen, onClose, user }) => {
-  console.log("UserDetailModal user:", user);
 
   if (!isOpen || !user) return null;
 
@@ -32,7 +31,7 @@ const UserDetailModal = ({ isOpen, onClose, user }) => {
 
   const getStatusBadge = (user) => {
    
-    if (!user.isDeleted) {
+    if (user.isDeleted) {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-red-100 text-red-800">
           <Delete className="w-3 h-3" />
@@ -41,7 +40,7 @@ const UserDetailModal = ({ isOpen, onClose, user }) => {
       );
     }
     
-    if (!user.inActive) {
+    if (user.inActive) {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-yellow-100 text-yellow-800">
           <Cancel className="w-3 h-3" />
@@ -61,7 +60,7 @@ const UserDetailModal = ({ isOpen, onClose, user }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[85vh]">
-        {/* Header - Compact */}
+       
         <div className="flex items-center justify-between p-4 border-b bg-white rounded-t-lg">
           <h3 className="text-lg font-semibold text-gray-900">
             Chi tiết người dùng
@@ -152,7 +151,7 @@ const UserDetailModal = ({ isOpen, onClose, user }) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg">
                 <Cake className="text-gray-400 w-4 h-4 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
@@ -163,10 +162,29 @@ const UserDetailModal = ({ isOpen, onClose, user }) => {
                 </div>
               </div>
 
+            
+              <div className="border-l-4 border-blue-500 bg-blue-50 rounded-lg flex items-center gap-2 p-3 border ">
+                <Badge className="text-blue-600 w-4 h-4" />
+                <span className="text-xs font-medium text-blue-800">
+                  Cấp độ quyền hạn: Level {user.power} ({user.role})
+                </span>
+              </div>
+           
+
+            
               <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
                 <AccessTime className="text-gray-400 w-4 h-4 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-gray-500">Ngày tạo tài khoản</p>
+                  <p className="text-xs text-gray-500">Thời gian chỉnh sửa gần nhất</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {formatDateTime(user.updatedAt)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                <AccessTime className="text-gray-400 w-4 h-4 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-gray-500">Thời gian tạo tài khoản</p>
                   <p className="text-sm font-medium text-gray-900">
                     {formatDateTime(user.createdAt)}
                   </p>
@@ -175,14 +193,7 @@ const UserDetailModal = ({ isOpen, onClose, user }) => {
             </div>
 
           
-            <div className="mt-4 p-3 border-l-4 border-blue-500 bg-blue-50 rounded">
-              <div className="flex items-center gap-2">
-                <Badge className="text-blue-600 w-4 h-4" />
-                <span className="text-xs font-medium text-blue-800">
-                  Cấp độ quyền hạn: Level {user.power} ({user.role})
-                </span>
-              </div>
-            </div>
+            
           </div>
         </div>
 

@@ -1,18 +1,30 @@
-import { DATE_FORMATS } from '../constants';
+import { DATE_FORMATS } from "../constants";
+
+
+export const formatDateForInput = (dateString) => {
+    if (!dateString) return "";
+    try {
+      const date = new Date(dateString);
+      return date.toISOString().split("T")[0]; 
+    } catch {
+      return "";
+    }
+  };
+
 
 // Format date using various formats
 export const formatDate = (date, format = DATE_FORMATS.DISPLAY) => {
-  if (!date) return '';
-  
-  const dateObj = new Date(date);
-  if (isNaN(dateObj.getTime())) return '';
+  if (!date) return "";
 
-  const day = dateObj.getDate().toString().padStart(2, '0');
-  const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+  const dateObj = new Date(date);
+  if (isNaN(dateObj.getTime())) return "";
+
+  const day = dateObj.getDate().toString().padStart(2, "0");
+  const month = (dateObj.getMonth() + 1).toString().padStart(2, "0");
   const year = dateObj.getFullYear();
-  const hours = dateObj.getHours().toString().padStart(2, '0');
-  const minutes = dateObj.getMinutes().toString().padStart(2, '0');
-  const seconds = dateObj.getSeconds().toString().padStart(2, '0');
+  const hours = dateObj.getHours().toString().padStart(2, "0");
+  const minutes = dateObj.getMinutes().toString().padStart(2, "0");
+  const seconds = dateObj.getSeconds().toString().padStart(2, "0");
 
   switch (format) {
     case DATE_FORMATS.DISPLAY:
@@ -24,22 +36,22 @@ export const formatDate = (date, format = DATE_FORMATS.DISPLAY) => {
     case DATE_FORMATS.API_WITH_TIME:
       return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
     default:
-      return dateObj.toLocaleDateString('vi-VN');
+      return dateObj.toLocaleDateString("vi-VN");
   }
 };
 
 // Get relative time (e.g., "2 hours ago")
 export const getRelativeTime = (date) => {
-  if (!date) return '';
-  
+  if (!date) return "";
+
   const dateObj = new Date(date);
-  if (isNaN(dateObj.getTime())) return '';
+  if (isNaN(dateObj.getTime())) return "";
 
   const now = new Date();
   const diffInSeconds = Math.floor((now - dateObj) / 1000);
 
   if (diffInSeconds < 60) {
-    return 'Vừa xong';
+    return "Vừa xong";
   }
 
   const diffInMinutes = Math.floor(diffInSeconds / 60);
@@ -69,21 +81,21 @@ export const getRelativeTime = (date) => {
 // Check if date is today
 export const isToday = (date) => {
   if (!date) return false;
-  
+
   const dateObj = new Date(date);
   const today = new Date();
-  
+
   return dateObj.toDateString() === today.toDateString();
 };
 
 // Check if date is this week
 export const isThisWeek = (date) => {
   if (!date) return false;
-  
+
   const dateObj = new Date(date);
   const today = new Date();
   const oneWeekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-  
+
   return dateObj >= oneWeekAgo && dateObj <= today;
 };
 

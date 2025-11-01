@@ -8,14 +8,14 @@
  */
 export const handleLogout = () => {
   // Clear user data from localStorage
-  localStorage.removeItem('user');
-  
+  localStorage.removeItem("user");
+
   // Clear any other auth-related data
-  localStorage.removeItem('token');
-  localStorage.removeItem('userRole');
-  
+  localStorage.removeItem("token");
+  localStorage.removeItem("userRole");
+
   // Force page reload to reset application state
-  window.location.href = '/login';
+  window.location.href = "/login";
 };
 
 /**
@@ -23,7 +23,7 @@ export const handleLogout = () => {
  * @returns {boolean} True if the user is authenticated
  */
 export const isAuthenticated = () => {
-  const user = localStorage.getItem('user');
+  const user = localStorage.getItem("user");
   return user !== null;
 };
 
@@ -32,13 +32,13 @@ export const isAuthenticated = () => {
  * @returns {Object|null} User object or null if not authenticated
  */
 export const getCurrentUser = () => {
-  const userStr = localStorage.getItem('user');
+  const userStr = localStorage.getItem("user");
   if (!userStr) return null;
-  
+
   try {
     return JSON.parse(userStr);
   } catch (error) {
-    console.error('Failed to parse user data', error);
+    console.error("Failed to parse user data", error);
     return null;
   }
 };

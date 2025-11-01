@@ -33,7 +33,7 @@ public class LoginService {
     // get user by username and password
     public User checkLoginUser(String username ,String inputPassword ) {
 
-        User user = userRepository.findByUsernameOrEmail(username) ;
+        User user = userRepository.checkLogin(username) ;
         if (user == null) return null;
         else {
             String hashedInput = SHA_256_password.SHA_password(inputPassword);
@@ -43,25 +43,6 @@ public class LoginService {
     }
 
 
-    // get user by username and password
-    public Admin checkLoginAdmin(String username, String inputPassword) {
-        Admin admin = adminRepository.findByUsername(username);
-        if (admin == null) return null;
-
-        String hashedInput = SHA_256_password.SHA_password(inputPassword);
-
-        if (admin.getPassword().equals(hashedInput)) {
-            return admin;
-        }
-
-        if (admin.getPassword().equals(inputPassword)) {
-            admin.setPassword(hashedInput);
-            adminRepository.save(admin);
-            return admin;
-        }
-
-        return null;
-    }
 
     // check username (while forgotPass)
     public User checkForgotPass(String username) {

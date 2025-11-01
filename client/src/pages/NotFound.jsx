@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
-import Button from '../components/common/Button';
+import { Link } from "react-router-dom";
+import Button from "../components/common/Button";
 
 const NotFound = () => {
   return (
@@ -12,19 +12,19 @@ const NotFound = () => {
             Oops! Trang không tồn tại
           </h2>
           <p className="text-xl text-gray-600 mb-8">
-            Xin lỗi, chúng tôi không thể tìm thấy trang bạn đang tìm kiếm. 
-            Có thể trang đã được di chuyển hoặc không còn tồn tại.
+            Xin lỗi, chúng tôi không thể tìm thấy trang bạn đang tìm kiếm. Có
+            thể trang đã được di chuyển hoặc không còn tồn tại.
           </p>
         </div>
-        
+
         <div className="space-y-4">
           <Link to="/">
             <Button size="lg" className="w-full">
               Về trang chủ
             </Button>
           </Link>
-          
-          <button 
+
+          <button
             onClick={() => window.history.back()}
             className="w-full text-blue-600 hover:text-blue-800 font-medium"
           >
@@ -33,7 +33,13 @@ const NotFound = () => {
         </div>
 
         <div className="mt-12 text-sm text-gray-500">
-          <p>Nếu bạn nghĩ đây là lỗi, vui lòng <Link to="/contact" className="text-blue-600 hover:underline">liên hệ với chúng tôi</Link>.</p>
+          <p>
+            Nếu bạn nghĩ đây là lỗi, vui lòng{" "}
+            <Link to="/contact" className="text-blue-600 hover:underline">
+              liên hệ với chúng tôi
+            </Link>
+            .
+          </p>
         </div>
       </div>
     </div>

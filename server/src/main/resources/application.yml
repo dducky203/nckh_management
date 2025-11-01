@@ -17,9 +17,17 @@ spring:
   application:
     name: "KLTN"
   datasource:
-    url: jdbc:mariadb://localhost:3307/nckh?allowPublicKeyRetrieval=true&useSSL=false
-    username: root
-    password: "duong"
+    # url: jdbc:mysql://gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/test?sslMode=VERIFY_IDENTITY
+    # username: 3Bx2cAUiS293NeD.root
+    # password: GqLF0LJRC8YuCB8g
+
+
+   url: jdbc:mariadb://localhost:3307/nckh?allowPublicKeyRetrieval=true&useSSL=false
+   username: root
+   password: duong
+#
+
+
   jpa:
     hibernate:
       ddl-auto: update

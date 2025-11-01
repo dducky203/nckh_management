@@ -2,13 +2,17 @@ package com.example.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.io.Serializable;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "title")
 public class Title extends EntityBase implements Serializable {
@@ -19,5 +23,9 @@ public class Title extends EntityBase implements Serializable {
 
     @Column(name = "name", length = 20)
     private String name;
+
+    public Title(Integer id) {
+        this.id = id;
+    }
 
 }

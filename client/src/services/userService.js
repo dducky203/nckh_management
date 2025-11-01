@@ -18,7 +18,7 @@ const userService = {
 
   // Tạo user mới
   createUser: async (userData) => {
-    return await api.post("/users", userData);
+    return await api.post("/dashboard/manage-users/create", userData);
   },
 
   // // Cập nhật user

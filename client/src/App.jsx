@@ -25,10 +25,7 @@ import Profile from "./pages/Users/Profile";
 import UserManagement from "./pages/Users/UserManagement";
 
 function App() {
-  useEffect(() => {
-    // Initialize app on mount
-    console.log("FITA Management App initialized successfully!");
-  }, []);
+
 
   return (
     <AuthProvider>
@@ -62,9 +59,9 @@ function App() {
                     <Route
                       path="/user/manager"
                       element={
-                        // <ProtectedRoute>
+                        <ProtectedRoute requiredPower="admin">
                           <UserManagement />
-                        // </ProtectedRoute>
+                      </ProtectedRoute>
                       }
                     />
                     <Route

@@ -10,7 +10,7 @@ export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
   // Xử lý nhiều toast cùng lúc
-  const showToast = (message, type = 'success', duration = 3000, position = {
+  const showToast = (message, type = 'success', duration = 5000, position = {
     vertical: 'top',
     horizontal: 'right',
   }) => {

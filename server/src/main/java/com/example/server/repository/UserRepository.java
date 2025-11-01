@@ -14,9 +14,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Integer> {
-        // // get user by username and password
-        // @Query(value = SQL.GET_USER,nativeQuery = true)
-        // User findByUsernameAndPassword(String username,String password);
 
         // Phân trang và sắp xếp
         @NotNull
@@ -30,15 +27,26 @@ public interface UserRepository extends JpaRepository<User, Integer> {
         @Query(value = SQL.FIND_USER_BY_ID, nativeQuery = true)
         User findByIdUser(Integer idUser);
 
-        Optional<User> findByUsername(String username); // Trả về Optional<User>
+//        Optional<User> findByUsername(String username);
+        User findByUsername(String username);
 
-        @Query(value = "SELECT u.* FROM user u " +
-                        "LEFT JOIN resume r ON u.username = r.code " +
-                        "WHERE (:username IS NULL OR u.username = :username) " +
-                        "OR (:username IS NULL OR r.email = :username)", nativeQuery = true)
-        User findByUsernameOrEmail(@Param("username") String username);
+    @Query(value = "SELECT u.* FROM user u " +
+            "LEFT JOIN resume r ON u.id_resume = r.id " +
+            "WHERE (:username IS NOT NULL AND u.username = :username) " +
+            "OR (:email IS NOT NULL AND r.email = :email)",
+            nativeQuery = true)
+    Optional<User> findByUsernameOrEmail(@Param("username") String username,
+                                         @Param("email") String email);
 
-        @Query(value = "SELECT u.* FROM User u JOIN Ncm n ON u.id = n.id_user\n" +
+    @Query(value = "SELECT u.* FROM user u " +
+            "LEFT JOIN resume r ON u.id_resume = r.id " +
+            "WHERE (:username IS NOT NULL AND u.username = :username) " +
+            "OR (:username IS NOT NULL AND r.email = :username)",
+            nativeQuery = true)
+    User checkLogin(@Param("username") String username);
+
+
+    @Query(value = "SELECT u.* FROM User u JOIN Ncm n ON u.id = n.id_user\n" +
                         "           WHERE n.id_group = :groupId", nativeQuery = true)
         List<User> findByNcmGroupId(@Param("groupId") int groupId);
 
