@@ -198,11 +198,8 @@ const UserManagement = () => {
       return true; // Thành công
     } catch (error) {
       console.error("Error saving user:", error);
-      toast.error(
-        error.response?.data?.message ||
-          "Có lỗi xảy ra khi lưu thông tin người dùng"
-      );
-      return false; // Thất bại
+      // Throw error để UserFormModal có thể catch và hiển thị lỗi trong input
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -217,7 +214,7 @@ const UserManagement = () => {
         fetchUsers(); // Refresh data
       } catch (error) {
         console.error("Error deleting user:", error);
-        toast.error("Có lỗi xảy ra khi xóa người dùng");
+        toast.error(error.message || "Có lỗi xảy ra khi xóa người dùng");
       } finally {
         setLoading(false);
       }

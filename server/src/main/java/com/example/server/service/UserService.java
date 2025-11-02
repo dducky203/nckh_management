@@ -44,7 +44,6 @@ public class UserService implements UserDetailsService {
     @Autowired
     ResumeMapper resumeMapper;
 
-
     public UserService(GuestRepository guestRepository, MemberRepository memberRepository) {
         this.guestRepository = guestRepository;
         this.memberRepository = memberRepository;
@@ -53,27 +52,29 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public void createUser(UserRequest request) {
-        Optional<User> user = userRepository.findByUsernameOrEmail(request.getUsername(), request.getEmail());
-        if (user.isEmpty()) {
-            Resume resumeSaved = resumeRepository.save(resumeMapper.toEntity(request));
+        // Validate user data
+        validateUserForCreate(request);
 
-            User userSaved = userMapper.toEntity(request);
-            userSaved.setPassword(SHA_256_password.GM_SHA_password(DateTimeConstant.toDate(request.getBirthday())));
-            if (request.getIdRole() == null) userSaved.setIdRole(new Role(2));
-            else userSaved.setIdRole(new Role(request.getIdRole().getId()));
-            userSaved.setIdTitle(new Title(request.getIdTitle().getId()));
-            userSaved.setIdResume(new Resume(resumeSaved.getId()));
-            userRepository.save(userSaved);
+        Resume resumeSaved = resumeRepository.save(resumeMapper.toEntity(request));
 
-        } else throw new ErrorException("Username hoặc Email đã tồn tại", HttpStatus.BAD_REQUEST);
+        User userSaved = userMapper.toEntity(request);
+        userSaved.setPassword(SHA_256_password.GM_SHA_password(DateTimeConstant.toDate(request.getBirthday())));
+        if (request.getIdRole() == null)
+            userSaved.setIdRole(new Role(2));
+        else
+            userSaved.setIdRole(new Role(request.getIdRole().getId()));
+        userSaved.setIdTitle(new Title(request.getIdTitle().getId()));
+        userSaved.setIdResume(new Resume(resumeSaved.getId()));
+        userRepository.save(userSaved);
     }
-
 
     @Transactional
     public void updateUser(UserRequest request) {
 
         User existingUser = userRepository.findByUsername(request.getUsername());
         if (existingUser != null) {
+            // Validate user data for update
+            validateUserForUpdate(request, existingUser.getId());
             existingUser.setName(request.getName());
             existingUser.setPower(request.getPower());
             existingUser.setInActive(request.getInActive());
@@ -106,17 +107,17 @@ public class UserService implements UserDetailsService {
         if (existingUser != null) {
             existingUser.setIsDeleted(true);
             userRepository.save(existingUser);
-        }else{
+        } else {
             throw new ErrorException("Tài khoản không tồn tại", HttpStatus.NOT_FOUND);
         }
 
     }
 
-
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username);
-        if (user == null) throw new UsernameNotFoundException("Không tìm thấy người dùng với username: " + username);
+        if (user == null)
+            throw new UsernameNotFoundException("Không tìm thấy người dùng với username: " + username);
 
         return new CustomUserDetails(user);
     }
@@ -128,7 +129,6 @@ public class UserService implements UserDetailsService {
     public boolean isMember(Integer userId) {
         return memberRepository.existsByUserId(userId);
     }
-
 
     public User getReferenceById(Integer integer) {
         return userRepository.getReferenceById(integer);
@@ -154,7 +154,8 @@ public class UserService implements UserDetailsService {
         return userRepository.existsById(integer);
     }
 
-    public <S extends User, R> R findBy(Example<S> example, Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) {
+    public <S extends User, R> R findBy(Example<S> example,
+            Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) {
         return userRepository.findBy(example, queryFunction);
     }
 
@@ -268,6 +269,61 @@ public class UserService implements UserDetailsService {
         Member member = memberRepository.findByUserIdAndEventId(userId, eventId);
         if (member != null) {
             memberRepository.delete(member);
+        }
+    }
+
+    // Check if email exists
+    public boolean isEmailExists(String email) {
+        return resumeRepository.existsByEmail(email);
+    }
+
+    // Check if phone exists
+    public boolean isPhoneExists(String phone) {
+        return resumeRepository.existsByPhone(phone);
+    }
+
+    // Check if email exists excluding current user (for update)
+    public boolean isEmailExistsForOtherUser(String email, Integer userId) {
+        return resumeRepository.existsByEmailExcludingUser(email, userId);
+    }
+
+    // Check if phone exists excluding current user (for update)
+    public boolean isPhoneExistsForOtherUser(String phone, Integer userId) {
+        return resumeRepository.existsByPhoneExcludingUser(phone, userId);
+    }
+
+    // Comprehensive validation for create user
+    public void validateUserForCreate(UserRequest request) {
+        // Check username
+        if (userRepository.findByUsername(request.getUsername()) != null) {
+            throw new ErrorException("Username đã tồn tại", HttpStatus.BAD_REQUEST);
+        }
+
+        // Check email
+        if (isEmailExists(request.getEmail())) {
+            throw new ErrorException("Email đã tồn tại", HttpStatus.BAD_REQUEST);
+        }
+
+        // Check phone (if provided)
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            if (isPhoneExists(request.getPhone())) {
+                throw new ErrorException("Số điện thoại đã tồn tại", HttpStatus.BAD_REQUEST);
+            }
+        }
+    }
+
+    // Comprehensive validation for update user
+    public void validateUserForUpdate(UserRequest request, Integer userId) {
+        // Check email (excluding current user)
+        if (isEmailExistsForOtherUser(request.getEmail(), userId)) {
+            throw new ErrorException("Email đã tồn tại", HttpStatus.BAD_REQUEST);
+        }
+
+        // Check phone (if provided and excluding current user)
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            if (isPhoneExistsForOtherUser(request.getPhone(), userId)) {
+                throw new ErrorException("Số điện thoại đã tồn tại", HttpStatus.BAD_REQUEST);
+            }
         }
     }
 }

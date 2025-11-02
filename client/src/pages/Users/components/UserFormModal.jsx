@@ -21,13 +21,44 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
     inActive: 0,
   });
 
-  // Helper function to normalize inActive value
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+
   const normalizeInActiveValue = (value) => {
     if (value === true || value === 1 || value === "1") return 1;
     if (value === false || value === 0 || value === "0") return 0;
     return 0;
   };
 
+  
+  const clearFieldError = (fieldName) => {
+    if (errors[fieldName]) {
+      setErrors((prev) => ({
+        ...prev,
+        [fieldName]: "",
+      }));
+    }
+  };
+
+  
+  const parseErrorMessage = (errorMessage) => {
+    const newErrors = {};
+
+    if (errorMessage.includes("Username đã tồn tại")) {
+      newErrors.username = "Username đã tồn tại";
+    } else if (errorMessage.includes("Email đã tồn tại")) {
+      newErrors.email = "Email đã tồn tại";
+    } else if (errorMessage.includes("Số điện thoại đã tồn tại")) {
+      newErrors.phone = "Số điện thoại đã tồn tại";
+    } else {
+
+      toast.error(errorMessage);
+      return {};
+    }
+
+    return newErrors;
+  };
 
   useEffect(() => {
     if (user) {
@@ -58,23 +89,52 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
         inActive: 0,
       });
     }
+    
+    setErrors({});
   }, [user, isOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.username || !formData.name || !formData.email) {
-      toast.error("Vui lòng điền đầy đủ thông tin bắt buộc!");
+   
+    setErrors({});
+    setIsSubmitting(true);
+
+   
+    const newErrors = {};
+    if (!formData.username || !formData.username.trim()) {
+      newErrors.username = "Mã người dùng là bắt buộc";
+    }
+    if (!formData.name || !formData.name.trim()) {
+      newErrors.name = "Họ và tên là bắt buộc";
+    }
+    if (!formData.email || !formData.email.trim()) {
+      newErrors.email = "Email là bắt buộc";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Email không hợp lệ";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setIsSubmitting(false);
       return;
     }
 
-    const success = await onSave(formData);
-    if (success) {
-      onClose();
+    try {
+      const success = await onSave(formData);
+      if (success) {
+        onClose();
+      }
+    } catch (error) {
+      
+      const fieldErrors = parseErrorMessage(error.message || "Có lỗi xảy ra");
+      if (Object.keys(fieldErrors).length > 0) {
+        setErrors(fieldErrors);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
-  console.log({ formData });
 
   if (!isOpen) return null;
 
@@ -105,14 +165,22 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
               <input
                 type="text"
                 value={formData.username}
-                onChange={(e) =>
-                  setFormData({ ...formData, username: e.target.value })
-                }
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
+                onChange={(e) => {
+                  setFormData({ ...formData, username: e.target.value });
+                  clearFieldError("username");
+                }}
+                className={`w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
+                  errors.username
+                    ? "border-red-500 focus:ring-red-300"
+                    : "border-gray-300 focus:ring-mainColor"
+                }`}
                 placeholder="Nhập mã người dùng"
                 disabled={!!user}
                 required
               />
+              {errors.username && (
+                <p className="text-red-500 text-xs mt-1">{errors.username}</p>
+              )}
             </div>
 
             {/* Name */}
@@ -123,13 +191,21 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
               <input
                 type="text"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
+                onChange={(e) => {
+                  setFormData({ ...formData, name: e.target.value });
+                  clearFieldError("name");
+                }}
+                className={`w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
+                  errors.name
+                    ? "border-red-500 focus:ring-red-300"
+                    : "border-gray-300 focus:ring-mainColor"
+                }`}
                 placeholder="Nhập họ và tên"
                 required
               />
+              {errors.name && (
+                <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+              )}
             </div>
 
             {/* Email */}
@@ -140,13 +216,21 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
               <input
                 type="email"
                 value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
+                onChange={(e) => {
+                  setFormData({ ...formData, email: e.target.value });
+                  clearFieldError("email");
+                }}
+                className={`w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
+                  errors.email
+                    ? "border-red-500 focus:ring-red-300"
+                    : "border-gray-300 focus:ring-mainColor"
+                }`}
                 placeholder="Nhập email"
                 required
               />
+              {errors.email && (
+                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+              )}
             </div>
 
             {/* Phone */}
@@ -157,12 +241,20 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
               <input
                 type="tel"
                 value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
+                onChange={(e) => {
+                  setFormData({ ...formData, phone: e.target.value });
+                  clearFieldError("phone");
+                }}
+                className={`w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 ${
+                  errors.phone
+                    ? "border-red-500 focus:ring-red-300"
+                    : "border-gray-300 focus:ring-mainColor"
+                }`}
                 placeholder="Nhập số điện thoại"
               />
+              {errors.phone && (
+                <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+              )}
             </div>
 
             {/* Birthday */}
@@ -322,10 +414,15 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
             </button>
             <button
               type="submit"
-              className="flex items-center gap-2 px-4 py-2 text-sm bg-mainColor text-white rounded-md hover:bg-opacity-90 transition-colors"
+              disabled={isSubmitting}
+              className={`flex items-center gap-2 px-4 py-2 text-sm text-white rounded-md transition-colors ${
+                isSubmitting
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-mainColor hover:bg-opacity-90"
+              }`}
             >
               <Save className="w-4 h-4" />
-              {user ? "Cập nhật" : "Thêm mới"}
+              {isSubmitting ? "Đang xử lý..." : user ? "Cập nhật" : "Thêm mới"}
             </button>
           </div>
         </form>

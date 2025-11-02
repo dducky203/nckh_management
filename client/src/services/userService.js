@@ -6,7 +6,6 @@ const userService = {
     return await api.get("/dashboard/manage-users/get-all-user", { params });
   },
 
-  // Lấy danh sách users (method cũ để tương thích)
   getUsers: async (params = {}) => {
     return await api.get("/users", { params });
   },

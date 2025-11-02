@@ -1,5 +1,6 @@
 package com.example.server.controller.admin;
 
+import com.example.server.DTO.SuccessResponseDTO;
 import com.example.server.DTO.users.UserDetailsDTO;
 import com.example.server.DTO.users.UserRequest;
 import com.example.server.controller.user.CommonController;
@@ -128,21 +129,35 @@ public class ManagerUserController {
 
     @PostMapping("/create")
     public ResponseEntity<?> createUser(@Valid @RequestBody UserRequest request) {
-        userService.createUser(request);
-        return ResponseEntity.ok("Tạo mới user thành công!");
+        try {
+            userService.createUser(request);
+            return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Tạo mới user thành công!"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        }
     }
-
 
     @PostMapping("/update")
     public ResponseEntity<?> updateUser(@Valid @RequestBody UserRequest request) {
-        userService.updateUser(request);
-        return ResponseEntity.ok("Cập nhật user thành công!");
+        try {
+            userService.updateUser(request);
+            return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Cập nhật user thành công!"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        }
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<?> updateUser(@RequestParam(value = "username") String username) {
-        userService.deleteUser(username);
-        return ResponseEntity.ok("Xóa user thành công!");
+    public ResponseEntity<?> deleteUser(@RequestParam(value = "username") String username) {
+        try {
+            userService.deleteUser(username);
+            return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Xóa user thành công!"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        }
     }
 
     // random pass
@@ -177,13 +192,13 @@ public class ManagerUserController {
     // save resume
     @PostMapping("/mSaveResume/{idUser}")
     public String saveResume(@PathVariable Integer idUser,
-                             @RequestParam(name = "power") Integer power,
-                             @RequestParam(name = "name") String name,
-                             @RequestParam(name = "email") String email,
-                             @RequestParam(name = "phone") String phone,
-                             @RequestParam(name = "address") String address,
-                             @RequestParam(name = "birthday") LocalDate birthday,
-                             Model model) {
+            @RequestParam(name = "power") Integer power,
+            @RequestParam(name = "name") String name,
+            @RequestParam(name = "email") String email,
+            @RequestParam(name = "phone") String phone,
+            @RequestParam(name = "address") String address,
+            @RequestParam(name = "birthday") LocalDate birthday,
+            Model model) {
         model.addAttribute("user", userRepository.findByIdUser(idUser));
         model.addAttribute("resume", resumeRepository.findByIdUser(idUser));
         User user = userRepository.findByIdUser(idUser);
