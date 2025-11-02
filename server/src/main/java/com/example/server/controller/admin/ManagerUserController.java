@@ -133,6 +133,17 @@ public class ManagerUserController {
     }
 
 
+    @PostMapping("/update")
+    public ResponseEntity<?> updateUser(@Valid @RequestBody UserRequest request) {
+        userService.updateUser(request);
+        return ResponseEntity.ok("Cập nhật user thành công!");
+    }
+
+    @DeleteMapping("/delete")
+    public ResponseEntity<?> updateUser(@RequestParam(value = "username") String username) {
+        userService.deleteUser(username);
+        return ResponseEntity.ok("Xóa user thành công!");
+    }
 
     // random pass
     public String generateRandomPassword(int length) {

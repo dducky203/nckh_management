@@ -74,7 +74,7 @@ const UserTable = ({
 
   const handleDeleteConfirm = () => {
     if (userToDelete) {
-      onDelete(userToDelete.id);
+      onDelete(userToDelete.username);
       setDeleteModalOpen(false);
       setUserToDelete(null);
     }

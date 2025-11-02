@@ -187,8 +187,7 @@ const UserManagement = () => {
     try {
       setLoading(true);
       if (editingUser) {
-        // TODO: Implement update user API call
-        console.log("Update user with data:", formData);
+        await userService.updateUserByAdmin(formData);
         toast.success("Cập nhật người dùng thành công!");
       } else {
         // Tạo user mới
@@ -209,11 +208,11 @@ const UserManagement = () => {
     }
   };
 
-  const handleDelete = async (userId) => {
+  const handleDelete = async (username) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
       try {
         setLoading(true);
-        console.log("Delete user with id:", userId);
+        await userService.deleteUser(username);
         toast.success("Xóa người dùng thành công!");
         fetchUsers(); // Refresh data
       } catch (error) {

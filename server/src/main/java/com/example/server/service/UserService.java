@@ -69,27 +69,49 @@ public class UserService implements UserDetailsService {
     }
 
 
+    @Transactional
     public void updateUser(UserRequest request) {
 
-//        User existingUser = userRepository.findById(request.getId())
-//                .orElseThrow(() -> new ErrorException("User không tồn tại", HttpStatus.NOT_FOUND));
-//        if(existingUser != null){
-//            User userSaved = userMapper.toEntity(request);
-//            userSaved.setPassword(SHA_256_password.GM_SHA_password(existingUser.getPassword());
-//            if (request.getIdRole() == null) userSaved.setIdRole(new Role(2));
-//            else userSaved.setIdRole(new Role(request.getIdRole().getId()));
-//            userSaved.setIdTitle(new Title(request.getIdTitle().getId()));
-//            userRepository.save(userSaved);
-//
-//            Resume profile = resumeRepository.findByIdUser(existingUser.getId());
-//            Resume resumeSaved = resumeMapper.toEntity(request);
-//            resumeSaved.setIdUser(new User(profile.getIdUser().getId());
-//            resumeRepository.save(resumeSaved);
-//
-//        }
+        User existingUser = userRepository.findByUsername(request.getUsername());
+        if (existingUser != null) {
+            existingUser.setName(request.getName());
+            existingUser.setPower(request.getPower());
+            existingUser.setInActive(request.getInActive());
+            if (request.getIdRole() != null) {
+                existingUser.setIdRole(new Role(request.getIdRole().getId()));
+            }
+            if (request.getIdTitle() != null) {
+                existingUser.setIdTitle(new Title(request.getIdTitle().getId()));
+            }
+            userRepository.save(existingUser);
 
+            Resume existingResume = resumeRepository.findResumeById(existingUser.getIdResume().getId());
+
+            if (existingResume != null) {
+                existingResume.setEmail(request.getEmail());
+                existingResume.setPhone(request.getPhone());
+                existingResume.setAddress(request.getAddress());
+                existingResume.setBirthday(request.getBirthday());
+                resumeRepository.save(existingResume);
+
+            }
+        } else {
+            throw new ErrorException("Tài khoản không tồn tại", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @Transactional
+    public void deleteUser(String username) {
+        User existingUser = userRepository.findByUsername(username);
+        if (existingUser != null) {
+            existingUser.setIsDeleted(true);
+            userRepository.save(existingUser);
+        }else{
+            throw new ErrorException("Tài khoản không tồn tại", HttpStatus.NOT_FOUND);
+        }
 
     }
+
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

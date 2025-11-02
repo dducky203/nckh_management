@@ -21,14 +21,14 @@ const userService = {
     return await api.post("/dashboard/manage-users/create", userData);
   },
 
-  // // Cập nhật user
-  // updateUser: async (userId, userData) => {
-  //   return await api.put(`/users/${userId}`, userData);
-  // },
+  // Cập nhật user
+  updateUserByAdmin: async (userData) => {
+    return await api.post("/dashboard/manage-users/update", userData);
+  },
 
   // Xóa user
-  deleteUser: async (userId) => {
-    return await api.delete(`/users/${userId}`);
+  deleteUser: async (username) => {
+    return await api.delete(`/dashboard/manage-users/delete?username=${username}`);
   },
 
   // Lấy profile

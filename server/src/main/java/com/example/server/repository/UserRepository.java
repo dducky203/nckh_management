@@ -19,9 +19,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
         @NotNull
         Page<User> findAll(Pageable pageable);
 
-        // get user by username and password
-        @Query(value = "select * from user where username=? and password=?", nativeQuery = true)
-        User findByUsernameAndPassword(String username, String password);
+
 
         // find by id
         @Query(value = SQL.FIND_USER_BY_ID, nativeQuery = true)
@@ -29,6 +27,8 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
 //        Optional<User> findByUsername(String username);
         User findByUsername(String username);
+
+
 
     @Query(value = "SELECT u.* FROM user u " +
             "LEFT JOIN resume r ON u.id_resume = r.id " +

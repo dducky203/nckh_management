@@ -24,16 +24,6 @@ public class Resume extends EntityBase implements Serializable {
     @Column(name = "id", nullable = false)
     private Integer id;
 
-//    @OneToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "id_user")
-//    @Unique
-//    private User idUser;
-
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_admin")
-    @Unique
-    private Admin idAdmin;
-
     @Column(name = "email", nullable = false, length = 100)
     @Unique
     private String email;
@@ -47,6 +37,7 @@ public class Resume extends EntityBase implements Serializable {
 
     @Column(name = "birthday", nullable = false)
     private LocalDate birthday;
+
 
     public Resume(Integer id) {
         this.id = id;

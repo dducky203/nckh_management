@@ -32,7 +32,7 @@ public class ResumeAdController {
     @GetMapping("/{idAdmin}")
     public String resume(@PathVariable Integer idAdmin, Model model, HttpSession session) {
 
-        model.addAttribute("resume",resumeRepository.findByIdAdmin(adminRepository.findById(idAdmin).get()));
+        model.addAttribute("resume", resumeRepository.findByIdAdmin(adminRepository.findById(idAdmin).get()));
 
         return "admin/resume/showResume";
     }
@@ -42,68 +42,70 @@ public class ResumeAdController {
     public String repairPass(Model model, @PathVariable Integer idAdmin) {
         return "admin/resume/repairPass";
     }
+
     // save pass
     @PostMapping("/savePass/{idAdmin}")
     public String savePass(@PathVariable Integer idAdmin,
-                           @RequestParam("pass1")String pass1,
-                           @RequestParam("pass2")String pass2,Model model){
-        if (!Objects.equals(pass1, pass2)){
-            model.addAttribute("message","2 mật khẩu phải giống nhau");
+            @RequestParam("pass1") String pass1,
+            @RequestParam("pass2") String pass2, Model model) {
+        if (!Objects.equals(pass1, pass2)) {
+            model.addAttribute("message", "2 mật khẩu phải giống nhau");
             return "admin/resume/repairPass";
         }
-        if (pass1.length() < 8  ) {
-            model.addAttribute("message","mật khẩu phải ít nhất 8 kí tự ");
+        if (pass1.length() < 8) {
+            model.addAttribute("message", "mật khẩu phải ít nhất 8 kí tự ");
             return "admin/resume/repairPass";
         }
         Admin admin = adminRepository.findById(idAdmin).get();
         String passInput = SHA_256_password.GM_SHA_password(pass1);
         admin.setPassword(passInput);
         adminRepository.save(admin);
-        return "redirect:/ad/resume/"+idAdmin;
+        return "redirect:/ad/resume/" + idAdmin;
     }
 
     // repair resume
     @GetMapping("/repair/{idAdmin}")
     public String repairResume(@PathVariable Integer idAdmin, Model model) {
-        model.addAttribute("admin",adminRepository.findById(idAdmin));
-        model.addAttribute("resume",resumeRepository.findByIdAdmin(adminRepository.findById(idAdmin).get()));
+        model.addAttribute("admin", adminRepository.findById(idAdmin));
+        model.addAttribute("resume", resumeRepository.findByIdAdmin(adminRepository.findById(idAdmin).get()));
         return "admin/resume/repairResume";
     }
+
     // save resume
-    @PostMapping("/save/{idAdmin}")
-    public String saveResume(@PathVariable Integer idAdmin,
-                             @RequestParam(name = "email") String email,
-                             @RequestParam(name = "phone") String phone,
-                             @RequestParam(name = "address")String address,
-                             @RequestParam(name = "birthday") LocalDate birthday,
-                             Model model) {
-        model.addAttribute("admin",adminRepository.findById(idAdmin));
-        model.addAttribute("resume",resumeRepository.findByIdAdmin(adminRepository.findById(idAdmin).get()));
-        if (phone.length() != 10  ) {
-            model.addAttribute("message","Số điện thoại phải 10 chữ số");
-            return "admin/resume/repairResume";
-        }
-        if (phone.startsWith("01") || phone.startsWith("04")
-                || phone.startsWith("06")) {
-            model.addAttribute("message","Không đúng định dạng số điện thoại Việt Nam");
-            return "admin/resume/repairResume";
-        }
-        Resume resume = resumeRepository.findByIdAdmin(adminRepository.findById(idAdmin).get());
-        if (resume == null) {
-            Resume resume1 = new Resume();
-            resume1.setIdAdmin(adminRepository.findById(idAdmin).get());
-            resume1.setEmail(email);
-            resume1.setPhone(phone);
-            resume1.setAddress(address);
-            resume1.setBirthday(birthday);
-            resumeRepository.save(resume1);
-        }else {
-            resume.setEmail(email);
-            resume.setPhone(phone);
-            resume.setAddress(address);
-            resume.setBirthday(birthday);
-            resumeRepository.save(resume);
-        }
-        return "redirect:/ad/resume/"+idAdmin;
-    }
+//    @PostMapping("/save/{idAdmin}")
+//    public String saveResume(@PathVariable Integer idAdmin,
+//            @RequestParam(name = "email") String email,
+//            @RequestParam(name = "phone") String phone,
+//            @RequestParam(name = "address") String address,
+//            @RequestParam(name = "birthday") LocalDate birthday,
+//            Model model) {
+//        model.addAttribute("admin", adminRepository.findById(idAdmin));
+//        model.addAttribute("resume", resumeRepository.findByIdAdmin(adminRepository.findById(idAdmin).get()));
+//        if (phone.length() != 10) {
+//            model.addAttribute("message", "Số điện thoại phải 10 chữ số");
+//            return "admin/resume/repairResume";
+//        }
+//        if (phone.startsWith("01") || phone.startsWith("04")
+//                || phone.startsWith("06")) {
+//            model.addAttribute("message", "Không đúng định dạng số điện thoại Việt Nam");
+//            return "admin/resume/repairResume";
+//        }
+//        Resume resume = resumeRepository.findByIdAdmin(adminRepository.findById(idAdmin).get());
+//        if (resume == null) {
+//            Resume resume1 = new Resume();
+//            resume1.setIdAdmin(adminRepository.findById(idAdmin).get());
+//            resume1.setEmail(email);
+//            resume1.setPhone(phone);
+//            resume1.setAddress(address);
+//            resume1.setBirthday(birthday);
+//            resumeRepository.save(resume1);
+//        } else {
+//            resume.setEmail(email);
+//            resume.setPhone(phone);
+//            resume.setAddress(address);
+//            resume.setBirthday(birthday);
+//            resumeRepository.save(resume);
+//        }
+//        return "redirect:/ad/resume/" + idAdmin;
+//    }
 }

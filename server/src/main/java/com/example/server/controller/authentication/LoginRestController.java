@@ -39,6 +39,14 @@ public class LoginRestController {
     
     @Autowired
     private JwtService jwtService;
+    @Autowired
+    private com.example.server.repository.ResumeRepository resumeRepository;
+
+    @Autowired
+    private com.example.server.controller.admin.ManagerUserController managerUserController;
+
+    @Autowired
+    private com.example.server.service.UserService userService;
 
 
     @PostMapping(value = "/login")
@@ -75,14 +83,7 @@ public class LoginRestController {
 
     }
     
-    @Autowired
-    private com.example.server.repository.ResumeRepository resumeRepository;
-    
-    @Autowired
-    private com.example.server.controller.admin.ManagerUserController managerUserController;
-    
-    @Autowired
-    private com.example.server.service.UserService userService;
+
     
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, Object>> forgotPassword(

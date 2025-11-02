@@ -35,8 +35,8 @@ public class UserRequest {
     @NotNull(message = "Title không được bỏ trống")
     private Title idTitle;
     private String address;
+    private Boolean inActive;
     private LocalDate birthday;
-
 //    @Pattern(regexp = "^[0-9]{10}$", message = "Số điện thoại chứa ký tự")
     private String phone;
 }

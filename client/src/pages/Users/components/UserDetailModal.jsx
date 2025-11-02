@@ -166,7 +166,7 @@ const UserDetailModal = ({ isOpen, onClose, user }) => {
               <div className="border-l-4 border-blue-500 bg-blue-50 rounded-lg flex items-center gap-2 p-3 border ">
                 <Badge className="text-blue-600 w-4 h-4" />
                 <span className="text-xs font-medium text-blue-800">
-                  Cấp độ quyền hạn: Level {user.power} ({user.role})
+                  Cấp độ quyền hạn: Level {user.idRole} ({user.role})
                 </span>
               </div>
            
