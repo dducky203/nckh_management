@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Close,
   Person,
@@ -12,12 +12,27 @@ import {
   CheckCircle,
   Cancel,
   Delete,
+  DeleteForever,
 } from "@mui/icons-material";
 import { formatDate, formatDateTime } from "../../../constants";
+import Modal from "../../../components/common/Modal";
 
-const UserDetailModal = ({ isOpen, onClose, user }) => {
+const UserDetailModal = ({ isOpen, onClose, user, onForceDelete }) => {
+  const [showForceDeleteModal, setShowForceDeleteModal] = useState(false);
 
   if (!isOpen || !user) return null;
+
+  const handleForceDeleteClick = () => {
+    setShowForceDeleteModal(true);
+  };
+
+  const handleConfirmForceDelete = () => {
+    if (onForceDelete) {
+      onForceDelete(user.username, true);
+    }
+    setShowForceDeleteModal(false);
+    onClose();
+  };
 
   const getRoleLabel = (power) => {
     const roles = {
@@ -30,7 +45,6 @@ const UserDetailModal = ({ isOpen, onClose, user }) => {
   };
 
   const getStatusBadge = (user) => {
-   
     if (user.isDeleted) {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-red-100 text-red-800">
@@ -39,7 +53,7 @@ const UserDetailModal = ({ isOpen, onClose, user }) => {
         </span>
       );
     }
-    
+
     if (user.inActive) {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-yellow-100 text-yellow-800">
@@ -48,7 +62,7 @@ const UserDetailModal = ({ isOpen, onClose, user }) => {
         </span>
       );
     }
-    
+
     return (
       <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800">
         <CheckCircle className="w-3 h-3" />
@@ -60,7 +74,6 @@ const UserDetailModal = ({ isOpen, onClose, user }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[85vh]">
-       
         <div className="flex items-center justify-between p-4 border-b bg-white rounded-t-lg">
           <h3 className="text-lg font-semibold text-gray-900">
             Chi tiết người dùng
@@ -95,9 +108,7 @@ const UserDetailModal = ({ isOpen, onClose, user }) => {
             </div>
           </div>
 
-         
           <div className="space-y-3">
-
             <div className="grid grid-cols-2 gap-3">
               <div className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg">
                 <Badge className="text-gray-400 w-4 h-4 flex-shrink-0" />
@@ -120,7 +131,6 @@ const UserDetailModal = ({ isOpen, onClose, user }) => {
               </div>
             </div>
 
-          
             <div className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg">
               <Email className="text-gray-400 w-4 h-4 flex-shrink-0" />
               <div className="min-w-0 flex-1">
@@ -162,20 +172,19 @@ const UserDetailModal = ({ isOpen, onClose, user }) => {
                 </div>
               </div>
 
-            
               <div className="border-l-4 border-blue-500 bg-blue-50 rounded-lg flex items-center gap-2 p-3 border ">
                 <Badge className="text-blue-600 w-4 h-4" />
                 <span className="text-xs font-medium text-blue-800">
                   Cấp độ quyền hạn: Level {user.idRole} ({user.role})
                 </span>
               </div>
-           
 
-            
               <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
                 <AccessTime className="text-gray-400 w-4 h-4 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-gray-500">Thời gian chỉnh sửa gần nhất</p>
+                  <p className="text-xs text-gray-500">
+                    Thời gian chỉnh sửa gần nhất
+                  </p>
                   <p className="text-sm font-medium text-gray-900">
                     {formatDateTime(user.updatedAt)}
                   </p>
@@ -184,29 +193,53 @@ const UserDetailModal = ({ isOpen, onClose, user }) => {
               <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
                 <AccessTime className="text-gray-400 w-4 h-4 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-gray-500">Thời gian tạo tài khoản</p>
+                  <p className="text-xs text-gray-500">
+                    Thời gian tạo tài khoản
+                  </p>
                   <p className="text-sm font-medium text-gray-900">
                     {formatDateTime(user.createdAt)}
                   </p>
                 </div>
               </div>
             </div>
-
-          
-            
           </div>
         </div>
 
-    
-        <div className="flex justify-end gap-2 p-4 border-t bg-gray-50 rounded-b-lg">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mainColor transition-colors"
-          >
-            Đóng
-          </button>
+        <div className="flex justify-between items-center p-4 border-t bg-gray-50 rounded-b-lg">
+          {/* Nút xóa cứng bên trái */}
+          {user.isDeleted && (
+            <button
+              onClick={handleForceDeleteClick}
+              className="flex items-center gap-1 px-2 py-1 text-sm font-medium text-white bg-red-600 border border-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+            >
+              <DeleteForever size="small" />
+              Xóa người dùng
+            </button>
+          )}
+
+          {/* Nút đóng bên phải */}
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-mainColor hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mainColor transition-colors"
+            >
+              Đóng
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Modal xác nhận xóa cứng */}
+      <Modal
+        isOpen={showForceDeleteModal}
+        onClose={() => setShowForceDeleteModal(false)}
+        onConfirm={handleConfirmForceDelete}
+        title="Xác nhận xóa cứng"
+        message={`Bạn có chắc chắn muốn xóa người dùng "${user?.name}"? Hành động này sẽ xóa vĩnh viễn và không thể khôi phục.`}
+        confirmText="Xóa"
+        cancelText="Hủy"
+        type="delete"
+      />
     </div>
   );
 };

@@ -26,8 +26,10 @@ const userService = {
   },
 
   // Xóa user
-  deleteUser: async (username) => {
-    return await api.delete(`/dashboard/manage-users/delete?username=${username}`);
+  deleteUser: async (username, force = false) => {
+    return await api.delete(
+      `/dashboard/manage-users/delete?username=${username}&force=${force}`
+    );
   },
 
   // Lấy profile
@@ -37,12 +39,12 @@ const userService = {
 
   // Cập nhật profile
   updateProfile: async (data) => {
-    return await api.post("/users/update-profile", data);
+    return await api.post(`/users/update-profile`, data);
   },
 
   // Đổi mật khẩu
-  changePassword: async (data) => {
-    return await api.post("/user/change-password", data);
+  changePassword: async (username, data) => {
+    return await api.put(`/users/change-password?username=${username}`, data);
   },
 };
 

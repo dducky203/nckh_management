@@ -129,30 +129,29 @@ public class ManagerUserController {
 
     @PostMapping("/create")
     public ResponseEntity<?> createUser(@Valid @RequestBody UserRequest request) {
-        try {
-            userService.createUser(request);
-            return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Tạo mới user thành công!"));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+        userService.createUser(request);
+        return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Tạo mới user thành công!"));
     }
 
     @PostMapping("/update")
     public ResponseEntity<?> updateUser(@Valid @RequestBody UserRequest request) {
-        try {
-            userService.updateUser(request);
-            return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Cập nhật user thành công!"));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+        userService.updateUser(request);
+        return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Cập nhật user thành công!"));
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteUser(@RequestParam(value = "username") String username) {
+    public ResponseEntity<?> deleteUser(
+            @RequestParam(value = "username") String username,
+            @RequestParam(value = "force", defaultValue = "false") Boolean force
+    ) {
+        userService.deleteUser(username, force);
+        return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Xóa user thành công!"));
+    }
+
+    @PatchMapping("reset-password")
+    public ResponseEntity<?> resetPassword(@RequestParam(value = "username") String username) {
         try {
-            userService.deleteUser(username);
+            userService.resetPassword(username);
             return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Xóa user thành công!"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -189,30 +188,6 @@ public class ManagerUserController {
         emailController.sendEmail(toEmail, subject, bodyGuest);
     }
 
-    // save resume
-    @PostMapping("/mSaveResume/{idUser}")
-    public String saveResume(@PathVariable Integer idUser,
-            @RequestParam(name = "power") Integer power,
-            @RequestParam(name = "name") String name,
-            @RequestParam(name = "email") String email,
-            @RequestParam(name = "phone") String phone,
-            @RequestParam(name = "address") String address,
-            @RequestParam(name = "birthday") LocalDate birthday,
-            Model model) {
-        model.addAttribute("user", userRepository.findByIdUser(idUser));
-        model.addAttribute("resume", resumeRepository.findByIdUser(idUser));
-        User user = userRepository.findByIdUser(idUser);
-        user.setPower(power);
-        user.setName(name);
-        userRepository.save(user);
 
-        Resume resume = resumeRepository.findByIdUser(idUser);
-        resume.setBirthday(birthday);
-        resume.setAddress(address);
-        resume.setEmail(email);
-        resume.setPhone(phone);
-        resumeRepository.save(resume);
-        return "redirect:/ad/managerUser/manager";
-    }
 
 }

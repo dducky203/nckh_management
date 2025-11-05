@@ -34,6 +34,17 @@ public class SHA_256_password {
         }
     }
 
+    public static boolean comparePassword(String inputPassword, String password) {
+        if (inputPassword == null || password == null) return false;
+
+        // Hash lại mật khẩu user nhập vào
+        String hashedInput = SHA_password(inputPassword);
+
+        // So sánh với hash trong DB
+        return hashedInput.equals(password);
+    }
+
+
     public static String GM_SHA_password(String input) {
         try {
             // Tạo một đối tượng MessageDigest với thuật toán SHA-256

@@ -4,6 +4,8 @@ import com.example.server.DTO.users.UserDTO;
 import com.example.server.DTO.users.UserDetailsDTO;
 import com.example.server.DTO.users.UserRequest;
 import com.example.server.domain.User;
+import com.example.server.utils.NormalizeUtils;
+import org.mapstruct.BeforeMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -21,6 +23,8 @@ public interface UserMapper {
     @Mapping(source = "idRole.name", target = "role")
     @Mapping(source = "idTitle.name", target = "title")
     UserDetailsDTO toUserDetailDTO(User user);
+
+
 
     User toEntity(UserRequest user);
 

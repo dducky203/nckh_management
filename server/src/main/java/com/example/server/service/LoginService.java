@@ -36,8 +36,8 @@ public class LoginService {
         User user = userRepository.checkLogin(username) ;
         if (user == null) return null;
         else {
-            String hashedInput = SHA_256_password.SHA_password(inputPassword);
-            if(!(hashedInput.equals(user.getPassword()))) return null;
+//            String hashedInput = SHA_256_password.SHA_password(inputPassword);
+            if(!(SHA_256_password.comparePassword(inputPassword, user.getPassword()))) return null;
             else return user;
         }
     }

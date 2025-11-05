@@ -7,14 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.checkerframework.common.aliasing.qual.Unique;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.security.core.userdetails.UserDetails;
-
 import java.io.Serializable;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.util.Date;
 
 @Getter
 @Setter
@@ -35,8 +28,8 @@ public class User extends EntityBase implements Serializable {
     @JoinColumn(name = "id_role")
     private Role idRole;
 
-    @Column(name = "username", length = 250)
-    @Unique
+    @Column(name = "username",unique = true, length = 250)
+
     private String username;
 
     @Column(name = "password", length = 250)
@@ -46,7 +39,7 @@ public class User extends EntityBase implements Serializable {
     private Integer power;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_resume")
+    @JoinColumn(name = "id_resume", unique = true)
     private Resume idResume;
 
     @ManyToOne(fetch = FetchType.LAZY)

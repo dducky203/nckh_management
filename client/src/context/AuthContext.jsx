@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect } from "react";
-import { getUserInfo } from "../utils/cookieUtils";
+import { getUserInfo, getAuthToken } from "../utils/cookieUtils";
 import authService from "../services/authService";
 
 const AuthContext = createContext();
@@ -7,28 +7,33 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [ncm, setNcm] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true); // Thêm state này
   const currentYear = new Date().getFullYear();
 
   // Initialize auth state from cookies
   useEffect(() => {
-    const userData = getUserInfo();
-    if (userData) {
-      setUser(userData);
+    const token = getAuthToken();
+    const userInfo = getUserInfo();
+
+    if (token && userInfo) {
+      setIsLoggedIn(true);
+      setUser(userInfo);
     }
+    
+    setIsInitializing(false); // Đánh dấu đã khởi tạo xong
   }, []);
 
   const login = async (username, password) => {
     setIsLoading(true);
 
     try {
-      // Gọi service để đăng nhập
       const response = await authService.login(username, password);
 
       if (response && response.userData) {
-        // Lưu thông tin người dùng vào state
         setUser(response.userData);
-
+        setIsLoggedIn(true);
         return { success: true };
       } else {
         throw new Error("Phản hồi từ server không hợp lệ");
@@ -53,6 +58,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setUser(null);
       setNcm(null);
+      setIsLoggedIn(false);
     }
   };
 
@@ -67,6 +73,7 @@ export const AuthProvider = ({ children }) => {
     user,
     ncm,
     isLoading,
+    isInitializing, // Thêm vào context
     currentYear,
     login,
     logout,

@@ -77,10 +77,10 @@ const ToastNotification = ({
         }
       },
       error: {
-        backgroundColor: 'rgba(211, 47, 47, 0.05)',
-        borderLeft: '4px solid #d32f2f',
+        backgroundColor: 'rgba(211, 47, 47)',
+         color: 'white',
         '& .MuiAlert-icon': {
-          color: '#d32f2f'
+          color: '#fff'
         }
       },
       warning: {

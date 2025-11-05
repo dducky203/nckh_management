@@ -1,14 +1,8 @@
 import Cookies from "js-cookie";
+import { JWT_EXPIRATION_DAYS } from "../constants";
 
-// Thời gian hết hạn mặc định (7 ngày)
-const DEFAULT_EXPIRATION = 7;
-
-/**
- * Lưu token vào cookie với các tùy chọn bảo mật
- * @param {string} token - Token cần lưu
- * @param {number} expiration - Số ngày trước khi hết hạn
- */
-export const setAuthToken = (token, expiration = DEFAULT_EXPIRATION) => {
+  
+export const setAuthToken = (token, expiration = JWT_EXPIRATION_DAYS) => {
   Cookies.set("auth_token", token, {
     expires: expiration,
     secure: window.location.protocol === "https:",
@@ -37,7 +31,7 @@ export const removeAuthToken = () => {
  * @param {Object} user - Thông tin người dùng
  * @param {number} expiration - Số ngày trước khi hết hạn
  */
-export const setUserInfo = (user, expiration = DEFAULT_EXPIRATION) => {
+export const setUserInfo = (user, expiration = JWT_EXPIRATION_DAYS) => {
   Cookies.set("user_info", JSON.stringify(user), {
     expires: expiration,
     secure: window.location.protocol === "https:",

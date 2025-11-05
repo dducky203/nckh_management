@@ -12,6 +12,7 @@ import com.example.server.repository.MemberRepository;
 import com.example.server.repository.ResumeRepository;
 import com.example.server.repository.UserRepository;
 import com.example.server.utils.DateTimeConstant;
+import com.example.server.utils.NormalizeUtils;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
@@ -61,8 +62,8 @@ public class UserService implements UserDetailsService {
         userSaved.setPassword(SHA_256_password.GM_SHA_password(DateTimeConstant.toDate(request.getBirthday())));
         if (request.getIdRole() == null)
             userSaved.setIdRole(new Role(2));
-        else
-            userSaved.setIdRole(new Role(request.getIdRole().getId()));
+        else userSaved.setIdRole(new Role(request.getIdRole().getId()));
+        userSaved.setName(NormalizeUtils.normalizeName(request.getName()));
         userSaved.setIdTitle(new Title(request.getIdTitle().getId()));
         userSaved.setIdResume(new Resume(resumeSaved.getId()));
         userRepository.save(userSaved);
@@ -75,7 +76,7 @@ public class UserService implements UserDetailsService {
         if (existingUser != null) {
             // Validate user data for update
             validateUserForUpdate(request, existingUser.getId());
-            existingUser.setName(request.getName());
+            existingUser.setName(NormalizeUtils.normalizeName(request.getName()));
             existingUser.setPower(request.getPower());
             existingUser.setInActive(request.getInActive());
             if (request.getIdRole() != null) {
@@ -102,15 +103,45 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public void deleteUser(String username) {
+    public void deleteUser(String username, Boolean force) {
+        User existingUser = userRepository.findByUsername(username);
+        Optional<Resume> profileUser = resumeRepository.findById(existingUser.getIdResume().getId());
+        if (existingUser != null && profileUser.isPresent()) {
+            if (force != null && force) {
+                resumeRepository.deleteById(existingUser.getIdResume().getId());
+                userRepository.delete(existingUser);
+            } else {
+                existingUser.setIsDeleted(true);
+                userRepository.save(existingUser);
+            }
+
+        } else {
+            throw new ErrorException("Tài khoản không tồn tại", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @Transactional
+    public void changePassword(String username, String currentPassword, String newPassword) {
         User existingUser = userRepository.findByUsername(username);
         if (existingUser != null) {
-            existingUser.setIsDeleted(true);
+            if (SHA_256_password.comparePassword(currentPassword, existingUser.getPassword())) {
+                existingUser.setPassword(SHA_256_password.GM_SHA_password(newPassword));
+                userRepository.save(existingUser);
+            } else throw new ErrorException("Mật khẩu hiện tại không chính xác !", HttpStatus.BAD_REQUEST);
+        } else {
+            throw new ErrorException("Tài khoản không tồn tại", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @Transactional
+    public void resetPassword(String username) {
+        User existingUser = userRepository.findByUsername(username);
+        if (existingUser != null) {
+            existingUser.setPassword("userfita@12345");
             userRepository.save(existingUser);
         } else {
             throw new ErrorException("Tài khoản không tồn tại", HttpStatus.NOT_FOUND);
         }
-
     }
 
     @Override
@@ -155,7 +186,7 @@ public class UserService implements UserDetailsService {
     }
 
     public <S extends User, R> R findBy(Example<S> example,
-            Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) {
+                                        Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) {
         return userRepository.findBy(example, queryFunction);
     }
 

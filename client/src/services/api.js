@@ -40,25 +40,8 @@ api.interceptors.response.use(
       }
     }
 
-    // Xử lý các lỗi khác nhau từ backend
-    let errorMessage = "Có lỗi xảy ra";
-
-    if (error.response?.data) {
-      // Nếu backend trả về string trực tiếp
-      if (typeof error.response.data === "string") {
-        errorMessage = error.response.data;
-      }
-      // Nếu backend trả về object với message
-      else if (error.response.data.message) {
-        errorMessage = error.response.data.message;
-      }
-      // Nếu backend trả về object với error
-      else if (error.response.data.error) {
-        errorMessage = error.response.data.error;
-      }
-    } else if (error.message) {
-      errorMessage = error.message;
-    }
+    const errorMessage =
+      error.response?.data?.message || error.message || "Có lỗi xảy ra";
 
     return Promise.reject(new Error(errorMessage));
   }

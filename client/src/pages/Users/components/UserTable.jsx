@@ -8,6 +8,7 @@ import {
   ArrowDownward,
   UnfoldMore,
   Restore,
+  LockReset
 } from "@mui/icons-material";
 import Modal from "../../../components/common/Modal";
 
@@ -26,7 +27,6 @@ const UserTable = ({
   const [userToDelete, setUserToDelete] = useState(null);
   // Lấy thông tin người dùng và các hàm từ AuthContext
   const { user: currentUser } = useContext(AuthContext);
-
 
   const getRoleLabel = (power) => {
     const roles = {
@@ -236,10 +236,10 @@ const UserTable = ({
 
                     {/* Thao tác */}
                     <td className="px-6 py-3">
-                      <div className="flex gap-1 justify-center">
+                      <div className="flex gap-0.5 justify-center">
                         <button
                           onClick={() => onView(user)}
-                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                          className="p-1 text-blue-600 hover:bg-blue-200 rounded transition-colors"
                           title="Xem chi tiết"
                         >
                           <Visibility fontSize="small" />
@@ -249,7 +249,7 @@ const UserTable = ({
                           <>
                             <button
                               onClick={() => onEdit(user)}
-                              className="p-1.5 text-yellow-600 hover:bg-yellow-50 rounded transition-colors"
+                              className="p-1 text-yellow-600 hover:bg-yellow-200 rounded transition-colors"
                               title="Chỉnh sửa"
                             >
                               <Edit fontSize="small" />
@@ -258,7 +258,7 @@ const UserTable = ({
                             user.username === currentUser.username ? null : (
                               <button
                                 onClick={() => handleDeleteClick(user)}
-                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                className="p-1 text-red-600 hover:bg-red-200 rounded transition-colors"
                                 title="Xóa"
                               >
                                 <Delete fontSize="small" />
@@ -268,12 +268,13 @@ const UserTable = ({
                         ) : (
                           <button
                             onClick={() => handleDeleteClick(user)}
-                            className="p-1.5 text-mainColor hover:bg-red-50 rounded transition-colors"
+                            className="p-1 text-mainColor hover:bg-red-200 rounded transition-colors"
                             title="Khôi phục"
                           >
                             <Restore fontSize="small" />
                           </button>
                         )}
+                       
                       </div>
                     </td>
                   </tr>

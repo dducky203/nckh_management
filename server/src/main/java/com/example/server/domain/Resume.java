@@ -5,12 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.checkerframework.common.aliasing.qual.Unique;
-import org.hibernate.annotations.processing.Pattern;
+
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.Date;
 
 @Getter
 @Setter
@@ -24,12 +22,10 @@ public class Resume extends EntityBase implements Serializable {
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @Column(name = "email", nullable = false, length = 100)
-    @Unique
+    @Column(name = "email", unique = true, nullable = false, length = 256)
     private String email;
 
-    @Column(name = "phone", nullable = false, length = 10)
-    @Unique
+    @Column(name = "phone", unique = true, nullable = false, length = 10)
     private String phone;
 
     @Column(name = "address", nullable = false, length = 250)

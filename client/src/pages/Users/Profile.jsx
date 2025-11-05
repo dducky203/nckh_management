@@ -20,6 +20,7 @@ import { useToast } from "../../context/ToastContext";
 import userService from "../../services/userService";
 import noAvatarImg from "../../assets/no-avatar-user.png";
 import { AuthContext } from "../../context/AuthContext";
+import Modal from "../../components/common/Modal";
 
 const Profile = () => {
   const { user, updateUser } = useContext(AuthContext);
@@ -29,14 +30,16 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [profileData, setProfileData] = useState({
-    name: "",
-    email: "",
-    username: "",
-    title: "",
-    avatar: "",
-    phone: "",
-    address: "",
-    birthday: "",
+    name: user.name || "",
+    email: user.email || "",
+    username: user.username ,
+    title: user.title || "",
+    // avatar: user.avatar || "",
+    phone: user.phone || "",
+    address: user.address || "",
+    birthday: user.birthday ? user.birthday.split("T")[0] : "",
+    power: user.power || "",
+    inActive: user.inActive ,
   });
 
   console.log({ user });
@@ -48,22 +51,17 @@ const Profile = () => {
   });
 
   const [avatarPreview, setAvatarPreview] = useState(null);
-  const [avatarFile, setAvatarFile] = useState(null);
+  // const [avatarFile, setAvatarFile] = useState(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showProfileConfirmModal, setShowProfileConfirmModal] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      setProfileData({
-        name: user.name || "",
-        email: user.email || "",
-        username: user.username || "",
-        title: user.title || "",
-        avatar: user.avatar || "",
-        phone: user.phone || "",
-        address: user.address || "",
-        birthday: user.birthday ? user.birthday.split("T")[0] : "",
-      });
-    } else navigate("/login");
+    if (!user) {
+      navigate("/login");
+    }
   }, [user, navigate]);
+
+  console.log({ profileData });
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -74,14 +72,13 @@ const Profile = () => {
     setIsEditing(!isEditing);
     if (!isEditing) {
       setProfileData({
-        name: user.name || "",
-        email: user.email || "",
-        username: user.username || "",
-        title: user.title || "",
-        avatar: user.avatar || "",
+        ...profileData,
+        name: user.name,
+        email: user.email,
+        title: user.title,
       });
       setAvatarPreview(null);
-      setAvatarFile(null);
+      // setAvatarFile(null);
     }
   };
 
@@ -101,34 +98,41 @@ const Profile = () => {
     }));
   };
 
-  const handleAvatarChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setAvatarFile(file);
+  // const handleAvatarChange = (e) => {
+  //   if (e.target.files && e.target.files[0]) {
+  //     const file = e.target.files[0];
+  //     setAvatarFile(file);
 
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+  //     // Create preview
+  //     const reader = new FileReader();
+  //     reader.onloadend = () => {
+  //       setAvatarPreview(reader.result);
+  //     };
+  //     reader.readAsDataURL(file);
+  //   }
+  // };
+
+  const handleProfileSubmit = (e) => {
+    e.preventDefault();
+
+    // Basic validation
+    if (!profileData.name || !profileData.email) {
+      toast.error("Vui lòng điền đầy đủ thông tin bắt buộc!");
+      return;
     }
+
+    // Show confirmation modal
+    setShowProfileConfirmModal(true);
   };
 
-  const handleProfileSubmit = async (e) => {
-    e.preventDefault();
+  const handleConfirmUpdateProfile = async () => {
     setIsLoading(true);
+    setShowProfileConfirmModal(false);
 
     try {
-      const updateData = {
-        name: profileData.name,
-        email: profileData.email,
-        phone: profileData.phone,
-        address: profileData.address,
-        birthday: profileData.birthday,
-      };
+    
 
-      const response = await userService.updateUser(user.id, updateData);
+      const response = await userService.updateProfile(profileData);
 
       if (response.success) {
         updateUser({
@@ -149,11 +153,36 @@ const Profile = () => {
     }
   };
 
-  const handlePasswordSubmit = async (e) => {
+  const handlePasswordSubmit = (e) => {
     e.preventDefault();
 
+    // Validate passwords match
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("Mật khẩu xác nhận không khớp!");
+      return;
+    }
+
+    // Validate password length
+    if (passwordData.newPassword.length < 6) {
+      toast.error("Mật khẩu mới phải có ít nhất 6 ký tự!");
+      return;
+    }
+
+    // Show confirmation modal
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmChangePassword = async () => {
+    setIsLoading(true);
+    setShowConfirmModal(false);
+
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+      const changePasswordData = {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      };
+
+      await userService.changePassword(user.username, changePasswordData);
 
       toast.success("Đổi mật khẩu thành công!");
       setPasswordData({
@@ -242,7 +271,7 @@ const Profile = () => {
                           type="file"
                           className="hidden"
                           accept="image/*"
-                          onChange={handleAvatarChange}
+                          // onChange={handleAvatarChange}
                         />
                       </label>
                     )}
@@ -262,7 +291,6 @@ const Profile = () => {
                   </div>
                 </div>
 
-               
                 <div className="flex-1">
                   <form onSubmit={handleProfileSubmit}>
                     <div className="space-y-4">
@@ -331,7 +359,9 @@ const Profile = () => {
                             name="email"
                             value={profileData.email}
                             onChange={handleProfileChange}
-                            disabled={isEditing ? !(user?.role === "admin") : true}
+                            disabled={
+                              isEditing ? !(user?.role === "admin") : true
+                            }
                             className="w-full py-2 px-3 outline-none disabled:bg-gray-50"
                             placeholder="Email"
                           />
@@ -355,7 +385,9 @@ const Profile = () => {
                             name="title"
                             value={profileData.title}
                             onChange={handleProfileChange}
-                            disabled={isEditing ? !(user?.role === "admin") : true}
+                            disabled={
+                              isEditing ? !(user?.role === "admin") : true
+                            }
                             className="w-full py-2 px-3 outline-none disabled:bg-gray-50"
                             placeholder="Chức danh"
                           />
@@ -612,7 +644,7 @@ const Profile = () => {
                         passwordData.newPassword !==
                           passwordData.confirmPassword
                       }
-                      className="bg-mainColor hover:bg-purple-700 text-white px-6 py-2 rounded-md transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      className="bg-mainColor text-white px-6 py-2 rounded-md transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >
                       {isLoading ? "Đang xử lý..." : "Đổi mật khẩu"}
                     </button>
@@ -623,6 +655,30 @@ const Profile = () => {
           )}
         </div>
       </div>
+
+      {/* Modal xác nhận cập nhật thông tin */}
+      <Modal
+        isOpen={showProfileConfirmModal}
+        onClose={() => setShowProfileConfirmModal(false)}
+        onConfirm={handleConfirmUpdateProfile}
+        title="Xác nhận cập nhật thông tin"
+        message="Bạn có chắc chắn muốn cập nhật thông tin cá nhân?"
+        confirmText="Cập nhật"
+        cancelText="Hủy"
+        type="info"
+      />
+
+      {/* Modal xác nhận đổi mật khẩu */}
+      <Modal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleConfirmChangePassword}
+        title="Xác nhận đổi mật khẩu"
+        message="Bạn có chắc chắn muốn đổi mật khẩu? Hành động này không thể hoàn tác."
+        confirmText="Đồng ý"
+        cancelText="Hủy"
+        type="warning"
+      />
     </div>
   );
 };

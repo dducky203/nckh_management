@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Close, Save, Visibility, VisibilityOff } from "@mui/icons-material";
+import { Close, Save, Visibility, VisibilityOff, LockReset } from "@mui/icons-material";
 import { useToast } from "../../../context/ToastContext";
 import { roleStringToInt, titleStringToInt } from "../../../utils/helpers";
 import { formatDateForInput } from "../../../utils/dateHelpers";
@@ -24,14 +24,12 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-
   const normalizeInActiveValue = (value) => {
     if (value === true || value === 1 || value === "1") return 1;
     if (value === false || value === 0 || value === "0") return 0;
     return 0;
   };
 
-  
   const clearFieldError = (fieldName) => {
     if (errors[fieldName]) {
       setErrors((prev) => ({
@@ -41,7 +39,6 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
     }
   };
 
-  
   const parseErrorMessage = (errorMessage) => {
     const newErrors = {};
 
@@ -52,7 +49,6 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
     } else if (errorMessage.includes("Số điện thoại đã tồn tại")) {
       newErrors.phone = "Số điện thoại đã tồn tại";
     } else {
-
       toast.error(errorMessage);
       return {};
     }
@@ -89,18 +85,16 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
         inActive: 0,
       });
     }
-    
+
     setErrors({});
   }, [user, isOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-   
     setErrors({});
     setIsSubmitting(true);
 
-   
     const newErrors = {};
     if (!formData.username || !formData.username.trim()) {
       newErrors.username = "Mã người dùng là bắt buộc";
@@ -126,7 +120,6 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
         onClose();
       }
     } catch (error) {
-      
       const fieldErrors = parseErrorMessage(error.message || "Có lỗi xảy ra");
       if (Object.keys(fieldErrors).length > 0) {
         setErrors(fieldErrors);
@@ -404,26 +397,43 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
           </div>
 
           {/* Buttons */}
-          <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-            >
-              Hủy
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`flex items-center gap-2 px-4 py-2 text-sm text-white rounded-md transition-colors ${
-                isSubmitting
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-mainColor hover:bg-opacity-90"
-              }`}
-            >
-              <Save className="w-4 h-4" />
-              {isSubmitting ? "Đang xử lý..." : user ? "Cập nhật" : "Thêm mới"}
-            </button>
+
+          <div className="flex justify-between mt-4 pt-4 ">
+            <div>
+              <button
+                // onClick={() => onResetPassword(user)}
+                className="px-4 py-2 text-white text-sm bg-mainColor  rounded transition-colors"
+                title="Reset mật khẩu"
+              
+              >
+                Reset mật khẩu
+              </button>
+            </div>
+            <div className="flex gap-2 ">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className={`flex items-center gap-2 px-4 py-2 text-sm text-white rounded-md transition-colors ${
+                  isSubmitting
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-mainColor hover:bg-opacity-90"
+                }`}
+              >
+                <Save className="w-4 h-4" />
+                {isSubmitting
+                  ? "Đang xử lý..."
+                  : user
+                  ? "Cập nhật"
+                  : "Thêm mới"}
+              </button>
+            </div>
           </div>
         </form>
       </div>

@@ -206,18 +206,30 @@ const UserManagement = () => {
   };
 
   const handleDelete = async (username) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
-      try {
-        setLoading(true);
-        await userService.deleteUser(username);
-        toast.success("Xóa người dùng thành công!");
-        fetchUsers(); // Refresh data
-      } catch (error) {
-        console.error("Error deleting user:", error);
-        toast.error(error.message || "Có lỗi xảy ra khi xóa người dùng");
-      } finally {
-        setLoading(false);
-      }
+    try {
+      setLoading(true);
+      await userService.deleteUser(username);
+      toast.success("Xóa người dùng thành công!");
+      fetchUsers(); // Refresh data
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      toast.error(error.message || "Có lỗi xảy ra khi xóa người dùng");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForceDelete = async (username, force = true) => {
+    try {
+      setLoading(true);
+      await userService.deleteUser(username, force);
+      toast.success("Xóa cứng người dùng thành công!");
+      fetchUsers(); // Refresh data
+    } catch (error) {
+      console.error("Error force deleting user:", error);
+      toast.error(error.message || "Có lỗi xảy ra khi xóa cứng người dùng");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -484,6 +496,7 @@ const UserManagement = () => {
         isOpen={detailModalOpen}
         onClose={() => setDetailModalOpen(false)}
         user={selectedUser}
+        onForceDelete={handleForceDelete}
       />
 
       <UserFormModal

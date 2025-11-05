@@ -1,6 +1,7 @@
 package com.example.server.controller.user;
 
 import com.example.server.DTO.SuccessResponseDTO;
+import com.example.server.DTO.users.ChangePasswordRequest;
 import com.example.server.DTO.users.UserDTO;
 import com.example.server.DTO.users.UserDetailsDTO;
 import com.example.server.DTO.users.UserRequest;
@@ -48,8 +49,6 @@ public class UserController {
     private UserMapper userMapper;
 
 
-
-
     @GetMapping("/profile")
     public ResponseEntity<?> profile(@RequestParam(name = "id") Integer userId) {
         User user = userRepository.findByIdUser(userId);
@@ -65,7 +64,7 @@ public class UserController {
     @PostMapping("/update-profile")
     public ResponseEntity<?> updateUser(@RequestBody UserRequest request) {
 
-        User user = userRepository.findByIdUser(request.getId());
+        User user = userRepository.findByUsername(request.getUsername());
 
 //        userRepository.save(user);
         if (user == null) throw new ErrorException("Người dùng không tồn tại !", HttpStatus.NOT_FOUND);
@@ -74,5 +73,20 @@ public class UserController {
             return ResponseEntity.ok(new SuccessResponseDTO<>(userDTO, "Lấy thông tin người dùng thành công."));
         }
     }
+
+    @PutMapping("/change-password")
+    public ResponseEntity<?> changePassword(
+            @RequestParam(value = "username") String username,
+            @RequestBody ChangePasswordRequest request
+    ) {
+//        try {
+            userService.changePassword(username, request.getCurrentPassword(), request.getNewPassword());
+            return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Đổi mật khẩu thành công!"));
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+//                    .body(e.getMessage());
+//        }
+    }
+
 
 }
