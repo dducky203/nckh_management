@@ -114,7 +114,6 @@ public class UserService implements UserDetailsService {
                 existingUser.setIsDeleted(true);
                 userRepository.save(existingUser);
             }
-
         } else {
             throw new ErrorException("Tài khoản không tồn tại", HttpStatus.NOT_FOUND);
         }
@@ -137,7 +136,7 @@ public class UserService implements UserDetailsService {
     public void resetPassword(String username) {
         User existingUser = userRepository.findByUsername(username);
         if (existingUser != null) {
-            existingUser.setPassword("userfita@12345");
+            existingUser.setPassword(SHA_256_password.GM_SHA_password("userfita@12345"));
             userRepository.save(existingUser);
         } else {
             throw new ErrorException("Tài khoản không tồn tại", HttpStatus.NOT_FOUND);

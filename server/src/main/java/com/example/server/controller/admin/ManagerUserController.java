@@ -8,6 +8,7 @@ import com.example.server.controller.user.EmailController;
 import com.example.server.domain.*;
 import com.example.server.mapper.UserMapper;
 import com.example.server.repository.*;
+import com.example.server.service.EmailService;
 import com.example.server.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -178,16 +179,18 @@ public class ManagerUserController {
                 " \nMật khẩu đăng nhập: " + rawPassword;
         emailController.sendEmail(toEmail, subject, bodyGuest);
     }
+    @Autowired
+private EmailService emailService;
 
-    public void sendPasswordForgotEmail(String code, String toEmail, String rawPassword) {
-        // send email to user
-        String subject = "Thông tin tài khoản của bạn";
-        String bodyGuest = "Tài khoản của bạn đã được cập nhật." +
-                "\nTài Khoản đăng nhập:" + code +
-                " \nMật khẩu đăng nhập: " + rawPassword;
-        emailController.sendEmail(toEmail, subject, bodyGuest);
+
+  public void sendPasswordForgotEmail(String username, String toEmail, String rawPassword) {
+    try {
+        // Sử dụng template HTML thay vì plain text
+        emailService.sendForgotPasswordEmail(toEmail, username, rawPassword);
+    } catch (Exception e) {
+        throw new RuntimeException("Không thể gửi email đặt lại mật khẩu: " + e.getMessage());
     }
-
+}
 
 
 }

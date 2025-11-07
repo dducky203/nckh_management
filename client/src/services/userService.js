@@ -32,6 +32,11 @@ const userService = {
     );
   },
 
+  // Đặt lại mật khẩu
+  resetPassword: async (username) => {
+    return await api.patch(`/dashboard/manage-users/reset-password?username=${username}`);
+  },
+
   // Lấy profile
   getProfile: async () => {
     return await api.get("/users/profile");

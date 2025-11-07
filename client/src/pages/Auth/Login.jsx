@@ -153,14 +153,6 @@ const Login = () => {
                     Tên đăng nhập phải có nhiều hơn 5 ký tự
                   </p>
                 )}
-              {formData.username.trim() &&
-                formData.password.trim() &&
-                formData.username.trim().toLowerCase() ===
-                  formData.password.trim().toLowerCase() && (
-                  <p className="text-red-500 text-xs mt-1">
-                    Tên đăng nhập và mật khẩu không được giống nhau
-                  </p>
-                )}
             </div>
 
             <div className="relative">

@@ -34,16 +34,16 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        // Cho phép các endpoint đăng nhập và công khai không cần xác thực
-                        .requestMatchers(
+                                // Cho phép các endpoint đăng nhập và công khai không cần xác thực
+                                .requestMatchers(
 //                                "/admin/**",
-                                "/auth/login"
+                                        "/auth/**"
 //                                "/public/**"
-                        ).permitAll()
-                        // Tùy chọn: tắt xác thực, cho phép mọi request
+                                ).permitAll()
+                                // Tùy chọn: tắt xác thực, cho phép mọi request
 //                        .anyRequest().permitAll()
-                        // Hoặc yêu cầu xác thực nếu cần
-                         .anyRequest().authenticated()
+                                // Hoặc yêu cầu xác thực nếu cần
+                                .anyRequest().authenticated()
                 )
                 .csrf(AbstractHttpConfigurer::disable)
                 // Thêm JwtAuthenticationFilter để xử lý token JWT
@@ -55,7 +55,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "https://rfc5lt36-5173.asse.devtunnels.ms"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
 

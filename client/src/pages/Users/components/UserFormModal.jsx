@@ -1,8 +1,16 @@
 import { useState, useEffect } from "react";
-import { Close, Save, Visibility, VisibilityOff, LockReset } from "@mui/icons-material";
+import {
+  Close,
+  Save,
+  Visibility,
+  VisibilityOff,
+  LockReset,
+} from "@mui/icons-material";
 import { useToast } from "../../../context/ToastContext";
 import { roleStringToInt, titleStringToInt } from "../../../utils/helpers";
 import { formatDateForInput } from "../../../utils/dateHelpers";
+import userService from "../../../services/userService";
+import Modal from "../../../components/common/Modal";
 
 const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
   const toast = useToast();
@@ -23,6 +31,7 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false);
 
   const normalizeInActiveValue = (value) => {
     if (value === true || value === 1 || value === "1") return 1;
@@ -88,6 +97,22 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
 
     setErrors({});
   }, [user, isOpen]);
+
+  const handleResetPasswordClick = () => {
+    setResetPasswordModalOpen(true);
+  };
+
+  const handleResetPasswordConfirm = async () => {
+    try {
+      await userService.resetPassword(user.username);
+      toast.success("Reset mật khẩu thành công!");
+      setResetPasswordModalOpen(false);
+    } catch (error) {
+      toast.error(
+        "Đặt lại mật khẩu thất bại: " + (error.message || "Có lỗi xảy ra")
+      );
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -400,14 +425,16 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
 
           <div className="flex justify-between mt-4 pt-4 ">
             <div>
-              <button
-                // onClick={() => onResetPassword(user)}
-                className="px-4 py-2 text-white text-sm bg-mainColor  rounded transition-colors"
-                title="Reset mật khẩu"
-              
-              >
-                Reset mật khẩu
-              </button>
+              {user && (
+                <button
+                  type="button"
+                  onClick={handleResetPasswordClick}
+                  className="px-4 py-2 text-white text-sm bg-mainColor rounded transition-colors hover:bg-opacity-90"
+                  title="Reset mật khẩu"
+                >
+                  Reset mật khẩu
+                </button>
+              )}
             </div>
             <div className="flex gap-2 ">
               <button
@@ -437,6 +464,18 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
           </div>
         </form>
       </div>
+
+      {/* Reset Password Modal */}
+      <Modal
+        isOpen={resetPasswordModalOpen}
+        onClose={() => setResetPasswordModalOpen(false)}
+        onConfirm={handleResetPasswordConfirm}
+        title="Xác nhận reset mật khẩu"
+        message={`Bạn có chắc chắn muốn reset mật khẩu cho người dùng "${user?.name}"? Mật khẩu mới sẽ được gửi qua email.`}
+        confirmText="Xác nhận"
+        cancelText="Hủy"
+        type="warning"
+      />
     </div>
   );
 };

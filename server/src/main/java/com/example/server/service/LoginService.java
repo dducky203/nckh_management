@@ -31,26 +31,26 @@ public class LoginService {
 
 
     // get user by username and password
-    public User checkLoginUser(String username ,String inputPassword ) {
+    public User checkLoginUser(String username, String inputPassword) {
 
-        User user = userRepository.checkLogin(username) ;
+        User user = userRepository.checkLogin(username);
         if (user == null) return null;
         else {
 //            String hashedInput = SHA_256_password.SHA_password(inputPassword);
-            if(!(SHA_256_password.comparePassword(inputPassword, user.getPassword()))) return null;
+            if (!(SHA_256_password.comparePassword(inputPassword, user.getPassword()))) return null;
             else return user;
         }
     }
-
 
 
     // check username (while forgotPass)
     public User checkForgotPass(String username) {
         List<User> users = userRepository.findAll();
         for (User user : users) {
-            if (user.getUsername().equals(username)) {
+            if (user.getIdResume().getEmail().equals(username)) {
                 return user;
             }
+
         }
         return null;
     }

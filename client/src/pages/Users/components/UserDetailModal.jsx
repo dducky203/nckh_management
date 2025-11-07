@@ -206,7 +206,7 @@ const UserDetailModal = ({ isOpen, onClose, user, onForceDelete }) => {
         </div>
 
         <div className="flex justify-between items-center p-4 border-t bg-gray-50 rounded-b-lg">
-          {/* Nút xóa cứng bên trái */}
+         
           {user.isDeleted && (
             <button
               onClick={handleForceDeleteClick}
@@ -217,7 +217,7 @@ const UserDetailModal = ({ isOpen, onClose, user, onForceDelete }) => {
             </button>
           )}
 
-          {/* Nút đóng bên phải */}
+        
           <div className="flex gap-2">
             <button
               onClick={onClose}
@@ -229,12 +229,12 @@ const UserDetailModal = ({ isOpen, onClose, user, onForceDelete }) => {
         </div>
       </div>
 
-      {/* Modal xác nhận xóa cứng */}
+      
       <Modal
         isOpen={showForceDeleteModal}
         onClose={() => setShowForceDeleteModal(false)}
         onConfirm={handleConfirmForceDelete}
-        title="Xác nhận xóa cứng"
+        title="Xác nhận xóa người dùng"
         message={`Bạn có chắc chắn muốn xóa người dùng "${user?.name}"? Hành động này sẽ xóa vĩnh viễn và không thể khôi phục.`}
         confirmText="Xóa"
         cancelText="Hủy"
