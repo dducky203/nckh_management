@@ -23,9 +23,11 @@ const ForgotPassword = () => {
     try {
       // Gọi API forgot password từ authService
       const response = await authService.forgotPassword(email);
-      
+
       if (response.success) {
-        setMessage(response.message || "Mật khẩu mới đã được gửi đến email của bạn!");
+        setMessage(
+          response.message || "Mật khẩu mới đã được gửi đến email của bạn!"
+        );
         setIsSuccess(true);
       } else {
         setMessage(response.message || "Có lỗi xảy ra, vui lòng thử lại");
@@ -35,17 +37,13 @@ const ForgotPassword = () => {
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <div  className="min-h-screen flex items-center justify-center bg-gray-200 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-200 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 border-2 p-8 shadow-md rounded-lg bg-gray-50  border-gray-300">
         <div>
-          <img
-            className="mx-auto h-12 w-auto"
-            src={logoFita}
-            alt="FITA Logo"
-          />
+          <img className="mx-auto h-12 w-auto" src={logoFita} alt="FITA Logo" />
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Quên mật khẩu
           </h2>
@@ -74,17 +72,15 @@ const ForgotPassword = () => {
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-green-800">{message}</p>
+                  <p className="text-sm font-medium text-green-800">
+                    {message}
+                  </p>
                 </div>
               </div>
             </div>
             <div>
               <Link to="/login">
-                <Button
-                  type="button"
-                  className="w-full"
-                  size="lg"
-                >
+                <Button type="button" className="w-full" size="lg">
                   Quay lại đăng nhập
                 </Button>
               </Link>
@@ -120,14 +116,23 @@ const ForgotPassword = () => {
             <div className="flex items-center justify-between">
               <div className="text-sm">
                 <Link
-                to="/login"
-                className="font-medium text-mainColor hover:text-mainColor/80 flex items-center"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                </svg>
-                Quay lại đăng nhập
-              </Link>
+                  to="/login"
+                  className="font-medium text-mainColor hover:text-mainColor/80 flex items-center"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 mr-1"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Quay lại đăng nhập
+                </Link>
               </div>
             </div>
 
@@ -138,9 +143,9 @@ const ForgotPassword = () => {
                 fullWidth
                 disabled={isLoading}
                 sx={{
-                  bgcolor: 'mainColor', 
-                  '&:hover': { bgcolor: 'rgba(32, 108, 158, 0.9)' },
-                  py: 1
+                  bgcolor: "mainColor",
+                  "&:hover": { bgcolor: "rgba(32, 108, 158, 0.9)" },
+                  py: 1,
                 }}
               >
                 {isLoading ? "Đang gửi..." : "Gửi yêu cầu"}
@@ -148,7 +153,6 @@ const ForgotPassword = () => {
             </div>
           </form>
         )}
-
       </div>
     </div>
   );
