@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@mui/material";
 import { Email } from "@mui/icons-material";
 import logoFita from "../../assets/logo_fita.png";
+import authService from "../../services/authService";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -20,34 +21,21 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Check if email exists in demo accounts
-      const demoEmails = [
-        "admin@fita.com",
-        "manager@fita.com",
-        "member@fita.com",
-        "guest@fita.com",
-      ];
-
-      if (demoEmails.includes(email)) {
-        // Simulate successful password reset request
+      // Gọi API forgot password từ authService
+      const response = await authService.forgotPassword(email);
+      
+      if (response.success) {
+        setMessage(response.message || "Mật khẩu mới đã được gửi đến email của bạn!");
         setIsSuccess(true);
-        setMessage("Đường dẫn đặt lại mật khẩu đã được gửi đến email của bạn");
       } else {
-        setMessage("Email không tồn tại trong hệ thống");
+        setMessage(response.message || "Có lỗi xảy ra, vui lòng thử lại");
       }
     } catch (error) {
-      console.error("Password reset error:", error);
-      setMessage("Có lỗi xảy ra khi gửi yêu cầu");
+      setMessage(error.message || "Có lỗi xảy ra khi gửi yêu cầu");
     } finally {
       setIsLoading(false);
-      
     }
-  };
-
-  // Redirect function not needed anymore as we use Link components
+  }
 
   return (
     <div  className="min-h-screen flex items-center justify-center bg-gray-200 py-12 px-4 sm:px-6 lg:px-8">
