@@ -35,33 +35,35 @@ public class JwtService {
                     .parseClaimsJws(token)
                     .getBody();
         } catch (ExpiredJwtException e) {
-            throw new JwtException("⏰ Token đã hết hạn");
+            throw new JwtException("Token đã hết hạn");
         } catch (MalformedJwtException e) {
-            throw new JwtException("❌ Token sai cấu trúc");
+            throw new JwtException("Token sai cấu trúc");
         } catch (SignatureException e) {
-            throw new JwtException("🔏 Token sai chữ ký");
+            throw new JwtException("Token sai chữ ký");
         } catch (UnsupportedJwtException e) {
-            throw new JwtException("🚫 Token không được hỗ trợ");
+            throw new JwtException("Token không được hỗ trợ");
         } catch (IllegalArgumentException e) {
-            throw new JwtException("⚠️ Token null hoặc rỗng");
+            throw new JwtException("Token null hoặc rỗng");
         } catch (Exception e) {
-            throw new JwtException("💥 Lỗi không xác định khi giải mã token");
+            throw new JwtException("Lỗi không xác định khi giải mã token");
         }
     }
 
-    public String generateToken(String username, String userType, Integer userId) {
+    public String generateToken(String username, String userType, Integer userId, long expirationTime) {
+        if (expirationTime == 0) expirationTime = jwtExpiration;
+
         Map<String, Object> claims = new HashMap<>();
         claims.put("userType", userType);
         claims.put("userId", userId);
-        return createToken(claims, username);
+        return createToken(claims, username, expirationTime);
     }
 
-    private String createToken(Map<String, Object> claims, String subject) {
+    private String createToken(Map<String, Object> claims, String subject, Long expirationTime) {
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(SignatureAlgorithm.HS256, secretKey)
                 .compact();
     }

@@ -74,8 +74,8 @@ const Login = () => {
 
   const demoAccounts = [
     {
-      email: "admin123",
-      password: "password123",
+      email: "admin",
+      password: "admin123",
       role: "Admin (Quản trị)",
       power: 1,
     },
@@ -268,24 +268,6 @@ const Login = () => {
                 </div>
               </button>
             ))}
-          </div>
-
-          <div className="mt-4 text-xs text-gray-500 text-center">
-            <p>
-              <strong>Hướng dẫn:</strong>
-            </p>
-            <p>• Admin/Manager có quyền quản lý toàn bộ hệ thống</p>
-            <p>• Member có thể xem/tạo sự kiện</p>
-            <p>• Guest có quyền hạn chế</p>
-            <p>• Mỗi role sẽ hiển thị menu khác nhau</p>
-            <div className="mt-2 pt-2 border-t border-gray-200">
-              <p>
-                <strong>Yêu cầu đăng nhập:</strong>
-              </p>
-              <p>• Tên đăng nhập phải có nhiều hơn 5 ký tự</p>
-              <p>• Tên đăng nhập và mật khẩu không được giống nhau</p>
-              <p>• Không được để trống hoặc chỉ có dấu cách</p>
-            </div>
           </div>
         </div>
       </div>

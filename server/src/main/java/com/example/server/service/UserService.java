@@ -120,13 +120,17 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public void changePassword(String username, String currentPassword, String newPassword) {
+    public void changePassword(String username, String currentPassword, String newPassword, Boolean forgotPassword) {
         User existingUser = userRepository.findByUsername(username);
         if (existingUser != null) {
-            if (SHA_256_password.comparePassword(currentPassword, existingUser.getPassword())) {
+            if (SHA_256_password.comparePassword(currentPassword, existingUser.getPassword()) && !forgotPassword ) {
+                existingUser.setPassword(SHA_256_password.GM_SHA_password(newPassword));
+                userRepository.save(existingUser);
+            } else if(forgotPassword && currentPassword == null){
                 existingUser.setPassword(SHA_256_password.GM_SHA_password(newPassword));
                 userRepository.save(existingUser);
             } else throw new ErrorException("Mật khẩu hiện tại không chính xác !", HttpStatus.BAD_REQUEST);
+
         } else {
             throw new ErrorException("Tài khoản không tồn tại", HttpStatus.NOT_FOUND);
         }

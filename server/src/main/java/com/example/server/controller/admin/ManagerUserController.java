@@ -52,6 +52,8 @@ public class ManagerUserController {
     private UserMapper userMapper;
     @Autowired
     private UserService userService;
+    @Autowired
+    private EmailService emailService;
 
     @GetMapping("/get-all-user")
     @ResponseBody
@@ -143,8 +145,7 @@ public class ManagerUserController {
     @DeleteMapping("/delete")
     public ResponseEntity<?> deleteUser(
             @RequestParam(value = "username") String username,
-            @RequestParam(value = "force", defaultValue = "false") Boolean force
-    ) {
+            @RequestParam(value = "force", defaultValue = "false") Boolean force) {
         userService.deleteUser(username, force);
         return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Xóa user thành công!"));
     }
@@ -179,18 +180,14 @@ public class ManagerUserController {
                 " \nMật khẩu đăng nhập: " + rawPassword;
         emailController.sendEmail(toEmail, subject, bodyGuest);
     }
-    @Autowired
-private EmailService emailService;
 
-
-  public void sendPasswordForgotEmail(String username, String toEmail, String rawPassword) {
-    try {
-        // Sử dụng template HTML thay vì plain text
-        emailService.sendForgotPasswordEmail(toEmail, username, rawPassword);
-    } catch (Exception e) {
-        throw new RuntimeException("Không thể gửi email đặt lại mật khẩu: " + e.getMessage());
+    public void sendPasswordForgotEmail(String name, String toEmail, String rawPassword, String token) {
+        try {
+            // Sử dụng template HTML thay vì plain text
+            emailService.sendForgotPasswordEmail(toEmail, name, rawPassword, token);
+        } catch (Exception e) {
+            throw new RuntimeException("Không thể gửi email đặt lại mật khẩu: " + e.getMessage());
+        }
     }
-}
-
 
 }

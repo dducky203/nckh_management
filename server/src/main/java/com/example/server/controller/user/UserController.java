@@ -79,13 +79,9 @@ public class UserController {
             @RequestParam(value = "username") String username,
             @RequestBody ChangePasswordRequest request
     ) {
-//        try {
-            userService.changePassword(username, request.getCurrentPassword(), request.getNewPassword());
+            userService.changePassword(username, request.getCurrentPassword(), request.getNewPassword(), false);
             return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Đổi mật khẩu thành công!"));
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-//                    .body(e.getMessage());
-//        }
+
     }
 
 

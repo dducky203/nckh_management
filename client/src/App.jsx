@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { useEffect } from "react";
 
 // Context Providers
 import { AuthProvider } from "./context/AuthContext";
@@ -13,20 +12,20 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Login from "./pages/Auth/Login";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
+import ResetPassword from "./pages/Auth/ResetPassword";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Auth/Unauthorized";
 import ResearchProjects from "./pages/ResearchActivity/ResearchProjects";
-import EventsUpcoming from "./pages/Events/EventsUpcoming";
+// import EventsUpcoming from "./pages/Events/EventsUpcoming";
 
 // Components
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import { ToastProvider } from "./context/ToastContext";
 import Profile from "./pages/Users/Profile";
 import UserManagement from "./pages/Users/UserManagement";
+import EventDashboard from "./pages/Events/EventDashboard";
 
 function App() {
-
-
   return (
     <AuthProvider>
       <Router>
@@ -35,6 +34,7 @@ function App() {
             {/* Public routes - không cần đăng nhập */}
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
 
             {/* Routes with layout */}
@@ -55,13 +55,21 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
-                   
+
                     <Route
                       path="/user/manager"
                       element={
                         <ProtectedRoute requiredPower="admin">
                           <UserManagement />
-                      </ProtectedRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="events/manage"
+                      element={
+                        <ProtectedRoute requiredPower="admin">
+                          <EventDashboard />
+                        </ProtectedRoute>
                       }
                     />
                     <Route
@@ -113,10 +121,10 @@ function App() {
                       }
                     />
                     {/* Events Routes */}
-                    <Route
+                    {/* <Route
                       path="/events/upcoming"
                       element={<EventsUpcoming />}
-                    />
+                    /> */}
                     <Route
                       path="/events/ongoing"
                       element={

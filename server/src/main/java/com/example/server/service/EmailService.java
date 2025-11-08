@@ -19,13 +19,13 @@ public class EmailService {
     private JavaMailSender mailSender;
 
     // Gửi email forgot password với template HTML
-    public void sendForgotPasswordEmail(String toEmail, String username, String newPassword) {
+    public void sendForgotPasswordEmail(String toEmail, String name, String newPassword, String token) {
         try {
             // 1. Tạo dữ liệu cho template
             Context context = new Context();
-            context.setVariable("username", username);
+            context.setVariable("name", name);
             context.setVariable("newPassword", newPassword);
-            context.setVariable("resetLink", "http://localhost:3000/login"); // Link về trang login
+            context.setVariable("resetLink", "http://localhost:5173/reset-password?token="+token); // Link về trang login
 
             // 2. Render file HTML ra chuỗi
             String htmlContent = templateEngine.process("forgotPassword", context);
@@ -37,7 +37,7 @@ public class EmailService {
             helper.setFrom("noreply@fita.vnua.edu.vn");
             helper.setTo(toEmail);
             helper.setSubject("Đặt lại mật khẩu - Hệ thống NCKH FITA");
-            helper.setText(htmlContent, true); // true = HTML
+            helper.setText(htmlContent, true);
 
             // 4. Gửi email
             mailSender.send(message);

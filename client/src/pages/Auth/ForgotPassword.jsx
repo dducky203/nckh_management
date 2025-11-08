@@ -21,7 +21,7 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      // Gọi API forgot password từ authService
+     
       const response = await authService.forgotPassword(email);
 
       if (response.success) {
