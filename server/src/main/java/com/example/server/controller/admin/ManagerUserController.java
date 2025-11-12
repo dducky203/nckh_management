@@ -181,10 +181,10 @@ public class ManagerUserController {
         emailController.sendEmail(toEmail, subject, bodyGuest);
     }
 
-    public void sendPasswordForgotEmail(String name, String toEmail, String rawPassword, String token) {
+    public void sendPasswordForgotEmail(String name, String toEmail,  String token) {
         try {
             // Sử dụng template HTML thay vì plain text
-            emailService.sendForgotPasswordEmail(toEmail, name, rawPassword, token);
+            emailService.sendForgotPasswordEmail(toEmail, name,  token);
         } catch (Exception e) {
             throw new RuntimeException("Không thể gửi email đặt lại mật khẩu: " + e.getMessage());
         }

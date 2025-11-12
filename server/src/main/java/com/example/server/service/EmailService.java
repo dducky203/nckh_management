@@ -2,6 +2,7 @@ package com.example.server.service;
 
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -18,14 +19,16 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
+    @Value("${kltn.frontend.url}")
+    private String frontendUrl;
+
     // Gửi email forgot password với template HTML
-    public void sendForgotPasswordEmail(String toEmail, String name, String newPassword, String token) {
+    public void sendForgotPasswordEmail(String toEmail, String name,  String token) {
         try {
             // 1. Tạo dữ liệu cho template
             Context context = new Context();
             context.setVariable("name", name);
-            context.setVariable("newPassword", newPassword);
-            context.setVariable("resetLink", "http://localhost:5173/reset-password?token="+token); // Link về trang login
+            context.setVariable("resetLink", frontendUrl + "/reset-password?token=" + token);
 
             // 2. Render file HTML ra chuỗi
             String htmlContent = templateEngine.process("forgotPassword", context);
@@ -41,7 +44,7 @@ public class EmailService {
 
             // 4. Gửi email
             mailSender.send(message);
-            
+
         } catch (Exception e) {
             throw new RuntimeException("Không thể gửi email: " + e.getMessage());
         }

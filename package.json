@@ -1,0 +1,9 @@
+{
+  "name": "kltn-root",
+  "private": true,
+  "scripts": {
+    "start": "npm run dev --prefix client",
+    "build": "npm run build --prefix client",
+    "preview": "npm run preview --prefix client"
+  }
+}

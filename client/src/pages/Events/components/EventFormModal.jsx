@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { Close, Save, Upload } from "@mui/icons-material";
 import { useToast } from "../../../context/ToastContext";
+// import MDEditor from '@uiw/react-md-editor';
+// import '@uiw/react-md-editor/markdown-editor.css';
+import './EventFormModal.css';
 
 const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
   const toast = useToast();
@@ -78,6 +81,16 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
     }
   };
 
+  // Xử lý thay đổi cho rich text editor
+  const handleRichTextChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -105,7 +118,7 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
       newErrors.location = "Địa điểm tổ chức là bắt buộc";
     }
 
-    if (!formData.description.trim()) {
+    if (!formData.description || !formData.description.trim()) {
       newErrors.description = "Mô tả sự kiện là bắt buộc";
     }
 
@@ -153,7 +166,8 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
 
     try {
       await onSave(formData);
-    } catch (error) {
+    } catch (err) {
+      console.error('Error saving event:', err);
       toast.error("Có lỗi xảy ra khi lưu sự kiện");
     } finally {
       setIsSubmitting(false);
@@ -350,16 +364,20 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Mô tả sự kiện <span className="text-red-500">*</span>
               </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows={4}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.description ? "border-red-500" : "border-gray-300"
-                }`}
-                placeholder="Mô tả chi tiết về sự kiện"
-              />
+              <div className={`${errors.description ? "border-red-500" : ""}`}>
+                <MDEditor
+                  value={formData.description}
+                  onChange={(value) => handleRichTextChange('description', value || '')}
+                  preview="edit"
+                  hideToolbar={false}
+                  visibleDragBar={false}
+                  textareaProps={{
+                    placeholder: 'Mô tả chi tiết về sự kiện...',
+                    style: { fontSize: 14, lineHeight: 1.5 }
+                  }}
+                  height={150}
+                />
+              </div>
               {errors.description && (
                 <p className="text-red-500 text-sm mt-1">
                   {errors.description}
@@ -387,13 +405,17 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Chương trình sự kiện
               </label>
-              <textarea
-                name="agenda"
+              <MDEditor
                 value={formData.agenda}
-                onChange={handleChange}
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Chương trình chi tiết của sự kiện"
+                onChange={(value) => handleRichTextChange('agenda', value || '')}
+                preview="edit"
+                hideToolbar={false}
+                visibleDragBar={false}
+                textareaProps={{
+                  placeholder: 'Chương trình chi tiết của sự kiện...',
+                  style: { fontSize: 14, lineHeight: 1.5 }
+                }}
+                height={150}
               />
             </div>
 
@@ -478,5 +500,4 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
     </div>
   );
 };
-
 export default EventFormModal;

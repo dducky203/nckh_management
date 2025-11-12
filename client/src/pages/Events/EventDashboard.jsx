@@ -12,6 +12,7 @@ import EventFormModal from "./components/EventFormModal";
 import EventDetailModal from "./components/EventDetailModal";
 import EventApprovalModal from "./components/EventApprovalModal";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import EventList from "./components/EventList";
 
 // Dashboard Components
 import DashboardSidebar from "./components/Management/DashboardSidebar";
@@ -109,13 +110,159 @@ const EventDashboard = () => {
         createdAt: "2024-10-15",
         approvedAt: "2024-10-20",
       },
+      {
+        id: 5,
+        title:
+          "Mô hình hóa xu hướng phát triển sử dụng đất/lớp phủ khu vực đô thị sử dụng dữ liệu viễn thám và các mô hình trí tuệ nhân tạo",
+        type: "Hội thảo",
+        date: "2024-12-24",
+        time: "08:00 - 17:00",
+        location: "Hội trường A",
+        description:
+          "Nghiên cứu về ứng dụng AI trong phân tích dữ liệu viễn thám cho quy hoạch đô thị",
+        organizer: "TS. Nguyễn Văn Khoa",
+        status: "pending",
+        participants: 0,
+        maxParticipants: 100,
+        createdAt: "2024-11-07",
+      },
+      {
+        id: 6,
+        title: "test vietnamese paper",
+        type: "Hội thảo",
+        date: "2025-09-19",
+        time: "14:00 - 18:00",
+        location: "Hội trường A",
+        description: "Hội thảo thử nghiệm về nghiên cứu khoa học",
+        organizer: "GS. Trần Thị Mai",
+        status: "pending",
+        participants: 0,
+        maxParticipants: 80,
+        createdAt: "2024-11-06",
+      },
+      {
+        id: 7,
+        title: "Workshop React Advanced - Từ cơ bản đến chuyên sâu",
+        type: "Workshop",
+        date: "2024-11-25",
+        time: "09:00 - 17:00",
+        location: "Phòng Lab C3",
+        description:
+          "Workshop intensive về React hooks, context, performance optimization",
+        organizer: "Nguyễn Văn Frontend",
+        status: "approved",
+        participants: 45,
+        maxParticipants: 60,
+        createdAt: "2024-10-28",
+        approvedAt: "2024-10-30",
+      },
+      {
+        id: 8,
+        title: "Cuộc thi Hackathon AI Innovation 2024",
+        type: "Cuộc thi",
+        date: "2024-12-14",
+        time: "08:00 - 20:00",
+        location: "Toàn bộ tòa nhà FITA",
+        description: "Cuộc thi phát triển ứng dụng AI trong 48 giờ liên tục",
+        organizer: "CLB Lập trình",
+        status: "pending",
+        participants: 0,
+        maxParticipants: 200,
+        createdAt: "2024-11-08",
+      },
+      {
+        id: 9,
+        title: "Seminar: Cybersecurity trong thời đại Digital",
+        type: "Seminar",
+        date: "2024-11-20",
+        time: "14:00 - 17:00",
+        location: "Hội trường B1",
+        description:
+          "Chia sẻ về các xu hướng tấn công mạng và cách phòng chống",
+        organizer: "TS. Lê Thanh Security",
+        status: "approved",
+        participants: 120,
+        maxParticipants: 150,
+        createdAt: "2024-10-25",
+        approvedAt: "2024-10-28",
+      },
+      {
+        id: 10,
+        title: "Workshop: Machine Learning cơ bản với Python",
+        type: "Workshop",
+        date: "2024-12-01",
+        time: "08:30 - 16:30",
+        location: "Phòng Lab B1-B2",
+        description: "Hands-on workshop về ML algorithms, scikit-learn, pandas",
+        organizer: "ThS. Hoàng Văn Data",
+        status: "pending",
+        participants: 0,
+        maxParticipants: 40,
+        createdAt: "2024-11-07",
+      },
+      {
+        id: 11,
+        title: "Hội thảo: Startup và Đổi mới sáng tạo",
+        type: "Hội thảo",
+        date: "2024-11-30",
+        time: "13:00 - 17:00",
+        location: "Audi A2",
+        description:
+          "Gặp gỡ các founder thành công, chia sẻ kinh nghiệm khởi nghiệp",
+        organizer: "Trung tâm Khởi nghiệp",
+        status: "approved",
+        participants: 180,
+        maxParticipants: 200,
+        createdAt: "2024-10-20",
+        approvedAt: "2024-10-22",
+      },
+      {
+        id: 12,
+        title: "Cuộc thi thiết kế UI/UX Design Challenge",
+        type: "Cuộc thi",
+        date: "2024-12-10",
+        time: "09:00 - 18:00",
+        location: "Phòng Design Studio",
+        description:
+          "Thử thách thiết kế interface cho ứng dụng mobile trong 8 giờ",
+        organizer: "CLB Design",
+        status: "pending",
+        participants: 0,
+        maxParticipants: 50,
+        createdAt: "2024-11-05",
+      },
+      {
+        id: 13,
+        title: "Seminar: DevOps và Cloud Computing",
+        type: "Seminar",
+        date: "2025-01-15",
+        time: "14:00 - 18:00",
+        location: "Online + Hội trường C1",
+        description: "Docker, Kubernetes, AWS, CI/CD pipelines trong thực tế",
+        organizer: "Cộng đồng DevOps VN",
+        status: "pending",
+        participants: 0,
+        maxParticipants: 300,
+        createdAt: "2024-11-08",
+      },
+      {
+        id: 14,
+        title: "Workshop: Game Development với Unity",
+        type: "Workshop",
+        date: "2024-12-28",
+        time: "09:00 - 17:00",
+        location: "Phòng Game Lab",
+        description: "Tạo game 2D hoàn chỉnh từ ý tưởng đến deploy",
+        organizer: "Game Studio UIT",
+        status: "approved",
+        participants: 25,
+        maxParticipants: 30,
+        createdAt: "2024-11-01",
+        approvedAt: "2024-11-03",
+      },
     ],
     []
   );
-
-  // useEffect(() => {
-  //   fetchEvents();
-  // }, [fetchEvents]);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -131,6 +278,10 @@ const EventDashboard = () => {
       setLoading(false);
     }
   }, [toast, mockEvents]);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
 
   // const generateStatistics = useCallback(() => {
   //   // Yearly statistics
@@ -228,17 +379,6 @@ const EventDashboard = () => {
     }
   };
 
-  const getTypeColor = (type) => {
-    const colors = {
-      "Hội thảo": "bg-blue-100 text-blue-800",
-      Workshop: "bg-green-100 text-green-800",
-      "Cuộc thi": "bg-red-100 text-red-800",
-      Seminar: "bg-purple-100 text-purple-800",
-      Khác: "bg-gray-100 text-gray-800",
-    };
-    return colors[type] || "bg-gray-100 text-gray-800";
-  };
-
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -275,220 +415,47 @@ const EventDashboard = () => {
 
           {/* Approved Events Tab */}
           {activeTab === "approved" && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="text-3xl font-bold text-gray-900">
-                    Sự kiện đã duyệt
-                  </h2>
-                  <p className="text-gray-600">
-                    Quản lý các sự kiện đã được phê duyệt
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    setEditingEvent(null);
-                    setFormModalOpen(true);
-                  }}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-                >
-                  <Add className="mr-2" />
-                  Thêm sự kiện
-                </button>
-              </div>
-
-              <div className="bg-white rounded-lg shadow-sm border">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Sự kiện
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Loại
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Ngày
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Tham gia
-                        </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-                          Thao tác
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {approvedEvents.map((event) => (
-                        <tr key={event.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {event.title}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {event.location}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span
-                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(
-                                event.type
-                              )}`}
-                            >
-                              {event.type}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-900">
-                            {new Date(event.date).toLocaleDateString("vi-VN")}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-900">
-                            {event.participants}/{event.maxParticipants}
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <div className="flex justify-center space-x-2">
-                              <button
-                                onClick={() => {
-                                  setSelectedEvent(event);
-                                  setDetailModalOpen(true);
-                                }}
-                                className="text-blue-600 hover:text-blue-800 p-1"
-                                title="Xem chi tiết"
-                              >
-                                <Visibility fontSize="small" />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setEditingEvent(event);
-                                  setFormModalOpen(true);
-                                }}
-                                className="text-yellow-600 hover:text-yellow-800 p-1"
-                                title="Chỉnh sửa"
-                              >
-                                <Edit fontSize="small" />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(event.id)}
-                                className="text-red-600 hover:text-red-800 p-1"
-                                title="Xóa"
-                              >
-                                <Delete fontSize="small" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
+            <EventList
+              events={approvedEvents}
+              type="approved"
+              title="Sự kiện đã duyệt"
+              onViewDetails={(event) => {
+                setSelectedEvent(event);
+                setDetailModalOpen(true);
+              }}
+              onEdit={(event) => {
+                setEditingEvent(event);
+                setFormModalOpen(true);
+              }}
+              onDelete={handleDelete}
+              onCreateNew={() => {
+                setEditingEvent(null);
+                setFormModalOpen(true);
+              }}
+              showCreateButton={true}
+            />
           )}
 
           {/* Pending Events Tab */}
           {activeTab === "pending" && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900">
-                  Sự kiện chờ duyệt
-                </h2>
-                <p className="text-gray-600">
-                  Xem xét và phê duyệt các sự kiện mới
-                </p>
-              </div>
-
-              {pendingEvents.length === 0 ? (
-                <div className="bg-white rounded-lg shadow-sm border p-12 text-center">
-                  <PendingActions
-                    className="mx-auto text-gray-400 mb-4"
-                    style={{ fontSize: "4rem" }}
-                  />
-                  <h3 className="text-xl font-medium text-gray-900 mb-2">
-                    Không có sự kiện chờ duyệt
-                  </h3>
-                  <p className="text-gray-600">Tất cả sự kiện đã được xử lý</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {pendingEvents.map((event) => (
-                    <div
-                      key={event.id}
-                      className="bg-white rounded-lg shadow-sm border p-6"
-                    >
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                            {event.title}
-                          </h3>
-                          <div className="space-y-1 text-sm text-gray-600">
-                            <p>
-                              <span className="font-medium">Loại:</span>{" "}
-                              {event.type}
-                            </p>
-                            <p>
-                              <span className="font-medium">Ngày:</span>{" "}
-                              {new Date(event.date).toLocaleDateString("vi-VN")}
-                            </p>
-                            <p>
-                              <span className="font-medium">Địa điểm:</span>{" "}
-                              {event.location}
-                            </p>
-                            <p>
-                              <span className="font-medium">
-                                Người tổ chức:
-                              </span>{" "}
-                              {event.organizer}
-                            </p>
-                          </div>
-                        </div>
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(
-                            event.type
-                          )}`}
-                        >
-                          {event.type}
-                        </span>
-                      </div>
-
-                      <p className="text-gray-700 text-sm mb-4 line-clamp-3">
-                        {event.description}
-                      </p>
-
-                      <div className="flex justify-between items-center">
-                        <div className="text-xs text-gray-500">
-                          Tạo:{" "}
-                          {new Date(event.createdAt).toLocaleDateString(
-                            "vi-VN"
-                          )}
-                        </div>
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => {
-                              setSelectedEvent(event);
-                              setDetailModalOpen(true);
-                            }}
-                            className="px-3 py-1 text-blue-600 border border-blue-300 rounded hover:bg-blue-50 transition-colors text-sm"
-                          >
-                            Chi tiết
-                          </button>
-                          <button
-                            onClick={() => {
-                              setSelectedEvent(event);
-                              setApprovalModalOpen(true);
-                            }}
-                            className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm"
-                          >
-                            Duyệt
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <EventList
+              events={pendingEvents}
+              type="pending"
+              title="Sự kiện chờ duyệt"
+              onViewDetails={(event) => {
+                setSelectedEvent(event);
+                setDetailModalOpen(true);
+              }}
+              onApprove={(event) => {
+                setSelectedEvent(event);
+                setApprovalModalOpen(true);
+              }}
+              onReject={(event) => {
+                setSelectedEvent(event);
+                setApprovalModalOpen(true);
+              }}
+              showCreateButton={false}
+            />
           )}
         </div>
       </div>

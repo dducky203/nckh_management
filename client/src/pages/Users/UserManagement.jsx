@@ -1,12 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import {
-  Search,
-  PersonAdd,
-  ChevronLeft,
-  ChevronRight,
-  FirstPage,
-  LastPage,
-} from "@mui/icons-material";
+import { Search, PersonAdd } from "@mui/icons-material";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import UserTable from "./components/UserTable";
 import SearchModal from "./components/SearchModal";
@@ -16,15 +9,15 @@ import { useToast } from "../../context/ToastContext";
 import userService from "../../services/userService";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { ITEMS_PER_PAGE } from "../../constants";
+import ErrorState from "../../components/common/ErrorState";
+import Pagination from "../../components/common/Pagination";
+import { usePagination } from "../../hooks";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPower, setFilterPower] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [currentPage, setCurrentPage] = useState(0); // API sử dụng 0-based indexing
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
@@ -34,6 +27,10 @@ const UserManagement = () => {
   const [editingUser, setEditingUser] = useState(null);
   const toast = useToast();
   const abortControllerRef = useRef(null);
+
+  // Use pagination hook
+  const pagination = usePagination(0, ITEMS_PER_PAGE);
+  const { currentPage, updatePaginationData } = pagination;
 
   const fetchUsers = useCallback(async () => {
     // Cancel previous request if exists
@@ -79,8 +76,10 @@ const UserManagement = () => {
       // Only update state if request wasn't aborted
       if (!abortControllerRef.current.signal.aborted) {
         setUsers(response.users || []);
-        setTotalPages(response.totalPages || 0);
-        setTotalItems(response.totalItems || 0);
+        updatePaginationData({
+          totalPages: response.totalPages || 0,
+          totalItems: response.totalItems || 0,
+        });
         setError(null);
       }
     } catch (error) {
@@ -100,14 +99,17 @@ const UserManagement = () => {
 
       // Reset data on error
       setUsers([]);
-      setTotalPages(0);
-      setTotalItems(0);
+      updatePaginationData({ totalPages: 0, totalItems: 0 });
     } finally {
       setLoading(false);
     }
-  }, [currentPage, filterPower, filterStatus, searchTerm]);
-
-  console.log({ users });
+  }, [
+    currentPage,
+    updatePaginationData,
+    filterPower,
+    filterStatus,
+    searchTerm,
+  ]);
 
   // Effect để handle tất cả data fetching
   useEffect(() => {
@@ -132,9 +134,6 @@ const UserManagement = () => {
     };
   }, []);
 
-  const startIndex = currentPage * ITEMS_PER_PAGE;
-  const endIndex = Math.min(startIndex + users.length, totalItems);
-
   // Add retry function
   const handleRetry = () => {
     setError(null);
@@ -144,13 +143,13 @@ const UserManagement = () => {
   // Handle search (với debounce nếu có search term)
   const handleSearchChange = (value) => {
     setSearchTerm(value);
-    setCurrentPage(0);
+    pagination.resetPagination();
     setError(null); // Clear error when user types
   };
 
   const handleFilterChange = (value) => {
     setFilterPower(value);
-    setCurrentPage(0);
+    pagination.resetPagination();
     setError(null); // Clear error when filter changes
 
     if (searchTerm.trim()) {
@@ -160,7 +159,7 @@ const UserManagement = () => {
 
   const handleStatusFilterChange = (value) => {
     setFilterStatus(value);
-    setCurrentPage(0);
+    pagination.resetPagination();
     setError(null); // Clear error when filter changes
     // Clear search để trigger immediate API call
     if (searchTerm.trim()) {
@@ -233,66 +232,6 @@ const UserManagement = () => {
     }
   };
 
-  const goToPage = (page) => {
-    setCurrentPage(page - 1); // Convert to 0-based for API
-  };
-
-  const goToFirstPage = () => {
-    setCurrentPage(0);
-  };
-
-  const goToLastPage = () => {
-    setCurrentPage(totalPages - 1);
-  };
-
-  const goToPreviousPage = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 0));
-  };
-
-  const goToNextPage = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1));
-  };
-
-  const getPageNumbers = () => {
-    const pages = [];
-    const delta = 2;
-    const displayCurrentPage = currentPage + 1; // Convert to 1-based for display
-
-    if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      pages.push(1);
-
-      let start = Math.max(2, displayCurrentPage - delta);
-      let end = Math.min(totalPages - 1, displayCurrentPage + delta);
-
-      if (displayCurrentPage <= delta + 2) {
-        end = Math.min(5, totalPages - 1);
-      }
-      if (displayCurrentPage >= totalPages - delta - 1) {
-        start = Math.max(totalPages - 4, 2);
-      }
-
-      if (start > 2) {
-        pages.push("...");
-      }
-
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-
-      if (end < totalPages - 1) {
-        pages.push("...");
-      }
-
-      pages.push(totalPages);
-    }
-
-    return pages;
-  };
-
   return (
     <div className="p-6">
       {/* Header */}
@@ -349,138 +288,41 @@ const UserManagement = () => {
         </div>
       </div>
 
-      {/* Error State */}
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-xs">!</span>
-              </div>
-              <div>
-                <p className="text-red-800 font-medium">
-                  Không thể tải dữ liệu
-                </p>
-                <p className="text-red-600 text-sm">{error}</p>
-              </div>
-            </div>
-            <button
-              onClick={handleRetry}
-              className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-              disabled={loading}
-            >
-              {loading ? "Đang thử lại..." : "Thử lại"}
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded  border-2 shadow overflow-hidden">
         {loading ? (
           <div className="flex justify-center items-center py-8">
             <LoadingSpinner />
           </div>
         ) : error ? (
-          <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <span className="text-2xl">⚠️</span>
-            </div>
-            <p className="text-lg font-medium mb-2">Không thể tải dữ liệu</p>
-            <p className="text-sm mb-4">
-              Vui lòng kiểm tra kết nối mạng hoặc liên hệ quản trị viên
-            </p>
-            <button
-              onClick={handleRetry}
-              className="px-4 py-2 bg-mainColor text-white rounded-md hover:bg-opacity-90 transition-colors"
-            >
-              Thử lại
-            </button>
-          </div>
+          <ErrorState onRetry={handleRetry} />
         ) : (
           <UserTable
             users={users}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onView={handleView}
-            currentPage={currentPage}
+            currentPage={pagination.currentPage}
             itemsPerPage={ITEMS_PER_PAGE}
           />
         )}
 
-        {!error && totalItems > 0 && (
-          <div className="px-6 py-4 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-700">
-                Hiển thị <span className="font-medium">{startIndex + 1}</span>{" "}
-                đến <span className="font-medium">{endIndex}</span> trong tổng
-                số <span className="font-medium">{totalItems}</span> người dùng
-              </div>
-
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={goToFirstPage}
-                  disabled={currentPage === 0}
-                  className="min-w-[32px] h-8 flex items-center justify-center rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-600"
-                  title="Trang đầu"
-                >
-                  <FirstPage fontSize="sm" />
-                </button>
-
-                <button
-                  onClick={goToPreviousPage}
-                  disabled={currentPage === 0}
-                  className="min-w-[32px] h-8 flex items-center justify-center rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-600"
-                  title="Trang trước"
-                >
-                  <ChevronLeft fontSize="sm" />
-                </button>
-
-                <div className="flex gap-1 mx-2">
-                  {getPageNumbers().map((page, index) =>
-                    page === "..." ? (
-                      <span
-                        key={`ellipsis-${index}`}
-                        className="min-w-[32px] h-8 flex items-center justify-center text-sm text-gray-500"
-                      >
-                        ...
-                      </span>
-                    ) : (
-                      <button
-                        key={page}
-                        onClick={() => goToPage(page)}
-                        className={`min-w-[32px] h-8 px-3 text-sm rounded-md transition-colors ${
-                          currentPage + 1 === page
-                            ? "bg-blue-500 text-white font-medium shadow-sm"
-                            : "text-gray-700 hover:bg-gray-100"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    )
-                  )}
-                </div>
-
-                <button
-                  onClick={goToNextPage}
-                  disabled={currentPage === totalPages - 1}
-                  className="min-w-[32px] h-8 flex items-center justify-center rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-600"
-                  title="Trang sau"
-                >
-                  <ChevronRight fontSize="sm" />
-                </button>
-
-                <button
-                  onClick={goToLastPage}
-                  disabled={currentPage === totalPages - 1}
-                  className="min-w-[32px] h-8 flex items-center justify-center rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-600"
-                  title="Trang cuối"
-                >
-                  <LastPage fontSize="sm" />
-                </button>
-              </div>
-            </div>
-          </div>
+        {!error && pagination.totalItems > 0 && (
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            itemsPerPage={ITEMS_PER_PAGE}
+            startIndex={pagination.startIndex}
+            endIndex={pagination.endIndex(users)}
+            onPageChange={pagination.goToPage}
+            onFirstPage={pagination.goToFirstPage}
+            onLastPage={pagination.goToLastPage}
+            onPreviousPage={pagination.goToPreviousPage}
+            onNextPage={pagination.goToNextPage}
+            getPageNumbers={pagination.getPageNumbers}
+            itemName="người dùng"
+          />
         )}
       </div>
 

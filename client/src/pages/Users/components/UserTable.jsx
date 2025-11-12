@@ -8,9 +8,10 @@ import {
   ArrowDownward,
   UnfoldMore,
   Restore,
-  LockReset
+  LockReset,
 } from "@mui/icons-material";
 import Modal from "../../../components/common/Modal";
+import { Checkbox } from "@mui/material";
 
 const UserTable = ({
   users,
@@ -25,8 +26,38 @@ const UserTable = ({
 }) => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
-  // Lấy thông tin người dùng và các hàm từ AuthContext
+  const [selectedUsers, setSelectedUsers] = useState([]); // Thêm state để track selected users
   const { user: currentUser } = useContext(AuthContext);
+
+  // Xử lý chọn tất cả
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      // Chọn tất cả users (lấy ID của tất cả users)
+      setSelectedUsers(users.map((user) => user.id));
+    } else {
+      // Bỏ chọn tất cả
+      setSelectedUsers([]);
+    }
+  };
+
+  // Xử lý chọn individual user
+  const handleSelectUser = (userId, checked) => {
+    if (checked) {
+      // Thêm user vào danh sách selected
+      setSelectedUsers((prev) => [...prev, userId]);
+    } else {
+      // Xóa user khỏi danh sách selected
+      setSelectedUsers((prev) => prev.filter((id) => id !== userId));
+    }
+  };
+
+  // Kiểm tra xem tất cả users có được chọn không
+  const isAllSelected =
+    users.length > 0 && selectedUsers.length === users.length;
+
+  // Kiểm tra xem có một số users được chọn không (indeterminate state)
+  const isIndeterminate =
+    selectedUsers.length > 0 && selectedUsers.length < users.length;
 
   const getRoleLabel = (power) => {
     const roles = {
@@ -80,7 +111,6 @@ const UserTable = ({
     }
   };
 
-  // Helper function để render sort icon
   const getSortIcon = (field) => {
     if (sortBy !== field) {
       return <UnfoldMore fontSize="small" className="text-gray-400" />;
@@ -95,9 +125,23 @@ const UserTable = ({
   return (
     <>
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-gray-300">
+          <thead className="bg-gray-100">
             <tr>
+              {/* Select All Checkbox */}
+              <th className="px-4 py-3 text-center w-12">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 text-mainColor focus:ring-mainColor focus:ring-2 border-gray-300 rounded cursor-pointer"
+                  title="Chọn tất cả"
+                  checked={isAllSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = isIndeterminate;
+                  }}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                />
+              </th>
+
               {/* STT */}
               <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase w-16">
                 STT
@@ -166,7 +210,7 @@ const UserTable = ({
           <tbody className="bg-white divide-y text-sm divide-gray-200">
             {users.length === 0 ? (
               <tr>
-                <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                <td colSpan="9" className="px-6 py-8 text-center text-gray-500">
                   Không tìm thấy người dùng nào
                 </td>
               </tr>
@@ -176,8 +220,28 @@ const UserTable = ({
                 return (
                   <tr
                     key={user.id}
-                    className="hover:bg-gray-50 transition-colors"
+                    className={`${
+                      user.id === currentUser.id
+                        ? "border border-green-500"
+                        : ""
+                    } ${
+                      selectedUsers.includes(user.id) ? "bg-blue-50" : ""
+                    } hover:bg-gray-100 transition-colors`}
                   >
+                    {/* Row Checkbox */}
+                    <td className="px-4 py-3 text-center">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 text-mainColor focus:ring-mainColor focus:ring-2 border-gray-300 rounded cursor-pointer"
+                        id={`user-${user.id}`}
+                        name={`user-${user.id}`}
+                        checked={selectedUsers.includes(user.id)}
+                        onChange={(e) =>
+                          handleSelectUser(user.id, e.target.checked)
+                        }
+                      />
+                    </td>
+
                     {/* STT */}
                     <td className="px-4 py-3 text-center text-sm text-gray-900 font-medium">
                       {stt}
@@ -274,7 +338,6 @@ const UserTable = ({
                             <Restore fontSize="small" />
                           </button>
                         )}
-                       
                       </div>
                     </td>
                   </tr>

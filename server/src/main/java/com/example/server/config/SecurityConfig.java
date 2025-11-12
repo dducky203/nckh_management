@@ -37,7 +37,8 @@ public class SecurityConfig {
                                 // Cho phép các endpoint đăng nhập và công khai không cần xác thực
                                 .requestMatchers(
 //                                "/admin/**",
-                                        "/auth/**"
+                                        "/auth/**",
+                                        "/file/**"
 //                                "/public/**"
                                 ).permitAll()
                                 // Tùy chọn: tắt xác thực, cho phép mọi request

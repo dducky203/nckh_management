@@ -81,47 +81,6 @@ public class LoginController {
 
     }
 
-    // @PostMapping("/forgot-password")
-    // public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> body) {
-    //     String email = body.get("email");
-    //     String newPassword = body.get("email");
-    //     Map<String, Object> response = new HashMap<>();
-
-    //     try {
-    //         User user = loginService.checkForgotPass(email);
-
-    //         if (user != null) {
-    //             // Generate new password
-    //             // String newPassword = managerUserController.generateRandomPassword(8);
-    //             // 1h het han
-    //             String token = jwtService.generateToken(user.getUsername(), user.getIdRole().getName(), user.getId(),
-    //                     3600000);
-    //             // user.setPassword(SHA_256_password.GM_SHA_password(newPassword));
-    //             // userService.save(user);
-    //             // userService.changePassword(user.getUsername(),null, newPassword,true);
-
-    //             // Send email with HTML template
-    //             managerUserController.sendPasswordForgotEmail(
-    //                     user.getUsername(),
-    //                     user.getIdResume().getEmail(),
-    //                     newPassword, token);
-
-    //             response.put("success", true);
-    //             response.put("message", "Mật khẩu mới đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư!");
-    //             return ResponseEntity.ok(response);
-    //         } else {
-    //             response.put("success", false);
-    //             response.put("message", "Email không tồn tại trong hệ thống");
-    //             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-    //         }
-    //     } catch (Exception e) {
-    //         response.put("success", false);
-    //         response.put("message", "Có lỗi xảy ra khi xử lý yêu cầu: " + e.getMessage());
-    //         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-    //     }
-
-    // }
-
     @PostMapping("/logout")
     public ResponseEntity<?> logout(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -143,49 +102,6 @@ public class LoginController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
-
-    // @PostMapping("/reset-password")
-    // public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body) {
-    //     String token = body.get("token");
-    //     String newPassword = body.get("newPassword");
-    //     Map<String, Object> response = new HashMap<>();
-
-    //     try {
-    //         // 1. Validate input
-    //         if (token == null || token.isEmpty()) {
-    //             response.put("success", false);
-    //             response.put("message", "Token không được cung cấp");
-    //             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-    //         }
-
-    //         if (newPassword == null || newPassword.length() < 6) {
-    //             response.put("success", false);
-    //             response.put("message", "Mật khẩu mới phải có ít nhất 6 ký tự");
-    //             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-    //         }
-
-    //         // 2. Validate và extract thông tin từ token
-    //         String username = jwtService.extractUsername(token);
-
-    //         if (username == null || jwtService.isTokenExpired(token)) {
-    //             response.put("success", false);
-    //             response.put("message", "Token không hợp lệ hoặc đã hết hạn");
-    //             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-    //         }
-
-    //         user.setPassword(SHA_256_password.GM_SHA_password(newPassword));
-    //         userService.save(user);
-
-    //         response.put("success", true);
-    //         response.put("message", "Mật khẩu đã được đặt lại thành công!");
-    //         return ResponseEntity.ok(response);
-
-    //     } catch (Exception e) {
-    //         response.put("success", false);
-    //         response.put("message", "Có lỗi xảy ra khi đặt lại mật khẩu: " + e.getMessage());
-    //         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-    //     }
-    // }
 
     @PostMapping("/validate-token")
     public ResponseEntity<Map<String, Object>> validateToken(@RequestBody Map<String, String> request) {
@@ -253,11 +169,10 @@ public class LoginController {
                         3600000 // 1 hour expiration
                 );
 
-                // 5. Gửi email với token (KHÔNG gửi password)
+                // 5. Gửi email với token
                 managerUserController.sendPasswordForgotEmail(
                         user.getName(),
                         user.getIdResume().getEmail(),
-                        null, // Không cần password ở đây
                         resetToken
                 );
 
@@ -334,7 +249,7 @@ public class LoginController {
             }
 
             // 5. Kiểm tra user có bị vô hiệu hóa không
-            if (user.getInActive()) {
+            if (user.getInActive() && user.getIsDeleted()) {
                 response.put("success", false);
                 response.put("message", "Tài khoản đã bị vô hiệu hóa");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);

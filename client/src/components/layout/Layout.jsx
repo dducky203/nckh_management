@@ -1,6 +1,7 @@
 import Header from "./Header";
 import Footer from "./Footer";
 import BackToTop from "../common/BackToTop";
+import ChatBotWidget from "../common/ChatBotWidget";
 
 const Layout = ({ children }) => {
   return (
@@ -8,6 +9,7 @@ const Layout = ({ children }) => {
       <Header />
       <main className="flex-1">{children}</main>
       <BackToTop threshold={400} position="right" />
+      <ChatBotWidget />
       <Footer />
     </div>
   );
