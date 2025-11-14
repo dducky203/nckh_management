@@ -1,6 +1,7 @@
 package com.example.server.controller.admin;
 
 import com.example.server.DTO.SuccessResponseDTO;
+import com.example.server.DTO.users.ChangePasswordRequest;
 import com.example.server.DTO.users.UserDetailsDTO;
 import com.example.server.DTO.users.UserRequest;
 import com.example.server.controller.user.CommonController;
@@ -9,6 +10,7 @@ import com.example.server.domain.*;
 import com.example.server.mapper.UserMapper;
 import com.example.server.repository.*;
 import com.example.server.service.EmailService;
+import com.example.server.service.ExcelService;
 import com.example.server.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -18,7 +20,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,6 +30,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.SecureRandom;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -54,6 +60,8 @@ public class ManagerUserController {
     private UserService userService;
     @Autowired
     private EmailService emailService;
+    @Autowired
+    private ExcelService excelService;
 
     @GetMapping("/get-all-user")
     @ResponseBody
@@ -160,6 +168,87 @@ public class ManagerUserController {
                     .body(e.getMessage());
         }
     }
+
+    // @PutMapping("export")
+    // public ResponseEntity<byte[]> exportUsersFile(@RequestBody List<Integer> userIds) {
+    //     byte[] fileBytes = excelService.exportExcelFile(userIds);
+    //     return ResponseEntity.ok()
+    //             .header(HttpHeaders.CONTENT_DISPOSITION,
+    //                     "attachment; filename=Danh sách người dùng.xlsx")
+    //             .contentType(MediaType.parseMediaType(
+    //                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+    //             .body(fileBytes);
+    // }
+    
+
+    @PostMapping("/export-excel")
+    public ResponseEntity<byte[]> exportUsersToExcel(@RequestBody List<Integer> userIds) {
+        try {
+            // Validate input
+            if (userIds == null || userIds.isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body("Danh sách ID người dùng không được để trống".getBytes());
+            }
+
+            // Export Excel
+            byte[] excelData = excelService.exportExcelFile(userIds);
+
+            // Tạo tên file với timestamp
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+            String fileName = "DanhSachNguoiDung_" + timestamp + ".xlsx";
+
+            // Tạo response headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDispositionFormData("attachment", fileName);
+            headers.setContentLength(excelData.length);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(excelData);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(("Lỗi khi xuất file Excel: " + e.getMessage()).getBytes());
+        }
+    }
+
+
+    @GetMapping("/export-excel/all")
+    public ResponseEntity<byte[]> exportAllUsersToExcel() {
+        try {
+            // Lấy tất cả ID của người dùng
+            List<User> allUsers = userRepository.findAll();
+            List<Integer> userIds = allUsers.stream()
+                    .map(User::getId)
+                    .toList();
+
+            if (userIds.isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body("Không có người dùng nào để xuất".getBytes());
+            }
+
+            // Export Excel
+            byte[] excelData = excelService.exportExcelFile(userIds);
+
+            // Tạo tên file với timestamp
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+            String fileName = "DanhSachNguoiDung_" + timestamp + ".xlsx";
+
+            // Tạo response headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDispositionFormData("attachment", fileName);
+            headers.setContentLength(excelData.length);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(excelData);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(("Lỗi khi xuất file Excel: " + e.getMessage()).getBytes());
+        }}
 
     // random pass
     public String generateRandomPassword(int length) {
