@@ -10,14 +10,23 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.time.LocalDateTime;
+
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
 public class ExcelServiceImpl implements ExcelService {
-    private static final String TEMPLATE_PATH = "/templates/file/template_output.xlsx";
+    // private static final String TEMPLATE_PATH = "/templates/file/template_output.xlsx";
+    private static final int COL_STT = 0;
+    private static final int COL_NAME = 1;
+    private static final int COL_USERNAME = 2;
+    private static final int COL_ROLE = 3;
+    private static final int COL_TITLE = 4;
+    private static final int COL_POWER = 5;
+    private static final int COL_STATUS = 6;
+    private static final int COL_CREATED_DATE = 7;
+    private static final int COL_UPDATED_DATE = 8;
+   
 
     @Autowired
     private UserRepository userRepository;
@@ -25,7 +34,7 @@ public class ExcelServiceImpl implements ExcelService {
     @Override
     public byte[] exportExcelFile(List<Integer> userIds) {
         try (XSSFWorkbook workbook = new XSSFWorkbook();
-             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
             // Tạo sheet mới
             Sheet sheet = workbook.createSheet("Danh sách người dùng");
@@ -57,7 +66,6 @@ public class ExcelServiceImpl implements ExcelService {
         }
     }
 
-
     private CellStyle createHeaderStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
 
@@ -86,7 +94,9 @@ public class ExcelServiceImpl implements ExcelService {
         return style;
     }
 
-
+    /**
+     * Tạo style cho data cells
+     */
     private CellStyle createDataStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
 
@@ -105,10 +115,9 @@ public class ExcelServiceImpl implements ExcelService {
         return style;
     }
 
-
     private void createHeaderRow(Sheet sheet, CellStyle headerStyle) {
         Row headerRow = sheet.createRow(0);
-        headerRow.setHeight((short) 600);
+        headerRow.setHeight((short) 600); // Tăng chiều cao header
 
         String[] headers = {
                 "STT",
@@ -129,7 +138,9 @@ public class ExcelServiceImpl implements ExcelService {
         }
     }
 
-
+    /**
+     * Tạo data rows
+     */
     private void createDataRows(Sheet sheet, List<User> users, CellStyle dataStyle) {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
@@ -138,41 +149,41 @@ public class ExcelServiceImpl implements ExcelService {
             User user = users.get(i);
 
             // STT
-            createStyledCell(row, 0, i + 1, dataStyle);
+            createStyledCell(row, COL_STT, i + 1, dataStyle);
 
             // Tên người dùng
-            createStyledCell(row, 1, user.getName() != null ? user.getName() : "", dataStyle);
+            createStyledCell(row, COL_NAME, user.getName() != null ? user.getName() : "", dataStyle);
 
             // Tên đăng nhập
-            createStyledCell(row, 2, user.getUsername() != null ? user.getUsername() : "", dataStyle);
+            createStyledCell(row, COL_USERNAME, user.getUsername() != null ? user.getUsername() : "", dataStyle);
 
             // Vai trò
             String roleName = "";
             if (user.getIdRole() != null) {
                 roleName = user.getIdRole().getName() != null ? user.getIdRole().getName() : "";
             }
-            createStyledCell(row, 3, roleName, dataStyle);
+            createStyledCell(row, COL_ROLE, roleName, dataStyle);
 
             // Chức danh
             String titleName = "";
             if (user.getIdTitle() != null) {
                 titleName = user.getIdTitle().getName() != null ? user.getIdTitle().getName() : "";
             }
-            createStyledCell(row, 4, titleName, dataStyle);
+            createStyledCell(row, COL_TITLE, titleName, dataStyle);
 
             // Quyền hạn
             String powerLevel = "";
             if (user.getPower() != null) {
                 powerLevel = getPowerDescription(user.getPower());
             }
-            createStyledCell(row, 5, powerLevel, dataStyle);
+            createStyledCell(row, COL_POWER, powerLevel, dataStyle);
 
             // Trạng thái
             String status = "";
             if (user.getInActive() != null) {
                 status = user.getInActive() ? "Không hoạt động" : "Hoạt động";
             }
-            createStyledCell(row, 6, status, dataStyle);
+            createStyledCell(row, COL_STATUS, status, dataStyle);
 
             // Ngày tạo
             String createdDate = "";
@@ -182,7 +193,7 @@ public class ExcelServiceImpl implements ExcelService {
                         .toLocalDateTime()
                         .format(dateFormatter);
             }
-            createStyledCell(row, 7, createdDate, dataStyle);
+            createStyledCell(row, COL_CREATED_DATE, createdDate, dataStyle);
 
             // Ngày cập nhật
             String modifiedDate = "";
@@ -192,10 +203,9 @@ public class ExcelServiceImpl implements ExcelService {
                         .toLocalDateTime()
                         .format(dateFormatter);
             }
-            createStyledCell(row, 8, modifiedDate, dataStyle);
+            createStyledCell(row, COL_UPDATED_DATE, modifiedDate, dataStyle);
         }
     }
-
 
     private void createStyledCell(Row row, int columnIndex, Object value, CellStyle style) {
         Cell cell = row.createCell(columnIndex);
@@ -215,7 +225,6 @@ public class ExcelServiceImpl implements ExcelService {
         cell.setCellStyle(style);
     }
 
-
     private void autoSizeColumns(Sheet sheet) {
         for (int i = 0; i < 10; i++) {
             sheet.autoSizeColumn(i);
@@ -231,9 +240,9 @@ public class ExcelServiceImpl implements ExcelService {
         }
     }
 
-
     private String getPowerDescription(Integer power) {
-        if (power == null) return "";
+        if (power == null)
+            return "";
 
         switch (power) {
             case 1:
@@ -249,4 +258,3 @@ public class ExcelServiceImpl implements ExcelService {
         }
     }
 };
-

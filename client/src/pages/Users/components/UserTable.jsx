@@ -23,39 +23,33 @@ const UserTable = ({
   sortBy,
   sortDirection,
   onSort,
+  selectedUsers,
+  setSelectedUsers,
 }) => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
-  const [selectedUsers, setSelectedUsers] = useState([]); // Thêm state để track selected users
   const { user: currentUser } = useContext(AuthContext);
 
   // Xử lý chọn tất cả
   const handleSelectAll = (checked) => {
     if (checked) {
-      // Chọn tất cả users (lấy ID của tất cả users)
       setSelectedUsers(users.map((user) => user.id));
     } else {
-      // Bỏ chọn tất cả
       setSelectedUsers([]);
     }
   };
 
-  // Xử lý chọn individual user
   const handleSelectUser = (userId, checked) => {
     if (checked) {
-      // Thêm user vào danh sách selected
       setSelectedUsers((prev) => [...prev, userId]);
     } else {
-      // Xóa user khỏi danh sách selected
       setSelectedUsers((prev) => prev.filter((id) => id !== userId));
     }
   };
 
-  // Kiểm tra xem tất cả users có được chọn không
   const isAllSelected =
     users.length > 0 && selectedUsers.length === users.length;
 
-  // Kiểm tra xem có một số users được chọn không (indeterminate state)
   const isIndeterminate =
     selectedUsers.length > 0 && selectedUsers.length < users.length;
 
@@ -129,7 +123,7 @@ const UserTable = ({
           <thead className="bg-gray-100">
             <tr>
               {/* Select All Checkbox */}
-              <th className="px-4 py-3 text-center w-12">
+              <th className="pl-4 pr-2 py-3 text-center w-12">
                 <input
                   type="checkbox"
                   className="h-4 w-4 text-mainColor focus:ring-mainColor focus:ring-2 border-gray-300 rounded cursor-pointer"
@@ -143,7 +137,7 @@ const UserTable = ({
               </th>
 
               {/* STT */}
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase w-16">
+              <th className="pl-2 pr-4 py-3 text-center text-xs font-medium text-gray-500 uppercase w-1">
                 STT
               </th>
 
@@ -229,7 +223,7 @@ const UserTable = ({
                     } hover:bg-gray-100 transition-colors`}
                   >
                     {/* Row Checkbox */}
-                    <td className="px-4 py-3 text-center">
+                    <td className="pl-4 pr-2 py-3 text-center">
                       <input
                         type="checkbox"
                         className="h-4 w-4 text-mainColor focus:ring-mainColor focus:ring-2 border-gray-300 rounded cursor-pointer"
@@ -243,7 +237,7 @@ const UserTable = ({
                     </td>
 
                     {/* STT */}
-                    <td className="px-4 py-3 text-center text-sm text-gray-900 font-medium">
+                    <td className="pl-2 pr-4 py-3 text-center text-sm text-gray-900 font-medium">
                       {stt}
                     </td>
 

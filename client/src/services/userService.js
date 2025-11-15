@@ -34,7 +34,9 @@ const userService = {
 
   // Đặt lại mật khẩu
   resetPassword: async (username) => {
-    return await api.patch(`/dashboard/manage-users/reset-password?username=${username}`);
+    return await api.patch(
+      `/dashboard/manage-users/reset-password?username=${username}`
+    );
   },
 
   // Lấy profile
@@ -50,6 +52,13 @@ const userService = {
   // Đổi mật khẩu
   changePassword: async (username, data) => {
     return await api.put(`/users/change-password?username=${username}`, data);
+  },
+
+  // Xuất danh sách người dùng ra file Excel
+  exportUsers: async (userIds) => {
+    return await api.post("/dashboard/manage-users/export-excel", userIds, { 
+      responseType: "blob" 
+    });
   },
 };
 

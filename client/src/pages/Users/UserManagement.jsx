@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Search, PersonAdd } from "@mui/icons-material";
+import { Search, PersonAdd, FileDownload } from "@mui/icons-material";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
+import DownloadForOfflineIcon from '@mui/icons-material/DownloadForOffline';
 import UserTable from "./components/UserTable";
 import SearchModal from "./components/SearchModal";
 import UserDetailModal from "./components/UserDetailModal";
@@ -25,6 +26,8 @@ const UserManagement = () => {
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [isExporting, setIsExporting] = useState(false);
   const toast = useToast();
   const abortControllerRef = useRef(null);
 
@@ -111,9 +114,7 @@ const UserManagement = () => {
     searchTerm,
   ]);
 
-  // Effect để handle tất cả data fetching
   useEffect(() => {
-    // Nếu có search term thì debounce, nếu không thì gọi ngay
     if (searchTerm.trim()) {
       const timeoutId = setTimeout(() => {
         fetchUsers();
@@ -134,7 +135,6 @@ const UserManagement = () => {
     };
   }, []);
 
-  // Add retry function
   const handleRetry = () => {
     setError(null);
     fetchUsers();
@@ -150,7 +150,7 @@ const UserManagement = () => {
   const handleFilterChange = (value) => {
     setFilterPower(value);
     pagination.resetPagination();
-    setError(null); // Clear error when filter changes
+    setError(null);
 
     if (searchTerm.trim()) {
       setSearchTerm("");
@@ -160,8 +160,7 @@ const UserManagement = () => {
   const handleStatusFilterChange = (value) => {
     setFilterStatus(value);
     pagination.resetPagination();
-    setError(null); // Clear error when filter changes
-    // Clear search để trigger immediate API call
+    setError(null); 
     if (searchTerm.trim()) {
       setSearchTerm("");
     }
@@ -232,18 +231,69 @@ const UserManagement = () => {
     }
   };
 
+  const handleExportUsers = async () => {
+    if (selectedUsers.length === 0) {
+      toast.error("Vui lòng chọn ít nhất một người dùng để xuất file!");
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+
+      const response = await userService.exportUsers(selectedUsers);
+
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+
+      const timestamp = new Date()
+        .toLocaleDateString("vi-VN")
+        .replace(/\//g, "-");
+      link.download = `DanhSachNguoiDung_${timestamp}.xlsx`;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Xuất file thành công");
+      setSelectedUsers([]);
+    } catch (error) {
+      console.error("Error exporting users:", error);
+      toast.error(error.message || "Có lỗi xảy ra khi xuất file!");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="p-6">
       {/* Header */}
       <div className="mb-6 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-800">Quản lý người dùng</h1>
-        <button
-          onClick={handleAdd}
-          className="flex items-center gap-2 bg-mainColor text-white px-4 py-2 rounded-md hover:bg-opacity-90 transition-colors text-sm"
-        >
-          <PersonAdd fontSize="sm" />
-          Thêm người dùng
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportUsers}
+            disabled={selectedUsers.length === 0 || isExporting}
+            className="flex items-center gap-2 bg-green-600 text-white px-2 py-1.5 rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm"
+            title="Xuất danh sách người dùng"
+          >
+            <DownloadForOfflineIcon fontSize="medium" />
+          
+          </button>
+          <button
+            title="Thêm mới người dùng"
+            onClick={handleAdd}
+            className="flex items-center gap-2 bg-mainColor text-white  px-2 py-1.5 rounded-md hover:bg-opacity-90 transition-colors text-sm"
+          >
+            <PersonAdd fontSize="medium" />
+            Thêm người dùng
+          </button>
+        </div>
       </div>
 
       {/* Search & Filter */}
@@ -264,7 +314,7 @@ const UserManagement = () => {
           <select
             value={filterPower}
             onChange={(e) => handleFilterChange(e.target.value)}
-            className="px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
+            className=" py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
             disabled={loading}
           >
             <option value="all">Tất cả vai trò</option>
@@ -277,7 +327,7 @@ const UserManagement = () => {
           <select
             value={filterStatus}
             onChange={(e) => handleStatusFilterChange(e.target.value)}
-            className="px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
+            className="pr-7 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
             disabled={loading}
           >
             <option value="all">Tất cả trạng thái</option>
@@ -304,6 +354,8 @@ const UserManagement = () => {
             onView={handleView}
             currentPage={pagination.currentPage}
             itemsPerPage={ITEMS_PER_PAGE}
+            selectedUsers={selectedUsers}
+            setSelectedUsers={setSelectedUsers}
           />
         )}
 

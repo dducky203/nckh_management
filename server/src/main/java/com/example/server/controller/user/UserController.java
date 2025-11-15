@@ -56,12 +56,12 @@ public class UserController {
     @Autowired
     private ExcelService excelService;
 
-
     @GetMapping("/profile")
     public ResponseEntity<?> profile(@RequestParam(name = "id") Integer userId) {
         User user = userRepository.findByIdUser(userId);
 
-        if (user == null) throw new ErrorException("Người dùng không tồn tại !", HttpStatus.NOT_FOUND);
+        if (user == null)
+            throw new ErrorException("Người dùng không tồn tại !", HttpStatus.NOT_FOUND);
         else {
             UserDetailsDTO userDTO = userMapper.toUserDetailDTO(user);
             return ResponseEntity.ok(new SuccessResponseDTO<>(userDTO, "Lấy thông tin người dùng thành công."));
@@ -74,8 +74,9 @@ public class UserController {
 
         User user = userRepository.findByUsername(request.getUsername());
 
-//        userRepository.save(user);
-        if (user == null) throw new ErrorException("Người dùng không tồn tại !", HttpStatus.NOT_FOUND);
+        // userRepository.save(user);
+        if (user == null)
+            throw new ErrorException("Người dùng không tồn tại !", HttpStatus.NOT_FOUND);
         else {
             UserDetailsDTO userDTO = userMapper.toUserDetailDTO(user);
             return ResponseEntity.ok(new SuccessResponseDTO<>(userDTO, "Lấy thông tin người dùng thành công."));
@@ -85,15 +86,9 @@ public class UserController {
     @PutMapping("/change-password")
     public ResponseEntity<?> changePassword(
             @RequestParam(value = "username") String username,
-            @RequestBody ChangePasswordRequest request
-    ) {
-            userService.changePassword(username, request.getCurrentPassword(), request.getNewPassword(), false);
-            return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Đổi mật khẩu thành công!"));
+            @RequestBody ChangePasswordRequest request) {
+        userService.changePassword(username, request.getCurrentPassword(), request.getNewPassword(), false);
+        return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Đổi mật khẩu thành công!"));
     }
 
-    }
-
-
-
-
-
+}

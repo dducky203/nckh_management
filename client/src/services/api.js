@@ -28,7 +28,14 @@ api.interceptors.request.use(
 
 // Response interceptor -  Xử lý lỗi chuẩn
 api.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    // ✅ Nếu response type là blob, trả về toàn bộ response
+    if (response.config.responseType === 'blob') {
+      return response;
+    }
+    // Còn lại thì unwrap data như bình thường
+    return response.data;
+  },
   (error) => {
     // Xử lý lỗi 401 - Unauthorized
     if (error.response?.status === 401) {

@@ -10,22 +10,22 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ExportUserRequest {
-    
+
     /**
      * Danh sách ID của những người dùng cần export
      */
     private List<Integer> userIds;
-    
+
     /**
      * Tên file (optional)
      */
     private String fileName;
-    
+
     /**
      * Có bao gồm thông tin chi tiết hay không
      */
     private Boolean includeDetails = true;
-    
+
     /**
      * Format ngày tháng (optional)
      * Mặc định: dd/MM/yyyy HH:mm

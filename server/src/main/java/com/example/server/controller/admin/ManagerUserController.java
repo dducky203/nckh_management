@@ -15,6 +15,8 @@ import com.example.server.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -92,18 +94,18 @@ public class ManagerUserController {
             if (status != null) {
                 switch (status) {
                     case "active":
-                        // Hoạt động: inActive = false AND isDeleted = false
-                        inActive = true;
-                        isDeleted = true;
+                        // ✅ Hoạt động: inActive = false AND isDeleted = false
+                        inActive = false;
+                        isDeleted = false;
                         break;
                     case "inactive":
-                        // Không hoạt động: inActive = true AND isDeleted = false
-                        inActive = false;
-                        isDeleted = true;
+                        // ✅ Không hoạt động: inActive = true AND isDeleted = false
+                        inActive = true;
+                        isDeleted = false;
                         break;
                     case "deleted":
-                        // Đã xóa: isDeleted = true (không quan tâm inActive)
-                        isDeleted = false;
+                        // ✅ Đã xóa: isDeleted = true (không quan tâm inActive)
+                        isDeleted = true;
                         break;
                 }
             }
@@ -169,86 +171,37 @@ public class ManagerUserController {
         }
     }
 
-    // @PutMapping("export")
-    // public ResponseEntity<byte[]> exportUsersFile(@RequestBody List<Integer> userIds) {
-    //     byte[] fileBytes = excelService.exportExcelFile(userIds);
-    //     return ResponseEntity.ok()
-    //             .header(HttpHeaders.CONTENT_DISPOSITION,
-    //                     "attachment; filename=Danh sách người dùng.xlsx")
-    //             .contentType(MediaType.parseMediaType(
-    //                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
-    //             .body(fileBytes);
-    // }
-    
-
     @PostMapping("/export-excel")
-    public ResponseEntity<byte[]> exportUsersToExcel(@RequestBody List<Integer> userIds) {
+    public ResponseEntity<Resource> exportUsersToExcel(@RequestBody List<Integer> userIds) {
         try {
-            // Validate input
             if (userIds == null || userIds.isEmpty()) {
                 return ResponseEntity.badRequest()
-                    .body("Danh sách ID người dùng không được để trống".getBytes());
+                        .body(null);
             }
 
-            // Export Excel
+            // Xuất file
             byte[] excelData = excelService.exportExcelFile(userIds);
+            ByteArrayResource resource = new ByteArrayResource(excelData);
 
-            // Tạo tên file với timestamp
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+            String timestamp = LocalDateTime.now()
+                    .format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
             String fileName = "DanhSachNguoiDung_" + timestamp + ".xlsx";
 
-            // Tạo response headers
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
             headers.setContentDispositionFormData("attachment", fileName);
-            headers.setContentLength(excelData.length);
+            headers.setContentType(
+                    MediaType.parseMediaType(
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
 
             return ResponseEntity.ok()
                     .headers(headers)
-                    .body(excelData);
+                    .contentLength(excelData.length)
+                    .body(resource);
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(("Lỗi khi xuất file Excel: " + e.getMessage()).getBytes());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
-
-
-    @GetMapping("/export-excel/all")
-    public ResponseEntity<byte[]> exportAllUsersToExcel() {
-        try {
-            // Lấy tất cả ID của người dùng
-            List<User> allUsers = userRepository.findAll();
-            List<Integer> userIds = allUsers.stream()
-                    .map(User::getId)
-                    .toList();
-
-            if (userIds.isEmpty()) {
-                return ResponseEntity.badRequest()
-                    .body("Không có người dùng nào để xuất".getBytes());
-            }
-
-            // Export Excel
-            byte[] excelData = excelService.exportExcelFile(userIds);
-
-            // Tạo tên file với timestamp
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
-            String fileName = "DanhSachNguoiDung_" + timestamp + ".xlsx";
-
-            // Tạo response headers
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            headers.setContentDispositionFormData("attachment", fileName);
-            headers.setContentLength(excelData.length);
-
-            return ResponseEntity.ok()
-                    .headers(headers)
-                    .body(excelData);
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(("Lỗi khi xuất file Excel: " + e.getMessage()).getBytes());
-        }}
 
     // random pass
     public String generateRandomPassword(int length) {
@@ -270,10 +223,10 @@ public class ManagerUserController {
         emailController.sendEmail(toEmail, subject, bodyGuest);
     }
 
-    public void sendPasswordForgotEmail(String name, String toEmail,  String token) {
+    public void sendPasswordForgotEmail(String name, String toEmail, String token) {
         try {
             // Sử dụng template HTML thay vì plain text
-            emailService.sendForgotPasswordEmail(toEmail, name,  token);
+            emailService.sendForgotPasswordEmail(toEmail, name, token);
         } catch (Exception e) {
             throw new RuntimeException("Không thể gửi email đặt lại mật khẩu: " + e.getMessage());
         }
