@@ -110,40 +110,39 @@ public class EventDetailController {
     @Autowired
     TImeRepository timeRepository;
 
-
     // show detail event
-    public void modelEventDetail(Integer idEvent, Model model){
+    public void modelEventDetail(Integer idEvent, Model model) {
         Optional<Event> event = eventRepository.findById(idEvent);
         model.addAttribute("event", eventRepository.findByIdEvent(idEvent));
-        model.addAttribute("time",timeRepository.findAll());
-        model.addAttribute("creator",userRepository.findByIdUser(event.get().getCreator()));
-        model.addAttribute("rooms",roomService.findAll());
-        //guest
+        model.addAttribute("time", timeRepository.findAll());
+        model.addAttribute("creator", userRepository.findByIdUser(event.get().getCreator()));
+        model.addAttribute("rooms", roomService.findAll());
+        // guest
         List<Guest> guests = guestRepository.findByEventId(idEvent);
         StringBuilder guestE = new StringBuilder();
         for (Guest guest : guests) {
             User user = guest.getUser();
-            if (user != null){
+            if (user != null) {
                 guestE.append(", ").append(user.getName());
             }
 
         }
         model.addAttribute("guests", guests);
         model.addAttribute("guestNames", guestE.toString().replaceFirst(", ", ""));
-        model.addAttribute("countGuest",guestRepository.countGuest(idEvent).getCountGuest());
+        model.addAttribute("countGuest", guestRepository.countGuest(idEvent).getCountGuest());
         // member
         List<Member> members = memberRepository.findByEventId(idEvent);
         StringBuilder memberE = new StringBuilder();
         for (Member member : members) {
             User user = member.getUser();
-            if (user != null){
+            if (user != null) {
                 memberE.append(", ").append(user.getName());
             }
 
         }
         model.addAttribute("members", members);
         model.addAttribute("memberNames", memberE.toString().replaceFirst(", ", ""));
-        model.addAttribute("countMember",memberRepository.countMember(idEvent).getCountMember());
+        model.addAttribute("countMember", memberRepository.countMember(idEvent).getCountMember());
         List<Guest> guestList = guestRepository.findByEventId(idEvent);
         List<Member> memberList = memberRepository.findByEventId(idEvent);
 
@@ -155,8 +154,7 @@ public class EventDetailController {
                 .map(m -> String.valueOf(m.getUser().getId()))
                 .collect(Collectors.joining(",")));
 
-
-// Lấy ra tên hoặc ID + tên của user tương ứng
+        // Lấy ra tên hoặc ID + tên của user tương ứng
         List<User> guestUsers = guestList.stream()
                 .map(guest -> userRepository.findById(guest.getUser().getId()).orElse(null))
                 .filter(Objects::nonNull)
@@ -176,17 +174,18 @@ public class EventDetailController {
         model.addAttribute("conferencePaper", conferencePaperRepository.findByIdEvent(idEvent));
         model.addAttribute("expertPresentation", expertPresentationRepository.findByIdEvent(idEvent));
         model.addAttribute("internationalPaper", internationalPaperRepository.findByIdEvent(idEvent));
-        model.addAttribute("ministryTask",ministryTaskRepository.findByIdEvent(idEvent));
-        model.addAttribute("overviewPaper",overviewPaperRepository.findByIdEvent(idEvent));
-        model.addAttribute("advisoryCouncil",advisoryCouncilRepository.findByIdEvent(idEvent));
-        model.addAttribute("researchProposal",researchProposalRepository.findByIdEvent(idEvent));
-        model.addAttribute("seminar",seminarRepository.findByIdEvent(idEvent));
-        model.addAttribute("studentResearchGuidance",guidanceRepository.findByIdEvent(idEvent));
-        model.addAttribute("vietnamPaper",vietnamesePaperRepository.findByIdEvent(idEvent));
-        model.addAttribute("activeInCouncil",activeInCouncilRepository.findByIdEvent(idEvent));
+        model.addAttribute("ministryTask", ministryTaskRepository.findByIdEvent(idEvent));
+        model.addAttribute("overviewPaper", overviewPaperRepository.findByIdEvent(idEvent));
+        model.addAttribute("advisoryCouncil", advisoryCouncilRepository.findByIdEvent(idEvent));
+        model.addAttribute("researchProposal", researchProposalRepository.findByIdEvent(idEvent));
+        model.addAttribute("seminar", seminarRepository.findByIdEvent(idEvent));
+        model.addAttribute("studentResearchGuidance", guidanceRepository.findByIdEvent(idEvent));
+        model.addAttribute("vietnamPaper", vietnamesePaperRepository.findByIdEvent(idEvent));
+        model.addAttribute("activeInCouncil", activeInCouncilRepository.findByIdEvent(idEvent));
     }
-    public void dtoEventDetail(Integer idEvent, Model model){
-        AllEventDto allEventDto= new AllEventDto();
+
+    public void dtoEventDetail(Integer idEvent, Model model) {
+        AllEventDto allEventDto = new AllEventDto();
         allEventDto.setEvent(eventRepository.findByIdEvent(idEvent));
         allEventDto.setConference(conferenceRepository.findByIdEvent(idEvent));
         allEventDto.setApprovedResearchTask(approvedResearchTaskRepository.findByIdEvent(idEvent));
@@ -203,51 +202,63 @@ public class EventDetailController {
 
         model.addAttribute("allEventDto", allEventDto);
     }
+
     @GetMapping("/detail/{idEvent}")
     public String detail(@PathVariable Integer idEvent, Model model) {
         // call menu
-        commonController.allTypeOfCriteria(model,typeOfCriterionRepository);
-        modelEventDetail(idEvent,model);
+        commonController.allTypeOfCriteria(model, typeOfCriterionRepository);
+        modelEventDetail(idEvent, model);
         return "user/eventDetail/detail";
     }
 
     // read presentation file
     @GetMapping("/preFile/{idEvent}")
     public String preFile(@PathVariable int idEvent, Model model) throws IOException {
-        if (conferenceRepository.findByIdEvent(idEvent) != null){
-            model.addAttribute("presentationFile", fileService.readFile(conferenceRepository.findByIdEvent(idEvent).getPresentationFiles()));
+        if (conferenceRepository.findByIdEvent(idEvent) != null) {
+            model.addAttribute("presentationFile",
+                    fileService.readFile(conferenceRepository.findByIdEvent(idEvent).getPresentationFiles()));
         }
-        if (advisoryCouncilRepository.findByIdEvent(idEvent) != null){
-            model.addAttribute("presentationFile", fileService.readFile(advisoryCouncilRepository.findByIdEvent(idEvent).getDocumentTemplate()));
+        if (advisoryCouncilRepository.findByIdEvent(idEvent) != null) {
+            model.addAttribute("presentationFile",
+                    fileService.readFile(advisoryCouncilRepository.findByIdEvent(idEvent).getDocumentTemplate()));
         }
-        if (conferencePaperRepository.findByIdEvent(idEvent) !=null){
-            model.addAttribute("presentationFile", fileService.readFile(conferencePaperRepository.findByIdEvent(idEvent).getConferenceProceedingsFile()));
+        if (conferencePaperRepository.findByIdEvent(idEvent) != null) {
+            model.addAttribute("presentationFile", fileService
+                    .readFile(conferencePaperRepository.findByIdEvent(idEvent).getConferenceProceedingsFile()));
         }
-        if (expertPresentationRepository.findByIdEvent(idEvent)!=null){
-            model.addAttribute("presentationFile", fileService.readFile(expertPresentationRepository.findByIdEvent(idEvent).getPresentationFile()));
+        if (expertPresentationRepository.findByIdEvent(idEvent) != null) {
+            model.addAttribute("presentationFile",
+                    fileService.readFile(expertPresentationRepository.findByIdEvent(idEvent).getPresentationFile()));
         }
-        if (seminarRepository.findByIdEvent(idEvent)!=null){
-            model.addAttribute("presentationFile", fileService.readFile(seminarRepository.findByIdEvent(idEvent).getPresentationFile()));
+        if (seminarRepository.findByIdEvent(idEvent) != null) {
+            model.addAttribute("presentationFile",
+                    fileService.readFile(seminarRepository.findByIdEvent(idEvent).getPresentationFile()));
         }
-        if (activeInCouncilRepository.findByIdEvent(idEvent)!=null){
-            model.addAttribute("presentationFile", fileService.readFile(activeInCouncilRepository.findByIdEvent(idEvent).getPresentationFile()));
+        if (activeInCouncilRepository.findByIdEvent(idEvent) != null) {
+            model.addAttribute("presentationFile",
+                    fileService.readFile(activeInCouncilRepository.findByIdEvent(idEvent).getPresentationFile()));
         }
         return "user/eventDetail/presentationFile";
     }
+
     // read minutes of meeting
     @GetMapping("/minutesOfMeeting/{idEvent}")
     public String minutesOfMeeting(Model model, @PathVariable Integer idEvent) throws IOException {
-        if (conferenceRepository.findByIdEvent(idEvent) != null){
-            model.addAttribute("minutesOfMeeting", fileService.readFile(conferenceRepository.findByIdEvent(idEvent).getMinutesOfMeeting()));
+        if (conferenceRepository.findByIdEvent(idEvent) != null) {
+            model.addAttribute("minutesOfMeeting",
+                    fileService.readFile(conferenceRepository.findByIdEvent(idEvent).getMinutesOfMeeting()));
         }
-        if (expertPresentationRepository.findByIdEvent(idEvent)!=null){
-            model.addAttribute("minutesOfMeeting", fileService.readFile(expertPresentationRepository.findByIdEvent(idEvent).getMinutesOfMeeting()));
+        if (expertPresentationRepository.findByIdEvent(idEvent) != null) {
+            model.addAttribute("minutesOfMeeting",
+                    fileService.readFile(expertPresentationRepository.findByIdEvent(idEvent).getMinutesOfMeeting()));
         }
-        if (seminarRepository.findByIdEvent(idEvent)!=null){
-            model.addAttribute("minutesOfMeeting", fileService.readFile(seminarRepository.findByIdEvent(idEvent).getMinutesOfMeeting()));
+        if (seminarRepository.findByIdEvent(idEvent) != null) {
+            model.addAttribute("minutesOfMeeting",
+                    fileService.readFile(seminarRepository.findByIdEvent(idEvent).getMinutesOfMeeting()));
         }
-        if (advisoryCouncilRepository.findByIdEvent(idEvent)!=null){
-            model.addAttribute("minutesOfMeeting", fileService.readFile(activeInCouncilRepository.findByIdEvent(idEvent).getMinutesOfMeeting()));
+        if (advisoryCouncilRepository.findByIdEvent(idEvent) != null) {
+            model.addAttribute("minutesOfMeeting",
+                    fileService.readFile(activeInCouncilRepository.findByIdEvent(idEvent).getMinutesOfMeeting()));
         }
         return "user/eventDetail/minutesOfMeeting";
     }
@@ -255,12 +266,12 @@ public class EventDetailController {
     // show event to user
     @GetMapping("/showE/{idUser}")
     public String showE(@PathVariable Integer idUser, Model model,
-                        @RequestParam("page") Optional<Integer> page,
-                        @RequestParam("size") Optional<Integer> size) throws IOException {
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size) throws IOException {
         // Phân trang xem/tao event
         int currentPage = page.orElse(1); // curren page
         int pageSize = size.orElse(10); // number event in page
-//        User user = userRepository.findByIdUser(idUser);
+        // User user = userRepository.findByIdUser(idUser);
         // count all page
         Page<Event> eventPage = null;
         model.addAttribute("pageSize", pageSize);
@@ -281,11 +292,12 @@ public class EventDetailController {
     @GetMapping("/detailE/{idEvent}")
     public String detailE(@PathVariable Integer idEvent, Model model) {
         // call menu
-        commonController.allTypeOfCriteria(model,typeOfCriterionRepository);
+        commonController.allTypeOfCriteria(model, typeOfCriterionRepository);
 
-        modelEventDetail(idEvent,model);
+        modelEventDetail(idEvent, model);
         Event event = eventRepository.findByIdEvent(idEvent);
-        TypeOfCriterion typeOfCriterion = typeOfCriterionRepository.getTypeOfCriterionByOS(event.getIdOperatingStandard2());
+        TypeOfCriterion typeOfCriterion = typeOfCriterionRepository
+                .getTypeOfCriterionByOS(event.getIdOperatingStandard2());
         model.addAttribute("typeOfCriterion", typeOfCriterion);
         return "user/event/eventDetail";
     }
@@ -303,34 +315,35 @@ public class EventDetailController {
     @GetMapping("/repairE/{idEvent}")
     public String repairE(@PathVariable Integer idEvent, Model model) {
         Event event = eventRepository.findByIdEvent(idEvent);
-        TypeOfCriterion typeOfCriterion = typeOfCriterionRepository.getTypeOfCriterionByOS(event.getIdOperatingStandard2());
+        TypeOfCriterion typeOfCriterion = typeOfCriterionRepository
+                .getTypeOfCriterionByOS(event.getIdOperatingStandard2());
         model.addAttribute("typeOfCriterion", typeOfCriterion);
 
-        modelEventDetail(idEvent,model);
+        modelEventDetail(idEvent, model);
 
-//        model.addAttribute("ty")
-        dtoEventDetail(idEvent,model);
+        // model.addAttribute("ty")
+        dtoEventDetail(idEvent, model);
         return "user/event/repairEvent";
     }
 
     // save event
     @PostMapping("/saveE/{idEvent}")
     public String saveE(@ModelAttribute AllEventDto allEventDto,
-                        @PathVariable Integer idEvent,
-                        Model model,
-                        @RequestParam("minutesOfMeeting") MultipartFile minutesOfMeeting,
-                        @RequestParam("presentationFiles") MultipartFile presentationFiles,
-                        @RequestParam("nameAllEventDto") String nameAllEventDto,
-                        @RequestParam("imageEvent") MultipartFile imageEvent,
-                        @RequestParam("guestNames") String guestNamesRaw,
-                        @RequestParam("memberNames") String memberNamesRaw,
-                        @RequestParam("guestIds") String guestIdsRaw,
-                        @RequestParam("memberIds") String memberIdsRaw
-    ) throws IOException {
+            @PathVariable Integer idEvent,
+            Model model,
+            @RequestParam("minutesOfMeeting") MultipartFile minutesOfMeeting,
+            @RequestParam("presentationFiles") MultipartFile presentationFiles,
+            @RequestParam("nameAllEventDto") String nameAllEventDto,
+            @RequestParam("imageEvent") MultipartFile imageEvent,
+            @RequestParam("guestNames") String guestNamesRaw,
+            @RequestParam("memberNames") String memberNamesRaw,
+            @RequestParam("guestIds") String guestIdsRaw,
+            @RequestParam("memberIds") String memberIdsRaw) throws IOException {
 
         modelEventDetail(idEvent, model);
         Event event = eventRepository.findByIdEvent(idEvent);
-        TypeOfCriterion typeOfCriterion = typeOfCriterionRepository.getTypeOfCriterionByOS(event.getIdOperatingStandard2());
+        TypeOfCriterion typeOfCriterion = typeOfCriterionRepository
+                .getTypeOfCriterionByOS(event.getIdOperatingStandard2());
         model.addAttribute("typeOfCriterion", typeOfCriterion);
 
         // Xử lý upload file minutes
@@ -370,7 +383,7 @@ public class EventDetailController {
 
         // Phân loại xử lý theo loại sự kiện
         switch (nameAllEventDto) {
-            case "conference":{
+            case "conference": {
                 String confResult = conferenceService.saveE(allEventDto);
                 if (!"null".equals(confResult)) {
                     model.addAttribute("message", confResult);
@@ -378,13 +391,16 @@ public class EventDetailController {
                 }
 
                 Conference conf = conferenceRepository.findByIdEvent(idEvent);
-                if (minutesName != null) conf.setMinutesOfMeeting(minutesName);
-                if (presentationName != null) conf.setPresentationFiles(presentationName);
-                if (imageName != null) conf.setImage(imageName);
+                if (minutesName != null)
+                    conf.setMinutesOfMeeting(minutesName);
+                if (presentationName != null)
+                    conf.setPresentationFiles(presentationName);
+                if (imageName != null)
+                    conf.setImage(imageName);
                 conferenceRepository.save(conf);
                 break;
             }
-            case "activeInCouncil":{
+            case "activeInCouncil": {
                 String active = activeInCouncilService.saveE(allEventDto);
                 if (!"null".equals(active)) {
                     model.addAttribute("message", active);
@@ -392,13 +408,16 @@ public class EventDetailController {
                 }
 
                 ActiveInCouncil conf = activeInCouncilRepository.findByIdEvent(idEvent);
-                if (minutesName != null) conf.setMinutesOfMeeting(minutesName);
-                if (presentationName != null) conf.setPresentationFile(presentationName);
-                if (imageName != null) conf.setImage(imageName);
+                if (minutesName != null)
+                    conf.setMinutesOfMeeting(minutesName);
+                if (presentationName != null)
+                    conf.setPresentationFile(presentationName);
+                if (imageName != null)
+                    conf.setImage(imageName);
                 activeInCouncilRepository.save(conf);
                 break;
             }
-            case "approvedResearchTask":{
+            case "approvedResearchTask": {
                 String artResult = approvedResearchTaskService.saveE(allEventDto);
                 if (!"null".equals(artResult)) {
                     model.addAttribute("message", artResult);
@@ -406,7 +425,7 @@ public class EventDetailController {
                 }
                 break;
             }
-            case "conferencePaper":{
+            case "conferencePaper": {
                 String paperResult = conferencePaperService.saveE(allEventDto);
                 if (!"null".equals(paperResult)) {
                     model.addAttribute("message", paperResult);
@@ -420,20 +439,23 @@ public class EventDetailController {
                 }
                 break;
             }
-            case "expertPresentation" :{
+            case "expertPresentation": {
                 String epResult = expertPresentationService.saveE(allEventDto);
                 if (!"null".equals(epResult)) {
                     model.addAttribute("message", epResult);
                     return "user/event/repairEvent";
                 }
                 ExpertPresentation ep = expertPresentationRepository.findByIdEvent(idEvent);
-                if (presentationName != null) ep.setPresentationFile(presentationName);
-                if (minutesName != null) ep.setMinutesOfMeeting(minutesName);
-                if (imageName != null) ep.setSeminarPhoto(imageName);
+                if (presentationName != null)
+                    ep.setPresentationFile(presentationName);
+                if (minutesName != null)
+                    ep.setMinutesOfMeeting(minutesName);
+                if (imageName != null)
+                    ep.setSeminarPhoto(imageName);
                 expertPresentationRepository.save(ep);
                 break;
             }
-            case "internationalPaper":{
+            case "internationalPaper": {
                 String iPaper = internationalPaperService.saveE(allEventDto);
                 if (!"null".equals(iPaper)) {
                     model.addAttribute("message", iPaper);
@@ -441,66 +463,72 @@ public class EventDetailController {
                 }
                 break;
             }
-            case "ministryTask":{
+            case "ministryTask": {
                 String ministry = ministryTaskService.saveE(allEventDto);
-                if (!"null".equals(ministry)){
+                if (!"null".equals(ministry)) {
                     model.addAttribute("message", ministry);
                     return "user/event/repairEvent";
                 }
                 break;
             }
-            case "overviewPaper":{
-                String ovp= overviewPaperService.saveE(allEventDto);
-                if (!"null".equals(ovp)){
+            case "overviewPaper": {
+                String ovp = overviewPaperService.saveE(allEventDto);
+                if (!"null".equals(ovp)) {
                     model.addAttribute("message", ovp);
                     return "user/event/repairEvent";
                 }
                 break;
             }
-            case "researchAdvisoryCouncil":{
+            case "researchAdvisoryCouncil": {
                 String rac = researchAdvisoryCouncilService.saveE(allEventDto);
-                if (!"null".equals(rac)){
+                if (!"null".equals(rac)) {
                     model.addAttribute("message", rac);
                     return "user/event/repairEvent";
                 }
-                ResearchAdvisoryCouncil researchAdvisoryCouncil = researchAdvisoryCouncilRepository.findByIdEvent(idEvent);
-                if (presentationName != null) researchAdvisoryCouncil.setDocumentTemplate(presentationName);
-                if (imageName != null) researchAdvisoryCouncil.setImage(imageName);
+                ResearchAdvisoryCouncil researchAdvisoryCouncil = researchAdvisoryCouncilRepository
+                        .findByIdEvent(idEvent);
+                if (presentationName != null)
+                    researchAdvisoryCouncil.setDocumentTemplate(presentationName);
+                if (imageName != null)
+                    researchAdvisoryCouncil.setImage(imageName);
                 researchAdvisoryCouncilRepository.save(researchAdvisoryCouncil);
                 break;
             }
-            case "researchProposal":{
-                String  rp= researchProposalService.saveE(allEventDto);
-                if (!"null".equals(rp)){
+            case "researchProposal": {
+                String rp = researchProposalService.saveE(allEventDto);
+                if (!"null".equals(rp)) {
                     model.addAttribute("message", rp);
                     return "user/event/repairEvent";
                 }
                 break;
             }
-            case "seminar":{
+            case "seminar": {
                 String seminar = seminarService.saveE(allEventDto);
-                if (!"null".equals(seminar)){
+                if (!"null".equals(seminar)) {
                     model.addAttribute("message", seminar);
                     return "user/event/repairEvent";
                 }
                 Seminar seminar1 = seminarRepository.findByIdEvent(idEvent);
-                if (presentationName != null) seminar1.setPresentationFile(presentationName);
-                if (minutesName != null) seminar1.setMinutesOfMeeting(minutesName);
-                if (imageName != null) seminar1.setSeminarPhoto(imageName);
+                if (presentationName != null)
+                    seminar1.setPresentationFile(presentationName);
+                if (minutesName != null)
+                    seminar1.setMinutesOfMeeting(minutesName);
+                if (imageName != null)
+                    seminar1.setSeminarPhoto(imageName);
                 seminarRepository.save(seminar1);
                 break;
             }
-            case "studentResearchGuidance":{
-                String srg= studentResearchGuidanceService.saveE(allEventDto);
-                if (!"null".equals(srg)){
+            case "studentResearchGuidance": {
+                String srg = studentResearchGuidanceService.saveE(allEventDto);
+                if (!"null".equals(srg)) {
                     model.addAttribute("message", srg);
                     return "user/event/repairEvent";
                 }
                 break;
             }
-            case "vietnamesePaper":{
-                String vp= vietnamesePaperService.saveE(allEventDto);
-                if (!"null".equals(vp)){
+            case "vietnamesePaper": {
+                String vp = vietnamesePaperService.saveE(allEventDto);
+                if (!"null".equals(vp)) {
                     model.addAttribute("message", vp);
                     return "user/event/repairEvent";
                 }
@@ -511,13 +539,11 @@ public class EventDetailController {
                 return "user/event/repairEvent";
         }
         // Lưu khách mời và thành viên
-        saveUsers(guestIdsRaw, idEvent, true);  // true cho guest
+        saveUsers(guestIdsRaw, idEvent, true); // true cho guest
         saveUsers(memberIdsRaw, idEvent, false); // false cho member
-
 
         return "redirect:/event/detailE/" + idEvent;
     }
-
 
     // Phương thức hỗ trợ xử lý và lưu danh sách khách mời hoặc thành viên
     public void saveUsers(String idsRaw, Integer eventId, boolean isGuest) {
@@ -534,34 +560,36 @@ public class EventDetailController {
             Event event = eventRepository.findByIdEvent(eventId);
             Resume resume = resumeRepository.findByIdUser(user.getId());
             String subject = "Lời mời tham dự sự kiện khoa CNTT VNUA";
-            if (event.getIdRoom() != null){
+            if (event.getIdRoom() != null) {
                 Room room = roomRepository.getReferenceById(event.getIdRoom().getId());
-                String bodyGuest = "Khoa công nghệ thông tin kính mời ông/bà "+user.getName()+ " làm khách mời\n"+
-                        "Tham gia sự kiện '"+event.getEventName()+"' \n" +
-                        "Diễn ra tại "+room.getRoomName()+", "+room.getAddress()+"\n" +
-                        "Thời gian diễn ra "+event.getStartTime()+" --- "+event.getEndTime()+"\n" +
-                        "Ngày diễn ra sự kiện "+event.getDateOfEvent()+"\n";
-                String bodyMember = "Khoa công nghệ thông tin kính mời ông/bà "+user.getName()+ "  làm thành viên của nhóm \n"+
-                        "Tham gia sự kiện '"+event.getEventName()+"' \n" +
-                        "Diễn ra tại "+room.getRoomName()+", "+room.getAddress()+"\n" +
-                        "Thời gian diễn ra "+event.getStartTime()+" --- "+event.getEndTime()+"\n" +
-                        "Ngày diễn ra sự kiện "+event.getDateOfEvent()+"\n";
-                if (!guestRepository.existsByUserIdAndEventId(user.getId(), eventId)&&isGuest) {
-                    emailController.sendEmail(resume.getEmail(), subject,bodyGuest);
+                String bodyGuest = "Khoa công nghệ thông tin kính mời ông/bà " + user.getName() + " làm khách mời\n" +
+                        "Tham gia sự kiện '" + event.getEventName() + "' \n" +
+                        "Diễn ra tại " + room.getRoomName() + ", " + room.getAddress() + "\n" +
+                        "Thời gian diễn ra " + event.getStartTime() + " --- " + event.getEndTime() + "\n" +
+                        "Ngày diễn ra sự kiện " + event.getDateOfEvent() + "\n";
+                String bodyMember = "Khoa công nghệ thông tin kính mời ông/bà " + user.getName()
+                        + "  làm thành viên của nhóm \n" +
+                        "Tham gia sự kiện '" + event.getEventName() + "' \n" +
+                        "Diễn ra tại " + room.getRoomName() + ", " + room.getAddress() + "\n" +
+                        "Thời gian diễn ra " + event.getStartTime() + " --- " + event.getEndTime() + "\n" +
+                        "Ngày diễn ra sự kiện " + event.getDateOfEvent() + "\n";
+                if (!guestRepository.existsByUserIdAndEventId(user.getId(), eventId) && isGuest) {
+                    emailController.sendEmail(resume.getEmail(), subject, bodyGuest);
                 }
-                if (!memberRepository.existsByUserIdAndEventId(user.getId(), eventId)&&!isGuest) {
-                    emailController.sendEmail(resume.getEmail(), subject,bodyMember);
+                if (!memberRepository.existsByUserIdAndEventId(user.getId(), eventId) && !isGuest) {
+                    emailController.sendEmail(resume.getEmail(), subject, bodyMember);
                 }
-            }else {
-                String body = "Khoa công nghệ thông tin kính mời ông/bà "+user.getName()+ "  làm thành viên của nhóm \n"+
-                        "Tham gia sự kiện '"+event.getEventName()+"' \n" +
-                        "Thời gian diễn ra "+event.getStartTime()+" --- "+event.getEndTime()+"\n" +
-                        "Ngày diễn ra sự kiện "+event.getDateOfEvent()+"\n";
-                if (!guestRepository.existsByUserIdAndEventId(user.getId(), eventId)&&isGuest) {
-                    emailController.sendEmail(resume.getEmail(), subject,body);
+            } else {
+                String body = "Khoa công nghệ thông tin kính mời ông/bà " + user.getName()
+                        + "  làm thành viên của nhóm \n" +
+                        "Tham gia sự kiện '" + event.getEventName() + "' \n" +
+                        "Thời gian diễn ra " + event.getStartTime() + " --- " + event.getEndTime() + "\n" +
+                        "Ngày diễn ra sự kiện " + event.getDateOfEvent() + "\n";
+                if (!guestRepository.existsByUserIdAndEventId(user.getId(), eventId) && isGuest) {
+                    emailController.sendEmail(resume.getEmail(), subject, body);
                 }
-                if (!memberRepository.existsByUserIdAndEventId(user.getId(), eventId)&&!isGuest) {
-                    emailController.sendEmail(resume.getEmail(), subject,body);
+                if (!memberRepository.existsByUserIdAndEventId(user.getId(), eventId) && !isGuest) {
+                    emailController.sendEmail(resume.getEmail(), subject, body);
                 }
             }
 
@@ -590,12 +618,11 @@ public class EventDetailController {
         }
     }
 
-
     // Xóa khách mời
     @PostMapping("/removeGuest/{eventId}/{userId}")
     public String removeGuest(@PathVariable("eventId") Integer eventId,
-                              @PathVariable("userId") Integer userId,
-                              Model model) {
+            @PathVariable("userId") Integer userId,
+            Model model) {
         Event event = eventRepository.findById(eventId).orElse(null);
         User user = userRepository.findById(userId).orElse(null);
         if (event != null) {
@@ -614,8 +641,8 @@ public class EventDetailController {
     // Xóa thành viên
     @PostMapping("/removeMember/{eventId}/{userId}")
     public String removeMember(@PathVariable("eventId") Integer eventId,
-                               @PathVariable("userId") Integer userId,
-                               Model model) {
+            @PathVariable("userId") Integer userId,
+            Model model) {
         Event event = eventRepository.findById(eventId).orElse(null);
         User user = userRepository.findById(userId).orElse(null);
         if (event != null) {
@@ -638,17 +665,20 @@ public class EventDetailController {
     }
 
     @GetMapping("/statistics")
-    public String statistics(Model model,HttpSession session){
+    public String statistics(Model model, HttpSession session) {
         // call menu
-        commonController.allTypeOfCriteria(model,typeOfCriterionRepository);
+        commonController.allTypeOfCriteria(model, typeOfCriterionRepository);
         int year = LocalDate.now().getYear();
         model.addAttribute("year", year);
         model.addAttribute("statistics", getStats(year));
-        //path user
-        model.addAttribute("breadcrumbs", breadcrumbService.getBreadcrumbForType(null,false,true,false,false)); // gửi ra view
+        // path user
+        model.addAttribute("breadcrumbs", breadcrumbService.getBreadcrumbForType(null, false, true, false, false)); // gửi
+                                                                                                                    // ra
+                                                                                                                    // view
         // end breadcrumb
         return "user/statistics/showStatistics";
     }
+
     @PostMapping("/postStatistics")
     public String yearStatistics(@RequestParam int year, Model model) {
         model.addAttribute("year", year);
@@ -659,17 +689,18 @@ public class EventDetailController {
     // show all event by (month - year)
     @GetMapping("/showEvByMonth/{month}/{year}")
     public String showEvByMonth(Model model,
-                                @PathVariable int month,
-                                @PathVariable int year,
-                                @RequestParam("page") Optional<Integer> page,
-                                @RequestParam("size") Optional<Integer> size) {
-        model.addAttribute("month",month);
+            @PathVariable int month,
+            @PathVariable int year,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size) {
+        model.addAttribute("month", month);
         model.addAttribute("year", year);
         model.addAttribute("statistics", getStats(year));
         int currentPage = page.orElse(1); // số trang
         int pageSize = size.orElse(10); // số event trên 1 trang
         model.addAttribute("pageSize", pageSize);
-        Page<Event> productPage = pageService.findPaginatedByMonth(PageRequest.of(currentPage - 1, pageSize),month,year);
+        Page<Event> productPage = pageService.findPaginatedByMonth(PageRequest.of(currentPage - 1, pageSize), month,
+                year);
         model.addAttribute("events", productPage);
         int totalPages = productPage.getTotalPages();
         if (totalPages > 0) {
@@ -677,20 +708,20 @@ public class EventDetailController {
                     .boxed()
                     .collect(Collectors.toList());
             model.addAttribute("pageNumbers", pageNumbers);
-            model.addAttribute("maxPageNumber",pageNumbers.size());
+            model.addAttribute("maxPageNumber", pageNumbers.size());
         }
-//        model.addAttribute("events",eventRepository.findByMonth(month,year));
+        // model.addAttribute("events",eventRepository.findByMonth(month,year));
         return "user/statistics/showStatistics";
     }
 
     // show event to user
     @GetMapping("/showEvManagement")
     public String showEvManagement(Model model,
-                                   @RequestParam("page") Optional<Integer> page,
-                                   @RequestParam("size") Optional<Integer> size,
-                                   HttpSession  session) throws IOException {
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size,
+            HttpSession session) throws IOException {
         // call menu
-        commonController.allTypeOfCriteria(model,typeOfCriterionRepository);
+        commonController.allTypeOfCriteria(model, typeOfCriterionRepository);
         // Phân trang xem/tao event
         int currentPage = page.orElse(1); // curren page
         int pageSize = size.orElse(10); // number event in page
@@ -710,19 +741,26 @@ public class EventDetailController {
             model.addAttribute("pageNumbers", pageNumbers);
             model.addAttribute("maxPageNumber", totalPages);
         }
-        //      Lưu vào session
-        model.addAttribute("breadcrumbs", breadcrumbService.getBreadcrumbForType(null,true,false,false,false)); // gửi ra view
+        // Lưu vào session
+        model.addAttribute("breadcrumbs", breadcrumbService.getBreadcrumbForType(null, true, false, false, false)); // gửi
+                                                                                                                    // ra
+                                                                                                                    // view
         // end breadcrumb
         return "user/event/showEvent";
     }
-
 
     // if power user == 1 || 2 || 5 => qly duyet ev
     @GetMapping("/status1/{idEvent}")
     public String management(Model model, @PathVariable Integer idEvent) {
         Event event = eventRepository.findById(idEvent).orElse(null);
         assert event != null;
-        event.setStatus(2);
+        // Kiểm tra ngày để set status phù hợp
+        java.time.LocalDate today = java.time.LocalDate.now();
+        if (event.getDateOfEvent() != null && event.getDateOfEvent().isBefore(today)) {
+            event.setStatus("completed");
+        } else {
+            event.setStatus("upcoming");
+        }
         eventRepository.save(event);
         return "redirect:/event/detailE/" + idEvent;
     }

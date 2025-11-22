@@ -27,7 +27,7 @@ const EventFilters = ({
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor text-sm"
+            className="pr-7 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor text-sm"
           >
             <option value="all">Tất cả loại</option>
             <option value="seminar">Hội thảo</option>

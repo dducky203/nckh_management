@@ -1,8 +1,10 @@
 import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import ErrorState from "../../components/common/ErrorState";
+import Pagination from "../../components/common/Pagination";
 import EventDetailModal from "./components/EventDetailModal";
 import EventRegistrationModal from "./components/EventRegistrationModal";
 import EventHero from "./components/EventsPublic/EventHero";
@@ -14,18 +16,28 @@ import EventCTA from "./components/EventsPublic/EventCTA";
 import { useEvents } from "./hooks/useEvents";
 import { useEventFilters } from "./hooks/useEventFilters";
 import { getTabConfig } from "./utils/eventHelpers";
+import eventService from "../../services/eventService";
 
 const EventsPublic = () => {
   const { user } = useContext(AuthContext);
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState("upcoming");
+  const [currentPage, setCurrentPage] = useState(0);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [eventToRegister, setEventToRegister] = useState(null);
+  const [isRegistered, setIsRegistered] = useState(false);
   const navigate = useNavigate();
 
-  // Custom hooks
-  const { events, loading, error, refetchEvents } = useEvents(activeTab);
+  // Custom hooks - backend pagination
+  const { events, pagination, loading, error, refetchEvents } = useEvents(
+    activeTab,
+    currentPage,
+    12
+  );
+
+  // Client-side filtering
   const {
     searchTerm,
     setSearchTerm,
@@ -34,23 +46,149 @@ const EventsPublic = () => {
     filteredEvents,
   } = useEventFilters(events);
 
-  const handleViewDetail = (event) => {
+  // Pagination handlers
+  const handlePageChange = (page) => {
+    setCurrentPage(page - 1); // Convert 1-based to 0-based
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleFirstPage = () => {
+    setCurrentPage(0);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleLastPage = () => {
+    setCurrentPage(pagination.totalPages - 1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handlePreviousPage = () => {
+    if (pagination.hasPrevious) {
+      setCurrentPage((prev) => prev - 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handleNextPage = () => {
+    if (pagination.hasNext) {
+      setCurrentPage((prev) => prev + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const delta = 2;
+    const displayCurrentPage = currentPage + 1;
+
+    if (pagination.totalPages <= 7) {
+      for (let i = 1; i <= pagination.totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+      let start = Math.max(2, displayCurrentPage - delta);
+      let end = Math.min(pagination.totalPages - 1, displayCurrentPage + delta);
+
+      if (start > 2) pages.push("...");
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+      if (end < pagination.totalPages - 1) pages.push("...");
+      pages.push(pagination.totalPages);
+    }
+    return pages;
+  };
+
+  // Reset to first page when changing tabs or filters
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setCurrentPage(0);
+  };
+
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+  };
+
+  const handleFilterChange = (value) => {
+    setFilterType(value);
+  };
+
+  const handleViewDetail = async (event) => {
     if (!user) {
       navigate("/login");
       return;
     }
-    setSelectedEvent(event);
-    setDetailModalOpen(true);
+    
+    try {
+      console.log("Fetching details for event:", event);
+      
+      // Gọi API song song: lấy chi tiết event và kiểm tra đã đăng ký chưa
+      const [eventResponse, registrationResponse] = await Promise.all([
+        eventService.getEventById(event.id),
+        eventService.checkRegistration(event.id, user.id)
+      ]);
+      
+      console.log("API responses:", { eventResponse, registrationResponse });
+      
+      // Backend trả về {data: {data: eventDTO, message: ...}}
+      const eventData = eventResponse.data?.data || eventResponse.data;
+      const isUserRegistered = registrationResponse.data?.data || false;
+      
+      console.log("Setting selected event:", eventData, "Is registered:", isUserRegistered);
+      
+      setSelectedEvent(eventData);
+      setIsRegistered(isUserRegistered);
+      setDetailModalOpen(true);
+    } catch (error) {
+      console.error("Error fetching event details:", error);
+      toast.error("Không thể tải chi tiết sự kiện");
+    }
   };
 
-  const handleRegister = (event, e) => {
+  const handleRegister = async (event, e) => {
     e.stopPropagation();
     if (!user) {
       navigate("/login");
       return;
     }
+
+    // Kiểm tra trạng thái sự kiện
+    if (activeTab === "completed") {
+      toast.error("Sự kiện đã kết thúc, không thể đăng ký!");
+      return;
+    }
+
+    if (activeTab === "ongoing") {
+      toast.warning(
+        "Sự kiện đang diễn ra, bạn có thể tham gia trực tiếp tại địa điểm!"
+      );
+      return;
+    }
+
+    // Mở modal đăng ký
     setEventToRegister(event);
     setRegisterModalOpen(true);
+  };
+
+  const handleConfirmRegister = async (formData) => {
+    try {
+      await eventService.registerForEvent(
+        eventToRegister.id,
+        user.id,
+        formData
+      );
+      toast.success("Đăng ký sự kiện thành công!");
+      setRegisterModalOpen(false);
+      setEventToRegister(null);
+      setIsRegistered(true); // Update registration status
+      refetchEvents(); // Refresh events list
+    } catch (error) {
+      const message =
+        error.response?.data?.message || error.message || "Đăng ký thất bại";
+      toast.error(message);
+      throw error; // Throw để modal xử lý loading state
+    }
   };
 
   const tabConfig = getTabConfig(activeTab);
@@ -66,14 +204,14 @@ const EventsPublic = () => {
         <div className="bg-white rounded-lg shadow-sm mb-6">
           <EventTabs
             activeTab={activeTab}
-            setActiveTab={setActiveTab}
+            setActiveTab={handleTabChange}
             eventCount={events.length}
           />
           <EventFilters
             searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
+            setSearchTerm={handleSearchChange}
             filterType={filterType}
-            setFilterType={setFilterType}
+            setFilterType={handleFilterChange}
           />
         </div>
 
@@ -104,18 +242,44 @@ const EventsPublic = () => {
                 searchTerm={searchTerm}
               />
             ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredEvents.map((event) => (
-                  <EventCard
-                    key={event.id}
-                    event={event}
-                    activeTab={activeTab}
-                    user={user}
-                    onViewDetail={handleViewDetail}
-                    onRegister={handleRegister}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                  {filteredEvents.map((event) => (
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      activeTab={activeTab}
+                      user={user}
+                      onViewDetail={handleViewDetail}
+                      onRegister={handleRegister}
+                    />
+                  ))}
+                </div>
+
+                {/* Pagination - từ backend */}
+                {pagination.totalPages > 1 && (
+                  <div className="bg-white rounded-lg shadow-sm">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={pagination.totalPages}
+                      totalItems={pagination.totalItems}
+                      itemsPerPage={pagination.itemsPerPage}
+                      startIndex={currentPage * pagination.itemsPerPage}
+                      endIndex={Math.min(
+                        (currentPage + 1) * pagination.itemsPerPage,
+                        pagination.totalItems
+                      )}
+                      onPageChange={handlePageChange}
+                      onFirstPage={handleFirstPage}
+                      onLastPage={handleLastPage}
+                      onPreviousPage={handlePreviousPage}
+                      onNextPage={handleNextPage}
+                      getPageNumbers={getPageNumbers}
+                      itemName="sự kiện"
+                    />
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
@@ -131,12 +295,11 @@ const EventsPublic = () => {
           onClose={() => {
             setDetailModalOpen(false);
             setSelectedEvent(null);
+            setIsRegistered(false);
           }}
           event={selectedEvent}
-          onRegister={(event) => {
-            setEventToRegister(event);
-            setRegisterModalOpen(true);
-          }}
+          onRegister={handleRegister}
+          isRegistered={isRegistered}
         />
       )}
 
@@ -150,6 +313,7 @@ const EventsPublic = () => {
           }}
           event={eventToRegister}
           user={user}
+          onConfirm={handleConfirmRegister}
         />
       )}
     </div>

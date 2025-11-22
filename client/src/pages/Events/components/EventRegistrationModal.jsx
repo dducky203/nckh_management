@@ -10,7 +10,13 @@ import {
 import Button from "../../../components/common/Button";
 import { useToast } from "../../../context/ToastContext";
 
-const EventRegistrationModal = ({ isOpen, onClose, event, user }) => {
+const EventRegistrationModal = ({
+  isOpen,
+  onClose,
+  event,
+  user,
+  onConfirm,
+}) => {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -73,17 +79,19 @@ const EventRegistrationModal = ({ isOpen, onClose, event, user }) => {
     try {
       setLoading(true);
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Here you would call your API
-      // await eventService.registerEvent(event.id, formData);
-
-      toast.success("Đăng ký tham gia sự kiện thành công!");
-      onClose();
+      // Call parent's onConfirm if provided
+      if (onConfirm) {
+        await onConfirm(formData);
+        onClose();
+      } else {
+        // Fallback: simulate API call
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        toast.success("Đăng ký tham gia sự kiện thành công!");
+        onClose();
+      }
     } catch (error) {
       console.error("Error registering for event:", error);
-      toast.error(error.message || "Có lỗi xảy ra khi đăng ký!");
+      // Don't close modal on error
     } finally {
       setLoading(false);
     }
@@ -152,7 +160,7 @@ const EventRegistrationModal = ({ isOpen, onClose, event, user }) => {
                     <strong>Địa điểm:</strong> {event.location}
                   </p>
                 )}
-                
+
                 {event.maxParticipants && (
                   <p>
                     <strong>Số lượng:</strong> Tối đa {event.maxParticipants}{" "}

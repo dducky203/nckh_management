@@ -239,13 +239,6 @@ Sau khi chạy backend, có thể truy cập:
 - REST API: `http://localhost:8081/api`
 - Thymeleaf views: `http://localhost:8080`
 
-## 🤝 Đóng góp
-
-1. Fork repository
-2. Tạo feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Tạo Pull Request
 
 ## 📝 License
 
@@ -262,7 +255,6 @@ Nếu gặp vấn đề trong quá trình cài đặt hoặc sử dụng, hãy:
 
 1. Kiểm tra [Issues](https://github.com/dducky203/nckh_management/issues)
 2. Tạo issue mới nếu chưa có
-3. Liên hệ qua email: support@example.com
 
 ---
 

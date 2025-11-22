@@ -6,7 +6,9 @@ const YearlyTrendChart = ({ events, years }) => {
     events: events.filter((e) => new Date(e.date).getFullYear() === year)
       .length,
     approved: events.filter(
-      (e) => new Date(e.date).getFullYear() === year && e.status === "approved"
+      (e) =>
+        new Date(e.date).getFullYear() === year &&
+        (e.status === "upcoming" || e.status === "completed")
     ).length,
   }));
 

@@ -23,8 +23,8 @@ public class Event extends EntityBase implements Serializable {
     @Column(name = "date_of_event")
     private LocalDate dateOfEvent;
 
-//    @Column(name = "create_date")
-//    private LocalDate createDate;
+    // @Column(name = "create_date")
+    // private LocalDate createDate;
 
     @Column(name = "creator")
     private Integer creator;
@@ -35,7 +35,7 @@ public class Event extends EntityBase implements Serializable {
     @Column(name = "end_time")
     private Integer endTime;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
+    // @ManyToOne(fetch = FetchType.LAZY)
     @Column(name = "id_operating_standard_2")
     private Integer idOperatingStandard2;
 
@@ -44,8 +44,11 @@ public class Event extends EntityBase implements Serializable {
     private Room idRoom;
 
     @Column(name = "status")
-    private Integer status;
+    private String status; // upcoming, pending, completed, rejected
 
     @Column(name = "is_delete")
     private Integer isDelete;
+
+    @Column(name = "banner_img")
+    private String bannerImg; // URL của banner image
 }

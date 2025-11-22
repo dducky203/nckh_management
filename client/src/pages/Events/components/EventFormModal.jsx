@@ -3,7 +3,7 @@ import { Close, Save, Upload } from "@mui/icons-material";
 import { useToast } from "../../../context/ToastContext";
 // import MDEditor from '@uiw/react-md-editor';
 // import '@uiw/react-md-editor/markdown-editor.css';
-import './EventFormModal.css';
+import "./EventFormModal.css";
 
 const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
   const toast = useToast();
@@ -12,15 +12,10 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
     title: "",
     type: "Hội thảo",
     date: "",
-    time: "",
+    startTime: 1,
+    endTime: 5,
     location: "",
     description: "",
-    maxParticipants: "",
-    registrationDeadline: "",
-    requirements: "",
-    agenda: "",
-    speakers: "",
-    contact: "",
     image: null,
   });
 
@@ -35,15 +30,10 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
         title: event.title || "",
         type: event.type || "Hội thảo",
         date: event.date || "",
-        time: event.time || "",
+        startTime: event.startTime || 1,
+        endTime: event.endTime || 5,
         location: event.location || "",
         description: event.description || "",
-        maxParticipants: event.maxParticipants?.toString() || "",
-        registrationDeadline: event.registrationDeadline || "",
-        requirements: event.requirements || "",
-        agenda: event.agenda || "",
-        speakers: event.speakers || "",
-        contact: event.contact || currentUser?.email || "",
         image: null,
       });
     } else {
@@ -51,15 +41,10 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
         title: "",
         type: "Hội thảo",
         date: "",
-        time: "",
+        startTime: 1,
+        endTime: 5,
         location: "",
         description: "",
-        maxParticipants: "",
-        registrationDeadline: "",
-        requirements: "",
-        agenda: "",
-        speakers: "",
-        contact: currentUser?.email || "",
         image: null,
       });
     }
@@ -84,7 +69,7 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
   // Xử lý thay đổi cho rich text editor
   const handleRichTextChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    
+
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
@@ -110,10 +95,6 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
       }
     }
 
-    if (!formData.time.trim()) {
-      newErrors.time = "Thời gian tổ chức là bắt buộc";
-    }
-
     if (!formData.location.trim()) {
       newErrors.location = "Địa điểm tổ chức là bắt buộc";
     }
@@ -122,33 +103,10 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
       newErrors.description = "Mô tả sự kiện là bắt buộc";
     }
 
-    if (
-      !formData.maxParticipants ||
-      isNaN(formData.maxParticipants) ||
-      formData.maxParticipants <= 0
-    ) {
-      newErrors.maxParticipants = "Số lượng tham gia tối đa phải là số dương";
-    }
-
-    if (!formData.registrationDeadline) {
-      newErrors.registrationDeadline = "Hạn đăng ký là bắt buộc";
-    } else {
-      const deadlineDate = new Date(formData.registrationDeadline);
-      const eventDate = new Date(formData.date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      if (deadlineDate < today) {
-        newErrors.registrationDeadline =
-          "Hạn đăng ký không thể là ngày trong quá khứ";
-      } else if (deadlineDate >= eventDate) {
-        newErrors.registrationDeadline =
-          "Hạn đăng ký phải trước ngày tổ chức sự kiện";
+    if (formData.startTime && formData.endTime) {
+      if (parseInt(formData.endTime) <= parseInt(formData.startTime)) {
+        newErrors.endTime = "Tiết kết thúc phải sau tiết bắt đầu";
       }
-    }
-
-    if (!formData.contact.trim()) {
-      newErrors.contact = "Thông tin liên hệ là bắt buộc";
     }
 
     setErrors(newErrors);
@@ -167,7 +125,7 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
     try {
       await onSave(formData);
     } catch (err) {
-      console.error('Error saving event:', err);
+      console.error("Error saving event:", err);
       toast.error("Có lỗi xảy ra khi lưu sự kiện");
     } finally {
       setIsSubmitting(false);
@@ -253,28 +211,46 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
               )}
             </div>
 
-            {/* Thời gian */}
+            {/* Tiết bắt đầu */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Thời gian <span className="text-red-500">*</span>
+                Tiết bắt đầu <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                name="time"
-                value={formData.time}
+              <select
+                name="startTime"
+                value={formData.startTime}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.time ? "border-red-500" : "border-gray-300"
-                }`}
-                placeholder="VD: 08:00 - 17:00"
-              />
-              {errors.time && (
-                <p className="text-red-500 text-sm mt-1">{errors.time}</p>
-              )}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((time) => (
+                  <option key={time} value={time}>
+                    Tiết {time}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Tiết kết thúc */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tiết kết thúc <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="endTime"
+                value={formData.endTime}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((time) => (
+                  <option key={time} value={time}>
+                    Tiết {time}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Địa điểm */}
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Địa điểm <span className="text-red-500">*</span>
               </label>
@@ -293,72 +269,6 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
               )}
             </div>
 
-            {/* Số lượng tham gia tối đa */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Số lượng tham gia tối đa <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                name="maxParticipants"
-                value={formData.maxParticipants}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.maxParticipants ? "border-red-500" : "border-gray-300"
-                }`}
-                placeholder="Nhập số lượng"
-                min="1"
-              />
-              {errors.maxParticipants && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.maxParticipants}
-                </p>
-              )}
-            </div>
-
-            {/* Hạn đăng ký */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Hạn đăng ký <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                name="registrationDeadline"
-                value={formData.registrationDeadline}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.registrationDeadline
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
-              />
-              {errors.registrationDeadline && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.registrationDeadline}
-                </p>
-              )}
-            </div>
-
-            {/* Thông tin liên hệ */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Thông tin liên hệ <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="contact"
-                value={formData.contact}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.contact ? "border-red-500" : "border-gray-300"
-                }`}
-                placeholder="Email hoặc số điện thoại"
-              />
-              {errors.contact && (
-                <p className="text-red-500 text-sm mt-1">{errors.contact}</p>
-              )}
-            </div>
-
             {/* Mô tả */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -367,13 +277,15 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
               <div className={`${errors.description ? "border-red-500" : ""}`}>
                 <MDEditor
                   value={formData.description}
-                  onChange={(value) => handleRichTextChange('description', value || '')}
+                  onChange={(value) =>
+                    handleRichTextChange("description", value || "")
+                  }
                   preview="edit"
                   hideToolbar={false}
                   visibleDragBar={false}
                   textareaProps={{
-                    placeholder: 'Mô tả chi tiết về sự kiện...',
-                    style: { fontSize: 14, lineHeight: 1.5 }
+                    placeholder: "Mô tả chi tiết về sự kiện...",
+                    style: { fontSize: 14, lineHeight: 1.5 },
                   }}
                   height={150}
                 />
@@ -385,56 +297,7 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
               )}
             </div>
 
-            {/* Yêu cầu tham gia */}
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Yêu cầu tham gia
-              </label>
-              <textarea
-                name="requirements"
-                value={formData.requirements}
-                onChange={handleChange}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Các yêu cầu đối với người tham gia (nếu có)"
-              />
-            </div>
-
-            {/* Chương trình */}
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Chương trình sự kiện
-              </label>
-              <MDEditor
-                value={formData.agenda}
-                onChange={(value) => handleRichTextChange('agenda', value || '')}
-                preview="edit"
-                hideToolbar={false}
-                visibleDragBar={false}
-                textareaProps={{
-                  placeholder: 'Chương trình chi tiết của sự kiện...',
-                  style: { fontSize: 14, lineHeight: 1.5 }
-                }}
-                height={150}
-              />
-            </div>
-
-            {/* Diễn giả */}
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Diễn giả/Người hướng dẫn
-              </label>
-              <textarea
-                name="speakers"
-                value={formData.speakers}
-                onChange={handleChange}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Thông tin về diễn giả hoặc người hướng dẫn"
-              />
-            </div>
-
-            {/* Upload ảnh */}
+            {/* Upload ảnh banner */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Ảnh đại diện sự kiện

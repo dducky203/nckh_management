@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 @Slf4j
 @SpringBootApplication
 @EnableJpaAuditing
+@org.springframework.scheduling.annotation.EnableScheduling
 public class ServerApplication {
 
     public static void main(String[] args) {

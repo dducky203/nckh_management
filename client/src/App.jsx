@@ -81,7 +81,7 @@ function App() {
                       }
                     />
                     <Route
-                      path="events/manage"
+                      path="/events/manage"
                       element={
                         <ProtectedRoute requiredPower="admin">
                           <EventDashboard />

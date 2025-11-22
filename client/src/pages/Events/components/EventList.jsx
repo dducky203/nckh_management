@@ -19,6 +19,7 @@ const EventList = ({
   onDelete,
   onCreateNew,
   showCreateButton = false,
+  isAdmin = false, // Admin có quyền approve/reject/delete
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
@@ -148,6 +149,7 @@ const EventList = ({
               onReject={onReject}
               onEdit={onEdit}
               onDelete={onDelete}
+              isAdmin={isAdmin}
             />
           ))}
         </div>

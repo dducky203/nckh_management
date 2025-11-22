@@ -10,6 +10,7 @@ const DashboardStats = ({
     (e) => new Date(e.date).getFullYear() === selectedYear
   );
   const totalParticipants = events.reduce((sum, e) => sum + e.participants, 0);
+    console.log({events});
 
   const statsCards = [
     {

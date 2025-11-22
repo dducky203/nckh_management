@@ -3,6 +3,7 @@ import DashboardStats from "./DashboardStats";
 import YearlyTrendChart from "./YearlyTrendChart";
 import EventTypeChart from "./EventTypeChart";
 import MonthlyBarChart from "./MonthlyBarChart";
+import EventCard from "../EventCard";
 
 const DashboardOverview = ({
   events,
@@ -15,6 +16,11 @@ const DashboardOverview = ({
   colors,
   setEditingEvent,
   setFormModalOpen,
+  onViewDetails,
+  onApprove,
+  onReject,
+  onEdit,
+  onDelete,
 }) => {
   return (
     <div className="space-y-6">
@@ -32,10 +38,10 @@ const DashboardOverview = ({
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="pr-7 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             {years.map((year) => (
-              <option key={year} value={year}>
+              <option  key={year} value={year}>
                 {year}
               </option>
             ))}
@@ -61,10 +67,34 @@ const DashboardOverview = ({
         selectedYear={selectedYear}
       />
 
-      
+      {/* Recent Events Section */}
+      {pendingEvents.length > 0 && (
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-bold text-gray-900">
+              Sự kiện chờ duyệt ({pendingEvents.length})
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {pendingEvents.slice(0, 6).map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                type="pending"
+                onViewDetails={onViewDetails}
+                onApprove={onApprove}
+                onReject={onReject}
+                isAdmin={true}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
 
       {/* Monthly Bar Chart - Full Width */}
       <MonthlyBarChart events={events} selectedYear={selectedYear} />
+
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <YearlyTrendChart events={events} years={years} />

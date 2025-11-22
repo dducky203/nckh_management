@@ -2,12 +2,17 @@ import {
   Close,
   CalendarToday,
   LocationOn,
-  People,
-  Schedule,
+  CheckCircle,
 } from "@mui/icons-material";
+import {API_BASE_URL} from "../../../constants/index.js";
 
-const EventDetailModal = ({ isOpen, onClose, event, onRegister }) => {
-  if (!isOpen || !event) return null;
+const EventDetailModal = ({ isOpen, onClose, event, onRegister, isRegistered = false }) => {
+  console.log("EventDetailModal render:", { isOpen, event, isRegistered });
+  
+  if (!isOpen || !event) {
+    console.log("Modal not rendering - isOpen:", isOpen, "event:", event);
+    return null;
+  }
 
   const isUpcoming = () => {
     const eventDate = new Date(event.dateOfEvent);
@@ -20,7 +25,14 @@ const EventDetailModal = ({ isOpen, onClose, event, onRegister }) => {
         label: "Chờ duyệt",
         className: "bg-yellow-100 text-yellow-800",
       },
-      approved: { label: "Đã duyệt", className: "bg-green-100 text-green-800" },
+      upcoming: {
+        label: "Sắp diễn ra",
+        className: "bg-green-100 text-green-800",
+      },
+      completed: {
+        label: "Đã hoàn thành",
+        className: "bg-blue-100 text-blue-800",
+      },
       rejected: { label: "Từ chối", className: "bg-red-100 text-red-800" },
     };
     return (
@@ -66,8 +78,8 @@ const EventDetailModal = ({ isOpen, onClose, event, onRegister }) => {
           {event.image && (
             <div className="mb-6">
               <img
-                src={event.image}
-                alt={event.title}
+                src={`${API_BASE_URL}`+event.image}
+                alt={event.eventName}
                 className="w-full h-64 object-cover rounded-lg"
               />
             </div>
@@ -90,11 +102,11 @@ const EventDetailModal = ({ isOpen, onClose, event, onRegister }) => {
               </span>
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              {event.title}
+              {event.eventName}
             </h1>
             <p className="text-gray-600">
               Tổ chức bởi:{" "}
-              <span className="font-medium">{event.organizer}</span>
+              <span className="font-medium">{event.organizer || "Chưa cập nhật"}</span>
             </p>
           </div>
 
@@ -106,10 +118,21 @@ const EventDetailModal = ({ isOpen, onClose, event, onRegister }) => {
                 <CalendarToday className="w-5 h-5 mr-2" />
                 <span className="font-medium">Thời gian</span>
               </div>
-              <p className="text-sm text-gray-600">
-                <div className="font-medium">{event.date}</div>
-                <div>{event.time}</div>
-              </p>
+              <div className="text-sm text-gray-600">
+                <div className="font-medium">
+                  {event.dateOfEvent ? new Date(event.dateOfEvent).toLocaleDateString('vi-VN', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  }) : 'Chưa xác định'}
+                </div>
+                <div className="mt-1">
+                  {event.startTimeDetail && event.endTimeDetail 
+                    ? `${event.startTimeDetail.slice(0, 5)} - ${event.endTimeDetail.slice(0, 5)}`
+                    : 'Chưa xác định giờ'}
+                </div>
+              </div>
             </div>
 
             {/* Location */}
@@ -118,40 +141,7 @@ const EventDetailModal = ({ isOpen, onClose, event, onRegister }) => {
                 <LocationOn className="w-5 h-5 mr-2" />
                 <span className="font-medium">Địa điểm</span>
               </div>
-              <p className="text-sm text-gray-600">{event.location}</p>
-            </div>
-
-            {/* Participants */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex items-center text-gray-700 mb-2">
-                <People className="w-5 h-5 mr-2" />
-                <span className="font-medium">Số lượng tham gia</span>
-              </div>
-              <p className="text-sm text-gray-600">
-                {event.participants}/{event.maxParticipants} người
-              </p>
-              <div className="mt-2 bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-blue-600 h-2 rounded-full"
-                  style={{
-                    width: `${Math.min(
-                      (event.participants / event.maxParticipants) * 100,
-                      100
-                    )}%`,
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Registration Deadline */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex items-center text-gray-700 mb-2">
-                <Schedule className="w-5 h-5 mr-2" />
-                <span className="font-medium">Hạn đăng ký</span>
-              </div>
-              <p className="text-sm text-gray-600">
-                {event.registrationDeadline}
-              </p>
+              <p className="text-sm text-gray-600">{event.location || 'Chưa xác định'}</p>
             </div>
           </div>
 
@@ -162,117 +152,39 @@ const EventDetailModal = ({ isOpen, onClose, event, onRegister }) => {
             </h3>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-gray-700 whitespace-pre-wrap">
-                {event.description}
+                {event.description || 'Chưa có mô tả'}
               </p>
             </div>
           </div>
-
-          {/* Requirements */}
-          {event.requirements && (
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Yêu cầu tham gia
-              </h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-gray-700 whitespace-pre-wrap">
-                  {event.requirements}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Agenda */}
-          {event.agenda && (
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Chương trình sự kiện
-              </h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-gray-700 whitespace-pre-wrap">
-                  {event.agenda}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Speakers */}
-          {event.speakers && (
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Diễn giả/Người hướng dẫn
-              </h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-gray-700 whitespace-pre-wrap">
-                  {event.speakers}
-                </p>
-              </div>
-            </div>
-          )}
 
           {/* Contact Info */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-3">
               Thông tin liên hệ
             </h3>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-gray-700">{event.contact}</p>
+            <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+              {event.contactEmail && (
+                <p className="text-gray-700">
+                  <span className="font-medium">Email:</span> {event.contactEmail}
+                </p>
+              )}
+              {event.contactPhone && (
+                <p className="text-gray-700">
+                  <span className="font-medium">Điện thoại:</span> {event.contactPhone}
+                </p>
+              )}
+              {!event.contactEmail && !event.contactPhone && (
+                <p className="text-gray-700">Chưa có thông tin liên hệ</p>
+              )}
             </div>
           </div>
 
-          {/* Approval/Rejection Info */}
-          {event.status === "approved" && event.approvedBy && (
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Thông tin duyệt
-              </h3>
-              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                <p className="text-green-800">
-                  Đã được duyệt bởi{" "}
-                  <span className="font-medium">{event.approvedBy}</span>
-                  {event.approvedAt && (
-                    <span>
-                      {" "}
-                      vào ngày{" "}
-                      {new Date(event.approvedAt).toLocaleDateString("vi-VN")}
-                    </span>
-                  )}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {event.status === "rejected" && event.rejectedBy && (
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Thông tin từ chối
-              </h3>
-              <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                <p className="text-red-800 mb-2">
-                  Đã bị từ chối bởi{" "}
-                  <span className="font-medium">{event.rejectedBy}</span>
-                  {event.rejectedAt && (
-                    <span>
-                      {" "}
-                      vào ngày{" "}
-                      {new Date(event.rejectedAt).toLocaleDateString("vi-VN")}
-                    </span>
-                  )}
-                </p>
-                {event.rejectionReason && (
-                  <div>
-                    <p className="text-red-700 font-medium mb-1">
-                      Lý do từ chối:
-                    </p>
-                    <p className="text-red-700">{event.rejectionReason}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* Created Date */}
           <div className="text-sm text-gray-500 border-t pt-4">
-            Tạo ngày: {new Date(event.createdAt).toLocaleDateString("vi-VN")}
+            <p>Tạo ngày: {event.createdAt ? new Date(event.createdAt).toLocaleDateString("vi-VN") : 'Chưa xác định'}</p>
+            {event.updatedAt && (
+              <p className="mt-1">Cập nhật lần cuối: {new Date(event.updatedAt).toLocaleDateString("vi-VN")}</p>
+            )}
           </div>
         </div>
 
@@ -286,15 +198,27 @@ const EventDetailModal = ({ isOpen, onClose, event, onRegister }) => {
               Đóng
             </button>
             {onRegister && isUpcoming() && (
-              <button
-                onClick={() => {
-                  onClose();
-                  onRegister(event);
-                }}
-                className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-              >
-                Đăng ký tham gia
-              </button>
+              <>
+                {isRegistered ? (
+                  <button
+                    disabled
+                    className="px-6 py-2 bg-gray-400 text-white rounded-md cursor-not-allowed flex items-center gap-2"
+                  >
+                    <CheckCircle className="w-5 h-5" />
+                    Đã đăng ký
+                  </button>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      onClose();
+                      onRegister(event, e);
+                    }}
+                    className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                  >
+                    Đăng ký tham gia
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>

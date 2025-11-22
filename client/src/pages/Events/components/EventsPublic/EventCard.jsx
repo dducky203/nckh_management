@@ -6,6 +6,7 @@ import {
 } from "@mui/icons-material";
 import Button from "../../../../components/common/Button";
 import { formatDateTime, getCountdown } from "../../utils/eventHelpers";
+import { API_BASE_URL } from "../../../../constants";
 
 const EventCard = ({ event, activeTab, onViewDetail, onRegister }) => {
   return (
@@ -13,7 +14,7 @@ const EventCard = ({ event, activeTab, onViewDetail, onRegister }) => {
       {/* Event Image */}
       <div className="relative h-48 overflow-hidden">
         <img
-          src={event.image || "/src/assets/default-event.jpg"}
+          src={`${API_BASE_URL}${event.image}`}
           alt={event.eventName}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
         />
@@ -29,7 +30,7 @@ const EventCard = ({ event, activeTab, onViewDetail, onRegister }) => {
           {event.type || "Sự kiện"}
         </div>
         {activeTab === "ongoing" && (
-          <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded-full text-xs font-medium animate-pulse">
+          <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded text-xs font-medium animate-pulse">
             Đang diễn ra
           </div>
         )}
@@ -44,8 +45,8 @@ const EventCard = ({ event, activeTab, onViewDetail, onRegister }) => {
       </div>
 
       {/* Event Content */}
-      <div className="p-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-3 line-clamp-2 group-hover:text-mainColor transition-colors">
+      <div className="p-6" >
+        <h3 title={event.eventName} className="text-xl font-bold text-gray-800 mb-3 line-clamp-2 group-hover:text-mainColor transition-colors">
           {event.eventName}
         </h3>
 
@@ -55,8 +56,8 @@ const EventCard = ({ event, activeTab, onViewDetail, onRegister }) => {
             <span>{formatDateTime(event.dateOfEvent)}</span>
           </div>
           {event.location && (
-            <div className="flex items-center">
-              <LocationOn fontSize="small" className="mr-2" />
+            <div className="flex items-center" title={event.location}>
+              <LocationOn fontSize="small" className="mr-2" title={event.location} />
               <span className="line-clamp-1">{event.location}</span>
             </div>
           )}

@@ -4,15 +4,11 @@ import {
   Event,
   CalendarMonth,
   LocationOn,
-  Person,
   Description,
-  Link as LinkIcon,
-  Email,
-  Phone,
   Category,
-  People,
-  AttachMoney,
   ArrowBack,
+  CloudUpload,
+  AccessTime,
 } from "@mui/icons-material";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
@@ -24,20 +20,16 @@ const CreateEvent = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [formData, setFormData] = useState({
     eventName: "",
     description: "",
     dateOfEvent: "",
-    endDate: "",
+    startTime: "",
+    endTime: "",
     location: "",
-    organizer: user?.name || "",
     type: "",
-    contactEmail: user?.email || "",
-    contactPhone: "",
-    registrationLink: "",
-    maxParticipants: "",
-    fee: "",
-    image: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -48,6 +40,19 @@ const CreateEvent = () => {
     { value: "conference", label: "Hội nghị" },
     { value: "competition", label: "Cuộc thi" },
     { value: "other", label: "Khác" },
+  ];
+
+  const timeSlots = [
+    { value: 1, label: "Tiết 1 (7:00 - 7:50)" },
+    { value: 2, label: "Tiết 2 (8:00 - 8:50)" },
+    { value: 3, label: "Tiết 3 (9:00 - 9:50)" },
+    { value: 4, label: "Tiết 4 (10:00 - 10:50)" },
+    { value: 5, label: "Tiết 5 (11:00 - 11:50)" },
+    { value: 6, label: "Tiết 6 (13:00 - 13:50)" },
+    { value: 7, label: "Tiết 7 (14:00 - 14:50)" },
+    { value: 8, label: "Tiết 8 (15:00 - 15:50)" },
+    { value: 9, label: "Tiết 9 (16:00 - 16:50)" },
+    { value: 10, label: "Tiết 10 (17:00 - 17:50)" },
   ];
 
   const handleChange = (e) => {
@@ -63,6 +68,27 @@ const CreateEvent = () => {
         [name]: "",
       }));
     }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Chỉ chấp nhận file ảnh (JPG, PNG, GIF)");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Kích thước file không được vượt quá 5MB");
+      return;
+    }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
   };
 
   const validateForm = () => {
@@ -84,33 +110,24 @@ const CreateEvent = () => {
       newErrors.location = "Địa điểm là bắt buộc";
     }
 
-    if (!formData.organizer.trim()) {
-      newErrors.organizer = "Đơn vị tổ chức là bắt buộc";
-    }
-
     if (!formData.type) {
       newErrors.type = "Loại sự kiện là bắt buộc";
     }
 
-    if (
-      formData.endDate &&
-      new Date(formData.endDate) < new Date(formData.dateOfEvent)
-    ) {
-      newErrors.endDate = "Ngày kết thúc phải sau ngày bắt đầu";
+    if (!formData.startTime) {
+      newErrors.startTime = "Tiết bắt đầu là bắt buộc";
+    }
+
+    if (!formData.endTime) {
+      newErrors.endTime = "Tiết kết thúc là bắt buộc";
     }
 
     if (
-      formData.contactEmail &&
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contactEmail)
+      formData.startTime &&
+      formData.endTime &&
+      parseInt(formData.endTime) < parseInt(formData.startTime)
     ) {
-      newErrors.contactEmail = "Email không hợp lệ";
-    }
-
-    if (
-      formData.contactPhone &&
-      !/^[0-9]{10,11}$/.test(formData.contactPhone)
-    ) {
-      newErrors.contactPhone = "Số điện thoại không hợp lệ";
+      newErrors.endTime = "Tiết kết thúc phải sau tiết bắt đầu";
     }
 
     setErrors(newErrors);
@@ -128,18 +145,25 @@ const CreateEvent = () => {
     try {
       setLoading(true);
 
-      // Prepare data for API
-      const eventData = {
-        ...formData,
-        maxParticipants: formData.maxParticipants
-          ? parseInt(formData.maxParticipants)
-          : null,
-        fee: formData.fee ? parseFloat(formData.fee) : 0,
-        status: "pending", // Default status
-        isEvent: 1, // Mark as event (not research activity)
-      };
+      // Tạo FormData để gửi file và data
+      const submitData = new FormData();
 
-      await eventService.createEvent(eventData);
+      // Thêm file banner nếu có
+      if (imageFile) {
+        submitData.append("banner", imageFile);
+      }
+
+      // Thêm các trường dữ liệu
+      submitData.append("eventName", formData.eventName);
+      submitData.append("dateOfEvent", formData.dateOfEvent);
+      submitData.append("startTime", formData.startTime || 1);
+      submitData.append("endTime", formData.endTime || 5);
+      submitData.append("location", formData.location);
+      submitData.append("type", formData.type);
+      submitData.append("description", formData.description);
+      submitData.append("creator", user?.id);
+
+      await eventService.createEvent(submitData);
 
       toast.success(
         "Đăng ký sự kiện thành công! Chờ phê duyệt từ quản trị viên."
@@ -147,7 +171,11 @@ const CreateEvent = () => {
       navigate("/events");
     } catch (error) {
       console.error("Error creating event:", error);
-      toast.error(error.message || "Có lỗi xảy ra khi đăng ký sự kiện!");
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Có lỗi xảy ra khi đăng ký sự kiện!"
+      );
     } finally {
       setLoading(false);
     }
@@ -269,242 +297,197 @@ const CreateEvent = () => {
             </div>
 
             {/* Date & Time */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="dateOfEvent"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Ngày bắt đầu <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <CalendarMonth className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="datetime-local"
-                    id="dateOfEvent"
-                    name="dateOfEvent"
-                    value={formData.dateOfEvent}
-                    onChange={handleChange}
-                    className={`w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor ${
-                      errors.dateOfEvent ? "border-red-500" : "border-gray-300"
-                    }`}
-                  />
-                </div>
-                {errors.dateOfEvent && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.dateOfEvent}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="endDate"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Ngày kết thúc
-                </label>
-                <div className="relative">
-                  <CalendarMonth className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="datetime-local"
-                    id="endDate"
-                    name="endDate"
-                    value={formData.endDate}
-                    onChange={handleChange}
-                    className={`w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor ${
-                      errors.endDate ? "border-red-500" : "border-gray-300"
-                    }`}
-                  />
-                </div>
-                {errors.endDate && (
-                  <p className="text-red-500 text-sm mt-1">{errors.endDate}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Location & Organizer */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="location"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Địa điểm <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <LocationOn className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    id="location"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleChange}
-                    className={`w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor ${
-                      errors.location ? "border-red-500" : "border-gray-300"
-                    }`}
-                    placeholder="Nhập địa điểm tổ chức"
-                  />
-                </div>
-                {errors.location && (
-                  <p className="text-red-500 text-sm mt-1">{errors.location}</p>
-                )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="organizer"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Đơn vị tổ chức <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Person className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    id="organizer"
-                    name="organizer"
-                    value={formData.organizer}
-                    onChange={handleChange}
-                    className={`w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor ${
-                      errors.organizer ? "border-red-500" : "border-gray-300"
-                    }`}
-                    placeholder="Nhập đơn vị tổ chức"
-                  />
-                </div>
-                {errors.organizer && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.organizer}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Contact Info */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="contactEmail"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Email liên hệ
-                </label>
-                <div className="relative">
-                  <Email className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="email"
-                    id="contactEmail"
-                    name="contactEmail"
-                    value={formData.contactEmail}
-                    onChange={handleChange}
-                    className={`w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor ${
-                      errors.contactEmail ? "border-red-500" : "border-gray-300"
-                    }`}
-                    placeholder="email@example.com"
-                  />
-                </div>
-                {errors.contactEmail && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.contactEmail}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="contactPhone"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Số điện thoại liên hệ
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="tel"
-                    id="contactPhone"
-                    name="contactPhone"
-                    value={formData.contactPhone}
-                    onChange={handleChange}
-                    className={`w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor ${
-                      errors.contactPhone ? "border-red-500" : "border-gray-300"
-                    }`}
-                    placeholder="0123456789"
-                  />
-                </div>
-                {errors.contactPhone && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.contactPhone}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Additional Info */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="maxParticipants"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Số lượng tham gia tối đa
-                </label>
-                <div className="relative">
-                  <People className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="number"
-                    id="maxParticipants"
-                    name="maxParticipants"
-                    value={formData.maxParticipants}
-                    onChange={handleChange}
-                    min="1"
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
-                    placeholder="Số lượng người tham gia"
-                  />
-                </div>
-              </div>
-
-             
-            </div>
-
-            {/* Registration Link */}
             <div>
               <label
-                htmlFor="registrationLink"
+                htmlFor="dateOfEvent"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Link đăng ký
+                Ngày tổ chức <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <LinkIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <CalendarMonth className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
-                  type="url"
-                  id="registrationLink"
-                  name="registrationLink"
-                  value={formData.registrationLink}
+                  type="date"
+                  id="dateOfEvent"
+                  name="dateOfEvent"
+                  value={formData.dateOfEvent}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
-                  placeholder="https://example.com/register"
+                  min={
+                    new Date(Date.now() + 86400000).toISOString().split("T")[0]
+                  }
+                  className={`w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor ${
+                    errors.dateOfEvent ? "border-red-500" : "border-gray-300"
+                  }`}
                 />
+              </div>
+              {errors.dateOfEvent && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.dateOfEvent}
+                </p>
+              )}
+            </div>
+
+            {/* Time Slots */}
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="startTime"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Tiết bắt đầu <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <AccessTime className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <select
+                    id="startTime"
+                    name="startTime"
+                    value={formData.startTime}
+                    onChange={handleChange}
+                    className={`w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor ${
+                      errors.startTime ? "border-red-500" : "border-gray-300"
+                    }`}
+                  >
+                    <option value="">Chọn tiết bắt đầu</option>
+                    {timeSlots.map((slot) => (
+                      <option key={slot.value} value={slot.value}>
+                        {slot.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {errors.startTime && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.startTime}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="endTime"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Tiết kết thúc <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <AccessTime className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <select
+                    id="endTime"
+                    name="endTime"
+                    value={formData.endTime}
+                    onChange={handleChange}
+                    className={`w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor ${
+                      errors.endTime ? "border-red-500" : "border-gray-300"
+                    }`}
+                  >
+                    <option value="">Chọn tiết kết thúc</option>
+                    {timeSlots.map((slot) => (
+                      <option key={slot.value} value={slot.value}>
+                        {slot.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {errors.endTime && (
+                  <p className="text-red-500 text-sm mt-1">{errors.endTime}</p>
+                )}
               </div>
             </div>
 
-            {/* Image URL */}
+            {/* Location */}
             <div>
               <label
-                htmlFor="image"
+                htmlFor="location"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Link ảnh sự kiện
+                Địa điểm <span className="text-red-500">*</span>
               </label>
-              <input
-                type="url"
-                id="image"
-                name="image"
-                value={formData.image}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
-                placeholder="https://example.com/image.jpg"
-              />
+              <div className="relative">
+                <LocationOn className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  id="location"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor ${
+                    errors.location ? "border-red-500" : "border-gray-300"
+                  }`}
+                  placeholder="Nhập địa điểm tổ chức"
+                />
+              </div>
+              {errors.location && (
+                <p className="text-red-500 text-sm mt-1">{errors.location}</p>
+              )}
+            </div>
+
+            {/* Image Upload */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Banner sự kiện
+              </label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-mainColor transition-colors">
+                {imagePreview ? (
+                  <div className="space-y-4">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="max-h-64 mx-auto rounded-lg shadow-md"
+                    />
+                    <div className="flex justify-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setImageFile(null);
+                          setImagePreview(null);
+                          setFormData((prev) => ({ ...prev, image: "" }));
+                        }}
+                      >
+                        Xóa ảnh
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <CloudUpload
+                      className="mx-auto text-gray-400"
+                      fontSize="large"
+                    />
+                    <p className="text-gray-600">
+                      {/*{uploadingImage*/}
+                      {/*  ? "Đang upload..."*/}
+                      {/*  : "Click để chọn ảnh hoặc kéo thả vào đây"}*/}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      JPG, PNG, GIF tối đa 5MB
+                    </p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      // disabled={uploadingImage}
+                      className="hidden"
+                      id="imageUpload"
+                    />
+                    <label htmlFor="imageUpload">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          document.getElementById("imageUpload").click()
+                        }
+                        // disabled={uploadingImage}
+                        className="cursor-pointer"
+                      >
+                        Chọn ảnh
+                      </Button>
+                    </label>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Submit Buttons */}

@@ -40,24 +40,29 @@ public class NcmService {
     MinistryTaskRepository ministryTaskRepository;
 
     public float calculateTotalNormForUser(Integer idUser) {
-        List<NcmDTO> ncm =  getNcmByUserId(idUser);
+        List<NcmDTO> ncm = getNcmByUserId(idUser);
         float totalNorm = 0;
         for (NcmDTO ncmItem : ncm) {
             int setRoleOfEvent = 0;
-            if (ncmItem.getRoleOfActivity() == null) { setRoleOfEvent= 4;}
+            if (ncmItem.getRoleOfActivity() == null) {
+                setRoleOfEvent = 4;
+            }
 
             float norm = ncmItem.getNorm();
             for (OperatingStandards2 operatingStandards2 : operatingStandard2Repository.findAll()) {
-                if (ncmItem.getIdOperatingStandard()== operatingStandards2.getId()){
-                    List<RoleOfEvent> roleOfEvents = roleOfEventRepository.findByOperatingStandards2(operatingStandards2);
+                if (ncmItem.getIdOperatingStandard() == operatingStandards2.getId()) {
+                    List<RoleOfEvent> roleOfEvents = roleOfEventRepository
+                            .findByOperatingStandards2(operatingStandards2);
                     for (RoleOfEvent roleOfEvent : roleOfEvents) {
-                        if (roleOfEvent.getRoleOfEvent() == ncmItem.getRoleOfActivity()){
-                            totalNorm += roleOfEvent.getNorm()*norm;
-                            System.out.println(operatingStandards2.getName()+" : "+roleOfEvent.getNorm() + " * " + norm );
+                        if (roleOfEvent.getRoleOfEvent() == ncmItem.getRoleOfActivity()) {
+                            totalNorm += roleOfEvent.getNorm() * norm;
+                            System.out.println(
+                                    operatingStandards2.getName() + " : " + roleOfEvent.getNorm() + " * " + norm);
                         }
-                        if (setRoleOfEvent==4 && roleOfEvent.getRoleOfEvent() == 4){
-                            totalNorm += roleOfEvent.getNorm()*norm;
-                            System.out.println(operatingStandards2.getName()+" : "+roleOfEvent.getNorm() + " * " + norm );
+                        if (setRoleOfEvent == 4 && roleOfEvent.getRoleOfEvent() == 4) {
+                            totalNorm += roleOfEvent.getNorm() * norm;
+                            System.out.println(
+                                    operatingStandards2.getName() + " : " + roleOfEvent.getNorm() + " * " + norm);
 
                         }
                     }
@@ -69,13 +74,13 @@ public class NcmService {
         return totalNorm;
     }
 
-
     public List<String> getDistinctActivitiesByGroup(int groupId) {
         List<Ncm> ncmList = ncmRepository.findByIdGroup_Id(groupId);
         return ncmList.stream()
                 .map(ncm -> {
                     OperatingStandards2 os = ncm.getIdOperatingStandard();
-                    if (os == null) return null;
+                    if (os == null)
+                        return null;
                     String catalog = os.getCatalog() != null ? os.getCatalog().trim() : "";
                     String name = os.getName() != null ? os.getName().trim() : "";
                     return catalog + " - " + name;
@@ -84,8 +89,6 @@ public class NcmService {
                 .distinct()
                 .collect(Collectors.toList());
     }
-
-
 
     public List<MemberActivityRow> buildMemberActivityTable(List<Ncm> ncmList, List<String> allActivities) {
         Map<User, List<Ncm>> grouped = ncmList.stream()
@@ -105,7 +108,8 @@ public class NcmService {
 
             for (Ncm ncm : userNcmList) {
                 OperatingStandards2 os = ncm.getIdOperatingStandard();
-                if (os == null) continue;
+                if (os == null)
+                    continue;
 
                 String catalog = os.getCatalog() != null ? os.getCatalog().trim() : "";
                 String name = os.getName() != null ? os.getName().trim() : "";
@@ -128,13 +132,14 @@ public class NcmService {
     private Map<String, Double> initActivityMap(List<String> activityNames) {
         Map<String, Double> map = new LinkedHashMap<>();
         for (String name : activityNames) {
-            map.put(name.trim(), 0.0);  // default 0.0
+            map.put(name.trim(), 0.0); // default 0.0
         }
         return map;
     }
 
     private String getRoleName(Integer roleOfTeam) {
-        if (roleOfTeam == null) return "";
+        if (roleOfTeam == null)
+            return "";
         return switch (roleOfTeam) {
             case 1 -> "Trưởng nhóm";
             case 2 -> "Thư ký";
@@ -142,6 +147,7 @@ public class NcmService {
             default -> "";
         };
     }
+
     public List<Event> getDistinctEventsByGroup(int groupId) {
         List<Ncm> ncmList = ncmRepository.findByIdGroup_Id(groupId);
         Set<Event> distinctEvents = new HashSet<>();
@@ -150,7 +156,7 @@ public class NcmService {
             if (ncm.getIdOperatingStandard() != null) {
                 List<Event> events = eventRepository.findAll();
                 for (Event event : events) {
-                    if (event.getIdOperatingStandard2() == ncm.getIdOperatingStandard().getId()){
+                    if (event.getIdOperatingStandard2() == ncm.getIdOperatingStandard().getId()) {
                         distinctEvents.add(event);
                     }
                 }
@@ -161,18 +167,20 @@ public class NcmService {
         return new ArrayList<>(distinctEvents);
     }
 
-    //tác giả chính= (1/3+2/(3*n))* số tiết, n là số tác giả của sản phẩm
+    // tác giả chính= (1/3+2/(3*n))* số tiết, n là số tác giả của sản phẩm
     public float normStatistics(Integer os2Id, Integer idUser, int year,
-                                Set<Integer> ncmEventIds,
-                                Map<Integer, List<Member>> membersMap,
-                                Map<Integer, MinistryTask> taskMap,
-                                float ncmFactor) {
+            Set<Integer> ncmEventIds,
+            Map<Integer, List<Member>> membersMap,
+            Map<Integer, MinistryTask> taskMap,
+            float ncmFactor) {
 
         OperatingStandards2 os2 = operatingStandard2Repository.findById(os2Id).orElse(null);
-        if (os2 == null) return 0;
+        if (os2 == null)
+            return 0;
 
         List<RoleOfEvent> roleEvents = roleOfEventRepository.findByOperatingStandards2(os2);
-        if (roleEvents.isEmpty()) return 0;
+        if (roleEvents.isEmpty())
+            return 0;
 
         RoleOfEvent roleOfEvent = roleEvents.get(0);
         float baseNorm = roleOfEvent.getNorm() != null ? roleOfEvent.getNorm() : 0;
@@ -183,24 +191,28 @@ public class NcmService {
 
         for (Event event : events) {
             int eventId = event.getId();
-            //  tính nhũng ev có status ==2 && isDelete==1
-            if (eventRepository.findByIdEvent(eventId).getStatus()==2&&
-                    eventRepository.findByIdEvent(eventId).getIsDelete()==1) {
+            // tính những ev có status "upcoming" hoặc "completed" && isDelete==1
+            Event eventCheck = eventRepository.findByIdEvent(eventId);
+            if (("upcoming".equals(eventCheck.getStatus()) || "completed".equals(eventCheck.getStatus())) &&
+                    eventCheck.getIsDelete() == 1) {
 
                 List<Member> members = membersMap.getOrDefault(eventId, new ArrayList<>());
                 int numAuthors = members.size();
                 boolean isMember = members.stream().anyMatch(m -> m.getUser().getId().equals(idUser));
-                if (!isMember) continue;
+                if (!isMember)
+                    continue;
 
                 float userNorm = 0;
 
                 if (os2.getIdTypeOfCriteria().getId() == 10) {
                     MinistryTask task = taskMap.get(eventId);
-                    if (task == null) continue;
+                    if (task == null)
+                        continue;
 
                     if (roleCode == 1 && task.getTaskLead() != null && task.getTaskLead().getId().equals(idUser)) {
                         userNorm = baseNorm;
-                    } else if (roleCode == 2 && task.getSecretary() != null && task.getSecretary().getId().equals(idUser)) {
+                    } else if (roleCode == 2 && task.getSecretary() != null
+                            && task.getSecretary().getId().equals(idUser)) {
                         userNorm = baseNorm;
                     } else if (roleCode == 3) {
                         userNorm = baseNorm;
@@ -212,7 +224,9 @@ public class NcmService {
                         userNorm = (1f / 3f + 2f / (3f * numAuthors)) * baseNorm * ncmFactor;
                     } else {
                         switch (roleCode) {
-                            case 1: case 2: case 4:
+                            case 1:
+                            case 2:
+                            case 4:
                                 userNorm = baseNorm;
                                 break;
                             case 3:
@@ -231,7 +245,6 @@ public class NcmService {
 
         return totalNorm;
     }
-
 
     // get all user atend event
     public List<Event> getEventsParticipatedByUser(Integer userId, int year) {
@@ -255,13 +268,13 @@ public class NcmService {
         // Lấy tất cả sự kiện người dùng tham gia
         List<Event> events = eventRepository.findAllById(eventIds);
 
-        // Lọc theo năm của dateOfEvent, status==2, isDelete==1
+        // Lọc theo năm của dateOfEvent, status "upcoming" hoặc "completed", isDelete==1
         return events.stream()
                 .filter(
                         event -> event.getDateOfEvent() != null &&
                                 event.getDateOfEvent().getYear() == year &&
-                                event.getIsDelete() ==1 && event.getStatus()==2
-                )
+                                event.getIsDelete() == 1 &&
+                                ("upcoming".equals(event.getStatus()) || "completed".equals(event.getStatus())))
                 .collect(Collectors.toList());
     }
 
@@ -270,23 +283,21 @@ public class NcmService {
 
         return rows.stream()
                 .map(r -> new NcmDTO(
-                        r[0] == null ? null : ((Number) r[0]).intValue(),        // id
-                        r[1] == null ? null : ((Number) r[1]).intValue(),        // idUser
-                        r[2] == null ? null : ((Number) r[2]).intValue(),        // roleOfTeam
-                        r[3] == null ? null : ((Number) r[3]).floatValue(),      // norm
-                        r[4] == null ? null : ((Number) r[4]).intValue(),        // idOperatingStandard
-                        r[5] == null ? null : ((Number) r[5]).intValue(),        // roleOfActivity  đã fix null
+                        r[0] == null ? null : ((Number) r[0]).intValue(), // id
+                        r[1] == null ? null : ((Number) r[1]).intValue(), // idUser
+                        r[2] == null ? null : ((Number) r[2]).intValue(), // roleOfTeam
+                        r[3] == null ? null : ((Number) r[3]).floatValue(), // norm
+                        r[4] == null ? null : ((Number) r[4]).intValue(), // idOperatingStandard
+                        r[5] == null ? null : ((Number) r[5]).intValue(), // roleOfActivity đã fix null
                         r[6] == null ? null : new Group(((Number) r[6]).intValue()), // idGroup
-                        (String) r[7],                                            // name
-                        r[8] == null ? null : ((String) r[8]).trim(),             // catalog
-                        r[9] == null ? null : ((Number) r[9]).intValue(),              // year
-                        r[10] == null ? null : ((Number) r[10]).intValue()              // year
+                        (String) r[7], // name
+                        r[8] == null ? null : ((String) r[8]).trim(), // catalog
+                        r[9] == null ? null : ((Number) r[9]).intValue(), // year
+                        r[10] == null ? null : ((Number) r[10]).intValue() // year
 
                 ))
                 .collect(Collectors.toList());
     }
-
-
 
     public void flush() {
         ncmRepository.flush();
@@ -411,7 +422,8 @@ public class NcmService {
         return ncmRepository.exists(example);
     }
 
-    public <S extends Ncm, R> R findBy(Example<S> example, Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) {
+    public <S extends Ncm, R> R findBy(Example<S> example,
+            Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) {
         return ncmRepository.findBy(example, queryFunction);
     }
 }

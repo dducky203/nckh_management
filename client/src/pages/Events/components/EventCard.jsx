@@ -16,6 +16,7 @@ const EventCard = ({
   onReject,
   onEdit,
   onDelete,
+  isAdmin = false, // Admin có quyền approve/reject/delete
 }) => {
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("vi-VN", {
@@ -27,8 +28,10 @@ const EventCard = ({
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "approved":
+      case "upcoming":
         return "text-green-600 bg-green-50";
+      case "completed":
+        return "text-blue-600 bg-blue-50";
       case "pending":
         return "text-yellow-600 bg-yellow-50";
       case "rejected":
@@ -66,7 +69,11 @@ const EventCard = ({
                 event.status
               )}`}
             >
-              Đã duyệt
+              {event.status === "upcoming"
+                ? "Sắp diễn ra"
+                : event.status === "completed"
+                ? "Đã hoàn thành"
+                : "Đã duyệt"}
             </span>
           </div>
         )}
@@ -83,28 +90,10 @@ const EventCard = ({
             xem thêm
           </button>
 
-          {/* Action Buttons based on type */}
+          {/* Action Buttons based on type and admin status */}
           <div className="flex space-x-2">
-            {type === "approved" ? (
-              // Approved event actions
-              <>
-                <button
-                  onClick={() => onEdit(event)}
-                  className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                  title="Chỉnh sửa"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => onDelete(event)}
-                  className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Xóa"
-                >
-                  <Delete className="w-4 h-4" />
-                </button>
-              </>
-            ) : (
-              // Pending event actions
+            {type === "pending" && isAdmin ? (
+              // Admin actions for pending events
               <>
                 <button
                   onClick={() => onReject(event)}
@@ -121,7 +110,25 @@ const EventCard = ({
                   Chấp nhận
                 </button>
               </>
-            )}
+            ) : type === "approved" && isAdmin ? (
+              // Admin actions for approved events
+              <>
+                <button
+                  onClick={() => onEdit(event)}
+                  className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="Chỉnh sửa"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => onDelete(event)}
+                  className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Xóa"
+                >
+                  <Delete className="w-4 h-4" />
+                </button>
+              </>
+            ) : null}
           </div>
         </div>
       </div>

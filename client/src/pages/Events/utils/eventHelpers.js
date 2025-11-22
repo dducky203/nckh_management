@@ -1,5 +1,18 @@
-export const formatDateTime = (dateString) => {
+export const formatDateTime = (dateString, timeDetail = null) => {
   const date = new Date(dateString);
+  const dateStr = date.toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+
+  // Nếu có timeDetail (VD: "07:00:00"), format nó
+  if (timeDetail) {
+    const timeParts = timeDetail.split(":");
+    const time = `${timeParts[0]}:${timeParts[1]}`;
+    return `${dateStr} ${time}`;
+  }
+
   return date.toLocaleString("vi-VN", {
     day: "2-digit",
     month: "2-digit",
@@ -7,6 +20,13 @@ export const formatDateTime = (dateString) => {
     hour: "2-digit",
     minute: "2-digit",
   });
+};
+
+// Format giờ từ timeDetail (VD: "07:00:00" -> "07:00")
+export const formatTimeOnly = (timeDetail) => {
+  if (!timeDetail) return "";
+  const timeParts = timeDetail.split(":");
+  return `${timeParts[0]}:${timeParts[1]}`;
 };
 
 export const getCountdown = (dateString) => {
