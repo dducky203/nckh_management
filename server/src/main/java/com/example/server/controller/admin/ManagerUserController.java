@@ -94,17 +94,14 @@ public class ManagerUserController {
             if (status != null) {
                 switch (status) {
                     case "active":
-                        // ✅ Hoạt động: inActive = false AND isDeleted = false
                         inActive = false;
                         isDeleted = false;
                         break;
                     case "inactive":
-                        // ✅ Không hoạt động: inActive = true AND isDeleted = false
                         inActive = true;
                         isDeleted = false;
                         break;
                     case "deleted":
-                        // ✅ Đã xóa: isDeleted = true (không quan tâm inActive)
                         isDeleted = true;
                         break;
                 }

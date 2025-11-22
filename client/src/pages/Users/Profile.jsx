@@ -21,6 +21,7 @@ import userService from "../../services/userService";
 import noAvatarImg from "../../assets/no-avatar-user.png";
 import { AuthContext } from "../../context/AuthContext";
 import Modal from "../../components/common/Modal";
+import ChangePassword from "./components/ChangPassword.jsx";
 
 const Profile = () => {
   const { user, updateUser } = useContext(AuthContext);
@@ -32,27 +33,18 @@ const Profile = () => {
   const [profileData, setProfileData] = useState({
     name: user.name || "",
     email: user.email || "",
-    username: user.username ,
+    username: user.username,
     title: user.title || "",
     // avatar: user.avatar || "",
     phone: user.phone || "",
     address: user.address || "",
     birthday: user.birthday ? user.birthday.split("T")[0] : "",
     power: user.power || "",
-    inActive: user.inActive ,
-  });
-
-  console.log({ user });
-
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
+    inActive: user.inActive,
   });
 
   const [avatarPreview, setAvatarPreview] = useState(null);
   // const [avatarFile, setAvatarFile] = useState(null);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showProfileConfirmModal, setShowProfileConfirmModal] = useState(false);
 
   useEffect(() => {
@@ -78,21 +70,12 @@ const Profile = () => {
         title: user.title,
       });
       setAvatarPreview(null);
-      // setAvatarFile(null);
     }
   };
 
   const handleProfileChange = (e) => {
     const { name, value } = e.target;
     setProfileData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handlePasswordChange = (e) => {
-    const { name, value } = e.target;
-    setPasswordData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -130,8 +113,6 @@ const Profile = () => {
     setShowProfileConfirmModal(false);
 
     try {
-    
-
       const response = await userService.updateProfile(profileData);
 
       if (response.success) {
@@ -148,51 +129,6 @@ const Profile = () => {
     } catch (error) {
       console.error("Update profile error:", error);
       toast.error(error.message || "Có lỗi xảy ra khi cập nhật thông tin!");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handlePasswordSubmit = (e) => {
-    e.preventDefault();
-
-    // Validate passwords match
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error("Mật khẩu xác nhận không khớp!");
-      return;
-    }
-
-    // Validate password length
-    if (passwordData.newPassword.length < 6) {
-      toast.error("Mật khẩu mới phải có ít nhất 6 ký tự!");
-      return;
-    }
-
-    // Show confirmation modal
-    setShowConfirmModal(true);
-  };
-
-  const handleConfirmChangePassword = async () => {
-    setIsLoading(true);
-    setShowConfirmModal(false);
-
-    try {
-      const changePasswordData = {
-        currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword,
-      };
-
-      await userService.changePassword(user.username, changePasswordData);
-
-      toast.success("Đổi mật khẩu thành công!");
-      setPasswordData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
-    } catch (error) {
-      console.error("Change password error:", error);
-      toast.error(error.message || "Có lỗi xảy ra khi đổi mật khẩu!");
     } finally {
       setIsLoading(false);
     }
@@ -235,7 +171,7 @@ const Profile = () => {
                 </h2>
                 <button
                   onClick={handleEditToggle}
-                  className={`flex items-center px-4 py-2 rounded-md text-sm ${
+                  className={`flex items-center gap-1 px-4 py-2 rounded-md text-sm ${
                     isEditing
                       ? "bg-gray-200 text-gray-700"
                       : "bg-mainColor text-white"
@@ -244,12 +180,12 @@ const Profile = () => {
                 >
                   {isEditing ? (
                     <>
-                      <Cancel className="w-4 h-4 mr-1" />
+                      <Cancel />
                       Hủy
                     </>
                   ) : (
                     <>
-                      <Edit className="w-4 h-4 mr-1" />
+                      <Edit />
                       Chỉnh sửa
                     </>
                   )}
@@ -262,11 +198,14 @@ const Profile = () => {
                     <img
                       src={avatarPreview || profileData.avatar || noAvatarImg}
                       alt="Avatar"
-                      className="w-40 h-40 rounded-full object-cover border-4 border-gray-100 shadow-md"
+                      className="w-40 h-40 rounded-full object-cover border-2 border-gray-300 shadow-md"
                     />
                     {isEditing && (
-                      <label className="absolute bottom-2 right-2 bg-mainColor text-white p-2 rounded-full cursor-pointer">
-                        <PhotoCamera className="w-5 h-5" />
+                      <label
+                        title="Đổi avatar"
+                        className="absolute bottom-2 right-2 bg-mainColor flex items-center text-white p-2 rounded-full cursor-pointer"
+                      >
+                        <PhotoCamera fontSize="small" />
                         <input
                           type="file"
                           className="hidden"
@@ -303,7 +242,7 @@ const Profile = () => {
                             Họ và tên
                           </label>
                           <div className="flex items-center border border-gray-300 rounded-md overflow-hidden">
-                            <span className="px-3 py-2 bg-gray-100">
+                            <span className="px-3 py-2 border-r border-gray-300 bg-gray-100">
                               <Person className="w-5 h-5 text-gray-500" />
                             </span>
                             <input
@@ -313,7 +252,7 @@ const Profile = () => {
                               value={profileData.name}
                               onChange={handleProfileChange}
                               disabled={!isEditing}
-                              className="w-full py-2 px-3 outline-none disabled:bg-gray-50"
+                              className="w-full py-2 px-3 border-0 outline-none disabled:bg-gray-50"
                               placeholder="Họ và tên"
                             />
                           </div>
@@ -326,7 +265,7 @@ const Profile = () => {
                             Tên đăng nhập
                           </label>
                           <div className="flex items-center border border-gray-300 rounded-md overflow-hidden">
-                            <span className="px-3 py-2 bg-gray-100">
+                            <span className="px-3 py-2 border-r border-gray-300 bg-gray-100">
                               <Badge className="w-5 h-5 text-gray-500" />
                             </span>
                             <input
@@ -336,7 +275,7 @@ const Profile = () => {
                               value={profileData.username}
                               onChange={handleProfileChange}
                               disabled={true}
-                              className="w-full py-2 px-3 outline-none disabled:bg-gray-50"
+                              className="w-full border-0 py-2 px-3 outline-none disabled:bg-gray-50"
                             />
                           </div>
                         </div>
@@ -350,7 +289,7 @@ const Profile = () => {
                           Email
                         </label>
                         <div className="flex items-center border border-gray-300 rounded-md overflow-hidden">
-                          <span className="px-3 py-2 bg-gray-100">
+                          <span className="px-3 py-2 border-r border-gray-300 bg-gray-100">
                             <Email className="w-5 h-5 text-gray-500" />
                           </span>
                           <input
@@ -362,7 +301,7 @@ const Profile = () => {
                             disabled={
                               isEditing ? !(user?.role === "admin") : true
                             }
-                            className="w-full py-2 px-3 outline-none disabled:bg-gray-50"
+                            className="w-full border-0 py-2 px-3 outline-none disabled:bg-gray-50"
                             placeholder="Email"
                           />
                         </div>
@@ -376,7 +315,7 @@ const Profile = () => {
                           Chức danh
                         </label>
                         <div className="flex items-center border border-gray-300 rounded-md overflow-hidden">
-                          <span className="px-3 py-2 bg-gray-100">
+                          <span className="px-3 py-2 border-r border-gray-300 bg-gray-100">
                             <School className="w-5 h-5 text-gray-500" />
                           </span>
                           <input
@@ -388,7 +327,7 @@ const Profile = () => {
                             disabled={
                               isEditing ? !(user?.role === "admin") : true
                             }
-                            className="w-full py-2 px-3 outline-none disabled:bg-gray-50"
+                            className="w-full  py-2 px-3 border-0 outline-none disabled:bg-gray-50"
                             placeholder="Chức danh"
                           />
                         </div>
@@ -403,7 +342,7 @@ const Profile = () => {
                             Số điện thoại
                           </label>
                           <div className="flex items-center border border-gray-300 rounded-md overflow-hidden">
-                            <span className="px-3 py-2 bg-gray-100">
+                            <span className="px-3 py-2 border-r border-gray-300 bg-gray-100">
                               <Phone className="w-5 h-5 text-gray-500" />
                             </span>
                             <input
@@ -413,7 +352,7 @@ const Profile = () => {
                               value={profileData.phone}
                               onChange={handleProfileChange}
                               disabled={!isEditing}
-                              className="w-full py-2 px-3 outline-none disabled:bg-gray-50"
+                              className="w-full border-0 py-2 px-3 outline-none disabled:bg-gray-50"
                               placeholder="Số điện thoại"
                             />
                           </div>
@@ -426,8 +365,8 @@ const Profile = () => {
                             Ngày sinh
                           </label>
                           <div className="flex items-center border border-gray-300 rounded-md overflow-hidden">
-                            <span className="px-3 py-2 bg-gray-100">
-                              <Cake className="w-5 h-5 text-gray-500" />
+                            <span className="px-3 py-2 border-r border-gray-300 bg-gray-100">
+                              <Cake className=" text-gray-500" />
                             </span>
                             <input
                               type="date"
@@ -436,7 +375,7 @@ const Profile = () => {
                               value={profileData.birthday}
                               onChange={handleProfileChange}
                               disabled={!isEditing}
-                              className="w-full py-2 px-3 outline-none disabled:bg-gray-50"
+                              className="w-full py-2 px-3 border-0 outline-none disabled:bg-gray-50"
                             />
                           </div>
                         </div>
@@ -450,8 +389,8 @@ const Profile = () => {
                           Địa chỉ
                         </label>
                         <div className="flex items-start border border-gray-300 rounded-md overflow-hidden">
-                          <span className="px-3 py-2 bg-gray-100">
-                            <LocationOn className="w-5 h-5 text-gray-500" />
+                          <span className="border-r border-gray-300 px-3 py-2 bg-gray-100">
+                            <LocationOn className=" text-gray-500" />
                           </span>
                           <textarea
                             id="address"
@@ -460,7 +399,7 @@ const Profile = () => {
                             onChange={handleProfileChange}
                             disabled={!isEditing}
                             rows={3}
-                            className="w-full py-2 px-3 outline-none disabled:bg-gray-50 resize-none"
+                            className="w-full py-2 border-0 px-3 outline-none disabled:bg-gray-50 resize-none"
                             placeholder="Địa chỉ"
                           />
                         </div>
@@ -490,167 +429,7 @@ const Profile = () => {
               <h2 className="text-xl font-semibold text-gray-800 mb-6">
                 Đổi mật khẩu
               </h2>
-              <form
-                onSubmit={handlePasswordSubmit}
-                className="max-w-md mx-auto"
-              >
-                <div className="space-y-4">
-                  <div>
-                    <label
-                      htmlFor="currentPassword"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Mật khẩu hiện tại
-                    </label>
-                    <input
-                      type="password"
-                      id="currentPassword"
-                      name="currentPassword"
-                      value={passwordData.currentPassword}
-                      onChange={handlePasswordChange}
-                      className="w-full py-2 px-3 border border-gray-300 rounded-md outline-none focus:ring-2 focus:ring-mainColor focus:border-transparent"
-                      placeholder="Nhập mật khẩu hiện tại"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="newPassword"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Mật khẩu mới
-                    </label>
-                    <input
-                      type="password"
-                      id="newPassword"
-                      name="newPassword"
-                      value={passwordData.newPassword}
-                      onChange={handlePasswordChange}
-                      className={`w-full py-2 px-3 border rounded-md outline-none focus:ring-2 focus:ring-mainColor focus:border-transparent ${
-                        passwordData.newPassword &&
-                        passwordData.newPassword.length < 6
-                          ? "border-red-300 bg-red-50"
-                          : "border-gray-300"
-                      }`}
-                      placeholder="Nhập mật khẩu mới"
-                      required
-                      minLength={6}
-                    />
-                    {passwordData.newPassword &&
-                      passwordData.newPassword.length < 6 && (
-                        <p className="text-red-500 text-xs mt-1">
-                          Mật khẩu phải có ít nhất 6 ký tự
-                        </p>
-                      )}
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="confirmPassword"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Xác nhận mật khẩu mới
-                    </label>
-                    <input
-                      type="password"
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      value={passwordData.confirmPassword}
-                      onChange={handlePasswordChange}
-                      className={`w-full py-2 px-3 border rounded-md outline-none focus:ring-2 focus:ring-mainColor focus:border-transparent ${
-                        passwordData.confirmPassword &&
-                        passwordData.newPassword !==
-                          passwordData.confirmPassword
-                          ? "border-red-300 bg-red-50"
-                          : passwordData.confirmPassword &&
-                            passwordData.newPassword ===
-                              passwordData.confirmPassword &&
-                            passwordData.newPassword.length >= 6
-                          ? "border-green-300 bg-green-50"
-                          : "border-gray-300"
-                      }`}
-                      placeholder="Nhập lại mật khẩu mới"
-                      required
-                      minLength={6}
-                    />
-                    {passwordData.confirmPassword &&
-                      passwordData.newPassword !==
-                        passwordData.confirmPassword && (
-                        <p className="text-red-500 text-xs mt-1">
-                          Mật khẩu xác nhận không khớp
-                        </p>
-                      )}
-                    {passwordData.confirmPassword &&
-                      passwordData.newPassword ===
-                        passwordData.confirmPassword &&
-                      passwordData.newPassword.length >= 6 && (
-                        <p className="text-green-500 text-xs mt-1">
-                          ✓ Mật khẩu khớp
-                        </p>
-                      )}
-                  </div>
-
-                  {/* Password strength indicator */}
-                  {passwordData.newPassword && (
-                    <div className="p-3 bg-gray-50 rounded-md">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">
-                        Yêu cầu mật khẩu:
-                      </h4>
-                      <div className="space-y-1">
-                        <div
-                          className={`flex items-center text-xs ${
-                            passwordData.newPassword.length >= 6
-                              ? "text-green-600"
-                              : "text-gray-400"
-                          }`}
-                        >
-                          <span className="mr-2">
-                            {passwordData.newPassword.length >= 6 ? "✓" : "○"}
-                          </span>
-                          Ít nhất 6 ký tự
-                        </div>
-                        <div
-                          className={`flex items-center text-xs ${
-                            passwordData.confirmPassword &&
-                            passwordData.newPassword ===
-                              passwordData.confirmPassword
-                              ? "text-green-600"
-                              : "text-gray-400"
-                          }`}
-                        >
-                          <span className="mr-2">
-                            {passwordData.confirmPassword &&
-                            passwordData.newPassword ===
-                              passwordData.confirmPassword
-                              ? "✓"
-                              : "○"}
-                          </span>
-                          Xác nhận mật khẩu khớp
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex justify-end pt-4">
-                    <button
-                      type="submit"
-                      disabled={
-                        isLoading ||
-                        !passwordData.currentPassword ||
-                        !passwordData.newPassword ||
-                        !passwordData.confirmPassword ||
-                        passwordData.newPassword.length < 6 ||
-                        passwordData.newPassword !==
-                          passwordData.confirmPassword
-                      }
-                      className="bg-mainColor text-white px-6 py-2 rounded-md transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    >
-                      {isLoading ? "Đang xử lý..." : "Đổi mật khẩu"}
-                    </button>
-                  </div>
-                </div>
-              </form>
+              <ChangePassword username={profileData.username} />
             </div>
           )}
         </div>
@@ -666,18 +445,6 @@ const Profile = () => {
         confirmText="Cập nhật"
         cancelText="Hủy"
         type="info"
-      />
-
-      {/* Modal xác nhận đổi mật khẩu */}
-      <Modal
-        isOpen={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        onConfirm={handleConfirmChangePassword}
-        title="Xác nhận đổi mật khẩu"
-        message="Bạn có chắc chắn muốn đổi mật khẩu? Hành động này không thể hoàn tác."
-        confirmText="Đồng ý"
-        cancelText="Hủy"
-        type="warning"
       />
     </div>
   );

@@ -6,8 +6,13 @@ import {
   Schedule,
 } from "@mui/icons-material";
 
-const EventDetailModal = ({ isOpen, onClose, event }) => {
+const EventDetailModal = ({ isOpen, onClose, event, onRegister }) => {
   if (!isOpen || !event) return null;
+
+  const isUpcoming = () => {
+    const eventDate = new Date(event.dateOfEvent);
+    return eventDate > new Date();
+  };
 
   const getStatusBadge = (status) => {
     const statusConfig = {
@@ -273,13 +278,24 @@ const EventDetailModal = ({ isOpen, onClose, event }) => {
 
         {/* Footer */}
         <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t">
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-3">
             <button
               onClick={onClose}
               className="px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
             >
               Đóng
             </button>
+            {onRegister && isUpcoming() && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onRegister(event);
+                }}
+                className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+              >
+                Đăng ký tham gia
+              </button>
+            )}
           </div>
         </div>
       </div>

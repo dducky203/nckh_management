@@ -9,6 +9,8 @@ import org.mapstruct.BeforeMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring")
 public interface UserMapper {
 //    @Mapping(source = "idResume.email", target = "email")
@@ -23,6 +25,14 @@ public interface UserMapper {
     @Mapping(source = "idRole.name", target = "role")
     @Mapping(source = "idTitle.name", target = "title")
     UserDetailsDTO toUserDetailDTO(User user);
+
+    @Mapping(source = "idResume.email", target = "email")
+    @Mapping(source = "idResume.phone", target = "phone")
+    @Mapping(source = "idResume.address", target = "address")
+    @Mapping(source = "idResume.birthday", target = "birthday")
+    @Mapping(source = "idRole.name", target = "role")
+    @Mapping(source = "idTitle.name", target = "title")
+    List<UserDetailsDTO> toUserDetailDTO(List<User> users);
 
 
 

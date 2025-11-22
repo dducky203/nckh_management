@@ -7,7 +7,7 @@ import { AuthProvider } from "./context/AuthContext";
 import Layout from "./components/layout/Layout";
 
 // Pages
-import Home from "./pages/Home";
+import Home from "./pages/Home/Home";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Login from "./pages/Auth/Login";
@@ -24,6 +24,8 @@ import { ToastProvider } from "./context/ToastContext";
 import Profile from "./pages/Users/Profile";
 import UserManagement from "./pages/Users/UserManagement";
 import EventDashboard from "./pages/Events/EventDashboard";
+import EventsPublic from "./pages/Events/EventsPublic";
+import CreateEvent from "./pages/Events/CreateEvent";
 
 function App() {
   return (
@@ -46,6 +48,20 @@ function App() {
                     <Route path="/" element={<Home />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/contact" element={<Contact />} />
+
+                    {/* Events Public - Không cần đăng nhập */}
+                    <Route path="/events" element={<EventsPublic />} />
+
+                    {/* Create Event - Yêu cầu đăng nhập */}
+                    <Route
+                      path="/events/create"
+                      element={
+                        <ProtectedRoute>
+                          <CreateEvent />
+                        </ProtectedRoute>
+                      }
+                    />
+
                     {/* Research Activities Routes - Yêu cầu đăng nhập */}
                     <Route
                       path="/profile"
