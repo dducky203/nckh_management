@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/public/events")
+@RequestMapping("/events")
 @CrossOrigin(origins = "*")
 public class EventPublicRestController {
 
@@ -172,12 +172,12 @@ public class EventPublicRestController {
             eventData.setDateOfEvent(java.time.LocalDate.parse(dateOfEvent));
             eventData.setStartTime(startTime);
             eventData.setEndTime(endTime);
-            eventData.setRoomId(roomId); // Set roomId instead of location
+            eventData.setRoomId(roomId);
             eventData.setType(type);
             eventData.setDescription(description);
             eventData.setCreator(creator);
             eventData.setBannerImg(bannerUrl);
-            eventData.setImage(bannerUrl); // Để tương thích với code cũ
+            eventData.setImage(bannerUrl);
 
             EventPublicDTO createdEvent = eventPublicService.createEvent(eventData);
             return ResponseEntity.ok(
@@ -194,30 +194,27 @@ public class EventPublicRestController {
         }
     }
 
-    @PostMapping("/{id}/approve")
-    public ResponseEntity<?> approveEvent(@PathVariable Integer id) {
-        try {
-            String message = eventPublicService.approveEvent(id);
-            return ResponseEntity.ok(
-                    new SuccessResponseDTO<>(null, message));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Có lỗi xảy ra: " + e.getMessage());
-        }
-    }
 
-    @PostMapping("/{id}/reject")
-    public ResponseEntity<?> rejectEvent(
+    @PostMapping("/{id}/status")
+    public ResponseEntity<?> actionEvent(
             @PathVariable Integer id,
-            @RequestBody Map<String, String> payload) {
+            @RequestParam String status,
+            @RequestBody(required = false) Map<String, String> payload) {
         try {
-            String reason = payload.getOrDefault("reason", "");
-            String message = eventPublicService.rejectEvent(id, reason);
-            return ResponseEntity.ok(
-                    new SuccessResponseDTO<>(null, message));
+            if ("APPROVE".equalsIgnoreCase(status)) {
+                String message = eventPublicService.approveEvent(id);
+                return ResponseEntity.ok(
+                        new SuccessResponseDTO<>(null, message));
+            } else if ("REJECT".equalsIgnoreCase(status)) {
+                String reason = payload.getOrDefault("reason", "");
+                String message = eventPublicService.rejectEvent(id, reason);
+                return ResponseEntity.ok(
+                        new SuccessResponseDTO<>(null, message));
+            } else {
+                return ResponseEntity.badRequest()
+                        .body("Trạng thái không hợp lệ. Chỉ chấp nhận 'APPROVE' hoặc 'REJECT'.");
+            }
+
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(e.getMessage());
@@ -227,7 +224,7 @@ public class EventPublicRestController {
         }
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteEvent(@PathVariable Integer id) {
         try {
             String message = eventPublicService.deleteEvent(id);

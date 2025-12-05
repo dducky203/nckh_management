@@ -125,9 +125,9 @@ const EventDashboard = () => {
     fetchEvents();
   }, [fetchEvents]);
 
-  const handleApprove = async (eventId) => {
+  const handleApprove = async (eventId, reason = "") => {
     try {
-      await eventService.approveEvent(eventId);
+      await eventService.updateEventStatus(eventId, "approved", reason);
       toast.success("Duyệt sự kiện thành công");
       setApprovalModalOpen(false);
       fetchEvents();
@@ -139,9 +139,9 @@ const EventDashboard = () => {
     }
   };
 
-  const handleReject = async (eventId, reason) => {
+  const handleReject = async (eventId, reason = "") => {
     try {
-      await eventService.rejectEvent(eventId, reason);
+      await eventService.updateEventStatus(eventId, "rejected", reason);
       toast.info("Đã từ chối sự kiện");
       setApprovalModalOpen(false);
       fetchEvents();
