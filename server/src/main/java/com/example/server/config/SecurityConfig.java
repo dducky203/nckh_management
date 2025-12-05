@@ -36,10 +36,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                                 // Cho phép các endpoint đăng nhập và công khai không cần xác thực
                                 .requestMatchers(
-//                                "/admin/**",
                                         "/auth/**",
                                         "/file/**"
-//                                "/public/**"
                                 ).permitAll()
                                 // Tùy chọn: tắt xác thực, cho phép mọi request
 //                        .anyRequest().permitAll()
@@ -47,7 +45,6 @@ public class SecurityConfig {
                                 .anyRequest().authenticated()
                 )
                 .csrf(AbstractHttpConfigurer::disable)
-                // Thêm JwtAuthenticationFilter để xử lý token JWT
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

@@ -19,6 +19,7 @@ public class EventPublicDTO {
     private String startTimeDetail; // Giờ chi tiết từ bảng Time (VD: "07:00:00")
     private String endTimeDetail; // Giờ chi tiết từ bảng Time (VD: "11:00:00")
     private String location; // from Room
+    private Integer roomId; // ID của room được chọn
     private String organizer; // from User (creator)
     private Integer creator; // User ID của người tạo
     private String type; // from TypeOfCriterion

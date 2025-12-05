@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Event,
@@ -12,6 +12,7 @@ import {
 } from "@mui/icons-material";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
+import { fetchRoomsData, getRoomOptions, getRoomsDataSync } from "../../utils/roomsData";
 import eventService from "../../services/eventService";
 import Button from "../../components/common/Button";
 
@@ -20,6 +21,8 @@ const CreateEvent = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const [loading, setLoading] = useState(false);
+  const [roomsLoading, setRoomsLoading] = useState(false);
+  const [rooms, setRooms] = useState([]);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [formData, setFormData] = useState({
@@ -28,10 +31,35 @@ const CreateEvent = () => {
     dateOfEvent: "",
     startTime: "",
     endTime: "",
-    location: "",
+    roomId: "",
     type: "",
   });
 
+  // Fetch rooms khi component mount
+  useEffect(() => {
+    const loadRooms = async () => {
+      try {
+        setRoomsLoading(true);
+        await fetchRoomsData();
+        setRooms(getRoomsDataSync());
+      } catch (error) {
+        console.error('Error loading rooms:', error);
+        toast.error('Không thể tải danh sách phòng');
+      } finally {
+        setRoomsLoading(false);
+      }
+    };
+
+    loadRooms();
+  }, [toast]);
+
+  console.log('Rooms debug:', { 
+    rooms, 
+    roomsLength: rooms?.length,
+    roomsLoading, 
+    getRoomOptions: getRoomOptions() 
+  });
+  
   const [errors, setErrors] = useState({});
 
   const eventTypes = [
@@ -106,7 +134,7 @@ const CreateEvent = () => {
       newErrors.dateOfEvent = "Ngày tổ chức là bắt buộc";
     }
 
-    if (!formData.location.trim()) {
+    if (!formData.roomId) {
       newErrors.location = "Địa điểm là bắt buộc";
     }
 
@@ -158,7 +186,7 @@ const CreateEvent = () => {
       submitData.append("dateOfEvent", formData.dateOfEvent);
       submitData.append("startTime", formData.startTime || 1);
       submitData.append("endTime", formData.endTime || 5);
-      submitData.append("location", formData.location);
+      submitData.append("roomId", formData.roomId);
       submitData.append("type", formData.type);
       submitData.append("description", formData.description);
       submitData.append("creator", user?.id);
@@ -394,30 +422,41 @@ const CreateEvent = () => {
               </div>
             </div>
 
-            {/* Location */}
+            {/* Location/Room */}
             <div>
               <label
-                htmlFor="location"
+                htmlFor="roomId"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
                 Địa điểm <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <LocationOn className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  id="location"
-                  name="location"
-                  value={formData.location}
+                <select
+                  id="roomId"
+                  name="roomId"
+                  value={formData.roomId}
                   onChange={handleChange}
+                  disabled={roomsLoading}
                   className={`w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor ${
                     errors.location ? "border-red-500" : "border-gray-300"
                   }`}
-                  placeholder="Nhập địa điểm tổ chức"
-                />
+                >
+                  <option value="">
+                    {roomsLoading ? "Đang tải..." : "Chọn địa điểm tổ chức"}
+                  </option>
+                  {rooms.map((room) => (
+                    <option key={room.id} value={room.id}>
+                      {room.displayName}
+                    </option>
+                  ))}
+                </select>
               </div>
               {errors.location && (
                 <p className="text-red-500 text-sm mt-1">{errors.location}</p>
+              )}
+              {roomsLoading && (
+                <p className="text-gray-500 text-sm mt-1">Đang tải danh sách phòng...</p>
               )}
             </div>
 

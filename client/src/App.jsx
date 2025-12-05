@@ -1,7 +1,11 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
 
 // Context Providers
 import { AuthProvider } from "./context/AuthContext";
+
+// Utils
+import { fetchRoomsData } from "./utils/roomsData";
 
 // Layout
 import Layout from "./components/layout/Layout";
@@ -28,6 +32,11 @@ import EventsPublic from "./pages/Events/EventsPublic";
 import CreateEvent from "./pages/Events/CreateEvent";
 
 function App() {
+  // Load rooms data when app starts
+  useEffect(() => {
+    fetchRoomsData().catch(console.error);
+  }, []);
+
   return (
     <AuthProvider>
       <Router>

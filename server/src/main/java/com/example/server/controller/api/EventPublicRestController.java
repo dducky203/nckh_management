@@ -147,7 +147,7 @@ public class EventPublicRestController {
             @RequestParam("dateOfEvent") String dateOfEvent,
             @RequestParam("startTime") Integer startTime,
             @RequestParam("endTime") Integer endTime,
-            @RequestParam("location") String location,
+            @RequestParam(value = "roomId", required = false) Integer roomId,
             @RequestParam("type") String type,
             @RequestParam("description") String description,
             @RequestParam("creator") Integer creator) {
@@ -172,7 +172,7 @@ public class EventPublicRestController {
             eventData.setDateOfEvent(java.time.LocalDate.parse(dateOfEvent));
             eventData.setStartTime(startTime);
             eventData.setEndTime(endTime);
-            eventData.setLocation(location);
+            eventData.setRoomId(roomId); // Set roomId instead of location
             eventData.setType(type);
             eventData.setDescription(description);
             eventData.setCreator(creator);
