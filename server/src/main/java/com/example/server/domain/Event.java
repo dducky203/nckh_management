@@ -23,8 +23,6 @@ public class Event extends EntityBase implements Serializable {
     @Column(name = "date_of_event")
     private LocalDate dateOfEvent;
 
-    // @Column(name = "create_date")
-    // private LocalDate createDate;
 
     @Column(name = "creator")
     private Integer creator;

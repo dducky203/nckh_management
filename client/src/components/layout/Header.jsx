@@ -175,12 +175,12 @@ const Header = () => {
                       )}
 
                       <Link
-                        to="/news/my"
+                        to="/news/manager"
                         className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
                         onClick={() => setActiveDropdown(null)}
                       >
                         <Article className="w-4 h-4 mr-2 text-gray-400" />
-                        <span>Tin tức của bạn</span>
+                        <span>Quản lí tin tức</span>
                       </Link>
 
                       <Link

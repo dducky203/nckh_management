@@ -30,6 +30,9 @@ import UserManagement from "./pages/Users/UserManagement";
 import EventDashboard from "./pages/Events/EventDashboard";
 import EventsPublic from "./pages/Events/EventsPublic";
 import CreateEvent from "./pages/Events/CreateEvent";
+import News from "./pages/News/News";
+import NewsDetail from "./pages/News/NewsDetail";
+import NewsManager from "./pages/News/NewsManager";
 
 function App() {
   // Load rooms data when app starts
@@ -145,6 +148,18 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
+                    {/* News Routes */}
+                    <Route path="/news" element={<News />} />
+                    <Route path="/news/:id" element={<NewsDetail />} />
+                    <Route
+                      path="/news/manager"
+                      element={
+                        <ProtectedRoute>
+                          <NewsManager />
+                        </ProtectedRoute>
+                      }
+                    />
+
                     {/* Events Routes */}
                     {/* <Route
                       path="/events/upcoming"

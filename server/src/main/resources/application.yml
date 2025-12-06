@@ -21,12 +21,10 @@ spring:
     username: 3Bx2cAUiS293NeD.root
     password: GqLF0LJRC8YuCB8g
 
-
-#    url: jdbc:mariadb://localhost:3307/nckh?allowPublicKeyRetrieval=true&useSSL=false
-#    username: root
-#    password: duong
-# #
-
+  #    url: jdbc:mariadb://localhost:3307/nckh?allowPublicKeyRetrieval=true&useSSL=false
+  #    username: root
+  #    password: duong
+  # #
 
   jpa:
     hibernate:

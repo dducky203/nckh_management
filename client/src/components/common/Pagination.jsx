@@ -18,7 +18,7 @@ const Pagination = ({
   onPreviousPage,
   onNextPage,
   getPageNumbers,
-  itemName = "mục", // có thể customize: "người dùng", "sự kiện", etc.
+  itemName = "mục", 
   className = "",
 }) => {
   if (totalItems === 0) return null;
@@ -68,7 +68,7 @@ const Pagination = ({
                   onClick={() => onPageChange(page)}
                   className={`min-w-[32px] h-8 px-3 text-sm rounded-md transition-colors ${
                     currentPage + 1 === page
-                      ? "bg-blue-500 text-white font-medium shadow-sm"
+                      ? "bg-mainColor text-white font-medium shadow-sm"
                       : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >

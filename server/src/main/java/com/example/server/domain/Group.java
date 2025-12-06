@@ -12,7 +12,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @Entity
-@Table(name = "`group`")
+@Table(name = "group")
 @NoArgsConstructor
 @AllArgsConstructor
 public class Group  extends EntityBase implements Serializable {

@@ -13,8 +13,8 @@ import {
   Person,
 } from "@mui/icons-material";
 import { AuthContext } from "../../context/AuthContext";
-// import eventService from "../../services/eventService";
-// import newsService from "../services/newsService";
+import eventService from "../../services/eventService";
+import newsService from "../../services/newsService";
 import Button from "../../components/common/Button";
 import Slideshow from "./components/Slideshow";
 
@@ -68,31 +68,23 @@ const Home = () => {
       try {
         setLoading(true);
 
-        // Fetch upcoming events (top 6)
-        const eventsResponse = await eventService.getEvents({
-          page: 1,
-          size: 6,
-          status: "approved",
-          sortBy: "dateOfEvent",
-          sortDirection: "asc",
-        });
-        setUpcomingEvents(eventsResponse.content || []);
+        // Fetch upcoming events (top 6) - sử dụng API có sẵn
+        const eventsResponse = await eventService.getPublicEvents(
+          "upcoming",
+          0,
+          6
+        );
+        console.log("Events response:", eventsResponse);
 
-        // Fetch research activities (top 6)
-        const researchResponse = await eventService.getEvents({
-          page: 1,
-          size: 6,
-          isEvent: 0, // NCKH activities
-          status: "approved",
-        });
-        setResearchActivities(researchResponse.content || []);
+        const eventsData = eventsResponse?.data?.events || [];
+        setUpcomingEvents(eventsData);
 
-        // Fetch latest news (top 4)
-        const newsResponse = await newsService.getNews({
-          page: 1,
-          size: 4,
-        });
-        setLatestNews(newsResponse.content || []);
+        // Fetch latest news (top 6)
+        const newsResponse = await newsService.getNews("", 0, 6);
+        console.log("News response:", newsResponse);
+
+        const newsData = newsResponse?.data?.news || [];
+        setLatestNews(newsData);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
