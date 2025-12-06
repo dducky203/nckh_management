@@ -1,0 +1,11 @@
+# Ignore các file không cần thiết trong Docker image
+.git
+.gitignore
+.mvn
+target/
+*.log
+*.class
+.idea
+.vscode
+*.iml
+README.md
