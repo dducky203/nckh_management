@@ -38,6 +38,7 @@ public class SecurityConfig {
                                 "/auth/**",
                                 "/file/**"
 //                        "a/api/public/**")
+                        )
                         .permitAll()
                         // Tùy chọn: tắt xác thực, cho phép mọi request
                         .anyRequest().permitAll())

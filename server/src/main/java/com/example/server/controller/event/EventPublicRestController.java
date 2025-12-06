@@ -1,4 +1,4 @@
-package com.example.server.controller.api;
+package com.example.server.controller.event;
 
 import com.example.server.DTO.SuccessResponseDTO;
 import com.example.server.DTO.event.EventPublicDTO;

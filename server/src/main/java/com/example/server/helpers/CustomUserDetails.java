@@ -44,5 +44,13 @@ public class CustomUserDetails implements UserDetails {
         return true;
     }
 
+    // Method để lấy ID của user
+    public Integer getId() {
+        return user.getId();
+    }
 
+    // Method để lấy User entity
+    public User getUser() {
+        return user;
+    }
 }

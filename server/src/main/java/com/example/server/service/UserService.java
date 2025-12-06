@@ -1,6 +1,5 @@
 package com.example.server.service;
 
-import com.example.server.DTO.users.UserDetailsDTO;
 import com.example.server.DTO.users.UserRequest;
 import com.example.server.domain.*;
 import com.example.server.exception.ErrorException;
@@ -14,7 +13,6 @@ import com.example.server.repository.UserRepository;
 import com.example.server.utils.DateTimeConstant;
 import com.example.server.utils.NormalizeUtils;
 import jakarta.transaction.Transactional;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
@@ -27,9 +25,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -110,7 +106,7 @@ public class UserService implements UserDetailsService {
     public void deleteUser(String username, Boolean force) {
         User existingUser = userRepository.findByUsername(username);
         Optional<Resume> profileUser = resumeRepository.findById(existingUser.getIdResume().getId());
-        if (existingUser != null && profileUser.isPresent()) {
+        if (profileUser.isPresent()) {
             if (force != null && force) {
                 resumeRepository.deleteById(existingUser.getIdResume().getId());
                 userRepository.delete(existingUser);
