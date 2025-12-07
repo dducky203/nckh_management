@@ -12,4 +12,5 @@ public class NewsCommentDTO {
     private String userAvatar;
     private String content;
     private Date createdAt;
+    private Date updatedAt;
 }

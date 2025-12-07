@@ -14,7 +14,7 @@ const EventTabs = ({ activeTab, setActiveTab, eventCount }) => {
         <Schedule fontSize="small" />
         Sắp diễn ra
         {activeTab === "upcoming" && eventCount > 0 && (
-          <span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">
+          <span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-md">
             {eventCount}
           </span>
         )}
@@ -30,7 +30,7 @@ const EventTabs = ({ activeTab, setActiveTab, eventCount }) => {
         <EventAvailable fontSize="small" />
         Đang diễn ra
         {activeTab === "ongoing" && eventCount > 0 && (
-          <span className="bg-green-600 text-white text-xs px-2 py-0.5 rounded-full">
+          <span className="bg-green-600 text-white text-xs px-2 py-0.5 rounded-md">
             {eventCount}
           </span>
         )}
@@ -46,7 +46,7 @@ const EventTabs = ({ activeTab, setActiveTab, eventCount }) => {
         <CheckCircle fontSize="small" />
         Đã kết thúc
         {activeTab === "completed" && eventCount > 0 && (
-          <span className="bg-gray-600 text-white text-xs px-2 py-0.5 rounded-full">
+          <span className="bg-gray-600 text-white text-xs px-2 py-0.5 rounded-md">
             {eventCount}
           </span>
         )}

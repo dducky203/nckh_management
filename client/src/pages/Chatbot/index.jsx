@@ -6,7 +6,7 @@ const ChatBot = () => {
       <div className="max-w-2xl mx-auto text-center">
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
           {/* Icon */}
-          <div className="mx-auto w-20 h-20 bg-gradient-to-r from-mainColor to-blue-600 rounded-full flex items-center justify-center mb-6 shadow-lg">
+          <div className="mx-auto w-20 h-20 bg-gradient-to-r from-mainColor to-blue-600 rounded-md flex items-center justify-center mb-6 shadow-lg">
             <ChatBubble className="w-10 h-10 text-white" />
           </div>
 
@@ -85,26 +85,26 @@ const ChatBot = () => {
             </h3>
             <div className="text-left space-y-2 text-yellow-800">
               <p className="flex items-center gap-2">
-                <span className="w-6 h-6 bg-yellow-200 rounded-full flex items-center justify-center text-xs font-bold">
+                <span className="w-6 h-6 bg-yellow-200 rounded-md flex items-center justify-center text-xs font-bold">
                   1
                 </span>
                 Tìm biểu tượng <ChatBubble className="w-4 h-4 inline mx-1" /> ở
                 góc dưới bên phải
               </p>
               <p className="flex items-center gap-2">
-                <span className="w-6 h-6 bg-yellow-200 rounded-full flex items-center justify-center text-xs font-bold">
+                <span className="w-6 h-6 bg-yellow-200 rounded-md flex items-center justify-center text-xs font-bold">
                   2
                 </span>
                 Nhấp vào biểu tượng để mở chatbot
               </p>
               <p className="flex items-center gap-2">
-                <span className="w-6 h-6 bg-yellow-200 rounded-full flex items-center justify-center text-xs font-bold">
+                <span className="w-6 h-6 bg-yellow-200 rounded-md flex items-center justify-center text-xs font-bold">
                   3
                 </span>
                 Đặt câu hỏi hoặc chọn gợi ý nhanh
               </p>
               <p className="flex items-center gap-2">
-                <span className="w-6 h-6 bg-yellow-200 rounded-full flex items-center justify-center text-xs font-bold">
+                <span className="w-6 h-6 bg-yellow-200 rounded-md flex items-center justify-center text-xs font-bold">
                   4
                 </span>
                 Nhận hướng dẫn chi tiết từ chatbot

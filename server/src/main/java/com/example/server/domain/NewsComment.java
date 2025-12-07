@@ -28,7 +28,4 @@ public class NewsComment extends EntityBase implements Serializable {
     @JoinColumn(name = "id_user")
     private User idUser;
 
-    @Column(name = "time")
-    private LocalDateTime time;
-
 }

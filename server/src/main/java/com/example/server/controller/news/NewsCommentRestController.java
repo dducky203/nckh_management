@@ -43,8 +43,6 @@ public class NewsCommentRestController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body("Vui lòng đăng nhập để comment");
             }
-
-            request.setNewsId(newsId);
             NewsCommentDTO comment = commentService.createComment(request, userId);
             return ResponseEntity.ok(
                     new SuccessResponseDTO<>(comment, "Tạo comment thành công"));

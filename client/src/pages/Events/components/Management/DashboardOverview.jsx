@@ -4,6 +4,7 @@ import YearlyTrendChart from "./YearlyTrendChart";
 import EventTypeChart from "./EventTypeChart";
 import MonthlyBarChart from "./MonthlyBarChart";
 import EventCard from "../EventCard";
+import Button from "../../../../components/common/Button";
 
 const DashboardOverview = ({
   events,
@@ -46,7 +47,7 @@ const DashboardOverview = ({
               </option>
             ))}
           </select>
-          <button
+          <Button
             onClick={() => {
               setEditingEvent(null);
               setFormModalOpen(true);
@@ -55,7 +56,7 @@ const DashboardOverview = ({
           >
             <Add className="mr-2" />
             Tạo sự kiện
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -75,6 +76,7 @@ const DashboardOverview = ({
               Sự kiện chờ duyệt ({pendingEvents.length})
             </h3>
           </div>
+          ff
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {pendingEvents.slice(0, 6).map((event) => (
               <EventCard

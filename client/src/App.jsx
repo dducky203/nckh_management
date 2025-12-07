@@ -33,6 +33,8 @@ import CreateEvent from "./pages/Events/CreateEvent";
 import News from "./pages/News/News";
 import NewsDetail from "./pages/News/NewsDetail";
 import NewsManager from "./pages/News/NewsManager";
+import ResearchGroupManagement from "./pages/ResearchGroup/ResearchGroupManagement";
+import ResearchGroupsPublic from "./pages/ResearchGroup/ResearchGroupsPublic";
 
 function App() {
   // Load rooms data when app starts
@@ -89,6 +91,18 @@ function App() {
                       element={
                         <ProtectedRoute requiredPower="admin">
                           <UserManagement />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/research-groups"
+                      element={<ResearchGroupsPublic />}
+                    />
+                    <Route
+                      path="/research-groups/manager"
+                      element={
+                        <ProtectedRoute>
+                          <ResearchGroupManagement />
                         </ProtectedRoute>
                       }
                     />
@@ -150,7 +164,7 @@ function App() {
                     />
                     {/* News Routes */}
                     <Route path="/news" element={<News />} />
-                    <Route path="/news/:id" element={<NewsDetail />} />
+                    <Route path="/news/details/:id" element={<NewsDetail />} />
                     <Route
                       path="/news/manager"
                       element={

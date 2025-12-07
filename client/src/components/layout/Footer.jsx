@@ -62,7 +62,7 @@ const Footer = () => {
           {socialLinks.map((social) => (
             <div
               key={social.id}
-              className="border-2 border-[#0b6d3a] rounded-full p-1.5 transition-colors duration-300"
+              className="border-2 border-[#0b6d3a] rounded-md p-1.5 transition-colors duration-300"
             >
               <a
                 href={social.url}

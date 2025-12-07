@@ -104,17 +104,17 @@ const EventDashboard = () => {
       ];
 
       // Separate by status
-      const pending = allEvents.filter((e) => e.status === "pending");
+
       const approved = allEvents.filter(
         (e) => e.status === "upcoming" || e.status === "completed"
       );
 
       setEvents(allEvents);
-      setPendingEvents(pending);
+      setPendingEvents(pendingEventsData);
       setApprovedEvents(approved);
-    } catch (err) {
-      console.error("Error loading events:", err);
-      toast.error("Lỗi khi tải dữ liệu");
+    } catch (error) {
+      console.error("Error loading data:", error);
+      toast.error(ERROR_MESSAGES.LOAD_DATA_ERROR);
     } finally {
       setLoading(false);
     }
@@ -127,7 +127,7 @@ const EventDashboard = () => {
 
   const handleApprove = async (eventId, reason = "") => {
     try {
-      await eventService.updateEventStatus(eventId, "approved", reason);
+      await eventService.updateEventStatus(eventId, "approve", reason);
       toast.success("Duyệt sự kiện thành công");
       setApprovalModalOpen(false);
       fetchEvents();
@@ -141,7 +141,7 @@ const EventDashboard = () => {
 
   const handleReject = async (eventId, reason = "") => {
     try {
-      await eventService.updateEventStatus(eventId, "rejected", reason);
+      await eventService.updateEventStatus(eventId, "reject", reason);
       toast.info("Đã từ chối sự kiện");
       setApprovalModalOpen(false);
       fetchEvents();
@@ -176,11 +176,11 @@ const EventDashboard = () => {
       const response = await eventService.getEventById(event.id);
       console.log("API response:", response);
       console.log("Event data:", response.data);
-      
+
       // Backend trả về {data: {data: eventDTO, message: ...}}
       const eventData = response.data?.data || response.data;
       console.log("Setting selected event:", eventData);
-      
+
       setSelectedEvent(eventData);
       setDetailModalOpen(true);
     } catch (error) {

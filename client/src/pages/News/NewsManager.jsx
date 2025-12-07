@@ -97,12 +97,12 @@ const NewsManager = () => {
     e.preventDefault();
 
     if (!formData.title.trim()) {
-      toast.error("Vui lòng nhập tiêu đề");
+      toast.error(ERROR_MESSAGES.FORM.REQUIRED);
       return;
     }
 
     if (!formData.content.trim()) {
-      toast.error("Vui lòng nhập nội dung");
+      toast.error(ERROR_MESSAGES.FORM.REQUIRED);
       return;
     }
 
@@ -287,7 +287,7 @@ const NewsManager = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-center gap-2">
                           <button
-                            onClick={() => navigate(`/news/${news.id}`)}
+                            onClick={() => navigate(`/news/details/${news.id}`)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                             title="Xem"
                           >

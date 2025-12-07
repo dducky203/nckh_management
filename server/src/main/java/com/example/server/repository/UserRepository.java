@@ -87,4 +87,13 @@ public interface UserRepository extends JpaRepository<User, Integer> {
                         @Param("isDeleted") Boolean isDeleted,
                         Pageable pageable);
 
+        // Search users by username or email
+        @Query("SELECT u FROM User u LEFT JOIN u.idResume r WHERE " +
+                        "LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%')) OR " +
+                        "LOWER(r.email) LIKE LOWER(CONCAT('%', :email, '%'))")
+        Page<User> findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                        @Param("username") String username, 
+                        @Param("email") String email, 
+                        Pageable pageable);
+
 }

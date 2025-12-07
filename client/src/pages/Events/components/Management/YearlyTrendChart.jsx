@@ -28,9 +28,9 @@ const YearlyTrendChart = ({ events, years }) => {
           >
             <span className="text-sm font-medium w-16">{yearData.year}</span>
             <div className="flex items-center space-x-4 flex-1 mx-4">
-              <div className="flex-1 bg-gray-200 rounded-full h-3">
+              <div className="flex-1 bg-gray-200 rounded-md h-3">
                 <div
-                  className="bg-gradient-to-r from-blue-400 to-blue-600 h-3 rounded-full transition-all duration-300"
+                  className="bg-gradient-to-r from-blue-400 to-blue-600 h-3 rounded-md transition-all duration-300"
                   style={{ width: `${(yearData.events / maxEvents) * 100}%` }}
                 ></div>
               </div>

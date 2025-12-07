@@ -1,0 +1,54 @@
+package com.example.server.service;
+
+import com.example.server.DTO.request.CreateResearchGroupRequest;
+import com.example.server.DTO.request.UpdateResearchGroupRequest;
+import com.example.server.DTO.response.ResearchGroupDTO;
+import com.example.server.domain.ResearchGroup;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.util.List;
+
+public interface ResearchGroupService {
+
+    // User tạo nhóm (chờ duyệt)
+    ResearchGroupDTO createGroup(Integer userId, CreateResearchGroupRequest request);
+
+    // Admin duyệt nhóm
+    ResearchGroupDTO approveGroup(Integer groupId);
+
+    // Admin từ chối nhóm
+    ResearchGroupDTO rejectGroup(Integer groupId, String reason);
+
+    // Cập nhật thông tin nhóm (Leader hoặc Admin)
+    ResearchGroupDTO updateGroup(Integer groupId, Integer userId, UpdateResearchGroupRequest request);
+
+    // Xóa nhóm (Admin)
+    void deleteGroup(Integer groupId);
+
+    // Thêm thành viên (Leader hoặc Admin)
+    ResearchGroupDTO addMember(Integer groupId, Integer userId, Integer memberId);
+
+    // Xóa thành viên (Leader hoặc Admin)
+    ResearchGroupDTO removeMember(Integer groupId, Integer userId, Integer memberId);
+
+    // Lấy danh sách nhóm (có phân trang, filter)
+    Page<ResearchGroupDTO> getAllGroups(String keyword, String status, Pageable pageable);
+
+    // Lấy chi tiết nhóm
+    ResearchGroupDTO getGroupById(Integer groupId);
+
+    // Lấy danh sách nhóm của user
+    List<ResearchGroupDTO> getGroupsByUser(Integer userId);
+
+    // Lấy thống kê
+    GroupStatistics getStatistics();
+
+    class GroupStatistics {
+        public long totalGroups;
+        public long pendingGroups;
+        public long approvedGroups;
+        public long rejectedGroups;
+    }
+}

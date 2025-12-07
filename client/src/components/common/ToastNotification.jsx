@@ -91,7 +91,7 @@ const ToastNotification = ({
         }
       },
       info: {
-        backgroundColor: 'rgba(3, 70, 87, 0.05)',
+        backgroundColor: '#e1f5fe',
         borderLeft: `4px solid ${mainColor}`,
         '& .MuiAlert-icon': {
           color: mainColor

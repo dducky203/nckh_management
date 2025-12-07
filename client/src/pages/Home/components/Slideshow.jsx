@@ -111,7 +111,7 @@ const Slideshow = ({ slides, autoPlayInterval = 5, user }) => {
       {/* Navigation Buttons */}
       <button
         onClick={prevSlide}
-        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-mainColor/70 text-white p-2 rounded-full transition-all backdrop-blur-sm"
+        className="hover:ml-1 absolute left-4 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-mainColor/70 text-white p-2 rounded-full transition-all backdrop-blur-sm"
         aria-label="Previous slide"
       >
         <ChevronLeft fontSize="large" />
@@ -119,7 +119,7 @@ const Slideshow = ({ slides, autoPlayInterval = 5, user }) => {
 
       <button
         onClick={nextSlide}
-        className="absolute  right-4 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-mainColor/70 text-white p-2 rounded-full transition-all backdrop-blur-sm"
+        className="hover:mr-1 absolute right-4 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-mainColor/70 text-white p-2 rounded-full transition-all backdrop-blur-sm"
         aria-label="Next slide"
       >
         <ChevronRight fontSize="large" />
@@ -131,7 +131,7 @@ const Slideshow = ({ slides, autoPlayInterval = 5, user }) => {
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`h-3 rounded-full transition-all ${
+            className={`h-3 rounded-md transition-all ${
               index === currentSlide
                 ? "bg-white w-8"
                 : "bg-white/50 hover:bg-white/75 w-3"
@@ -141,8 +141,6 @@ const Slideshow = ({ slides, autoPlayInterval = 5, user }) => {
           />
         ))}
       </div>
-
-      
     </section>
   );
 };

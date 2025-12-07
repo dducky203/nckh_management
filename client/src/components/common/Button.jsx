@@ -10,16 +10,16 @@ const Button = ({
   ...props
 }) => {
   const baseClasses =
-    "font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+    " font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
 
   const variants = {
     primary:
-      "bg-mainColor text-white hover:bg-mainColor/90 focus:ring-mainColor/70",
+      "bg-mainColor  text-white hover:bg-mainColor/90 focus:ring-mainColor/70",
     secondary:
       "bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500",
     danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
     outline:
-      "border-2 border-mainColor text-mainColor hover:bg-mainColor/10 focus:ring-mainColor/50",
+      "border-2 border-mainColor text-mainColor hover:bg-mainColor/90 hover:text-white focus:ring-mainColor/50",
     custom: "", // Thêm variant custom để cho phép tùy chỉnh hoàn toàn thông qua className
   };
 
@@ -41,7 +41,7 @@ const Button = ({
     >
       {loading ? (
         <div className="flex items-center justify-center -wte">
-          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></div>
+          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-md animate-spin mr-2"></div>
           Đang xử lý...
         </div>
       ) : (

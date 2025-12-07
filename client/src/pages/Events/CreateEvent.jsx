@@ -12,10 +12,15 @@ import {
 } from "@mui/icons-material";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
-import { fetchRoomsData, getRoomOptions, getRoomsDataSync } from "../../utils/roomsData";
+import {
+  fetchRoomsData,
+  getRoomOptions,
+  getRoomsDataSync,
+} from "../../utils/roomsData";
 import eventService from "../../services/eventService";
 import Button from "../../components/common/Button";
 import { TIME_SLOTS } from "../../utils";
+import { ERROR_MESSAGES } from "../../constants";
 
 const CreateEvent = () => {
   const { user } = useContext(AuthContext);
@@ -44,8 +49,8 @@ const CreateEvent = () => {
         await fetchRoomsData();
         setRooms(getRoomsDataSync());
       } catch (error) {
-        console.error('Error loading rooms:', error);
-        toast.error('Không thể tải danh sách phòng');
+        console.error("Error loading rooms:", error);
+        toast.error(ERROR_MESSAGES.LOAD_ROOM_ERROR);
       } finally {
         setRoomsLoading(false);
       }
@@ -54,13 +59,13 @@ const CreateEvent = () => {
     loadRooms();
   }, [toast]);
 
-  console.log('Rooms debug:', { 
-    rooms, 
+  console.log("Rooms debug:", {
+    rooms,
     roomsLength: rooms?.length,
-    roomsLoading, 
-    getRoomOptions: getRoomOptions() 
+    roomsLoading,
+    getRoomOptions: getRoomOptions(),
   });
-  
+
   const [errors, setErrors] = useState({});
 
   const eventTypes = [
@@ -70,8 +75,6 @@ const CreateEvent = () => {
     { value: "competition", label: "Cuộc thi" },
     { value: "other", label: "Khác" },
   ];
-
-
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -94,14 +97,14 @@ const CreateEvent = () => {
 
     // Validate file type
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
-    if (!validTypes.includes(file.type)) {
-      toast.error("Chỉ chấp nhận file ảnh (JPG, PNG, GIF)");
+    if (!allowedTypes.includes(file.type)) {
+      toast.error(ERROR_MESSAGES.FILE_TYPE_ERROR);
       return;
     }
 
-    // Validate file size (max 5MB)
+    // Check file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Kích thước file không được vượt quá 5MB");
+      toast.error(ERROR_MESSAGES.FILE_SIZE_ERROR);
       return;
     }
 
@@ -156,7 +159,7 @@ const CreateEvent = () => {
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error("Vui lòng kiểm tra lại thông tin!");
+      toast.error(ERROR_MESSAGES.FORM.CHECK_INFO);
       return;
     }
 
@@ -446,7 +449,9 @@ const CreateEvent = () => {
                 <p className="text-red-500 text-sm mt-1">{errors.location}</p>
               )}
               {roomsLoading && (
-                <p className="text-gray-500 text-sm mt-1">Đang tải danh sách phòng...</p>
+                <p className="text-gray-500 text-sm mt-1">
+                  Đang tải danh sách phòng...
+                </p>
               )}
             </div>
 

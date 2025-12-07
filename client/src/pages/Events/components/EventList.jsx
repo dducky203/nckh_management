@@ -7,6 +7,7 @@ import {
   Event as EventIcon,
   PendingActions,
 } from "@mui/icons-material";
+import Button from "../../../components/common/Button";
 
 const EventList = ({
   events = [],
@@ -76,13 +77,13 @@ const EventList = ({
         </div>
 
         {showCreateButton && (
-          <button
+          <Button
             onClick={onCreateNew}
             className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <Add className="w-5 h-5 mr-2" />
             Tạo sự kiện mới
-          </button>
+          </Button>
         )}
       </div>
 
@@ -125,7 +126,7 @@ const EventList = ({
         <div className="mt-3 text-sm text-gray-600">
           Hiển thị {filteredEvents.length} / {events.length} sự kiện
           {type === "pending" && events.length > 0 && (
-            <span className="ml-2 px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+            <span className="ml-2 px-2 py-1 bg-yellow-100 text-yellow-800 rounded-md text-xs font-medium">
               {events.length} chờ xử lý
             </span>
           )}

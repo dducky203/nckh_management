@@ -1,11 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import {
-  Send,
-  SmartToy,
-  Person,
-  Close,
-  
-} from "@mui/icons-material";
+import { Send, SmartToy, Person, Close } from "@mui/icons-material";
 import logo from "../../assets/logo_fita.png";
 import { getBotResponse } from "../../utils/chatbotData";
 
@@ -59,7 +53,6 @@ const ChatBotWidget = () => {
     }, 1000 + Math.random() * 1000);
   };
 
- 
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -89,7 +82,7 @@ const ChatBotWidget = () => {
               <div>
                 <h3 className="font-semibold text-sm">Trợ lý NCKH</h3>
                 <div className="flex items-center gap-1 text-xs opacity-90">
-                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <div className="w-2 h-2 bg-green-400 rounded-md"></div>
                   <span>Đang hoạt động</span>
                 </div>
               </div>
@@ -151,13 +144,13 @@ const ChatBotWidget = () => {
                 </div>
                 <div className="bg-white border border-gray-100 px-3 py-2.5 rounded-2xl shadow-sm">
                   <div className="flex gap-1">
-                    <div className="w-1.5 h-1.5 bg-mainColor rounded-full animate-bounce"></div>
+                    <div className="w-1.5 h-1.5 bg-mainColor rounded-md animate-bounce"></div>
                     <div
-                      className="w-1.5 h-1.5 bg-mainColor rounded-full animate-bounce"
+                      className="w-1.5 h-1.5 bg-mainColor rounded-md animate-bounce"
                       style={{ animationDelay: "0.1s" }}
                     ></div>
                     <div
-                      className="w-1.5 h-1.5 bg-mainColor rounded-full animate-bounce"
+                      className="w-1.5 h-1.5 bg-mainColor rounded-md animate-bounce"
                       style={{ animationDelay: "0.2s" }}
                     ></div>
                   </div>
@@ -239,7 +232,7 @@ const ChatBotWidget = () => {
 
       {/* Notification Badge */}
       {!isOpen && (
-        <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-bounce shadow-lg">
+        <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-md flex items-center justify-center animate-bounce shadow-lg">
           <span className="font-bold">1</span>
         </div>
       )}

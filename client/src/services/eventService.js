@@ -30,13 +30,11 @@ const eventService = {
     return await api.delete(`/events/delete/${eventId}`);
   },
 
-
-
   // Phê duyệt ,Từ chối event
   updateEventStatus: async (eventId, status, reason = "") => {
-    return await api.post(`/events/${eventId}/status=${status}`, 
-      { reason }, // Body
-      { params: { status } } // Query Params
+    return await api.post(
+      `/events/${eventId}?status=${status}`,
+      { reason } // Body
     );
   },
 

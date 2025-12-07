@@ -91,4 +91,20 @@ public class UserController {
         return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Đổi mật khẩu thành công!"));
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<?> searchUsers(
+            @RequestParam(value = "keyword") String keyword,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+        return userService.searchUsers(keyword, page, size);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getUserById(@PathVariable("id") Integer id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ErrorException("Người dùng không tồn tại!", HttpStatus.NOT_FOUND));
+        UserDetailsDTO userDTO = userMapper.toUserDetailDTO(user);
+        return ResponseEntity.ok(new SuccessResponseDTO<>(userDTO, "Lấy thông tin người dùng thành công."));
+    }
+
 }

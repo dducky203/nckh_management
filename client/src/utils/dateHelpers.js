@@ -12,7 +12,7 @@ export const formatDateForInput = (dateString) => {
   };
 
 
-// Format date using various formats
+
 export const formatDate = (date, format = DATE_FORMATS.DISPLAY) => {
   if (!date) return "";
 

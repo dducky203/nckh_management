@@ -1,57 +1,55 @@
 // Application constants
 export const API_BASE_URL = import.meta.env.VITE_API_URL;
 export const BASE_IMG_URL = `${API_BASE_URL}/file/`;
-export const JWT_EXPIRATION_DAYS = Number(import.meta.env.VITE_JWT_EXPIRATION_DAYS) || 1;
+export const JWT_EXPIRATION_DAYS =
+  Number(import.meta.env.VITE_JWT_EXPIRATION_DAYS) || 1;
 export const ITEMS_PER_PAGE = 15;
 
-
 export const formatDate = (dateString) => {
-  if (!dateString) return 'Không có thông tin';
-  
+  if (!dateString) return "Không có thông tin";
+
   try {
     const date = new Date(dateString);
-    
+
     // Check if date is valid
     if (isNaN(date.getTime())) {
-      return 'Ngày không hợp lệ';
+      return "Ngày không hợp lệ";
     }
-    
-    return date.toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
+
+    return date.toLocaleDateString("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
     });
   } catch (error) {
-    console.error('Error formatting date:', error);
-    return 'Lỗi định dạng ngày';
+    console.error("Error formatting date:", error);
+    return "Lỗi định dạng ngày";
   }
 };
-
 
 export const formatDateTime = (dateString) => {
-  if (!dateString) return 'Không có thông tin';
-  
+  if (!dateString) return "Không có thông tin";
+
   try {
     const date = new Date(dateString);
-    
+
     // Check if date is valid
     if (isNaN(date.getTime())) {
-      return 'Ngày giờ không hợp lệ';
+      return "Ngày giờ không hợp lệ";
     }
-    
-    return date.toLocaleString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
+
+    return date.toLocaleString("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   } catch (error) {
-    console.error('Error formatting datetime:', error);
-    return 'Lỗi định dạng ngày giờ';
+    console.error("Error formatting datetime:", error);
+    return "Lỗi định dạng ngày giờ";
   }
 };
-
 
 // API endpoints
 export const API_ENDPOINTS = {
@@ -78,8 +76,6 @@ export const STORAGE_KEYS = {
   PRIMARY_COLOR: "primaryColor",
   LANGUAGE: "language",
 };
-
-
 
 // Navigation routes
 export const ROUTES = {
@@ -147,6 +143,13 @@ export const ERROR_MESSAGES = {
   SERVER_ERROR: "Lỗi server. Vui lòng thử lại sau.",
   VALIDATION_ERROR: "Dữ liệu không hợp lệ.",
   NOT_FOUND: "Không tìm thấy dữ liệu.",
+  LOAD_DATA_ERROR: "Không thể tải dữ liệu",
+  LOAD_EVENT_ERROR: "Không thể tải chi tiết sự kiện",
+  LOAD_ROOM_ERROR: "Không thể tải danh sách phòng",
+  EVENT_ENDED: "Sự kiện đã kết thúc, không thể đăng ký!",
+  SAVE_EVENT_ERROR: "Có lỗi xảy ra khi lưu sự kiện",
+  FILE_TYPE_ERROR: "Chỉ chấp nhận file ảnh (JPG, PNG, GIF)",
+  FILE_SIZE_ERROR: "Kích thước file không được vượt quá 5MB",
   FORM: {
     REQUIRED: "Trường này là bắt buộc",
     EMAIL_INVALID: "Email không hợp lệ",
@@ -154,6 +157,7 @@ export const ERROR_MESSAGES = {
     PASSWORDS_NOT_MATCH: "Mật khẩu không khớp",
     NAME_TOO_SHORT: `Tên phải có ít nhất ${VALIDATION_RULES.NAME_MIN_LENGTH} ký tự`,
     PHONE_INVALID: "Số điện thoại không hợp lệ",
+    CHECK_INFO: "Vui lòng kiểm tra lại thông tin!",
   },
 };
 
@@ -169,6 +173,16 @@ export const SUCCESS_MESSAGES = {
   UPLOAD_SUCCESS: "Tải lên thành công!",
   DELETE_SUCCESS: "Xóa thành công!",
   SAVE_SUCCESS: "Lưu thành công!",
+  REGISTRATION_SUCCESS: "Đăng ký tham gia sự kiện thành công!",
+  EVENT_APPROVED: "Duyệt sự kiện thành công!",
+  EVENT_CREATED: "Tạo sự kiện thành công! Chờ phê duyệt.",
+  EVENT_UPDATED: "Cập nhật sự kiện thành công!",
+  GROUP_CREATED: "Tạo nhóm thành công! Chờ admin duyệt.",
+  GROUP_APPROVED: "Duyệt nhóm thành công!",
+  GROUP_REJECTED: "Từ chối nhóm thành công!",
+  GROUP_UPDATED: "Cập nhật nhóm thành công!",
+  MEMBER_ADDED: "Thêm thành viên thành công!",
+  MEMBER_REMOVED: "Xóa thành viên thành công!",
 };
 
 export default {
@@ -181,5 +195,5 @@ export default {
   DATE_FORMATS,
   ERROR_MESSAGES,
   SUCCESS_MESSAGES,
-  API_BASE_URL
+  API_BASE_URL,
 };

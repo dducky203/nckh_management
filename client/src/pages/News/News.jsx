@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
   Search,
@@ -11,107 +11,56 @@ import LoadingSpinner from "../../components/common/LoadingSpinner";
 import Pagination from "../../components/common/Pagination";
 import newsService from "../../services/newsService";
 import Button from "../../components/common/Button";
-import { formatDate, formatDateTime } from "../../constants";
-import { formatDateForInput } from "../../utils";
+import { formatDateTime } from "../../constants";
+import { usePagination } from "../../hooks/usePagination";
 
 const News = () => {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(0);
-  const [pagination, setPagination] = useState({
-    totalPages: 0,
-    totalItems: 0,
-    itemsPerPage: 12,
-    hasNext: false,
-    hasPrevious: false,
-  });
 
-  const fetchNews = async (search = "", page = 0) => {
-    try {
-      setLoading(true);
-      const response = await newsService.getNews(search, page, 12);
+  const {
+    currentPage,
+    totalPages,
+    totalItems,
+    itemsPerPage,
+    goToPage,
+    goToFirstPage,
+    goToLastPage,
+    goToPreviousPage,
+    goToNextPage,
+    getPageNumbers,
+    updatePaginationData,
+    resetPagination,
+  } = usePagination(0, 12);
 
-      const data = response?.data;
-      setNews(data?.news || []);
-      setPagination({
-        totalPages: data?.totalPages || 0,
-        totalItems: data?.totalItems || 0,
-        itemsPerPage: data?.itemsPerPage || 12,
-        hasNext: data?.hasNext || false,
-        hasPrevious: data?.hasPrevious || false,
-      });
-    } catch (error) {
-      console.error("Error fetching news:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchNews = useCallback(
+    async (search = "", page = 0) => {
+      try {
+        setLoading(true);
+        const response = await newsService.getNews(search, page, 12);
+
+        const data = response?.data;
+        setNews(data?.news || []);
+        updatePaginationData(data);
+      } catch (error) {
+        console.error("Error fetching news:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [updatePaginationData]
+  );
 
   useEffect(() => {
     fetchNews(searchTerm, currentPage);
-  }, [currentPage]);
+  }, [currentPage, searchTerm, fetchNews]);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    setCurrentPage(0);
+    resetPagination();
     fetchNews(searchTerm, 0);
   };
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page - 1);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleFirstPage = () => {
-    setCurrentPage(0);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleLastPage = () => {
-    setCurrentPage(pagination.totalPages - 1);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handlePreviousPage = () => {
-    if (pagination.hasPrevious) {
-      setCurrentPage((prev) => prev - 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-
-  const handleNextPage = () => {
-    if (pagination.hasNext) {
-      setCurrentPage((prev) => prev + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-
-  const getPageNumbers = () => {
-    const pages = [];
-    const delta = 2;
-    const displayCurrentPage = currentPage + 1;
-
-    if (pagination.totalPages <= 7) {
-      for (let i = 1; i <= pagination.totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      pages.push(1);
-      let start = Math.max(2, displayCurrentPage - delta);
-      let end = Math.min(pagination.totalPages - 1, displayCurrentPage + delta);
-
-      if (start > 2) pages.push("...");
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-      if (end < pagination.totalPages - 1) pages.push("...");
-      pages.push(pagination.totalPages);
-    }
-    return pages;
-  };
-
- 
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -148,8 +97,7 @@ const News = () => {
         {!loading && news.length > 0 && (
           <div className="mb-4">
             <p className="text-sm text-gray-600">
-              Tìm thấy{" "}
-              <span className="font-semibold">{pagination.totalItems}</span> tin
+              Tìm thấy <span className="font-semibold">{totalItems}</span> tin
               tức
             </p>
           </div>
@@ -205,7 +153,7 @@ const News = () => {
                     )}
 
                     <Link
-                      to={`/news/${item.id}`}
+                      to={`/news/details/${item.id}`}
                       className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
                     >
                       Đọc thêm
@@ -221,19 +169,19 @@ const News = () => {
             <div className="bg-white rounded-lg shadow-sm">
               <Pagination
                 currentPage={currentPage}
-                totalPages={pagination.totalPages}
-                totalItems={pagination.totalItems}
-                itemsPerPage={pagination.itemsPerPage}
-                startIndex={currentPage * pagination.itemsPerPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+                startIndex={currentPage * itemsPerPage}
                 endIndex={Math.min(
-                  (currentPage + 1) * pagination.itemsPerPage,
-                  pagination.totalItems
+                  (currentPage + 1) * itemsPerPage,
+                  totalItems
                 )}
-                onPageChange={handlePageChange}
-                onFirstPage={handleFirstPage}
-                onLastPage={handleLastPage}
-                onPreviousPage={handlePreviousPage}
-                onNextPage={handleNextPage}
+                onPageChange={goToPage}
+                onFirstPage={goToFirstPage}
+                onLastPage={() => goToLastPage(totalPages)}
+                onPreviousPage={goToPreviousPage}
+                onNextPage={() => goToNextPage(totalPages)}
                 getPageNumbers={getPageNumbers}
                 itemName="tin tức"
               />

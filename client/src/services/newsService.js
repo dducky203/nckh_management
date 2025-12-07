@@ -23,7 +23,6 @@ const newsService = {
       newsId: newsId,
       content: content,
     };
-    console.log("Creating comment with payload:", payload);
     return await api.post(`/public/news/${newsId}/comments`, payload);
   },
 

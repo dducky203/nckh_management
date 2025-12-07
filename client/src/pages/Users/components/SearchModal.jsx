@@ -1,28 +1,29 @@
-import { useState } from 'react';
-import { Search, Close, Person } from '@mui/icons-material';
+import { useState } from "react";
+import { Search, Close, Person } from "@mui/icons-material";
 
 const SearchModal = ({ isOpen, onClose, users, onSelectUser }) => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = users.filter(
+    (user) =>
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getRoleLabel = (power) => {
     const roles = {
-      1: 'Trưởng khoa',
-      2: 'Phó khoa',
-      3: 'Cán bộ',
-      4: 'Sinh viên'
+      1: "Trưởng khoa",
+      2: "Phó khoa",
+      3: "Cán bộ",
+      4: "Sinh viên",
     };
-    return roles[power] || 'Không xác định';
+    return roles[power] || "Không xác định";
   };
 
   const handleSelectUser = (user) => {
     onSelectUser(user);
-    setSearchTerm('');
+    setSearchTerm("");
     onClose();
   };
 
@@ -72,7 +73,7 @@ const SearchModal = ({ isOpen, onClose, users, onSelectUser }) => {
                     onClick={() => handleSelectUser(user)}
                     className="flex items-center p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
                   >
-                    <div className="w-10 h-10 rounded-full bg-mainColor text-white flex items-center justify-center text-sm font-semibold flex-shrink-0">
+                    <div className="w-10 h-10 rounded-md bg-mainColor text-white flex items-center justify-center text-sm font-semibold flex-shrink-0">
                       {user.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="ml-3 flex-1 min-w-0">
@@ -80,12 +81,16 @@ const SearchModal = ({ isOpen, onClose, users, onSelectUser }) => {
                         <span className="text-sm font-medium text-gray-900 truncate">
                           {user.name}
                         </span>
-                        <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800 flex-shrink-0">
+                        <span className="px-2 py-0.5 text-xs font-medium rounded-md bg-blue-100 text-blue-800 flex-shrink-0">
                           {getRoleLabel(user.power)}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-600 truncate">{user.username}</p>
-                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                      <p className="text-xs text-gray-600 truncate">
+                        {user.username}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">
+                        {user.email}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -93,7 +98,9 @@ const SearchModal = ({ isOpen, onClose, users, onSelectUser }) => {
             ) : (
               <div className="text-center py-8">
                 <p className="text-sm text-gray-500">
-                  {searchTerm ? 'Không tìm thấy người dùng nào' : 'Nhập từ khóa để tìm kiếm'}
+                  {searchTerm
+                    ? "Không tìm thấy người dùng nào"
+                    : "Nhập từ khóa để tìm kiếm"}
                 </p>
               </div>
             )}

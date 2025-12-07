@@ -35,8 +35,6 @@ const About = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  
-
   // Core values
   const coreValues = [
     {
@@ -85,7 +83,7 @@ const About = () => {
         }}
       >
         <div className="animate-pulse flex flex-col items-center">
-          <div className="rounded-full bg-mainColor/30 h-12 w-12 mb-4"></div>
+          <div className="rounded-md bg-mainColor/30 h-12 w-12 mb-4"></div>
           <div className="h-4 bg-mainColor/30 rounded w-32 mb-2"></div>
           <div className="h-3 bg-mainColor/20 rounded w-24"></div>
         </div>
@@ -129,15 +127,15 @@ const About = () => {
             </Typography>
           </div>
 
-          <Typography >
+          <Typography>
             <strong>Địa chỉ Văn phòng Khoa:</strong> P316, Tầng 3 Nhà Hành
             chính, Học viện Nông nghiệp Việt Nam, Thị trấn Trâu Quỳ, huyện Gia
             Lâm, TP. Hà Nội
           </Typography>
-          <Typography >
+          <Typography>
             <strong>Điện thoại:</strong> (024) 62617701
           </Typography>
-          <Typography >
+          <Typography>
             <strong>Email:</strong> cntt@vnua.edu.vn <strong>Website:</strong>{" "}
             <a
               href="https://fita.vnua.edu.vn"
@@ -148,10 +146,10 @@ const About = () => {
               https://fita.vnua.edu.vn
             </a>
           </Typography>
-          <Typography >
+          <Typography>
             <strong>Ngày thành lập:</strong> 10-10-2005
           </Typography>
-          <Typography >
+          <Typography>
             <strong>Bộ môn:</strong> Hiện nay Khoa có 05 Bộ môn và 01 Tổ văn
             phòng
           </Typography>
@@ -170,7 +168,7 @@ const About = () => {
             </Typography>
           </div>
 
-          <Grid container  spacing={3}>
+          <Grid container spacing={3}>
             {DEPARTMENTS.map((department, index) => {
               const IconComponent = department.icon;
               return (
@@ -204,7 +202,7 @@ const About = () => {
             </Typography>
           </div>
 
-          <Typography >
+          <Typography>
             Hệ thống giảng đường trung tâm của trường Học viện Nông nghiệp Việt
             Nam đều được trang bị máy chiếu projector. Hệ thống phòng thực hành
             máy tính của khoa CNTT gồm có 05 phòng được trang bị thiết bị máy
@@ -229,7 +227,7 @@ const About = () => {
                     Tầm nhìn
                   </Typography>
                 </div>
-                <Typography >
+                <Typography>
                   Trở thành một cơ sở đào tạo có uy tín cao trong nước và khu
                   vực về đào tạo nguồn nhân lực có chất lượng cao, NCKH, ứng
                   dụng tri thức và phát triển công nghệ trong lĩnh vực khoa học
@@ -254,7 +252,7 @@ const About = () => {
                     Sứ mệnh
                   </Typography>
                 </div>
-                <Typography >
+                <Typography>
                   Đào tạo và cung cấp nguồn nhân lực chất lượng cao, NCKH, phát
                   triển công nghệ, chuyển giao tri thức, sản phẩm mới về khoa
                   học máy tính, CNTT, trí tuệ nhân tạo, truyền thông và dữ liệu
@@ -287,7 +285,7 @@ const About = () => {
             "Chuyên nghiệp – Sáng tạo – Hội nhập – Trách nhiệm"
           </Typography>
 
-          <Typography >
+          <Typography>
             "Chuyên nghiệp – Sáng tạo – Hội nhập – Trách nhiệm" hướng đến mục
             tiêu đào tạo nguồn nhân lực có năng lực chuyên môn tốt và chuyên
             nghiệp, năng động và sáng tạo trong công việc, đáp ứng yêu cầu thực
@@ -313,7 +311,7 @@ const About = () => {
             </Typography>
           </div>
 
-          <Typography  className="font-medium">
+          <Typography className="font-medium">
             Mục tiêu chiến lược đến năm 2030 và tầm nhìn đến năm 2050:
           </Typography>
 
@@ -343,7 +341,7 @@ const About = () => {
             </Typography>
           </div>
 
-          <Typography  className="mb-4 font-medium">
+          <Typography className="mb-4 font-medium">
             Khoa Công nghệ thông tin không ngừng phấn đấu để kiến tạo nên "sự
             khác biệt, đặc trưng":
           </Typography>

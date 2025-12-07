@@ -83,7 +83,7 @@ const ResearchProjects = () => {
                   {project.title}
                 </h2>
                 <span
-                  className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
+                  className={`inline-flex px-3 py-1 rounded-md text-sm font-medium ${getStatusColor(
                     project.status
                   )}`}
                 >

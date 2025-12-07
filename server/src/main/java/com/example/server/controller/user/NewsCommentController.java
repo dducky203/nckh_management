@@ -45,7 +45,6 @@ public class NewsCommentController {
         nc.setComment(comment);
         nc.setIdNews(news);
         nc.setIdUser(user);
-        nc.setTime(LocalDateTime.now());
         commentRepository.save(nc);
         return ResponseEntity.ok().build();
     }
@@ -55,11 +54,10 @@ public class NewsCommentController {
         News news = newsRepository.findById(newsId).orElse(null);
         if (news == null) return List.of();
 
-        return commentRepository.findByIdNewsOrderByTimeDesc(news).stream()
+        return commentRepository.findByIdNewsOrderByCreatedAtDesc(news).stream()
                 .map(c -> Map.of(
                         "user", c.getIdUser().getName(),
-                        "comment", c.getComment(),
-                        "time", c.getTime().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy"))
+                        "comment", c.getComment()
                 ))
                 .toList();
     }

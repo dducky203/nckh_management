@@ -2,10 +2,12 @@ package com.example.server.service;
 
 import com.example.server.DTO.event.EventPublicDTO;
 import com.example.server.DTO.event.EventRegistrationDTO;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 
+@Service
 public interface EventPublicService {
 
     
@@ -25,7 +27,6 @@ public interface EventPublicService {
     String unregisterEvent(Integer eventId, Integer userId);
 
     EventPublicDTO createEvent(EventPublicDTO eventData);
-
  
     String approveEvent(Integer eventId);
 

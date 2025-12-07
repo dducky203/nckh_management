@@ -425,6 +425,7 @@ public class EventPublicServiceImpl implements EventPublicService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sự kiện với ID: " + eventId));
 
         event.setStatus("rejected");
+        event.setReason(reason);
         eventRepository.save(event);
 
         return "Từ chối sự kiện thành công. Lý do: " + reason;
@@ -435,8 +436,7 @@ public class EventPublicServiceImpl implements EventPublicService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sự kiện với ID: " + eventId));
 
-        event.setIsDelete(0);
-        eventRepository.save(event);
+        eventRepository.delete(event);
 
         return "Xóa sự kiện thành công";
     }

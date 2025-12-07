@@ -4,24 +4,34 @@ export const usePagination = (initialPage = 0, itemsPerPage = 20) => {
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [hasPrevious, setHasPrevious] = useState(false);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const goToPage = useCallback((page) => {
-    setCurrentPage(page - 1); 
+    setCurrentPage(page - 1);
+    scrollToTop();
   }, []);
 
   const goToFirstPage = useCallback(() => {
     setCurrentPage(0);
+    scrollToTop();
   }, []);
 
   const goToLastPage = useCallback(
     (totalPagesValue) => {
       setCurrentPage(Math.max((totalPagesValue || totalPages) - 1, 0));
+      scrollToTop();
     },
     [totalPages]
   );
 
   const goToPreviousPage = useCallback(() => {
     setCurrentPage((prev) => Math.max(prev - 1, 0));
+    scrollToTop();
   }, []);
 
   const goToNextPage = useCallback(
@@ -29,6 +39,7 @@ export const usePagination = (initialPage = 0, itemsPerPage = 20) => {
       setCurrentPage((prev) =>
         Math.min(prev + 1, (totalPagesValue || totalPages) - 1)
       );
+      scrollToTop();
     },
     [totalPages]
   );
@@ -82,6 +93,8 @@ export const usePagination = (initialPage = 0, itemsPerPage = 20) => {
   const updatePaginationData = useCallback((data) => {
     setTotalPages(data.totalPages || 0);
     setTotalItems(data.totalItems || 0);
+    setHasNext(data.hasNext || false);
+    setHasPrevious(data.hasPrevious || false);
   }, []);
 
   const startIndex = currentPage * itemsPerPage;
@@ -98,6 +111,9 @@ export const usePagination = (initialPage = 0, itemsPerPage = 20) => {
     currentPage,
     totalPages,
     totalItems,
+    itemsPerPage,
+    hasNext,
+    hasPrevious,
     startIndex,
     endIndex,
     goToPage,

@@ -11,6 +11,7 @@ import { roleStringToInt, titleStringToInt } from "../../../utils/helpers";
 import { formatDateForInput } from "../../../utils/dateHelpers";
 import userService from "../../../services/userService";
 import Modal from "../../../components/common/Modal";
+import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../../constants";
 
 const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
   const toast = useToast();
@@ -105,12 +106,10 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
   const handleResetPasswordConfirm = async () => {
     try {
       await userService.resetPassword(user.username);
-      toast.success("Reset mật khẩu thành công!");
+      toast.success(SUCCESS_MESSAGES.RESET_PASSWORD);
       setResetPasswordModalOpen(false);
     } catch (error) {
-      toast.error(
-        "Đặt lại mật khẩu thất bại: " + (error.message || "Có lỗi xảy ra")
-      );
+      toast.error(error.message || ERROR_MESSAGES.SERVER_ERROR);
     }
   };
 
@@ -325,11 +324,11 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
                         className="sr-only peer"
                       />
                       <div
-                        className={`w-11 h-6 rounded-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-offset-1 transition-all duration-300 shadow-inner ${
+                        className={`w-11 h-6 rounded-md peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-offset-1 transition-all duration-300 shadow-inner ${
                           normalizeInActiveValue(formData.inActive) === 0
                             ? "bg-green-500 peer-focus:ring-green-300"
                             : "bg-red-500 peer-focus:ring-red-300"
-                        } peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all after:duration-300 after:shadow-md`}
+                        } peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-md after:h-5 after:w-5 after:transition-all after:duration-300 after:shadow-md`}
                       ></div>
                     </label>
                   </div>

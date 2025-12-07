@@ -16,15 +16,17 @@ import {
   ChevronRight,
   KeyboardArrowDown,
   Login,
+  Group,
 } from "@mui/icons-material";
 
-import { EVENT_CATEGORIES, RESEARCH_CATEGORIES } from "../../utils";
+import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../constants";
 import { AuthContext } from "../../context/AuthContext";
 import { logout } from "../../utils/cookieUtils";
 import { useToast } from "../../context/ToastContext";
 import Modal from "../common/Modal";
 import logoFita from "../../assets/logo_fita.png";
 import noAvatarImg from "../../assets/no-avatar-user.png";
+import { EVENT_CATEGORIES, RESEARCH_CATEGORIES } from "../../utils";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -69,10 +71,10 @@ const Header = () => {
       await logout(); // Gọi hàm logout từ AuthContext - sẽ xóa cookie
       setActiveDropdown(null);
       navigate("/login"); // Chuyển hướng về trang đăng nhập
-      toast.success("Đăng xuất thành công!");
+      toast.success(SUCCESS_MESSAGES.LOGOUT);
     } catch (error) {
       console.error("Logout failed:", error);
-      toast.error("Đăng xuất thất bại. Vui lòng thử lại!");
+      toast.error(ERROR_MESSAGES.SERVER_ERROR);
     }
   };
 
@@ -113,7 +115,11 @@ const Header = () => {
                       <img
                         src={user.avatar || noAvatarImg}
                         alt={user.name}
-                        className={`${user.role === "admin" ? "border-green-400" : "border-[#ef9d1d]"} w-10 p-[2px] h-10 border-2 rounded-full`}
+                        className={`${
+                          user.role === "admin"
+                            ? "border-green-400"
+                            : "border-[#ef9d1d]"
+                        } w-10 p-[2px] h-10 border-2 rounded-full`}
                       />
                     </div>
                     <div className="flex items-center">
@@ -190,6 +196,15 @@ const Header = () => {
                       >
                         <BarChart className="w-4 h-4 mr-2 text-gray-400" />
                         <span>Định mức hoạt động</span>
+                      </Link>
+
+                      <Link
+                        to="/research-groups/manager"
+                        className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
+                        onClick={() => setActiveDropdown(null)}
+                      >
+                        <BarChart className="w-4 h-4 mr-2 text-gray-400" />
+                        <span>Quản lý nhóm NCKH</span>
                       </Link>
                     </div>
 
@@ -517,13 +532,30 @@ const Header = () => {
                         setActiveDropdown(null);
                       }}
                     >
-                      <span className="w-1.5 h-1.5 bg-mainColor rounded-full mr-1.5"></span>
+                      <span className="w-1.5 h-1.5 bg-mainColor rounded-md mr-1.5"></span>
                       {item.name}
                     </Link>
                   ))}
                 </div>
               )}
             </div>
+
+            {/* Mobile Research Groups Link */}
+            <Link
+              to="/research-groups"
+              className={`flex items-center px-4 py-2 text-sm hover:bg-purple-50 hover:text-mainColor transition-colors ${
+                isActive("/research-groups")
+                  ? "text-mainColor bg-purple-50"
+                  : "text-gray-700"
+              }`}
+              onClick={() => {
+                setIsMenuOpen(false);
+                setActiveDropdown(null);
+              }}
+            >
+              <Group className="w-4 h-4 mr-2" />
+              <span>Nhóm NCKH</span>
+            </Link>
 
             {/* Mobile Events Dropdown */}
             <div className="px-4 py-2">
@@ -563,7 +595,7 @@ const Header = () => {
                         setActiveDropdown(null);
                       }}
                     >
-                      <span className="w-1.5 h-1.5 bg-mainColor rounded-full mr-1.5"></span>
+                      <span className="w-1.5 h-1.5 bg-mainColor rounded-md mr-1.5"></span>
                       {item.name}
                     </Link>
                   ))}

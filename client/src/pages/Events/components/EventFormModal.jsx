@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Close, Save, Upload } from "@mui/icons-material";
 import { useToast } from "../../../context/ToastContext";
+import { ERROR_MESSAGES } from "../../../constants";
 // import MDEditor from '@uiw/react-md-editor';
 // import '@uiw/react-md-editor/markdown-editor.css';
 import "./EventFormModal.css";
@@ -126,7 +127,7 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
       await onSave(formData);
     } catch (err) {
       console.error("Error saving event:", err);
-      toast.error("Có lỗi xảy ra khi lưu sự kiện");
+      toast.error(ERROR_MESSAGES.SAVE_EVENT_ERROR);
     } finally {
       setIsSubmitting(false);
     }

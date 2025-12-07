@@ -9,6 +9,7 @@ import {
 } from "@mui/icons-material";
 import Button from "../../../components/common/Button";
 import { useToast } from "../../../context/ToastContext";
+import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../../constants";
 
 const EventRegistrationModal = ({
   isOpen,
@@ -72,7 +73,7 @@ const EventRegistrationModal = ({
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error("Vui lòng kiểm tra lại thông tin!");
+      toast.error(ERROR_MESSAGES.FORM.CHECK_INFO);
       return;
     }
 
@@ -86,7 +87,7 @@ const EventRegistrationModal = ({
       } else {
         // Fallback: simulate API call
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        toast.success("Đăng ký tham gia sự kiện thành công!");
+        toast.success(SUCCESS_MESSAGES.REGISTRATION_SUCCESS);
         onClose();
       }
     } catch (error) {
@@ -130,7 +131,7 @@ const EventRegistrationModal = ({
           <div className="sticky top-0 bg-gradient-to-r from-mainColor to-[#154c6e] text-white p-6">
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 text-white hover:bg-white/20 p-2 rounded-full transition-colors"
+              className="absolute top-4 right-4 text-white hover:bg-white/20 p-2 rounded-md transition-colors"
             >
               <Close />
             </button>

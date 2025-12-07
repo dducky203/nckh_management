@@ -65,7 +65,7 @@ const EventCard = ({
         {type === "approved" && (
           <div className="mt-3">
             <span
-              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+              className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${getStatusColor(
                 event.status
               )}`}
             >

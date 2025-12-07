@@ -33,7 +33,7 @@ public class NewsCommentServiceImpl implements NewsCommentService {
         News news = newsRepository.findById(newsId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tin tức"));
 
-        List<NewsComment> comments = commentRepository.findByIdNewsOrderByTimeDesc(news);
+        List<NewsComment> comments = commentRepository.findByIdNewsOrderByCreatedAtDesc(news);
 
         return comments.stream()
                 .map(this::mapToDTO)
@@ -52,7 +52,6 @@ public class NewsCommentServiceImpl implements NewsCommentService {
         comment.setIdNews(news);
         comment.setIdUser(user);
         comment.setComment(request.getContent());
-        comment.setTime(LocalDateTime.now());
 
         NewsComment savedComment = commentRepository.save(comment);
         return mapToDTO(savedComment);
@@ -76,7 +75,6 @@ public class NewsCommentServiceImpl implements NewsCommentService {
         }
 
         comment.setComment(content);
-        comment.setTime(LocalDateTime.now());
         NewsComment updatedComment = commentRepository.save(comment);
         return mapToDTO(updatedComment);
     }
@@ -110,6 +108,7 @@ public class NewsCommentServiceImpl implements NewsCommentService {
         dto.setUserAvatar(null); // User entity không có avatar field
         dto.setContent(comment.getComment());
         dto.setCreatedAt(comment.getCreatedAt());
+        dto.setUpdatedAt(comment.getUpdatedAt());
         return dto;
     }
 }

@@ -1,5 +1,7 @@
 package com.example.server.service;
 
+import com.example.server.DTO.users.UserDTO;
+import com.example.server.DTO.users.UserDetailsDTO;
 import com.example.server.DTO.users.UserRequest;
 import com.example.server.domain.*;
 import com.example.server.exception.ErrorException;
@@ -26,7 +28,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -123,10 +127,10 @@ public class UserService implements UserDetailsService {
     public void changePassword(String username, String currentPassword, String newPassword, Boolean forgotPassword) {
         User existingUser = userRepository.findByUsername(username);
         if (existingUser != null) {
-            if (SHA_256_password.comparePassword(currentPassword, existingUser.getPassword()) && !forgotPassword ) {
+            if (SHA_256_password.comparePassword(currentPassword, existingUser.getPassword()) && !forgotPassword) {
                 existingUser.setPassword(SHA_256_password.GM_SHA_password(newPassword));
                 userRepository.save(existingUser);
-            } else if(forgotPassword && currentPassword == null){
+            } else if (forgotPassword && currentPassword == null) {
                 existingUser.setPassword(SHA_256_password.GM_SHA_password(newPassword));
                 userRepository.save(existingUser);
             } else throw new ErrorException("Mật khẩu hiện tại không chính xác !", HttpStatus.BAD_REQUEST);
@@ -155,8 +159,6 @@ public class UserService implements UserDetailsService {
 
         return new CustomUserDetails(user);
     }
-
-
 
 
     public boolean isGuest(Integer userId) {
@@ -362,5 +364,24 @@ public class UserService implements UserDetailsService {
                 throw new ErrorException("Số điện thoại đã tồn tại", HttpStatus.BAD_REQUEST);
             }
         }
+    }
+
+    public org.springframework.http.ResponseEntity<?> searchUsers(String keyword, int page, int size) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        org.springframework.data.domain.Page<User> userPage = userRepository.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                keyword, keyword, pageable);
+
+        List<UserDetailsDTO> users = userPage.getContent().stream()
+                .map(userMapper::toUserDetailDTO)
+                .toList();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("users", users);
+        response.put("totalItems", userPage.getTotalElements());
+        response.put("totalPages", userPage.getTotalPages());
+        response.put("currentPage", page);
+
+        return org.springframework.http.ResponseEntity.ok(
+                new com.example.server.DTO.SuccessResponseDTO<>(response, "Tìm kiếm người dùng thành công."));
     }
 }

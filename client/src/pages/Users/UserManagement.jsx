@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Search, PersonAdd, FileDownload } from "@mui/icons-material";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
-import DownloadForOfflineIcon from '@mui/icons-material/DownloadForOffline';
+import DownloadForOfflineIcon from "@mui/icons-material/DownloadForOffline";
 import UserTable from "./components/UserTable";
 import SearchModal from "./components/SearchModal";
 import UserDetailModal from "./components/UserDetailModal";
@@ -9,7 +9,11 @@ import UserFormModal from "./components/UserFormModal";
 import { useToast } from "../../context/ToastContext";
 import userService from "../../services/userService";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
-import { ITEMS_PER_PAGE } from "../../constants";
+import {
+  ITEMS_PER_PAGE,
+  SUCCESS_MESSAGES,
+  ERROR_MESSAGES,
+} from "../../constants";
 import ErrorState from "../../components/common/ErrorState";
 import Pagination from "../../components/common/Pagination";
 import { usePagination } from "../../hooks";
@@ -160,7 +164,7 @@ const UserManagement = () => {
   const handleStatusFilterChange = (value) => {
     setFilterStatus(value);
     pagination.resetPagination();
-    setError(null); 
+    setError(null);
     if (searchTerm.trim()) {
       setSearchTerm("");
     }
@@ -186,11 +190,11 @@ const UserManagement = () => {
       setLoading(true);
       if (editingUser) {
         await userService.updateUserByAdmin(formData);
-        toast.success("Cập nhật người dùng thành công!");
+        toast.success(SUCCESS_MESSAGES.SAVE_SUCCESS);
       } else {
         // Tạo user mới
         await userService.createUser(formData);
-        toast.success("Thêm người dùng thành công!");
+        toast.success(SUCCESS_MESSAGES.SAVE_SUCCESS);
       }
       fetchUsers(); // Refresh data
       return true; // Thành công
@@ -207,11 +211,11 @@ const UserManagement = () => {
     try {
       setLoading(true);
       await userService.deleteUser(username);
-      toast.success("Xóa người dùng thành công!");
+      toast.success(SUCCESS_MESSAGES.DELETE_SUCCESS);
       fetchUsers(); // Refresh data
     } catch (error) {
       console.error("Error deleting user:", error);
-      toast.error(error.message || "Có lỗi xảy ra khi xóa người dùng");
+      toast.error(error.message || ERROR_MESSAGES.SERVER_ERROR);
     } finally {
       setLoading(false);
     }
@@ -221,11 +225,11 @@ const UserManagement = () => {
     try {
       setLoading(true);
       await userService.deleteUser(username, force);
-      toast.success("Xóa cứng người dùng thành công!");
+      toast.success(SUCCESS_MESSAGES.DELETE_SUCCESS);
       fetchUsers(); // Refresh data
     } catch (error) {
       console.error("Error force deleting user:", error);
-      toast.error(error.message || "Có lỗi xảy ra khi xóa cứng người dùng");
+      toast.error(error.message || ERROR_MESSAGES.SERVER_ERROR);
     } finally {
       setLoading(false);
     }
@@ -233,7 +237,7 @@ const UserManagement = () => {
 
   const handleExportUsers = async () => {
     if (selectedUsers.length === 0) {
-      toast.error("Vui lòng chọn ít nhất một người dùng để xuất file!");
+      toast.error(ERROR_MESSAGES.VALIDATION_ERROR);
       return;
     }
 
@@ -260,11 +264,11 @@ const UserManagement = () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      toast.success("Xuất file thành công");
+      toast.success(SUCCESS_MESSAGES.UPLOAD_SUCCESS);
       setSelectedUsers([]);
     } catch (error) {
       console.error("Error exporting users:", error);
-      toast.error(error.message || "Có lỗi xảy ra khi xuất file!");
+      toast.error(error.message || ERROR_MESSAGES.SERVER_ERROR);
     } finally {
       setIsExporting(false);
     }
@@ -283,7 +287,6 @@ const UserManagement = () => {
             title="Xuất danh sách người dùng"
           >
             <DownloadForOfflineIcon fontSize="medium" />
-          
           </button>
           <button
             title="Thêm mới người dùng"

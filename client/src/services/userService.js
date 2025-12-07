@@ -56,8 +56,15 @@ const userService = {
 
   // Xuất danh sách người dùng ra file Excel
   exportUsers: async (userIds) => {
-    return await api.post("/dashboard/manage-users/export-excel", userIds, { 
-      responseType: "blob" 
+    return await api.post("/dashboard/manage-users/export-excel", userIds, {
+      responseType: "blob",
+    });
+  },
+
+  // Tìm kiếm users theo username hoặc email
+  searchUsers: async (keyword, page = 0, size = 10) => {
+    return await api.get("/users/search", {
+      params: { keyword, page, size },
     });
   },
 };

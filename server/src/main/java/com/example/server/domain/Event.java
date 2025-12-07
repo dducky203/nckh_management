@@ -48,5 +48,8 @@ public class Event extends EntityBase implements Serializable {
     private Integer isDelete;
 
     @Column(name = "banner_img")
-    private String bannerImg; // URL của banner image
+    private String bannerImg;
+
+    @Column(name = "reason")
+    private String Reason;
 }

@@ -20,6 +20,7 @@ import { useToast } from "../../context/ToastContext";
 import userService from "../../services/userService";
 import noAvatarImg from "../../assets/no-avatar-user.png";
 import { AuthContext } from "../../context/AuthContext";
+import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../constants";
 import Modal from "../../components/common/Modal";
 import ChangePassword from "./components/ChangPassword.jsx";
 
@@ -100,7 +101,7 @@ const Profile = () => {
 
     // Basic validation
     if (!profileData.name || !profileData.email) {
-      toast.error("Vui lòng điền đầy đủ thông tin bắt buộc!");
+      toast.error(ERROR_MESSAGES.VALIDATION_ERROR);
       return;
     }
 
@@ -121,10 +122,10 @@ const Profile = () => {
           ...response.data,
         });
 
-        toast.success("Cập nhật thông tin thành công!");
+        toast.success(SUCCESS_MESSAGES.UPDATE_PROFILE);
         setIsEditing(false);
       } else {
-        toast.error(response.message || "Cập nhật thông tin thất bại!");
+        toast.error(response.message || ERROR_MESSAGES.SERVER_ERROR);
       }
     } catch (error) {
       console.error("Update profile error:", error);
@@ -203,7 +204,7 @@ const Profile = () => {
                     {isEditing && (
                       <label
                         title="Đổi avatar"
-                        className="absolute bottom-2 right-2 bg-mainColor flex items-center text-white p-2 rounded-full cursor-pointer"
+                        className="absolute bottom-2 right-2 bg-mainColor flex items-center text-white p-2 rounded-md cursor-pointer"
                       >
                         <PhotoCamera fontSize="small" />
                         <input

@@ -3,6 +3,7 @@ import { Lock } from "@mui/icons-material";
 import { useToast } from "../../../context/ToastContext";
 import userService from "../../../services/userService";
 import Modal from "../../../components/common/Modal";
+import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../../constants";
 
 const ChangePassword = ({ username }) => {
   const toast = useToast();
@@ -27,13 +28,13 @@ const ChangePassword = ({ username }) => {
 
     // Validate passwords match
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error("Mật khẩu xác nhận không khớp!");
+      toast.error(ERROR_MESSAGES.FORM.PASSWORDS_NOT_MATCH);
       return;
     }
 
     // Validate password length
     if (passwordData.newPassword.length < 6) {
-      toast.error("Mật khẩu mới phải có ít nhất 6 ký tự!");
+      toast.error(ERROR_MESSAGES.FORM.PASSWORD_TOO_SHORT);
       return;
     }
 
@@ -53,7 +54,7 @@ const ChangePassword = ({ username }) => {
 
       await userService.changePassword(username, changePasswordData);
 
-      toast.success("Đổi mật khẩu thành công!");
+      toast.success(SUCCESS_MESSAGES.CHANGE_PASSWORD);
 
       // Reset form
       setPasswordData({

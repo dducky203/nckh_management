@@ -30,9 +30,9 @@ const EventTypeChart = ({ events, selectedYear, eventTypes, colors }) => {
               <span className="text-sm font-medium">{type.name}</span>
             </div>
             <div className="flex items-center space-x-3 flex-1 mx-4">
-              <div className="flex-1 bg-gray-200 rounded-full h-3">
+              <div className="flex-1 bg-gray-200 rounded-md h-3">
                 <div
-                  className="h-3 rounded-full transition-all duration-300"
+                  className="h-3 rounded-md transition-all duration-300"
                   style={{
                     width: `${(type.value / maxValue) * 100}%`,
                     backgroundColor: colors[index % colors.length],

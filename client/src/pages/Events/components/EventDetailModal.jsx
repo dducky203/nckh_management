@@ -4,11 +4,17 @@ import {
   LocationOn,
   CheckCircle,
 } from "@mui/icons-material";
-import {API_BASE_URL} from "../../../constants/index.js";
+import { API_BASE_URL } from "../../../constants";
 
-const EventDetailModal = ({ isOpen, onClose, event, onRegister, isRegistered = false }) => {
+const EventDetailModal = ({
+  isOpen,
+  onClose,
+  event,
+  onRegister,
+  isRegistered = false,
+}) => {
   console.log("EventDetailModal render:", { isOpen, event, isRegistered });
-  
+
   if (!isOpen || !event) {
     console.log("Modal not rendering - isOpen:", isOpen, "event:", event);
     return null;
@@ -78,7 +84,7 @@ const EventDetailModal = ({ isOpen, onClose, event, onRegister, isRegistered = f
           {event.image && (
             <div className="mb-6">
               <img
-                src={`${API_BASE_URL}`+event.image}
+                src={`${API_BASE_URL}` + event.image}
                 alt={event.eventName}
                 className="w-full h-64 object-cover rounded-lg"
               />
@@ -89,14 +95,14 @@ const EventDetailModal = ({ isOpen, onClose, event, onRegister, isRegistered = f
           <div className="mb-6">
             <div className="flex flex-wrap items-center gap-3 mb-3">
               <span
-                className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getTypeColor(
+                className={`inline-flex px-3 py-1 rounded-md text-sm font-medium ${getTypeColor(
                   event.type
                 )}`}
               >
                 {event.type}
               </span>
               <span
-                className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${statusBadge.className}`}
+                className={`inline-flex px-3 py-1 rounded-md text-sm font-medium ${statusBadge.className}`}
               >
                 {statusBadge.label}
               </span>
@@ -106,7 +112,9 @@ const EventDetailModal = ({ isOpen, onClose, event, onRegister, isRegistered = f
             </h1>
             <p className="text-gray-600">
               Tổ chức bởi:{" "}
-              <span className="font-medium">{event.organizer || "Chưa cập nhật"}</span>
+              <span className="font-medium">
+                {event.organizer || "Chưa cập nhật"}
+              </span>
             </p>
           </div>
 
@@ -120,17 +128,22 @@ const EventDetailModal = ({ isOpen, onClose, event, onRegister, isRegistered = f
               </div>
               <div className="text-sm text-gray-600">
                 <div className="font-medium">
-                  {event.dateOfEvent ? new Date(event.dateOfEvent).toLocaleDateString('vi-VN', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  }) : 'Chưa xác định'}
+                  {event.dateOfEvent
+                    ? new Date(event.dateOfEvent).toLocaleDateString("vi-VN", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })
+                    : "Chưa xác định"}
                 </div>
                 <div className="mt-1">
-                  {event.startTimeDetail && event.endTimeDetail 
-                    ? `${event.startTimeDetail.slice(0, 5)} - ${event.endTimeDetail.slice(0, 5)}`
-                    : 'Chưa xác định giờ'}
+                  {event.startTimeDetail && event.endTimeDetail
+                    ? `${event.startTimeDetail.slice(
+                        0,
+                        5
+                      )} - ${event.endTimeDetail.slice(0, 5)}`
+                    : "Chưa xác định giờ"}
                 </div>
               </div>
             </div>
@@ -141,7 +154,9 @@ const EventDetailModal = ({ isOpen, onClose, event, onRegister, isRegistered = f
                 <LocationOn className="w-5 h-5 mr-2" />
                 <span className="font-medium">Địa điểm</span>
               </div>
-              <p className="text-sm text-gray-600">{event.location || 'Chưa xác định'}</p>
+              <p className="text-sm text-gray-600">
+                {event.location || "Chưa xác định"}
+              </p>
             </div>
           </div>
 
@@ -152,7 +167,7 @@ const EventDetailModal = ({ isOpen, onClose, event, onRegister, isRegistered = f
             </h3>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-gray-700 whitespace-pre-wrap">
-                {event.description || 'Chưa có mô tả'}
+                {event.description || "Chưa có mô tả"}
               </p>
             </div>
           </div>
@@ -165,12 +180,14 @@ const EventDetailModal = ({ isOpen, onClose, event, onRegister, isRegistered = f
             <div className="bg-gray-50 p-4 rounded-lg space-y-2">
               {event.contactEmail && (
                 <p className="text-gray-700">
-                  <span className="font-medium">Email:</span> {event.contactEmail}
+                  <span className="font-medium">Email:</span>{" "}
+                  {event.contactEmail}
                 </p>
               )}
               {event.contactPhone && (
                 <p className="text-gray-700">
-                  <span className="font-medium">Điện thoại:</span> {event.contactPhone}
+                  <span className="font-medium">Điện thoại:</span>{" "}
+                  {event.contactPhone}
                 </p>
               )}
               {!event.contactEmail && !event.contactPhone && (
@@ -181,9 +198,17 @@ const EventDetailModal = ({ isOpen, onClose, event, onRegister, isRegistered = f
 
           {/* Created Date */}
           <div className="text-sm text-gray-500 border-t pt-4">
-            <p>Tạo ngày: {event.createdAt ? new Date(event.createdAt).toLocaleDateString("vi-VN") : 'Chưa xác định'}</p>
+            <p>
+              Tạo ngày:{" "}
+              {event.createdAt
+                ? new Date(event.createdAt).toLocaleDateString("vi-VN")
+                : "Chưa xác định"}
+            </p>
             {event.updatedAt && (
-              <p className="mt-1">Cập nhật lần cuối: {new Date(event.updatedAt).toLocaleDateString("vi-VN")}</p>
+              <p className="mt-1">
+                Cập nhật lần cuối:{" "}
+                {new Date(event.updatedAt).toLocaleDateString("vi-VN")}
+              </p>
             )}
           </div>
         </div>

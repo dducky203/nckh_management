@@ -195,7 +195,7 @@ public class EventPublicRestController {
     }
 
 
-    @PostMapping("/{id}/status")
+    @PostMapping("/{id}")
     public ResponseEntity<?> actionEvent(
             @PathVariable Integer id,
             @RequestParam String status,

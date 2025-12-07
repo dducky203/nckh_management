@@ -4,6 +4,7 @@ import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import ErrorState from "../../components/common/ErrorState";
+import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../constants";
 import Pagination from "../../components/common/Pagination";
 import EventDetailModal from "./components/EventDetailModal";
 import EventRegistrationModal from "./components/EventRegistrationModal";
@@ -119,30 +120,35 @@ const EventsPublic = () => {
       navigate("/login");
       return;
     }
-    
+
     try {
       console.log("Fetching details for event:", event);
-      
+
       // Gọi API song song: lấy chi tiết event và kiểm tra đã đăng ký chưa
       const [eventResponse, registrationResponse] = await Promise.all([
         eventService.getEventById(event.id),
-        eventService.checkRegistration(event.id, user.id)
+        eventService.checkRegistration(event.id, user.id),
       ]);
-      
+
       console.log("API responses:", { eventResponse, registrationResponse });
-      
+
       // Backend trả về {data: {data: eventDTO, message: ...}}
       const eventData = eventResponse.data?.data || eventResponse.data;
       const isUserRegistered = registrationResponse.data?.data || false;
-      
-      console.log("Setting selected event:", eventData, "Is registered:", isUserRegistered);
-      
+
+      console.log(
+        "Setting selected event:",
+        eventData,
+        "Is registered:",
+        isUserRegistered
+      );
+
       setSelectedEvent(eventData);
       setIsRegistered(isUserRegistered);
       setDetailModalOpen(true);
     } catch (error) {
       console.error("Error fetching event details:", error);
-      toast.error("Không thể tải chi tiết sự kiện");
+      toast.error(ERROR_MESSAGES.LOAD_EVENT_ERROR);
     }
   };
 
@@ -155,7 +161,7 @@ const EventsPublic = () => {
 
     // Kiểm tra trạng thái sự kiện
     if (activeTab === "completed") {
-      toast.error("Sự kiện đã kết thúc, không thể đăng ký!");
+      toast.error(ERROR_MESSAGES.EVENT_ENDED);
       return;
     }
 
@@ -178,7 +184,7 @@ const EventsPublic = () => {
         user.id,
         formData
       );
-      toast.success("Đăng ký sự kiện thành công!");
+      toast.success(SUCCESS_MESSAGES.REGISTRATION_SUCCESS);
       setRegisterModalOpen(false);
       setEventToRegister(null);
       setIsRegistered(true); // Update registration status

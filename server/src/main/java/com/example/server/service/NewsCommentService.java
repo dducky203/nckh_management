@@ -2,8 +2,11 @@ package com.example.server.service;
 
 import com.example.server.DTO.news.CreateCommentRequest;
 import com.example.server.DTO.news.NewsCommentDTO;
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 
+@Service
 public interface NewsCommentService {
     List<NewsCommentDTO> getCommentsByNewsId(Integer newsId);
 

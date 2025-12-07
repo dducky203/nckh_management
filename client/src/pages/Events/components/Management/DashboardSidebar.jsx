@@ -31,8 +31,6 @@ const DashboardSidebar = ({
 
   return (
     <div className="w-80 bg-white shadow-lg border-r">
-      
-
       <nav className="p-4">
         {sidebarItems.map((item) => (
           <button
@@ -52,7 +50,7 @@ const DashboardSidebar = ({
               </div>
             </div>
             {item.badge && (
-              <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+              <span className="bg-red-500 text-white text-xs rounded-md px-2 py-1 min-w-[20px] text-center">
                 {item.badge}
               </span>
             )}
