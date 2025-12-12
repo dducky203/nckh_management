@@ -20,6 +20,9 @@ import Button from "../../components/common/Button";
 import Slideshow from "./components/Slideshow";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { formatDateTime } from "../../constants";
+import bannerImg from '../../assets/banner.png'; 
+import logoFitaImg from '../../assets/logo_fita.png';
+import noAvatarImg from '../../assets/no-avatar-user.png';
 
 const Home = () => {
   const { user } = useContext(AuthContext);
@@ -32,7 +35,7 @@ const Home = () => {
   const bannerSlides = [
     {
       id: 1,
-      image: "/src/assets/banner.png",
+      image: bannerImg,
       title: "Hệ thống Quản lý Nghiên cứu Khoa học",
       subtitle: "Khoa Công nghệ Thông tin - Học viện Nông nghiệp Việt Nam",
       description:
@@ -40,7 +43,7 @@ const Home = () => {
     },
     {
       id: 2,
-      image: "/src/assets/logo_fita.png",
+      image: logoFitaImg,
       title: "Đổi mới sáng tạo trong nghiên cứu",
       subtitle: "Ứng dụng công nghệ thông tin vào nông nghiệp",
       description:
@@ -48,7 +51,7 @@ const Home = () => {
     },
     {
       id: 3,
-      image: "/src/assets/no-avatar-user.png",
+      image: noAvatarImg,
       title: "Hội thảo & Sự kiện học thuật",
       subtitle: "Kết nối - Chia sẻ - Phát triển",
       description:
@@ -56,7 +59,7 @@ const Home = () => {
     },
     {
       id: 4,
-      image: "/src/assets/no-avatar-user.png",
+      image: noAvatarImg,
       title: "Hợp tác & Phát triển",
       subtitle: "Mở rộng mạng lưới nghiên cứu",
       description: "Kết nối với các đối tác doanh nghiệp và tổ chức quốc tế",
