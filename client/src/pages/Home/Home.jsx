@@ -20,7 +20,7 @@ import Button from "../../components/common/Button";
 import Slideshow from "./components/Slideshow";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { formatDateTime } from "../../constants";
-import bannerImg from '../../assets/banner.png'; 
+import bannerImg from '../../assets/Banner.png'; 
 import logoFitaImg from '../../assets/logo_fita.png';
 import noAvatarImg from '../../assets/no-avatar-user.png';
 
