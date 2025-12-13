@@ -165,10 +165,12 @@ const EventDetailModal = ({
             <h3 className="text-lg font-semibold text-gray-900 mb-3">
               Mô tả sự kiện
             </h3>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-gray-700 whitespace-pre-wrap">
-                {event.description || "Chưa có mô tả"}
-              </p>
+            <div className="bg-gray-50 p-4 rounded-lg prose prose-sm max-w-none">
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: event.description || "Chưa có mô tả",
+                }}
+              />
             </div>
           </div>
 

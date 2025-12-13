@@ -18,6 +18,7 @@ import { ERROR_MESSAGES, formatDate } from "../../constants";
 import GroupFormModal from "./components/GroupFormModal";
 import GroupDetailModal from "./components/GroupDetailModal";
 import { usePagination } from "../../hooks/usePagination";
+import Button from "../../components/common/Button";
 
 const ResearchGroupsPublic = () => {
   const { user } = useContext(AuthContext);
@@ -33,7 +34,6 @@ const ResearchGroupsPublic = () => {
     currentPage,
     totalPages,
     totalItems,
-    itemsPerPage,
     goToPage,
     goToFirstPage,
     goToLastPage,
@@ -54,7 +54,7 @@ const ResearchGroupsPublic = () => {
       setLoading(true);
       const response = await researchGroupService.getAllGroups(
         searchTerm,
-        "APPROVED", // Chỉ lấy nhóm đã duyệt
+        "APPROVED", 
         currentPage,
         12
       );
@@ -128,12 +128,12 @@ const ResearchGroupsPublic = () => {
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-              <button
+              <Button
                 type="submit"
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Tìm kiếm
-              </button>
+              </Button>
             </form>
 
             <button

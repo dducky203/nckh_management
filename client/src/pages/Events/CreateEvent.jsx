@@ -10,6 +10,8 @@ import {
   CloudUpload,
   AccessTime,
 } from "@mui/icons-material";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import {
@@ -19,7 +21,7 @@ import {
 } from "../../utils/roomsData";
 import eventService from "../../services/eventService";
 import Button from "../../components/common/Button";
-import { TIME_SLOTS } from "../../utils";
+import { EVENT_CATEGORIES, TIME_SLOTS } from "../../utils";
 import { ERROR_MESSAGES } from "../../constants";
 
 const CreateEvent = () => {
@@ -97,7 +99,7 @@ const CreateEvent = () => {
 
     // Validate file type
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
-    if (!allowedTypes.includes(file.type)) {
+    if (!validTypes.includes(file.type)) {
       toast.error(ERROR_MESSAGES.FILE_TYPE_ERROR);
       return;
     }
@@ -276,9 +278,9 @@ const CreateEvent = () => {
                   }`}
                 >
                   <option value="">Chọn loại sự kiện</option>
-                  {eventTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
+                  {EVENT_CATEGORIES.map((type) => (
+                    <option key={type.id} value={type.name}>
+                      {type.name}
                     </option>
                   ))}
                 </select>
@@ -296,20 +298,43 @@ const CreateEvent = () => {
               >
                 Mô tả sự kiện <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
-                <Description className="absolute left-3 top-3 text-gray-400" />
-                <textarea
-                  id="description"
-                  name="description"
+              <div className="bg-white">
+                <ReactQuill
+                  theme="snow"
                   value={formData.description}
-                  onChange={handleChange}
-                  rows={5}
-                  className={`w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor ${
-                    errors.description ? "border-red-500" : "border-gray-300"
-                  }`}
-                  placeholder="Mô tả chi tiết về sự kiện..."
+                  onChange={(value) =>
+                    setFormData({ ...formData, description: value })
+                  }
+                  modules={{
+                    toolbar: [
+                      [{ header: [1, 2, 3, false] }],
+                      ["bold", "italic", "underline", "strike"],
+                      [{ list: "ordered" }, { list: "bullet" }],
+                      [{ color: [] }, { background: [] }],
+                      [{ align: [] }],
+                      ["link", "image"],
+                      ["clean"],
+                    ],
+                  }}
+                  formats={[
+                    "header",
+                    "bold",
+                    "italic",
+                    "underline",
+                    "strike",
+                    "list",
+                    "bullet",
+                    "color",
+                    "background",
+                    "align",
+                    "link",
+                    "image",
+                  ]}
+                  className="h-[300px]"
+                  placeholder="Nhập mô tả chi tiết về sự kiện..."
                 />
               </div>
+              <div className="h-16"></div>
               {errors.description && (
                 <p className="text-red-500 text-sm mt-1">
                   {errors.description}
@@ -402,7 +427,7 @@ const CreateEvent = () => {
                     }`}
                   >
                     <option value="">Chọn tiết kết thúc</option>
-                    {timeSlots.map((slot) => (
+                    {TIME_SLOTS.map((slot) => (
                       <option key={slot.value} value={slot.value}>
                         {slot.label}
                       </option>

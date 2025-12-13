@@ -96,9 +96,9 @@ const About = () => {
       {/* Hero section with faculty image */}
       <div className="relative h-64 md:h-80 overflow-hidden mb-8">
         <img
-          src="/src/assets/faculty/building.jpg"
+          src="/src/assets/banner23.png"
           alt="Khoa Công nghệ thông tin"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-scale-down"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-mainColor/80 to-transparent flex items-center">
           <div className="container mx-auto px-4">

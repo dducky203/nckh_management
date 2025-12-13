@@ -21,28 +21,20 @@ export const usePagination = (initialPage = 0, itemsPerPage = 20) => {
     scrollToTop();
   }, []);
 
-  const goToLastPage = useCallback(
-    (totalPagesValue) => {
-      setCurrentPage(Math.max((totalPagesValue || totalPages) - 1, 0));
-      scrollToTop();
-    },
-    [totalPages]
-  );
+  const goToLastPage = useCallback(() => {
+    setCurrentPage(Math.max(totalPages - 1, 0));
+    scrollToTop();
+  }, [totalPages]);
 
   const goToPreviousPage = useCallback(() => {
     setCurrentPage((prev) => Math.max(prev - 1, 0));
     scrollToTop();
   }, []);
 
-  const goToNextPage = useCallback(
-    (totalPagesValue) => {
-      setCurrentPage((prev) =>
-        Math.min(prev + 1, (totalPagesValue || totalPages) - 1)
-      );
-      scrollToTop();
-    },
-    [totalPages]
-  );
+  const goToNextPage = useCallback(() => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1));
+    scrollToTop();
+  }, [totalPages]);
 
   const getPageNumbers = useCallback(() => {
     const pages = [];

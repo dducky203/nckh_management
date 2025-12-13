@@ -1,20 +1,9 @@
-import {
-  Visibility,
-  Edit,
-  Delete,
-  CheckCircle,
-  Cancel,
-  People,
-} from "@mui/icons-material";
+import { Visibility, Delete, People } from "@mui/icons-material";
 
 const GroupTable = ({
   groups,
   isAdmin,
-  currentUserId,
   onViewDetail,
-  onEdit,
-  onApprove,
-  onReject,
   onDelete,
   getStatusBadge,
 }) => {
@@ -51,11 +40,10 @@ const GroupTable = ({
             {groups.map((group) => {
               const statusBadge = getStatusBadge(group.status);
               const StatusIcon = statusBadge.icon;
-              const isLeader = group.leader?.id === currentUserId;
 
               return (
                 <tr key={group.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4" title={group.groupName }>
+                  <td className="px-6 py-4" title={group.groupName}>
                     <div className="font-medium text-gray-900">
                       {group.groupName}
                     </div>
@@ -107,7 +95,6 @@ const GroupTable = ({
                         <Visibility fontSize="small" />
                       </button>
 
-                
                       {isAdmin && (
                         <button
                           onClick={() => onDelete(group.id)}

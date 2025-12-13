@@ -45,8 +45,7 @@ public class ExcelServiceImpl implements ExcelService {
 
     @Override
     public byte[] exportExcelFile(List<Integer> userIds) {
-        try (XSSFWorkbook workbook = new XSSFWorkbook();
-             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
             // Tạo sheet mới
             Sheet sheet = workbook.createSheet("Danh sách người dùng");
@@ -124,21 +123,7 @@ public class ExcelServiceImpl implements ExcelService {
         Row headerRow = sheet.createRow(0);
         headerRow.setHeight((short) 600); // Tăng chiều cao header
 
-        String[] headers = {
-                "STT",
-                "Tên người dùng",
-                "Tên đăng nhập",
-                "Email",
-                "Vai trò",
-                "Chức danh",
-                "Quyền hạn",
-                "Số điện thoại",
-                "Ngày sinh",
-                "Địa chỉ",
-                "Trạng thái",
-                "Ngày tạo",
-                "Ngày cập nhật"
-        };
+        String[] headers = {"STT", "Tên người dùng", "Tên đăng nhập", "Email", "Vai trò", "Chức danh", "Quyền hạn", "Số điện thoại", "Ngày sinh", "Địa chỉ", "Trạng thái", "Ngày tạo", "Ngày cập nhật"};
 
         for (int i = 0; i < headers.length; i++) {
             Cell cell = headerRow.createCell(i);
@@ -184,9 +169,7 @@ public class ExcelServiceImpl implements ExcelService {
             createStyledCell(row, COL_PHONE, user.getPhone() != null ? user.getPhone() : "", dataStyle);
 
             // Ngày sinh
-            createStyledCell(row, COL_BIRTHDAY, DateTimeConstant.toDate(user.getBirthday().toInstant()
-                    .atZone(ZoneId.systemDefault())
-                    .toLocalDate()), dataStyle);
+            createStyledCell(row, COL_BIRTHDAY, DateTimeConstant.toDate(user.getBirthday()), dataStyle);
 
             // Địa chỉ
             createStyledCell(row, COL_ADDRESS, user.getAddress() != null ? user.getAddress() : "", dataStyle);

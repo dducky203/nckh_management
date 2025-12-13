@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Close, Add, Delete, Search } from "@mui/icons-material";
 import userService from "../../../services/userService";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
+import Button from "../../../components/common/Button";
 
 const GroupFormModal = ({ isOpen, onClose, onSave, group, currentUserId }) => {
   const [formData, setFormData] = useState({
@@ -418,20 +419,21 @@ const GroupFormModal = ({ isOpen, onClose, onSave, group, currentUserId }) => {
 
           {/* Action Buttons */}
           <div className="flex gap-4 pt-4 border-t">
-            <button
+            <Button
+              variant="outline"
               type="button"
               onClick={onClose}
               className="flex-1 px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
             >
               Hủy
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={loading}
               className="flex-1 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? <LoadingSpinner /> : group ? "Cập nhật" : "Tạo nhóm"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

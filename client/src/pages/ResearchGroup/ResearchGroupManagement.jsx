@@ -18,6 +18,7 @@ import GroupTable from "./components/GroupTable";
 import GroupFormModal from "./components/GroupFormModal";
 import GroupDetailModal from "./components/GroupDetailModal";
 import { usePagination } from "../../hooks/usePagination";
+import Button from "../../components/common/Button";
 
 const ResearchGroupManagement = () => {
   const { user } = useContext(AuthContext);
@@ -41,7 +42,6 @@ const ResearchGroupManagement = () => {
     currentPage,
     totalPages,
     totalItems,
-    itemsPerPage,
     goToPage,
     goToFirstPage,
     goToLastPage,
@@ -281,12 +281,12 @@ const ResearchGroupManagement = () => {
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-              <button
+              <Button
                 type="submit"
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Tìm kiếm
-              </button>
+              </Button>
             </form>
 
             <div className="flex gap-4">

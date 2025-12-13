@@ -1,5 +1,6 @@
 import { Close, Edit, CheckCircle, Cancel, People } from "@mui/icons-material";
 import { formatDateTime } from "../../../constants";
+import Button from "../../../components/common/Button";
 
 const GroupDetailModal = ({
   isOpen,
@@ -170,7 +171,7 @@ const GroupDetailModal = ({
         {/* Action Buttons */}
         <div className="flex gap-4 p-6 border-t bg-gray-50">
           {(isAdmin || isLeader) && (
-            <button
+            <Button
               onClick={() => {
                 onClose();
                 onEdit(group);
@@ -179,7 +180,7 @@ const GroupDetailModal = ({
             >
               <Edit fontSize="small" />
               Chỉnh sửa
-            </button>
+            </Button>
           )}
 
           {isAdmin && group.status === "PENDING" && (
@@ -207,12 +208,13 @@ const GroupDetailModal = ({
             </>
           )}
 
-          <button
+          <Button
             onClick={onClose}
+            variant="outline"
             className="ml-auto px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100"
           >
             Đóng
-          </button>
+          </Button>
         </div>
       </div>
     </div>

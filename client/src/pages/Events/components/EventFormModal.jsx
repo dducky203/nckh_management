@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { Close, Save, Upload } from "@mui/icons-material";
 import { useToast } from "../../../context/ToastContext";
 import { ERROR_MESSAGES } from "../../../constants";
-// import MDEditor from '@uiw/react-md-editor';
-// import '@uiw/react-md-editor/markdown-editor.css';
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
 import "./EventFormModal.css";
 
 const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
@@ -275,22 +275,43 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Mô tả sự kiện <span className="text-red-500">*</span>
               </label>
-              <div className={`${errors.description ? "border-red-500" : ""}`}>
-                <MDEditor
+              <div className="bg-white">
+                <ReactQuill
+                  theme="snow"
                   value={formData.description}
                   onChange={(value) =>
                     handleRichTextChange("description", value || "")
                   }
-                  preview="edit"
-                  hideToolbar={false}
-                  visibleDragBar={false}
-                  textareaProps={{
-                    placeholder: "Mô tả chi tiết về sự kiện...",
-                    style: { fontSize: 14, lineHeight: 1.5 },
+                  modules={{
+                    toolbar: [
+                      [{ header: [1, 2, 3, false] }],
+                      ["bold", "italic", "underline", "strike"],
+                      [{ list: "ordered" }, { list: "bullet" }],
+                      [{ color: [] }, { background: [] }],
+                      [{ align: [] }],
+                      ["link", "image"],
+                      ["clean"],
+                    ],
                   }}
-                  height={150}
+                  formats={[
+                    "header",
+                    "bold",
+                    "italic",
+                    "underline",
+                    "strike",
+                    "list",
+                    "bullet",
+                    "color",
+                    "background",
+                    "align",
+                    "link",
+                    "image",
+                  ]}
+                  className="h-[200px]"
+                  placeholder="Mô tả chi tiết về sự kiện..."
                 />
               </div>
+              <div className="h-16"></div>
               {errors.description && (
                 <p className="text-red-500 text-sm mt-1">
                   {errors.description}

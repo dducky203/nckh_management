@@ -31,14 +31,14 @@ const Slideshow = ({ slides, autoPlayInterval = 5, user }) => {
 
   if (!slides || slides.length === 0) {
     return (
-      <div className="h-[500px] bg-gray-200 flex items-center justify-center">
+      <div className="h-[600px] bg-gray-200 flex items-center justify-center">
         <p className="text-gray-500">Không có slides để hiển thị</p>
       </div>
     );
   }
 
   return (
-    <section className="relative h-[500px] overflow-hidden">
+    <section className="relative h-[600px] overflow-hidden">
       {/* Slides */}
       {slides.map((slide, index) => (
         <div
@@ -51,7 +51,7 @@ const Slideshow = ({ slides, autoPlayInterval = 5, user }) => {
           <img
             src={slide.image}
             alt={slide.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-fill"
             loading={index === 0 ? "eager" : "lazy"}
           />
 
@@ -82,7 +82,7 @@ const Slideshow = ({ slides, autoPlayInterval = 5, user }) => {
                   </Link>
                 )}
 
-                {/* Default CTA based on user auth */}
+                {/* Default CTA based on user auth
                 {!slide.ctaText && (
                   <>
                     {user ? (
@@ -101,7 +101,7 @@ const Slideshow = ({ slides, autoPlayInterval = 5, user }) => {
                       </Link>
                     )}
                   </>
-                )}
+                )} */}
               </div>
             </div>
           </div>

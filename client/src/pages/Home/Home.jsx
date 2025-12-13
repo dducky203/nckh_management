@@ -22,7 +22,8 @@ import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { formatDateTime } from "../../constants";
 import bannerImg from '../../assets/Banner.png'; 
 import logoFitaImg from '../../assets/logo_fita.png';
-import noAvatarImg from '../../assets/no-avatar-user.png';
+import banner2 from '../../assets/gt.jpg';
+// import noAvatarImg from '../../assets/no-avatar-user.png';
 
 const Home = () => {
   const { user } = useContext(AuthContext);
@@ -36,34 +37,34 @@ const Home = () => {
     {
       id: 1,
       image: bannerImg,
-      title: "Hệ thống Quản lý Nghiên cứu Khoa học",
-      subtitle: "Khoa Công nghệ Thông tin - Học viện Nông nghiệp Việt Nam",
-      description:
-        "Nền tảng số hóa quản lý và tổ chức các hoạt động nghiên cứu khoa học",
+      // title: "Hệ thống Quản lý Nghiên cứu Khoa học",
+      // subtitle: "Khoa Công nghệ Thông tin - Học viện Nông nghiệp Việt Nam",
+      // description:
+      //   "Nền tảng số hóa quản lý và tổ chức các hoạt động nghiên cứu khoa học",
     },
     {
       id: 2,
       image: logoFitaImg,
-      title: "Đổi mới sáng tạo trong nghiên cứu",
-      subtitle: "Ứng dụng công nghệ thông tin vào nông nghiệp",
-      description:
-        "Tiên phong trong việc ứng dụng AI, IoT, Big Data vào lĩnh vực nông nghiệp",
+      // title: "Đổi mới sáng tạo trong nghiên cứu",
+      // subtitle: "Ứng dụng công nghệ thông tin vào nông nghiệp",
+      // description:
+      //   "Tiên phong trong việc ứng dụng AI, IoT, Big Data vào lĩnh vực nông nghiệp",
     },
     {
       id: 3,
-      image: noAvatarImg,
-      title: "Hội thảo & Sự kiện học thuật",
-      subtitle: "Kết nối - Chia sẻ - Phát triển",
-      description:
-        "Tham gia các hội thảo, workshop và sự kiện học thuật hàng đầu",
+      image: banner2,
+      // title: "Hội thảo & Sự kiện học thuật",
+      // subtitle: "Kết nối - Chia sẻ - Phát triển",
+      // description:
+      //   "Tham gia các hội thảo, workshop và sự kiện học thuật hàng đầu",
     },
-    {
-      id: 4,
-      image: noAvatarImg,
-      title: "Hợp tác & Phát triển",
-      subtitle: "Mở rộng mạng lưới nghiên cứu",
-      description: "Kết nối với các đối tác doanh nghiệp và tổ chức quốc tế",
-    },
+    // {
+    //   id: 4,
+    //   image: noAvatarImg,
+    //   // title: "Hợp tác & Phát triển",
+    //   // subtitle: "Mở rộng mạng lưới nghiên cứu",
+    //   // description: "Kết nối với các đối tác doanh nghiệp và tổ chức quốc tế",
+    // },
   ];
 
   useEffect(() => {
@@ -71,16 +72,11 @@ const Home = () => {
       try {
         setLoading(true);
 
-        const eventsResponse = await eventService.getPublicEvents(
-          "upcoming",
-          0,
-          3
-        );
-        setUpcomingEvents(eventsResponse?.data?.events || []);
-
-        // Giả lập lấy data NCKH (nếu API chưa có thì dùng tạm mảng rỗng hoặc mock data để test UI)
-        // const researchResponse = await ...
-        // setResearchActivities(...)
+        // const eventsResponse = await eventService.getPublicEvents(
+        //   "upcoming",
+        //   0,
+        //   3
+        // );
 
         const newsResponse = await newsService.getNews("", 0, 4);
         setLatestNews(newsResponse?.data?.news || []);
@@ -95,7 +91,7 @@ const Home = () => {
   }, []);
 
   if (loading) {
-    return <LoadingSpinner size="lg" />;
+    return <LoadingSpinner size="md" />;
   }
 
   return (
@@ -312,7 +308,7 @@ const Home = () => {
               <Link to="/research/register">
                 <Button
                   size="sm"
-                  className="bg-white border border-green-600 text-green-700 hover:bg-green-600 hover:text-white transition-all shadow-sm"
+                  className="border-green-600 text-green-700 hover:bg-green-600 hover:text-white transition-all shadow-sm"
                 >
                   Đăng ký đề tài mới
                 </Button>
@@ -491,7 +487,7 @@ const Home = () => {
             </div>
           ) : (
             <Link to="/events/dashboard">
-              <Button className="bg-white text-blue-900 hover:bg-blue-50 border-transparent px-8 py-3 h-auto text-base font-bold shadow-lg">
+              <Button className="hover:bg-blue-50 border-transparent px-8 py-3 h-auto text-base font-bold shadow-lg">
                 Khám phá ngay <ArrowForward className="ml-2" />
               </Button>
             </Link>
