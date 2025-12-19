@@ -206,6 +206,15 @@ const Header = () => {
                         <BarChart className="w-4 h-4 mr-2 text-gray-400" />
                         <span>Quản lý nhóm NCKH</span>
                       </Link>
+
+                      <Link
+                        to="/research-groups/profile"
+                        className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
+                        onClick={() => setActiveDropdown(null)}
+                      >
+                        <Group className="w-4 h-4 mr-2 text-gray-400" />
+                        <span>Hồ sơ nhóm</span>
+                      </Link>
                     </div>
 
                     <div className="border-t border-gray-100">

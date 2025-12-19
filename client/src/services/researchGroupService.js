@@ -7,16 +7,20 @@ const researchGroupService = {
     // return response.data;
   },
 
-  getAllGroups: async (keyword = "", status = "", page = 0, size = 10) => {
+  getAllGroups: async (keyword = "", status = "", page = 0, size = 10, year = "") => {
+    const params = {
+      keyword,
+      status,
+      page,
+      size,
+      sortBy: "createdAt",
+      sortDir: "DESC",
+    };
+    if (year) {
+      params.year = year;
+    }
     const response = await api.get("/research-groups", {
-      params: {
-        keyword,
-        status,
-        page,
-        size,
-        sortBy: "createdAt",
-        sortDir: "DESC",
-      },
+      params,
     });
     return response.data;
   },

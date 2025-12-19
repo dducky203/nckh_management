@@ -17,6 +17,7 @@ import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../constants";
 import GroupTable from "./components/GroupTable";
 import GroupFormModal from "./components/GroupFormModal";
 import GroupDetailModal from "./components/GroupDetailModal";
+import MemberManagementModal from "./components/MemberManagementModal";
 import { usePagination } from "../../hooks/usePagination";
 import Button from "../../components/common/Button";
 
@@ -27,8 +28,10 @@ const ResearchGroupManagement = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [yearFilter, setYearFilter] = useState("");
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [memberModalOpen, setMemberModalOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [statistics, setStatistics] = useState(null);
   const [confirmModal, setConfirmModal] = useState({
@@ -50,7 +53,7 @@ const ResearchGroupManagement = () => {
     getPageNumbers,
     updatePaginationData,
     resetPagination,
-  } = usePagination(0, 10);
+  } = usePagination(0, 6);
 
   const isAdmin = user?.role === "admin";
 
@@ -60,7 +63,7 @@ const ResearchGroupManagement = () => {
       fetchStatistics();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, statusFilter]);
+  }, [currentPage, statusFilter, yearFilter]);
 
   const fetchGroups = async () => {
     try {
@@ -69,7 +72,8 @@ const ResearchGroupManagement = () => {
         searchTerm,
         statusFilter,
         currentPage,
-        10
+        6,
+        yearFilter
       );
       const responseData = response.data || response;
       setGroups(responseData?.groups || []);
@@ -163,6 +167,30 @@ const ResearchGroupManagement = () => {
     }
   };
 
+  // Handler cho quản lý thành viên
+  const handleManageMembers = (group) => {
+    setSelectedGroup(group);
+    setMemberModalOpen(true);
+  };
+
+  // Handler cho quản lý sản phẩm
+  const handleManageProducts = (group) => {
+    // TODO: Navigate to product management page or open modal
+    console.log("Quản lý sản phẩm cho nhóm:", group.id);
+    toast.info(`Mở trang quản lý sản phẩm cho nhóm: ${group.groupName}`);
+    // Có thể navigate: navigate(`/research-groups/${group.id}/products`)
+    // Hoặc mở modal quản lý sản phẩm
+  };
+
+  // Handler cho quản lý mức độ hoàn thành
+  const handleManageCompletion = (group) => {
+    // TODO: Navigate to completion management page or open modal
+    console.log("Quản lý mức độ hoàn thành cho nhóm:", group.id);
+    toast.info(`Mở trang quản lý mức độ hoàn thành cho nhóm: ${group.groupName}`);
+    // Có thể navigate: navigate(`/research-groups/${group.id}/completion`)
+    // Hoặc mở modal quản lý mức độ hoàn thành
+  };
+
   const handleSaveGroup = async (groupData) => {
     try {
       if (selectedGroup) {
@@ -212,9 +240,6 @@ const ResearchGroupManagement = () => {
             <Group className="text-blue-600" />
             Quản lý Nhóm NCKH
           </h1>
-          <p className="mt-2 text-gray-600">
-            Quản lý các nhóm nghiên cứu khoa học
-          </p>
         </div>
 
         {/* Statistics Cards - Admin Only */}
@@ -291,6 +316,20 @@ const ResearchGroupManagement = () => {
 
             <div className="flex gap-4">
               <select
+                value={yearFilter}
+                onChange={(e) => {
+                  setYearFilter(e.target.value);
+                  resetPagination();
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Tất cả năm</option>
+                <option value="2022">2022</option>
+                <option value="2023">2023</option>
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+              </select>
+              <select
                 value={statusFilter}
                 onChange={(e) => {
                   setStatusFilter(e.target.value);
@@ -353,6 +392,9 @@ const ResearchGroupManagement = () => {
               onApprove={handleApprove}
               onReject={handleReject}
               onDelete={handleDelete}
+              onManageMembers={handleManageMembers}
+              onManageProducts={handleManageProducts}
+              onManageCompletion={handleManageCompletion}
               getStatusBadge={getStatusBadge}
             />
 
@@ -362,9 +404,9 @@ const ResearchGroupManagement = () => {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 totalItems={totalItems}
-                itemsPerPage={10}
-                startIndex={0}
-                endIndex={groups.length}
+                itemsPerPage={6}
+                startIndex={currentPage * 6}
+                endIndex={Math.min((currentPage + 1) * 6, totalItems)}
                 onPageChange={goToPage}
                 onFirstPage={goToFirstPage}
                 onLastPage={() => goToLastPage(totalPages)}
@@ -400,6 +442,18 @@ const ResearchGroupManagement = () => {
           onReject={handleReject}
           onEdit={handleEditGroup}
           getStatusBadge={getStatusBadge}
+        />
+      )}
+
+      {memberModalOpen && selectedGroup && (
+        <MemberManagementModal
+          isOpen={memberModalOpen}
+          onClose={() => {
+            setMemberModalOpen(false);
+            setSelectedGroup(null);
+          }}
+          group={selectedGroup}
+          onRefresh={fetchGroups}
         />
       )}
 

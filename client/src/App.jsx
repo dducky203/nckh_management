@@ -35,6 +35,7 @@ import NewsDetail from "./pages/News/NewsDetail";
 import NewsManager from "./pages/News/NewsManager";
 import ResearchGroupManagement from "./pages/ResearchGroup/ResearchGroupManagement";
 import ResearchGroupsPublic from "./pages/ResearchGroup/ResearchGroupsPublic";
+import ResearchGroupProfile from "./pages/ResearchGroup/ResearchGroupProfile";
 
 function App() {
   // Load rooms data when app starts
@@ -103,6 +104,14 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <ResearchGroupManagement />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/research-groups/profile"
+                      element={
+                        <ProtectedRoute>
+                          <ResearchGroupProfile />
                         </ProtectedRoute>
                       }
                     />
