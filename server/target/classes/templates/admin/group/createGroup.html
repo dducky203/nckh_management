@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{/admin/index}">
+<head>
+    <meta charset="UTF-8">
+    <title>Tạo mới người dùng</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* Phần chung */
+        body {
+            background-color: #f8f9fa;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .container {
+            max-width: 960px;
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        h2, h4 {
+            color: #2c3e50;
+        }
+
+        /* Ô nhập liệu */
+        .form-control, .form-select {
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+        }
+
+        /* Bảng thành viên */
+        #membersTable th, #membersTable td {
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .border {
+            border: 1px solid #ced4da !important;
+            border-radius: 8px;
+            background-color: #f1f3f5;
+        }
+
+        /* Nút bấm */
+        button.btn {
+            border-radius: 6px;
+        }
+
+        button.btn-danger {
+            font-weight: bold;
+        }
+
+        button.btn-outline-success {
+            font-size: 14px;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .activity-entry .col-md-5,
+            .activity-entry .col-md-3,
+            .activity-entry .col-md-2 {
+                margin-bottom: 0.5rem;
+            }
+        }
+
+    </style>
+</head>
+<body>
+<section class="showcase" style="align-content: center" layout:fragment="content">
+    <div class="container mt-5">
+        <h2 class="mb-4">Tạo mới nhóm nghiên cứu</h2>
+        <p style="color: red" th:text="${message}"></p>
+
+        <form th:action="@{/ad/managerGroup/createGroup}" method="post">
+            <!-- Tên nhóm -->
+            <div class="form-group mb-3">
+                <label for="groupName">Tên nhóm nghiên cứu</label>
+                <input type="text" class="form-control" id="groupName" name="groupName" required maxlength="250" placeholder="Nhập tên nhóm">
+            </div>
+            <!-- Nút gửi -->
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Tạo nhóm</button>
+            </div>
+        </form>
+    </div>
+
+
+</section>
+
+
+</body>
+</html>

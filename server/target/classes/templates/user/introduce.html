@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{/user/index}">
+<head>
+    <meta charset="UTF-8">
+    <title>Giới thiệu Khoa CNTT</title>
+    <style>
+        /* Các mục trong dropdown */
+        .dropdown-item {
+            display: block;
+            padding: 10px 20px;
+            color: #333;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f0f0f0;
+            color: #000;
+        }
+        .criteria-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .criteria-item {
+            display: inline-block;
+            padding: 8px 12px;
+            border: 1px solid #007bff;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #007bff;
+            background-color: #f8f9fa;
+            transition: background-color 0.2s;
+            max-width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .criteria-item:hover {
+            background-color: #e2e6ea;
+        }
+
+        /* Nếu tiêu chí dài thì xuống dòng */
+        .criteria-item.long-text {
+            white-space: normal;
+            flex: 1 1 100%;
+        }
+    </style>
+</head>
+<body>
+<section class="showcase" style="margin-top: 3rem" layout:fragment="content">
+    <div style="position: fixed; top: 150px; left: 40px;">
+        <a th:href="@{/createE/selectE}" class="btn btn-primary">Quay lại</a>
+        <br><br>
+<!--        <a class="criteria-item" th:href="@{'/intro'}">-->
+<!--            <h6 class="mb-2" >THÔNG TIN CHUNG</h6>-->
+<!--        </a>-->
+    </div>
+    <div style="margin-left: 15rem">
+        <h4>Nhóm nghiên cứu</h4>
+        <div th:each="g :${groups}">
+            <a class="criteria-item" th:href="@{'/ncm/showNcmNotUser/'+${g.id}}">
+                <h6 class="mb-2" th:text="${g.groupName}"></h6>
+            </a>
+        </div>
+    </div>
+    <br>
+    <div class="static-intro" style=" line-height: 1.6; max-width: 1000px; margin: 0 auto;">
+
+        <h2>THÔNG TIN CHUNG</h2>
+        <p><strong>Địa chỉ Văn phòng Khoa:</strong> P316, Tầng 3 Nhà Hành chính, Học viện Nông nghiệp Việt Nam, Thị trấn Trâu Quỳ, huyện Gia Lâm, TP. Hà Nội</p>
+        <p><strong>Điện thoại:</strong> (024) 62617701</p>
+        <p><strong>Email:</strong> cntt@vnua.edu.vn &nbsp;&nbsp; <strong>Website:</strong> <a href="https://fita.vnua.edu.vn">https://fita.vnua.edu.vn</a></p>
+        <p><strong>Ngày thành lập:</strong> 10-10-2005</p>
+        <p><strong>Bộ môn:</strong> Hiện nay Khoa có 05 Bộ môn và 01 Tổ văn phòng:</p>
+        <ul>
+            <li>Bộ môn Công nghệ phần mềm</li>
+            <li>Bộ môn Khoa học máy tính</li>
+            <li>Bộ môn Toán</li>
+            <li>Bộ môn Vật lý</li>
+            <li>Bộ môn Mạng và Hệ thống thông tin</li>
+            <li>Tổ văn phòng</li>
+        </ul>
+
+        <h5>CƠ SỞ VẬT CHẤT</h5>
+        <p>Hệ thống giảng đường trung tâm của Học viện đều được trang bị máy chiếu projector. Hệ thống phòng thực hành máy tính của Khoa CNTT gồm 05 phòng hiện đại, màn hình cỡ lớn hoặc projector, kết nối Internet nội bộ để đáp ứng nhu cầu học tập của sinh viên.</p>
+
+        <h5>TẦM NHÌN</h5>
+        <p>Trở thành cơ sở đào tạo uy tín trong nước và khu vực về nhân lực chất lượng cao, nghiên cứu, phát triển công nghệ trong lĩnh vực khoa học máy tính, CNTT, trí tuệ nhân tạo, truyền thông và dữ liệu lớn phục vụ nông nghiệp và phát triển nông thôn.</p>
+
+        <h5>SỨ MẠNG</h5>
+        <p>Đào tạo, NCKH, chuyển giao tri thức trong CNTT, trí tuệ nhân tạo, truyền thông và dữ liệu lớn, phục vụ phát triển nông nghiệp, nông dân, nông thôn và hội nhập quốc tế.</p>
+
+        <h5>TRIẾT LÝ GIÁO DỤC</h5>
+        <blockquote>“Chuyên nghiệp – Sáng tạo – Hội nhập – Trách nhiệm”</blockquote>
+        <p>Mục tiêu đào tạo nguồn nhân lực chuyên môn tốt, sáng tạo, có trách nhiệm với bản thân, xã hội. Định hướng áp dụng công nghệ vị nhân sinh và phát triển bền vững.</p>
+
+        <h5>MỤC TIÊU CHIẾN LƯỢC</h5>
+        <ul>
+            <li>Chương trình đào tạo linh hoạt giữa nghiên cứu và nghề nghiệp, uy tín trong ứng dụng CNTT nông nghiệp.</li>
+            <li>Đội ngũ giỏi chuyên môn, cơ sở hiện đại, là trung tâm chuyển giao công nghệ thông tin trong nông nghiệp.</li>
+            <li>Môi trường học tập, làm việc lý tưởng.</li>
+            <li>Hợp tác quốc tế, truyền thông mạnh, khẳng định thương hiệu.</li>
+            <li>Ưu tiên nghiên cứu hệ thống thông minh, ứng dụng CNTT cao trong nông nghiệp.</li>
+        </ul>
+
+        <h5>GIÁ TRỊ CỐT LÕI</h5>
+        <ul>
+            <li><strong>Đoàn kết:</strong> “Đoàn kết chặt chẽ, cố gắng không ngừng để tiến bộ mãi”.</li>
+            <li><strong>Trách nhiệm:</strong> Tận tâm, cống hiến hết mình.</li>
+            <li><strong>Hội nhập:</strong> Tiếp cận chuẩn mực giáo dục quốc tế, gắn kết Học viện – Khoa – Doanh nghiệp.</li>
+            <li><strong>Sáng tạo:</strong> Tiếp thu tinh hoa tri thức, đổi mới, phát huy truyền thống tốt đẹp.</li>
+            <li><strong>Chất lượng:</strong> Là mục tiêu, động lực và yếu tố cốt lõi làm nên thương hiệu Khoa CNTT.</li>
+        </ul>
+    </div>
+</section>
+</body>
+</html>

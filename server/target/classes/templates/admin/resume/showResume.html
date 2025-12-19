@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{/admin/index}">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<section class="showcase"  layout:fragment="content">
+    <div class="container" >
+        <div class="row_content">
+            <div class="row">
+                <div class="col-12">
+                    <h4  th:text="'Họ và tên : '+${session.saveAdmin.getName()}"></h4>
+                    <div th:if="${resume != null}">
+                        <p th:text="'email : '+${resume.getEmail()}"></p>
+                        <p th:text="'Số điện thoại : '+${resume.getPhone()}"></p>
+                        <p th:text="'Địa chỉ : : '+${resume.getAddress()}"></p>
+                        <p th:text="'Ngày sinh : '+${resume.getBirthday()}"></p>
+                    </div>
+                    <div th:if="${resume == null}">
+                        <p style="color: red">Chưa có hồ sơ cá nhân</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <a th:href="@{'/ad/resume/repair/'+${session.saveAdmin.getId()}}"
+                           class="btn btn-primary" style="background-color: #0dcaf0">
+                            Sửa thông tin
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>
