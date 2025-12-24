@@ -45,6 +45,17 @@ public interface ResearchGroupService {
     // Lấy thống kê
     GroupStatistics getStatistics();
 
+    // Cập nhật Google Sheet link (chỉ thành viên nhóm mới có quyền)
+    ResearchGroupDTO updateGoogleSheetLink(Integer groupId, Integer userId, String googleSheetLink);
+
+    // Cập nhật thông tin thành viên (role và participation rate)
+    ResearchGroupDTO updateMemberInfo(Integer groupId, Integer userId, Integer memberId, String role,
+            Integer participationRate);
+
+    // Import thành viên từ Excel
+    ResearchGroupDTO importMembersFromExcel(Integer groupId, Integer userId,
+            org.springframework.web.multipart.MultipartFile file);
+
     class GroupStatistics {
         public long totalGroups;
         public long pendingGroups;

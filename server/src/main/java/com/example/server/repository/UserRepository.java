@@ -19,34 +19,27 @@ public interface UserRepository extends JpaRepository<User, Integer> {
         @NotNull
         Page<User> findAll(Pageable pageable);
 
-
-
         // find by id
         @Query(value = SQL.FIND_USER_BY_ID, nativeQuery = true)
         User findByIdUser(Integer idUser);
 
-//        Optional<User> findByUsername(String username);
+        // Optional<User> findByUsername(String username);
         User findByUsername(String username);
 
+        @Query(value = "SELECT u.* FROM user u " +
+                        "LEFT JOIN resume r ON u.id_resume = r.id " +
+                        "WHERE (:username IS NOT NULL AND u.username = :username) " +
+                        "OR (:email IS NOT NULL AND r.email = :email)", nativeQuery = true)
+        Optional<User> findByUsernameOrEmail(@Param("username") String username,
+                        @Param("email") String email);
 
+        @Query(value = "SELECT u.* FROM user u " +
+                        "LEFT JOIN resume r ON u.id_resume = r.id " +
+                        "WHERE (:username IS NOT NULL AND u.username = :username) " +
+                        "OR (:username IS NOT NULL AND r.email = :username)", nativeQuery = true)
+        User checkLogin(@Param("username") String username);
 
-    @Query(value = "SELECT u.* FROM user u " +
-            "LEFT JOIN resume r ON u.id_resume = r.id " +
-            "WHERE (:username IS NOT NULL AND u.username = :username) " +
-            "OR (:email IS NOT NULL AND r.email = :email)",
-            nativeQuery = true)
-    Optional<User> findByUsernameOrEmail(@Param("username") String username,
-                                         @Param("email") String email);
-
-    @Query(value = "SELECT u.* FROM user u " +
-            "LEFT JOIN resume r ON u.id_resume = r.id " +
-            "WHERE (:username IS NOT NULL AND u.username = :username) " +
-            "OR (:username IS NOT NULL AND r.email = :username)",
-            nativeQuery = true)
-    User checkLogin(@Param("username") String username);
-
-
-    @Query(value = "SELECT u.* FROM User u JOIN Ncm n ON u.id = n.id_user\n" +
+        @Query(value = "SELECT u.* FROM User u JOIN Ncm n ON u.id = n.id_user\n" +
                         "           WHERE n.id_group = :groupId", nativeQuery = true)
         List<User> findByNcmGroupId(@Param("groupId") int groupId);
 
@@ -87,13 +80,13 @@ public interface UserRepository extends JpaRepository<User, Integer> {
                         @Param("isDeleted") Boolean isDeleted,
                         Pageable pageable);
 
-        // Search users by username or email
+        // Search users by username, email, or name
         @Query("SELECT u FROM User u LEFT JOIN u.idResume r WHERE " +
-                        "LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%')) OR " +
-                        "LOWER(r.email) LIKE LOWER(CONCAT('%', :email, '%'))")
+                        "(LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(r.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(u.name) LIKE LOWER(CONCAT('%', :keyword, '%')))")
         Page<User> findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(
-                        @Param("username") String username, 
-                        @Param("email") String email, 
+                        @Param("keyword") String keyword,
                         Pageable pageable);
 
 }

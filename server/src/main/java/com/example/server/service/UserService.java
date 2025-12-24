@@ -27,7 +27,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +65,8 @@ public class UserService implements UserDetailsService {
         userSaved.setPassword(SHA_256_password.GM_SHA_password(DateTimeConstant.toDate(request.getBirthday())));
         if (request.getIdRole() == null)
             userSaved.setIdRole(new Role(2));
-        else userSaved.setIdRole(new Role(request.getIdRole().getId()));
+        else
+            userSaved.setIdRole(new Role(request.getIdRole().getId()));
         userSaved.setName(NormalizeUtils.normalizeName(request.getName()));
         userSaved.setIdTitle(new Title(request.getIdTitle().getId()));
         userSaved.setIdResume(new Resume(resumeSaved.getId()));
@@ -133,7 +133,8 @@ public class UserService implements UserDetailsService {
             } else if (forgotPassword && currentPassword == null) {
                 existingUser.setPassword(SHA_256_password.GM_SHA_password(newPassword));
                 userRepository.save(existingUser);
-            } else throw new ErrorException("Mật khẩu hiện tại không chính xác !", HttpStatus.BAD_REQUEST);
+            } else
+                throw new ErrorException("Mật khẩu hiện tại không chính xác !", HttpStatus.BAD_REQUEST);
 
         } else {
             throw new ErrorException("Tài khoản không tồn tại", HttpStatus.NOT_FOUND);
@@ -159,7 +160,6 @@ public class UserService implements UserDetailsService {
 
         return new CustomUserDetails(user);
     }
-
 
     public boolean isGuest(Integer userId) {
         return guestRepository.existsByUserId(userId);
@@ -194,7 +194,7 @@ public class UserService implements UserDetailsService {
     }
 
     public <S extends User, R> R findBy(Example<S> example,
-                                        Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) {
+            Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) {
         return userRepository.findBy(example, queryFunction);
     }
 
@@ -368,8 +368,9 @@ public class UserService implements UserDetailsService {
 
     public org.springframework.http.ResponseEntity<?> searchUsers(String keyword, int page, int size) {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
-        org.springframework.data.domain.Page<User> userPage = userRepository.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(
-                keyword, keyword, pageable);
+        org.springframework.data.domain.Page<User> userPage = userRepository
+                .findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                        keyword, pageable);
 
         List<UserDetailsDTO> users = userPage.getContent().stream()
                 .map(userMapper::toUserDetailDTO)

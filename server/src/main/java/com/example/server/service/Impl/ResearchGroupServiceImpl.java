@@ -8,17 +8,25 @@ import com.example.server.domain.User;
 //import com.example.server.dto.request.CreateResearchGroupRequest;
 //import com.example.server.dto.request.UpdateResearchGroupRequest;
 //import com.example.server.dto.response.ResearchGroupDTO;
+import com.example.server.domain.ResearchGroupMember;
+import com.example.server.repository.ResearchGroupMemberRepository;
 import com.example.server.repository.ResearchGroupRepository;
 import com.example.server.repository.UserRepository;
 import com.example.server.service.ResearchGroupService;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -28,6 +36,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
 
     private final ResearchGroupRepository groupRepository;
     private final UserRepository userRepository;
+    private final ResearchGroupMemberRepository memberRepository;
 
     @Override
     @Transactional
@@ -65,7 +74,19 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                 .build();
 
         ResearchGroup savedGroup = groupRepository.save(group);
-        return ResearchGroupDTO.fromEntity(savedGroup);
+
+        // Tạo ResearchGroupMember cho tất cả members
+        for (User member : members) {
+            ResearchGroupMember memberInfo = ResearchGroupMember.builder()
+                    .groupId(savedGroup.getId())
+                    .userId(member.getId())
+                    .role(member.getId().equals(leader.getId()) ? "Trưởng nhóm" : "Thành viên")
+                    .participationRate(100)
+                    .build();
+            memberRepository.save(memberInfo);
+        }
+
+        return getGroupById(savedGroup.getId());
     }
 
     @Override
@@ -76,7 +97,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
 
         group.setStatus(ResearchGroup.GroupStatus.APPROVED);
         ResearchGroup savedGroup = groupRepository.save(group);
-        return ResearchGroupDTO.fromEntity(savedGroup);
+        return getGroupById(savedGroup.getId());
     }
 
     @Override
@@ -91,9 +112,8 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
             group.setDescription(group.getDescription() + "\n\nLý do từ chối: " + reason);
         }
         ResearchGroup savedGroup = groupRepository.save(group);
-        return ResearchGroupDTO.fromEntity(savedGroup);
+        return getGroupById(savedGroup.getId());
     }
-
 
     @Transactional
     public ResearchGroupDTO updateGroup(Integer groupId, Integer userId, UpdateResearchGroupRequest request) {
@@ -165,7 +185,17 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
 
         group.addMember(newMember);
         ResearchGroup savedGroup = groupRepository.save(group);
-        return ResearchGroupDTO.fromEntity(savedGroup);
+
+        // Tạo ResearchGroupMember với role và participationRate mặc định
+        ResearchGroupMember memberInfo = ResearchGroupMember.builder()
+                .groupId(groupId)
+                .userId(memberId)
+                .role("Thành viên")
+                .participationRate(100)
+                .build();
+        memberRepository.save(memberInfo);
+
+        return getGroupById(groupId);
     }
 
     @Override
@@ -192,7 +222,11 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
 
         group.removeMember(memberToRemove);
         ResearchGroup savedGroup = groupRepository.save(group);
-        return ResearchGroupDTO.fromEntity(savedGroup);
+
+        // Xóa ResearchGroupMember
+        memberRepository.deleteByGroupIdAndUserId(groupId, memberId);
+
+        return getGroupById(groupId);
     }
 
     @Override
@@ -215,7 +249,10 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
             }
         }
 
-        return groups.map(ResearchGroupDTO::fromEntity);
+        return groups.map(group -> {
+            List<ResearchGroupMember> memberInfos = memberRepository.findByGroupId(group.getId());
+            return ResearchGroupDTO.fromEntity(group, memberInfos);
+        });
     }
 
     @Override
@@ -223,7 +260,8 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
     public ResearchGroupDTO getGroupById(Integer groupId) {
         ResearchGroup group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
-        return ResearchGroupDTO.fromEntity(group);
+        List<ResearchGroupMember> memberInfos = memberRepository.findByGroupId(groupId);
+        return ResearchGroupDTO.fromEntity(group, memberInfos);
     }
 
     @Override
@@ -240,7 +278,10 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         allGroups.addAll(memberGroups);
 
         return allGroups.stream()
-                .map(ResearchGroupDTO::fromEntity)
+                .map(group -> {
+                    List<ResearchGroupMember> memberInfos = memberRepository.findByGroupId(group.getId());
+                    return ResearchGroupDTO.fromEntity(group, memberInfos);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -253,5 +294,236 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         stats.approvedGroups = groupRepository.countByStatus(ResearchGroup.GroupStatus.APPROVED);
         stats.rejectedGroups = groupRepository.countByStatus(ResearchGroup.GroupStatus.REJECTED);
         return stats;
+    }
+
+    @Override
+    @Transactional
+    public ResearchGroupDTO updateGoogleSheetLink(Integer groupId, Integer userId, String googleSheetLink) {
+        ResearchGroup group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+        // Kiểm tra quyền: chỉ leader, advisor hoặc member mới được cập nhật
+        boolean isLeader = group.isLeader(user);
+        boolean isAdvisor = group.getAdvisor() != null && group.getAdvisor().getId().equals(userId);
+        boolean isMember = group.isMember(user);
+        boolean isAdmin = "ADMIN".equals(user.getIdRole().getName());
+
+        if (!isLeader && !isAdvisor && !isMember && !isAdmin) {
+            throw new RuntimeException("Chỉ thành viên nhóm mới có quyền cập nhật link Google Sheet");
+        }
+
+        group.setGoogleSheetLink(googleSheetLink);
+        ResearchGroup savedGroup = groupRepository.save(group);
+        return getGroupById(groupId);
+    }
+
+    @Override
+    @Transactional
+    public ResearchGroupDTO updateMemberInfo(Integer groupId, Integer userId, Integer memberId, String role,
+            Integer participationRate) {
+        ResearchGroup group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+        // Kiểm tra quyền: chỉ leader hoặc admin mới được cập nhật
+        if (!group.isLeader(user) && !"ADMIN".equals(user.getIdRole().getName())) {
+            throw new RuntimeException("Bạn không có quyền cập nhật thông tin thành viên");
+        }
+
+        // Không cho phép thay đổi role của leader
+        if (group.getLeader().getId().equals(memberId) && role != null && !"Trưởng nhóm".equals(role)) {
+            throw new RuntimeException("Không thể thay đổi role của trưởng nhóm");
+        }
+
+        // Tìm hoặc tạo ResearchGroupMember
+        ResearchGroupMember memberInfo = memberRepository.findByGroupIdAndUserId(groupId, memberId)
+                .orElse(ResearchGroupMember.builder()
+                        .groupId(groupId)
+                        .userId(memberId)
+                        .role("Thành viên")
+                        .participationRate(100)
+                        .build());
+
+        if (role != null && !role.isEmpty()) {
+            memberInfo.setRole(role);
+        }
+        if (participationRate != null && participationRate >= 0 && participationRate <= 100) {
+            memberInfo.setParticipationRate(participationRate);
+        }
+
+        memberRepository.save(memberInfo);
+        return getGroupById(groupId);
+    }
+
+    @Override
+    @Transactional
+    public ResearchGroupDTO importMembersFromExcel(Integer groupId, Integer userId,
+            org.springframework.web.multipart.MultipartFile file) {
+        ResearchGroup group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+        // Kiểm tra quyền: chỉ leader hoặc admin mới được import
+        if (!group.isLeader(user) && !"ADMIN".equals(user.getIdRole().getName())) {
+            throw new RuntimeException("Bạn không có quyền import thành viên");
+        }
+
+        try (InputStream inputStream = file.getInputStream();
+                Workbook workbook = new XSSFWorkbook(inputStream)) {
+
+            Sheet sheet = workbook.getSheetAt(0);
+            int rowCount = sheet.getPhysicalNumberOfRows();
+
+            if (rowCount < 2) {
+                throw new RuntimeException("File Excel phải có ít nhất 1 dòng dữ liệu (không tính header)");
+            }
+
+            // Đọc header (dòng 0)
+            Row headerRow = sheet.getRow(0);
+            Map<String, Integer> columnMap = new HashMap<>();
+            for (int i = 0; i < headerRow.getPhysicalNumberOfCells(); i++) {
+                Cell cell = headerRow.getCell(i);
+                if (cell != null) {
+                    String headerValue = cell.getStringCellValue().trim();
+                    columnMap.put(headerValue, i);
+                }
+            }
+
+            // Validate columns
+            if (!columnMap.containsKey("Họ và tên") || !columnMap.containsKey("Mã cán bộ")) {
+                throw new RuntimeException("File Excel phải có các cột: Họ và tên, Mã cán bộ");
+            }
+
+            int successCount = 0;
+            int errorCount = 0;
+            StringBuilder errors = new StringBuilder();
+
+            // Đọc dữ liệu từ dòng 1 trở đi
+            for (int i = 1; i < rowCount; i++) {
+                Row row = sheet.getRow(i);
+                if (row == null)
+                    continue;
+
+                try {
+                    // Đọc các cột
+                    String name = getCellValueAsString(row, columnMap.get("Họ và tên"));
+                    String username = getCellValueAsString(row, columnMap.get("Mã cán bộ"));
+                    String email = columnMap.containsKey("Email") ? getCellValueAsString(row, columnMap.get("Email"))
+                            : null;
+                    String address = columnMap.containsKey("Đơn vị")
+                            ? getCellValueAsString(row, columnMap.get("Đơn vị"))
+                            : null;
+                    String role = columnMap.containsKey("Nhiệm vụ")
+                            ? getCellValueAsString(row, columnMap.get("Nhiệm vụ"))
+                            : "Thành viên";
+                    Integer participationRate = columnMap.containsKey("Tỷ lệ tham gia (%)")
+                            ? getCellValueAsInteger(row, columnMap.get("Tỷ lệ tham gia (%)"))
+                            : 100;
+
+                    if (username == null || username.trim().isEmpty()) {
+                        errorCount++;
+                        errors.append("Dòng ").append(i + 1).append(": Mã cán bộ không được để trống\n");
+                        continue;
+                    }
+
+                    // Tìm user theo username
+                    User member = userRepository.findByUsername(username.trim());
+                    if (member == null) {
+                        throw new RuntimeException("Không tìm thấy người dùng với mã cán bộ: " + username);
+                    }
+
+                    // Kiểm tra xem đã là member chưa
+                    if (!group.isMember(member)) {
+                        group.addMember(member);
+                    }
+
+                    // Tạo hoặc cập nhật ResearchGroupMember
+                    ResearchGroupMember memberInfo = memberRepository.findByGroupIdAndUserId(groupId, member.getId())
+                            .orElse(ResearchGroupMember.builder()
+                                    .groupId(groupId)
+                                    .userId(member.getId())
+                                    .role("Thành viên")
+                                    .participationRate(100)
+                                    .build());
+
+                    if (role != null && !role.trim().isEmpty()) {
+                        memberInfo.setRole(role.trim());
+                    }
+                    if (participationRate != null && participationRate >= 0 && participationRate <= 100) {
+                        memberInfo.setParticipationRate(participationRate);
+                    }
+
+                    memberRepository.save(memberInfo);
+                    successCount++;
+
+                } catch (Exception e) {
+                    errorCount++;
+                    errors.append("Dòng ").append(i + 1).append(": ").append(e.getMessage()).append("\n");
+                }
+            }
+
+            groupRepository.save(group);
+
+            if (errorCount > 0) {
+                throw new RuntimeException("Import hoàn tất với " + successCount + " thành công, " + errorCount
+                        + " lỗi:\n" + errors.toString());
+            }
+
+            return getGroupById(groupId);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi import file Excel: " + e.getMessage(), e);
+        }
+    }
+
+    private String getCellValueAsString(Row row, Integer columnIndex) {
+        if (columnIndex == null)
+            return null;
+        Cell cell = row.getCell(columnIndex);
+        if (cell == null)
+            return null;
+
+        CellType cellType = cell.getCellType();
+        if (cellType == CellType.STRING) {
+            return cell.getStringCellValue().trim();
+        } else if (cellType == CellType.NUMERIC) {
+            if (org.apache.poi.ss.usermodel.DateUtil.isCellDateFormatted(cell)) {
+                return cell.getDateCellValue().toString();
+            } else {
+                return String.valueOf((long) cell.getNumericCellValue());
+            }
+        } else if (cellType == CellType.BOOLEAN) {
+            return String.valueOf(cell.getBooleanCellValue());
+        } else {
+            return null;
+        }
+    }
+
+    private Integer getCellValueAsInteger(Row row, Integer columnIndex) {
+        if (columnIndex == null)
+            return null;
+        Cell cell = row.getCell(columnIndex);
+        if (cell == null)
+            return null;
+
+        CellType cellType = cell.getCellType();
+        if (cellType == CellType.NUMERIC) {
+            return (int) cell.getNumericCellValue();
+        } else if (cellType == CellType.STRING) {
+            try {
+                return Integer.parseInt(cell.getStringCellValue().trim());
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        } else {
+            return null;
+        }
     }
 }

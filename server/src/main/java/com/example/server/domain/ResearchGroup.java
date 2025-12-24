@@ -29,6 +29,9 @@ public class ResearchGroup extends EntityBase {
     @Column(length = 2000)
     private String description;
 
+    @Column(length = 500)
+    private String googleSheetLink; // Link Google Sheet để cập nhật minh chứng
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private GroupStatus status = GroupStatus.PENDING;
@@ -45,17 +48,13 @@ public class ResearchGroup extends EntityBase {
 
     // Danh sách thành viên
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "research_group_members",
-        joinColumns = @JoinColumn(name = "group_id"),
-        inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
+    @JoinTable(name = "research_group_members", joinColumns = @JoinColumn(name = "group_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
     private Set<User> members = new HashSet<>();
 
     public enum GroupStatus {
-        PENDING,    // Chờ duyệt
-        APPROVED,   // Đã duyệt
-        REJECTED    // Bị từ chối
+        PENDING, // Chờ duyệt
+        APPROVED, // Đã duyệt
+        REJECTED // Bị từ chối
     }
 
     // Helper methods
