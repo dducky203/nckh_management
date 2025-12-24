@@ -18,6 +18,7 @@ import GroupTable from "./components/GroupTable";
 import GroupFormModal from "./components/GroupFormModal";
 import GroupDetailModal from "./components/GroupDetailModal";
 import MemberManagementModal from "./components/MemberManagementModal";
+import ProductManagementModal from "./components/ProductManagementModal";
 import { usePagination } from "../../hooks/usePagination";
 import Button from "../../components/common/Button";
 
@@ -32,6 +33,7 @@ const ResearchGroupManagement = () => {
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [memberModalOpen, setMemberModalOpen] = useState(false);
+  const [productModalOpen, setProductModalOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [statistics, setStatistics] = useState(null);
   const [confirmModal, setConfirmModal] = useState({
@@ -175,11 +177,8 @@ const ResearchGroupManagement = () => {
 
   // Handler cho quản lý sản phẩm
   const handleManageProducts = (group) => {
-    // TODO: Navigate to product management page or open modal
-    console.log("Quản lý sản phẩm cho nhóm:", group.id);
-    toast.info(`Mở trang quản lý sản phẩm cho nhóm: ${group.groupName}`);
-    // Có thể navigate: navigate(`/research-groups/${group.id}/products`)
-    // Hoặc mở modal quản lý sản phẩm
+    setSelectedGroup(group);
+    setProductModalOpen(true);
   };
 
   // Handler cho quản lý mức độ hoàn thành
@@ -450,6 +449,18 @@ const ResearchGroupManagement = () => {
           isOpen={memberModalOpen}
           onClose={() => {
             setMemberModalOpen(false);
+            setSelectedGroup(null);
+          }}
+          group={selectedGroup}
+          onRefresh={fetchGroups}
+        />
+      )}
+
+      {productModalOpen && selectedGroup && (
+        <ProductManagementModal
+          isOpen={productModalOpen}
+          onClose={() => {
+            setProductModalOpen(false);
             setSelectedGroup(null);
           }}
           group={selectedGroup}

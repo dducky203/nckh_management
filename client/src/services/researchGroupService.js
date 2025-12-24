@@ -80,6 +80,40 @@ const researchGroupService = {
     const response = await api.delete(`/admin/research-groups/${groupId}`);
     return response.data;
   },
+
+  // Update Google Sheet link
+  updateGoogleSheetLink: async (groupId, googleSheetLink) => {
+    const response = await api.put(
+      `/research-groups/${groupId}/google-sheet-link`,
+      { link: googleSheetLink }
+    );
+    return response.data;
+  },
+
+  // Update member info (role and participation rate)
+  updateMemberInfo: async (groupId, memberId, role, participationRate) => {
+    const response = await api.put(
+      `/research-groups/${groupId}/members/${memberId}`,
+      { role, participationRate }
+    );
+    return response.data;
+  },
+
+  // Import members from Excel
+  importMembersFromExcel: async (groupId, file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await api.post(
+      `/research-groups/${groupId}/members/import`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
+  },
 };
 
 export default researchGroupService;
