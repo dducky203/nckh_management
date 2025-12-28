@@ -7,6 +7,7 @@ import {
 import Button from "../../../../components/common/Button";
 import { formatDateTime, getCountdown } from "../../utils/eventHelpers";
 import { API_BASE_URL } from "../../../../constants";
+import EventCountdown from "./EventCountdown";
 
 const EventCard = ({ event, activeTab, onViewDetail, onRegister }) => {
   return (
@@ -34,19 +35,19 @@ const EventCard = ({ event, activeTab, onViewDetail, onRegister }) => {
             Đang diễn ra
           </div>
         )}
-        {activeTab === "upcoming" && getCountdown(event.dateOfEvent) && (
-          <div className="absolute top-4 left-4 bg-green-600 text-white px-2 py-1 rounded-md text-xs font-medium shadow-lg">
-            <div className="flex items-center gap-1">
-              <AccessTime sx={{ fontSize: 14 }} />
-              <span>{getCountdown(event.dateOfEvent)}</span>
-            </div>
+        {activeTab === "upcoming" && (
+          <div className="absolute top-4 left-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-lg backdrop-blur-sm">
+            <EventCountdown targetDate={event.dateOfEvent} />
           </div>
         )}
       </div>
 
       {/* Event Content */}
-      <div className="p-6" >
-        <h3 title={event.eventName} className="text-xl font-bold text-gray-800 mb-3 line-clamp-2 group-hover:text-mainColor transition-colors">
+      <div className="p-6">
+        <h3
+          title={event.eventName}
+          className="text-xl font-bold text-gray-800 mb-3 line-clamp-2 group-hover:text-mainColor transition-colors"
+        >
           {event.eventName}
         </h3>
 
@@ -57,7 +58,11 @@ const EventCard = ({ event, activeTab, onViewDetail, onRegister }) => {
           </div>
           {event.location && (
             <div className="flex items-center" title={event.location}>
-              <LocationOn fontSize="small" className="mr-2" title={event.location} />
+              <LocationOn
+                fontSize="small"
+                className="mr-2"
+                title={event.location}
+              />
               <span className="line-clamp-1">{event.location}</span>
             </div>
           )}

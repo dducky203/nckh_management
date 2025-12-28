@@ -48,7 +48,7 @@ export const RESEARCH_CATEGORIES = [
 ];
 
 export const EVENT_CATEGORIES = [
-  { id: 1, name: "Hội thảo", path: "/events/seminars" },
+  { id: 1, name: "Hội thảo", path: "/events" },
   { id: 2, name: "Hội nghị", path: "/events/conferences" },
   {
     id: 3,

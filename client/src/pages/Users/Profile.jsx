@@ -233,7 +233,7 @@ const Profile = () => {
                     {isEditing && (
                       <label
                         title="Đổi avatar"
-                        className="absolute bottom-2 right-2 bg-mainColor flex items-center text-white p-2 rounded-md cursor-pointer"
+                        className="absolute bottom-2 right-2 bg-mainColor flex items-center text-white p-2 rounded-full cursor-pointer"
                       >
                         <PhotoCamera fontSize="small" />
                         <input

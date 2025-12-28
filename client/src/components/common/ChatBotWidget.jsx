@@ -1,20 +1,34 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, SmartToy, Person, Close } from "@mui/icons-material";
+import {
+  Send,
+  SmartToy,
+  Person,
+  Close,
+  Refresh,
+  Event,
+  MenuBook,
+  Groups,
+  Newspaper,
+  ExpandLess,
+  ExpandMore,
+} from "@mui/icons-material";
 import logo from "../../assets/logo_fita.png";
-import { getBotResponse } from "../../utils/chatbotData";
+import chatbotService from "../../services/chatbotService";
 
 const ChatBotWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
       id: 1,
-      text: "Xin chào! Tôi là chatbot hỗ trợ hệ thống quản lý NCKH. Tôi có thể giúp bạn:\n\n• Hướng dẫn tạo sự kiện mới\n• Xem các sự kiện sắp diễn ra\n• Cách tham gia sự kiện\n• Tìm hiểu về các bài báo nghiên cứu\n\nHãy hỏi tôi bất cứ điều gì bạn muốn biết!",
+      text: "Xin chào! Tôi là trợ lý AI của hệ thống NCKH. Tôi có thể giúp bạn:\n\n• Hướng dẫn sử dụng hệ thống\n• Giải thích các chức năng\n• Tạo sự kiện, nhóm nghiên cứu\n• Quản lý hoạt động NCKH\n\nHãy hỏi tôi bất cứ điều gì bạn muốn biết!",
       isBot: true,
       timestamp: new Date().toLocaleTimeString(),
     },
   ]);
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [conversationId, setConversationId] = useState(null);
+  const [showQuickActions, setShowQuickActions] = useState(true);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -39,18 +53,38 @@ const ChatBotWidget = () => {
     setInputText("");
     setIsTyping(true);
 
-    // Simulate bot thinking time
-    setTimeout(() => {
-      const botResponse = getBotResponse(inputText);
+    try {
+      // Gọi API Gemini thông qua backend
+      const response = await chatbotService.sendMessage(
+        inputText,
+        conversationId
+      );
+
+      // Cập nhật conversationId
+      if (response.conversationId) {
+        setConversationId(response.conversationId);
+      }
+
       const botMessage = {
         id: Date.now() + 1,
-        text: botResponse,
+        text: response.response,
         isBot: true,
         timestamp: new Date().toLocaleTimeString(),
       };
+
       setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      console.error("Chatbot request failed:", error);
+      const errorMessage = {
+        id: Date.now() + 1,
+        text: "Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại sau.",
+        isBot: true,
+        timestamp: new Date().toLocaleTimeString(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1000 + Math.random() * 1000);
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -62,6 +96,25 @@ const ChatBotWidget = () => {
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handleClearConversation = async () => {
+    if (conversationId) {
+      try {
+        await chatbotService.clearConversation(conversationId);
+      } catch (error) {
+        console.error("Error clearing conversation:", error);
+      }
+    }
+    setConversationId(null);
+    setMessages([
+      {
+        id: 1,
+        text: "Xin chào! Tôi là trợ lý AI của hệ thống NCKH. Hãy hỏi tôi bất cứ điều gì!",
+        isBot: true,
+        timestamp: new Date().toLocaleTimeString(),
+      },
+    ]);
   };
 
   return (
@@ -87,12 +140,21 @@ const ChatBotWidget = () => {
                 </div>
               </div>
             </div>
-            <button
-              onClick={toggleChat}
-              className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
-            >
-              <Close className="w-4 h-4" />
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleClearConversation}
+                className="hover:bg-white/20 rounded-lg p-1.5 transition-colors"
+                title="Xóa lịch sử"
+              >
+                <Refresh className="w-4 h-4" />
+              </button>
+              <button
+                onClick={toggleChat}
+                className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+              >
+                <Close className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Chat Messages */}
@@ -121,9 +183,14 @@ const ChatBotWidget = () => {
                       : "bg-gradient-to-r from-mainColor to-blue-600 text-white"
                   }`}
                 >
-                  <div className="whitespace-pre-line leading-relaxed">
-                    {message.text}
-                  </div>
+                  <div
+                    className="whitespace-pre-line leading-relaxed"
+                    dangerouslySetInnerHTML={{
+                      __html: message.text
+                        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                        .replace(/\n/g, "<br />"),
+                    }}
+                  />
                   <div className="text-[10px] opacity-60 mt-1.5">
                     {message.timestamp}
                   </div>
@@ -162,33 +229,61 @@ const ChatBotWidget = () => {
           </div>
 
           {/* Quick Actions */}
-          <div className="px-4 py-3 bg-white border-t border-gray-100">
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => setInputText("Làm sao để tạo sự kiện mới?")}
-                className="px-2.5 py-2 text-[10px] bg-gray-50 text-gray-700 rounded-lg border border-gray-200 hover:bg-mainColor/10 hover:border-mainColor/30 hover:text-mainColor transition-all duration-200 font-medium"
-              >
-                💡 Tạo sự kiện
-              </button>
-              <button
-                onClick={() => setInputText("Sự kiện nào sắp diễn ra?")}
-                className="px-2.5 py-2 text-[10px] bg-gray-50 text-gray-700 rounded-lg border border-gray-200 hover:bg-mainColor/10 hover:border-mainColor/30 hover:text-mainColor transition-all duration-200 font-medium"
-              >
-                📅 Sự kiện
-              </button>
-              <button
-                onClick={() => setInputText("Cách tham gia sự kiện?")}
-                className="px-2.5 py-2 text-[10px] bg-gray-50 text-gray-700 rounded-lg border border-gray-200 hover:bg-mainColor/10 hover:border-mainColor/30 hover:text-mainColor transition-all duration-200 font-medium"
-              >
-                ✅ Tham gia
-              </button>
-              <button
-                onClick={() => setInputText("Xem bài báo nghiên cứu?")}
-                className="px-2.5 py-2 text-[10px] bg-gray-50 text-gray-700 rounded-lg border border-gray-200 hover:bg-mainColor/10 hover:border-mainColor/30 hover:text-mainColor transition-all duration-200 font-medium"
-              >
-                📚 Bài báo
-              </button>
-            </div>
+          <div className="bg-white border-t border-gray-100">
+            <button
+              type="button"
+              onClick={() => setShowQuickActions((prev) => !prev)}
+              className="w-full px-4 py-2 flex items-center justify-between text-[11px] font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              aria-expanded={showQuickActions}
+            >
+              <span>Gợi ý nhanh</span>
+              {showQuickActions ? (
+                <ExpandLess className="w-4 h-4" />
+              ) : (
+                <ExpandMore className="w-4 h-4" />
+              )}
+            </button>
+
+            {showQuickActions && (
+              <div className="px-4 pb-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() =>
+                      setInputText("Hướng dẫn tạo sự kiện mới như thế nào?")
+                    }
+                    className="px-2 py-1.5 text-[10px] bg-gray-50 text-gray-700 rounded-lg border border-gray-200 hover:bg-mainColor/10 hover:border-mainColor/30 hover:text-mainColor transition-all duration-200 font-medium flex items-center justify-center gap-1"
+                  >
+                    <Event fontSize="small" />
+                    <span>Tạo sự kiện</span>
+                  </button>
+                  <button
+                    onClick={() =>
+                      setInputText("Các chức năng chính của hệ thống là gì?")
+                    }
+                    className="px-2 py-1.5 text-[10px] bg-gray-50 text-gray-700 rounded-lg border border-gray-200 hover:bg-mainColor/10 hover:border-mainColor/30 hover:text-mainColor transition-all duration-200 font-medium flex items-center justify-center gap-1"
+                  >
+                    <MenuBook fontSize="small" />
+                    <span>Chức năng</span>
+                  </button>
+                  <button
+                    onClick={() =>
+                      setInputText("Làm thế nào để tạo nhóm nghiên cứu?")
+                    }
+                    className="px-2 py-1.5 text-[10px] bg-gray-50 text-gray-700 rounded-lg border border-gray-200 hover:bg-mainColor/10 hover:border-mainColor/30 hover:text-mainColor transition-all duration-200 font-medium flex items-center justify-center gap-1"
+                  >
+                    <Groups fontSize="small" />
+                    <span>Nhóm NC</span>
+                  </button>
+                  <button
+                    onClick={() => setInputText("Xem tin tức mới nhất")}
+                    className="px-2 py-1.5 text-[10px] bg-gray-50 text-gray-700 rounded-lg border border-gray-200 hover:bg-mainColor/10 hover:border-mainColor/30 hover:text-mainColor transition-all duration-200 font-medium flex items-center justify-center gap-1"
+                  >
+                    <Newspaper fontSize="small" />
+                    <span>Tin tức</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Input Area */}
@@ -198,14 +293,14 @@ const ChatBotWidget = () => {
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Nhập câu hỏi..."
+                placeholder="Nhập câu hỏi của bạn..."
                 rows="1"
                 className="flex-1 px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-mainColor/50 focus:border-mainColor resize-none bg-gray-50 placeholder-gray-500"
                 style={{ minHeight: "32px", maxHeight: "80px" }}
               />
               <button
                 onClick={handleSendMessage}
-                disabled={!inputText.trim()}
+                disabled={!inputText.trim() || isTyping}
                 className="flex items-center px-3 py-2 bg-gradient-to-r from-mainColor to-blue-600 text-white rounded-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
               >
                 <Send fontSize="sm" />

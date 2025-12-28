@@ -38,3 +38,9 @@ jwt:
   expiration: 86400000 # 24 hours in milliseconds
 #  expiration: 1 # 24 hours in milliseconds
 
+# Gemini AI Configuration
+gemini:
+  api:
+    key: AIzaSyDBWJrfVmHaR_sQ363zVcdMhDi4N_yQkqM
+    model: gemini-2.5-flash
+    endpoint: https://generativelanguage.googleapis.com/v1beta/models/
