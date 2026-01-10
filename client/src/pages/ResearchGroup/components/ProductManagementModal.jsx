@@ -1,340 +1,332 @@
-import { useState, useEffect, useContext } from "react";
+import { useState } from "react";
 import {
   Close,
-  Edit,
-  Save,
-  Link as LinkIcon,
-  Article,
-  School,
-  Description,
-  OpenInNew,
-  Visibility,
+  ExpandMore,
+  ExpandLess,
 } from "@mui/icons-material";
-import { AuthContext } from "../../../context/AuthContext";
-import researchGroupService from "../../../services/researchGroupService";
-import { useToast } from "../../../context/ToastContext";
-import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../../constants";
-import LoadingSpinner from "../../../components/common/LoadingSpinner";
 
-const ProductManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
-  const { user } = useContext(AuthContext);
-  const toast = useToast();
-  const [loading, setLoading] = useState(false);
-  const [googleSheetLink, setGoogleSheetLink] = useState("");
-  const [isEditingLink, setIsEditingLink] = useState(false);
-  const [tempLink, setTempLink] = useState("");
-  const [products, setProducts] = useState([]);
-  const [isMember, setIsMember] = useState(false);
+/**
+ * =========================
+ * 13 TIÊU CHÍ + ĐẦY ĐỦ CẤP
+ * =========================
+ */
+const CRITERIA = [
+  {
+    id: "1",
+    name: "Seminar",
+    children: [
+      { id: "1.1", name: "Trình bày Seminar", unit: "Giờ/bài", quota: 10 },
+    ],
+  },
+  {
+    id: "2",
+    name: "Hội thảo",
+    children: [
+      {
+        id: "2.1",
+        name: "Tổ chức hội thảo",
+        children: [
+          { id: "2.1.1", name: "Cấp Quốc tế", unit: "Giờ/hội thảo", quota: 100 },
+          { id: "2.1.2", name: "Cấp Quốc gia", unit: "Giờ/hội thảo", quota: 60 },
+          { id: "2.1.3", name: "Cấp Học viện", unit: "Giờ/hội thảo", quota: 20 },
+        ],
+      },
+      {
+        id: "2.2",
+        name: "Bài tham luận trình bày",
+        children: [
+          { id: "2.2.1", name: "Cấp Quốc tế", unit: "Giờ/bài", quota: 50 },
+          { id: "2.2.2", name: "Cấp Quốc gia", unit: "Giờ/bài", quota: 30 },
+          { id: "2.2.3", name: "Cấp Học viện", unit: "Giờ/bài", quota: 20 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "3",
+    name: "Bài báo quốc tế",
+    children: [
+      { id: "3.1", name: "WoS", unit: "Giờ/bài", quota: 210 },
+      { id: "3.2", name: "Scopus", unit: "Giờ/bài", quota: 140 },
+      { id: "3.3", name: "Tạp chí Học viện (EN)", unit: "Giờ/bài", quota: 70 },
+      { id: "3.4", name: "Không WoS/Scopus", unit: "Giờ/bài", quota: 60 },
+      { id: "3.5", name: "Trích dẫn", unit: "Giờ/lượt", quota: 1 },
+    ],
+  },
+  {
+    id: "4",
+    name: "Bài báo tiếng Việt",
+    children: [
+      { id: "4.1", name: "Tạp chí Học viện", unit: "Giờ/bài", quota: 40 },
+      { id: "4.2", name: "Tạp chí khác", unit: "Giờ/bài", quota: 20 },
+    ],
+  },
+  {
+    id: "5",
+    name: "Bài tham luận đăng kỷ yếu",
+    children: [
+      { id: "5.1", name: "Quốc tế", unit: "Giờ/bài", quota: 25 },
+      { id: "5.2", name: "Quốc gia", unit: "Giờ/bài", quota: 15 },
+      { id: "5.3", name: "Học viện", unit: "Giờ/bài", quota: 10 },
+    ],
+  },
+  {
+    id: "6",
+    name: "Bài tổng quan lĩnh vực nghiên cứu",
+    children: [{ id: "6.1", name: "Bài tổng quan", unit: "Giờ/bài", quota: 10 }],
+  },
+  {
+    id: "7",
+    name: "Bản tin KH&CN Website Học viện",
+    children: [{ id: "7.1", name: "Sản phẩm", unit: "Giờ/sản phẩm", quota: 5 }],
+  },
+  {
+    id: "8",
+    name: "Quy trình / Tiêu chuẩn kỹ thuật",
+    children: [{ id: "8.1", name: "Sản phẩm", unit: "Giờ/sản phẩm", quota: 10 }],
+  },
+  {
+    id: "9",
+    name: "Đề xuất tuyển chọn",
+    children: [
+      { id: "9.1", name: "Cấp Quốc gia", unit: "Giờ/đề xuất", quota: 10 },
+      { id: "9.2", name: "Cấp Bộ", unit: "Giờ/đề xuất", quota: 5 },
+      { id: "9.3", name: "Học viện trọng điểm", unit: "Giờ/đề xuất", quota: 2.5 },
+    ],
+  },
+  {
+    id: "10",
+    name: "Nhiệm vụ KH&CN được phê duyệt",
+    children: [
+      {
+        id: "10.1",
+        name: "Cấp Quốc gia",
+        children: [
+          { id: "10.1.1", name: "Chủ nhiệm", unit: "Giờ/đề tài", quota: 90 },
+          { id: "10.1.2", name: "Thư ký", unit: "Giờ/đề tài", quota: 40 },
+          { id: "10.1.3", name: "Tham gia", unit: "Giờ/đề tài", quota: 150 },
+        ],
+      },
+      {
+        id: "10.2",
+        name: "Cấp Bộ",
+        children: [
+          { id: "10.2.1", name: "Chủ nhiệm", unit: "Giờ/đề tài", quota: 70 },
+          { id: "10.2.2", name: "Thư ký", unit: "Giờ/đề tài", quota: 30 },
+          { id: "10.2.3", name: "Tham gia", unit: "Giờ/đề tài", quota: 110 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "11",
+    name: "Tổ chức Hội đồng tư vấn",
+    children: [{ id: "11.1", name: "Hội đồng", unit: "Giờ/hội đồng", quota: 20 }],
+  },
+  {
+    id: "12",
+    name: "Mời chuyên gia trình bày Seminar",
+    children: [{ id: "12.1", name: "Seminar", unit: "Giờ/Seminar", quota: 15 }],
+  },
+  {
+    id: "13",
+    name: "Hoạt động KH&CN khác",
+    children: [
+      { id: "13.1", name: "Chương sách ISBN", unit: "Giờ/chương", quota: 80 },
+      { id: "13.2", name: "Đề án Học viện", unit: "Giờ/đề án", quota: 80 },
+      { id: "13.3", name: "Bài quảng bá", unit: "Giờ/bài", quota: 10 },
+      { id: "13.4", name: "Giáo trình", unit: "Giờ/giáo trình", quota: 50 },
+      { id: "13.5", name: "Bài giảng mới", unit: "Giờ/bài giảng", quota: 30 },
+      { id: "13.6", name: "Sách chuyên khảo", unit: "Giờ/sách", quota: 40 },
+      { id: "13.7", name: "Sách tham khảo", unit: "Giờ/sách", quota: 20 },
+      { id: "13.8", name: "Hợp đồng KH&CN", unit: "Giờ/10tr", quota: 1 },
+    ],
+  },
+];
 
-  useEffect(() => {
-    if (isOpen && group) {
-      fetchGroupData();
-      checkUserPermission();
+const ProductManagementModal = ({ isOpen, onClose }) => {
+  const [openIds, setOpenIds] = useState([]);
+  const [values, setValues] = useState({});
+
+  const toggle = (id) =>
+    setOpenIds((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+
+  const update = (id, field, value) =>
+    setValues((p) => ({
+      ...p,
+      [id]: { ...p[id], [field]: Number(value) },
+    }));
+
+  /* ===== TÍNH GIỜ CHO ITEM ===== */
+  const calcItem = (item) => {
+    if (!item.children) {
+      const plan = values[item.id]?.plan || 0;
+      const actual = values[item.id]?.actual || 0;
+      const planH = plan * (item.quota || 0);
+      const actH = actual * (item.quota || 0);
+      const percent =
+        planH > 0 ? Math.round((actH / planH) * 100) : 0;
+
+      return { planH, actH, percent };
     }
-  }, [isOpen, group, user]);
 
-  const fetchGroupData = async () => {
-    if (!group?.id) return;
-
-    try {
-      setLoading(true);
-      const response = await researchGroupService.getGroupById(group.id);
-      const groupData = response.data || response;
-      
-      // Lấy Google Sheet link từ group data
-      setGoogleSheetLink(groupData.googleSheetLink || "");
-      setTempLink(groupData.googleSheetLink || "");
-      
-      // TODO: Fetch products/activities from API
-      // Tạm thời dùng mock data
-      setProducts([
-        {
-          id: 1,
-          type: "Bài báo quốc tế",
-          title: "Research on AI Applications in Agriculture",
-          authors: "Nguyễn Văn A, Trần Thị B",
-          year: 2024,
-          journal: "International Journal of AI",
-          link: "https://example.com/paper1",
-        },
-        {
-          id: 2,
-          type: "Hội thảo",
-          title: "Seminar về IoT trong Nông nghiệp",
-          date: "15/03/2024",
-          location: "Học viện Nông nghiệp Việt Nam",
-        },
-        {
-          id: 3,
-          type: "Bài báo tiếng Việt",
-          title: "Ứng dụng Blockchain trong Quản lý Chuỗi Cung ứng",
-          authors: "Lê Văn C, Phạm Thị D",
-          year: 2024,
-          journal: "Tạp chí Khoa học Công nghệ",
-        },
-      ]);
-    } catch (error) {
-      console.error("Error fetching group data:", error);
-      toast.error(error.message || ERROR_MESSAGES.LOAD_DATA_ERROR);
-    } finally {
-      setLoading(false);
-    }
+    return item.children.reduce(
+      (sum, c) => {
+        const r = calcItem(c);
+        return {
+          planH: sum.planH + r.planH,
+          actH: sum.actH + r.actH,
+        };
+      },
+      { planH: 0, actH: 0 }
+    );
   };
 
-  const checkUserPermission = () => {
-    if (!user || !group) {
-      setIsMember(false);
-      return;
-    }
+  /* ===== TỔNG TOÀN BẢNG ===== */
+  const totalAll = CRITERIA.reduce(
+    (sum, c) => {
+      const r = calcItem(c);
+      return {
+        planH: sum.planH + r.planH,
+        actH: sum.actH + r.actH,
+      };
+    },
+    { planH: 0, actH: 0 }
+  );
 
-    // Kiểm tra xem user có phải là leader, advisor hoặc member không
-    const isLeader = group.leader?.id === user.id;
-    const isAdvisor = group.advisor?.id === user.id;
-    const isGroupMember = group.members?.some((m) => m.id === user.id);
+  const percentAll =
+    totalAll.planH > 0
+      ? Math.round((totalAll.actH / totalAll.planH) * 100)
+      : 0;
 
-    setIsMember(isLeader || isAdvisor || isGroupMember);
-  };
+  /* ===== RENDER ===== */
+  const renderRows = (items, level = 0) =>
+    items.map((i) => {
+      const r = calcItem(i);
 
-  const handleEditLink = () => {
-    setTempLink(googleSheetLink);
-    setIsEditingLink(true);
-  };
+      return (
+        <>
+          <tr className={i.children ? "bg-gray-50" : ""}>
+            <td style={{ paddingLeft: level * 24 }}>
+              {i.children && (
+                <button onClick={() => toggle(i.id)}>
+                  {openIds.includes(i.id) ? <ExpandLess /> : <ExpandMore />}
+                </button>
+              )}
+            </td>
 
-  const handleCancelEdit = () => {
-    setTempLink(googleSheetLink);
-    setIsEditingLink(false);
-  };
+            <td>{i.name}</td>
+            <td>{i.unit || ""}</td>
+            <td>{i.quota || ""}</td>
 
-  const handleSaveLink = async () => {
-    if (!group?.id) return;
+            <td>
+              {!i.children && (
+                <input
+                  type="number"
+                  className="w-20 border px-1"
+                  onChange={(e) => update(i.id, "plan", e.target.value)}
+                />
+              )}
+            </td>
 
-    try {
-      setLoading(true);
-      // TODO: Gọi API để cập nhật Google Sheet link
-      await researchGroupService.updateGoogleSheetLink(group.id, tempLink);
-      
-      setGoogleSheetLink(tempLink);
-      setIsEditingLink(false);
-      toast.success("Cập nhật link Google Sheet thành công");
-      
-      if (onRefresh) onRefresh();
-    } catch (error) {
-      console.error("Error updating Google Sheet link:", error);
-      toast.error(error.message || "Không thể cập nhật link");
-    } finally {
-      setLoading(false);
-    }
-  };
+            <td>{!i.children && r.planH}</td>
 
-  const handleOpenSheet = () => {
-    if (googleSheetLink) {
-      window.open(googleSheetLink, "_blank");
-    }
-  };
+            <td>
+              {!i.children && (
+                <input
+                  type="number"
+                  className="w-20 border px-1"
+                  onChange={(e) => update(i.id, "actual", e.target.value)}
+                />
+              )}
+            </td>
 
-  if (!isOpen || !group) return null;
+            <td>{!i.children && r.actH}</td>
+
+            {/* % RIÊNG TỪNG DÒNG */}
+            <td
+              className={
+                !i.children
+                  ? r.percent >= 100
+                    ? "text-green-600 font-bold"
+                    : "text-orange-600 font-bold"
+                  : ""
+              }
+            >
+              {!i.children && `${r.percent}%`}
+            </td>
+
+            {/* 3 CỘT CUỐI CHỈ DÙNG CHO FOOTER */}
+            <td />
+            <td />
+            <td />
+          </tr>
+
+          {i.children &&
+            openIds.includes(i.id) &&
+            renderRows(i.children, level + 1)}
+        </>
+      );
+    });
+
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white z-10">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">
-              Quản lý sản phẩm nghiên cứu
-            </h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Nhóm: {group.groupName}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
+    <div className="fixed inset-0 bg-black/50 z-50 flex justify-center items-center">
+      <div className="bg-white w-[96%] max-h-[96vh] rounded shadow flex flex-col">
+
+        {/* HEADER */}
+        <div className="p-4 border-b flex justify-between">
+          <h2 className="text-xl font-bold">
+            Quản lý sản phẩm & mức độ hoàn thành
+          </h2>
+          <button onClick={onClose}>
             <Close />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6">
-          {loading && !isEditingLink ? (
-            <div className="flex justify-center py-8">
-              <LoadingSpinner />
-            </div>
-          ) : (
-            <>
-              {/* Google Sheet Link Section */}
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <LinkIcon className="text-blue-600" />
-                    Link Google Sheet (Minh chứng)
-                  </h3>
-                  {isMember && !isEditingLink && (
-                    <button
-                      onClick={handleEditLink}
-                      className="flex items-center gap-2 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    >
-                      <Edit fontSize="small" />
-                      Chỉnh sửa
-                    </button>
-                  )}
-                </div>
+        {/* TABLE */}
+        <div className="flex-1 overflow-auto">
+          <table className="w-full border text-sm">
+            <thead className="sticky top-0 bg-gray-100 z-10">
+              <tr>
+                <th />
+                <th>Tiêu chí</th>
+                <th>Đơn vị</th>
+                <th>Định mức</th>
+                <th>SL ĐM</th>
+                <th>Giờ ĐM</th>
+                <th>SL TT</th>
+                <th>Giờ TT</th>
+                <th>% HT</th>
+                <th>Tổng giờ ĐM</th>
+                <th>Tổng giờ TT</th>
+                <th>% HT chung</th>
+              </tr>
+            </thead>
 
-                {isEditingLink ? (
-                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="flex gap-2 mb-3">
-                      <input
-                        type="url"
-                        value={tempLink}
-                        onChange={(e) => setTempLink(e.target.value)}
-                        placeholder="Nhập link Google Sheet..."
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleSaveLink}
-                        disabled={loading}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
-                      >
-                        <Save fontSize="small" />
-                        Lưu
-                      </button>
-                      <button
-                        onClick={handleCancelEdit}
-                        disabled={loading}
-                        className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:bg-gray-100 transition-colors"
-                      >
-                        Hủy
-                      </button>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Chỉ thành viên nhóm mới có quyền cập nhật link này
-                    </p>
-                  </div>
-                ) : (
-                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    {googleSheetLink ? (
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <a
-                            href={googleSheetLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-2 break-all"
-                          >
-                            <OpenInNew fontSize="small" />
-                            {googleSheetLink}
-                          </a>
-                        </div>
-                        <button
-                          onClick={handleOpenSheet}
-                          className="ml-4 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
-                        >
-                          <Visibility fontSize="small" />
-                          Mở
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="text-center py-4 text-gray-500">
-                        <LinkIcon className="mx-auto mb-2 text-gray-300" />
-                        <p>Chưa có link Google Sheet</p>
-                        {isMember && (
-                          <p className="text-xs mt-1">
-                            Nhấn "Chỉnh sửa" để thêm link
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+            <tbody>{renderRows(CRITERIA)}</tbody>
 
-              {/* Products/Activities Section */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
-                  <Article className="text-green-600" />
-                  Hoạt động nghiên cứu của nhóm
-                </h3>
-
-                {products.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
-                    <Description className="mx-auto mb-2 text-gray-300" />
-                    <p>Chưa có sản phẩm nghiên cứu nào</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {products.map((product) => (
-                      <div
-                        key={product.id}
-                        className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">
-                                {product.type}
-                              </span>
-                              {product.year && (
-                                <span className="text-sm text-gray-500">
-                                  {product.year}
-                                </span>
-                              )}
-                            </div>
-                            <h4 className="font-semibold text-gray-900 mb-2">
-                              {product.title}
-                            </h4>
-                            {product.authors && (
-                              <p className="text-sm text-gray-600 mb-1">
-                                <strong>Tác giả:</strong> {product.authors}
-                              </p>
-                            )}
-                            {product.journal && (
-                              <p className="text-sm text-gray-600 mb-1">
-                                <strong>Tạp chí:</strong> {product.journal}
-                              </p>
-                            )}
-                            {product.date && (
-                              <p className="text-sm text-gray-600 mb-1">
-                                <strong>Ngày:</strong> {product.date}
-                              </p>
-                            )}
-                            {product.location && (
-                              <p className="text-sm text-gray-600">
-                                <strong>Địa điểm:</strong> {product.location}
-                              </p>
-                            )}
-                          </div>
-                          {product.link && (
-                            <a
-                              href={product.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="ml-4 p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              title="Xem chi tiết"
-                            >
-                              <OpenInNew />
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="flex justify-end gap-3 p-6 border-t bg-gray-50">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Đóng
-          </button>
+            {/* ===== FOOTER TỔNG ===== */}
+            <tfoot className="sticky bottom-0 bg-blue-50 font-bold">
+              <tr>
+                <td colSpan={9} className="text-right pr-4">
+                  TỔNG TOÀN BỘ
+                </td>
+                <td className="text-blue-700">{totalAll.planH}</td>
+                <td className="text-green-700">{totalAll.actH}</td>
+                <td
+                  className={
+                    percentAll >= 100
+                      ? "text-green-600"
+                      : "text-orange-600"
+                  }
+                >
+                  {percentAll}%
+                </td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       </div>
     </div>

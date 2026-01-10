@@ -242,6 +242,7 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
                   className="hidden"
                 />
               </label>
+
             </div>
 
               {showAddMember && (
