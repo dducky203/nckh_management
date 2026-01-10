@@ -7,18 +7,18 @@ import {
   Cancel,
   Pending,
 } from "@mui/icons-material";
-import { AuthContext } from "../../context/AuthContext";
-import { useToast } from "../../context/ToastContext";
-import researchGroupService from "../../services/researchGroupService";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
-import Pagination from "../../components/common/Pagination";
-import Modal from "../../components/common/Modal";
-import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../constants";
-import GroupTable from "./components/GroupTable";
-import GroupFormModal from "./components/GroupFormModal";
-import GroupDetailModal from "./components/GroupDetailModal";
-import { usePagination } from "../../hooks/usePagination";
-import Button from "../../components/common/Button";
+import { AuthContext } from "../../../../context/AuthContext";
+import { useToast } from "../../../../context/ToastContext";
+import researchGroupService from "../../../../services/researchGroupService";
+import LoadingSpinner from "../../../../components/common/LoadingSpinner";
+import Pagination from "../../../../components/common/Pagination";
+import Modal from "../../../../components/common/Modal";
+import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../../../constants";
+import GroupTable from "../../../ResearchGroup/components/GroupTable";
+import GroupFormModal from "../../../ResearchGroup/components/GroupFormModal";
+import GroupDetailModal from "../../../ResearchGroup/components/GroupDetailModal";
+import { usePagination } from "../../../../hooks/usePagination";
+import Button from "../../../../components/common/Button";
 
 const ResearchGroupManagement = () => {
   const { user } = useContext(AuthContext);

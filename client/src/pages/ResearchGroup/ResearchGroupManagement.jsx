@@ -175,20 +175,12 @@ const ResearchGroupManagement = () => {
     setMemberModalOpen(true);
   };
 
-  // Handler cho quản lý sản phẩm
-  const handleManageProducts = (group) => {
+  // Quản lý sản phẩm & mức độ hoàn thành
+  const handleManageProductsAndCompletion = (group) => {
     setSelectedGroup(group);
     setProductModalOpen(true);
   };
 
-  // Handler cho quản lý mức độ hoàn thành
-  const handleManageCompletion = (group) => {
-    // TODO: Navigate to completion management page or open modal
-    console.log("Quản lý mức độ hoàn thành cho nhóm:", group.id);
-    toast.info(`Mở trang quản lý mức độ hoàn thành cho nhóm: ${group.groupName}`);
-    // Có thể navigate: navigate(`/research-groups/${group.id}/completion`)
-    // Hoặc mở modal quản lý mức độ hoàn thành
-  };
 
   const handleSaveGroup = async (groupData) => {
     try {
@@ -383,19 +375,15 @@ const ResearchGroupManagement = () => {
         ) : (
           <>
             <GroupTable
-              groups={groups}
-              isAdmin={isAdmin}
-              currentUserId={user?.id}
-              onViewDetail={handleViewDetail}
-              onEdit={handleEditGroup}
-              onApprove={handleApprove}
-              onReject={handleReject}
-              onDelete={handleDelete}
-              onManageMembers={handleManageMembers}
-              onManageProducts={handleManageProducts}
-              onManageCompletion={handleManageCompletion}
-              getStatusBadge={getStatusBadge}
-            />
+            groups={groups}
+            isAdmin={isAdmin}
+            onViewDetail={handleViewDetail}
+            onDelete={handleDelete}
+            getStatusBadge={getStatusBadge}
+            onManageMembers={handleManageMembers}
+            onManageProductsAndCompletion={handleManageProductsAndCompletion}
+          />
+
 
             {/* Pagination */}
             <div className="bg-white rounded-lg shadow-sm">

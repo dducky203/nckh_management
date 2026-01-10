@@ -119,6 +119,63 @@ const researchGroupService = {
     );
     return response.data;
   },
+
+  // Document management
+  getDocuments: async (groupId) => {
+    const response = await api.get(`/research-groups/${groupId}/documents`);
+    return response.data;
+  },
+
+  createDocument: async (groupId, documentName, documentType, description, file) => {
+    const formData = new FormData();
+    formData.append("documentName", documentName);
+    formData.append("documentType", documentType);
+    if (description) formData.append("description", description);
+    formData.append("file", file);
+    const response = await api.post(
+      `/research-groups/${groupId}/documents`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
+  },
+
+  updateDocument: async (groupId, documentId, documentName, documentType, description, file) => {
+    const formData = new FormData();
+    if (documentName) formData.append("documentName", documentName);
+    if (documentType) formData.append("documentType", documentType);
+    if (description) formData.append("description", description);
+    if (file) formData.append("file", file);
+    const response = await api.put(
+      `/research-groups/${groupId}/documents/${documentId}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
+  },
+
+  deleteDocument: async (groupId, documentId) => {
+    const response = await api.delete(
+      `/research-groups/${groupId}/documents/${documentId}`
+    );
+    return response.data;
+  },
 };
+
+  export const exportMembers = (groupId) => {
+  return axios.get(
+    `/research-groups/${groupId}/members/export`,
+    { responseType: "blob" }
+  );
+};
+
 
 export default researchGroupService;

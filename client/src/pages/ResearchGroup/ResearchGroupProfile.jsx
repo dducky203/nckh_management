@@ -36,57 +36,41 @@ const ResearchGroupProfile = () => {
     file: null,
   });
 
+  const [currentGroup, setCurrentGroup] = useState(null);
+
   useEffect(() => {
-    fetchDocuments();
+    fetchMyGroups();
   }, []);
 
+  useEffect(() => {
+    if (currentGroup) {
+      fetchDocuments();
+    }
+  }, [currentGroup]);
+
+  const fetchMyGroups = async () => {
+    try {
+      const response = await researchGroupService.getMyGroups();
+      const groups = response.data || [];
+      // Lấy nhóm đầu tiên hoặc nhóm hiện tại (tùy logic của bạn)
+      if (groups.length > 0) {
+        setCurrentGroup(groups[0]);
+      } else {
+        toast.error("Bạn chưa tham gia nhóm nghiên cứu nào");
+      }
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+      toast.error(error.message || ERROR_MESSAGES.LOAD_DATA_ERROR);
+    }
+  };
+
   const fetchDocuments = async () => {
+    if (!currentGroup) return;
+    
     try {
       setLoading(true);
-      // TODO: Gọi API để lấy danh sách văn bản của nhóm
-      // const response = await researchGroupService.getGroupDocuments(user.groupId);
-      // setDocuments(response.data || []);
-      
-      // Demo data với 6 ví dụ
-      const mockDocuments = [
-        {
-          id: 1,
-          documentName: "Mẫu phiếu đăng kí đề tài thực tập chuyên ngành",
-          documentType: "Thông báo",
-          fileUrl: "/file/template1.docx",
-        },
-        {
-          id: 2,
-          documentName: "Mẫu phiếu đăng ký học phần khóa luận tốt nghiệp, thực tập chuyên ngành",
-          documentType: "Quyết Định",
-          fileUrl: "/file/template2.docx",
-        },
-        {
-          id: 3,
-          documentName: "Mẫu phiếu đăng kí đề tài thực tập tốt nghiệp",
-          documentType: "Thông báo",
-          fileUrl: "/file/template3.docx",
-        },
-        {
-          id: 4,
-          documentName: "Giấy xác nhận của đơn vị thực tập",
-          documentType: "Hồ Sơ Thanh Toán",
-          fileUrl: "/file/template4.docx",
-        },
-        {
-          id: 5,
-          documentName: "Quyết định phê duyệt đề tài nghiên cứu khoa học",
-          documentType: "Quyết Định",
-          fileUrl: "/file/template5.pdf",
-        },
-        {
-          id: 6,
-          documentName: "Báo cáo tiến độ nghiên cứu quý I/2025",
-          documentType: "Thông Báo",
-          fileUrl: "/file/template6.pdf",
-        },
-      ];
-      setDocuments(mockDocuments);
+      const response = await researchGroupService.getDocuments(currentGroup.id);
+      setDocuments(response.data || []);
     } catch (error) {
       console.error("Error fetching documents:", error);
       toast.error(error.message || ERROR_MESSAGES.LOAD_DATA_ERROR);
@@ -148,13 +132,29 @@ const ResearchGroupProfile = () => {
         submitData.append("file", formData.file);
       }
 
+      if (!currentGroup) {
+        toast.error("Vui lòng chọn nhóm nghiên cứu");
+        return;
+      }
+
       if (selectedDocument) {
-        // TODO: Cập nhật văn bản
-        // await researchGroupService.updateDocument(selectedDocument.id, submitData);
-        toast.success("Cập nhật văn bản thành công");
+        await researchGroupService.updateDocument(
+          currentGroup.id,
+          selectedDocument.id,
+          formData.documentName,
+          formData.documentType,
+          formData.description || null,
+          formData.file || null
+        );
+        toast.success(SUCCESS_MESSAGES.UPDATE_SUCCESS);
       } else {
-        // TODO: Tạo văn bản mới
-        // await researchGroupService.createDocument(submitData);
+        await researchGroupService.createDocument(
+          currentGroup.id,
+          formData.documentName,
+          formData.documentType,
+          formData.description || null,
+          formData.file
+        );
         toast.success("Thêm văn bản thành công");
       }
 
@@ -167,9 +167,13 @@ const ResearchGroupProfile = () => {
   };
 
   const confirmDelete = async () => {
+    if (!currentGroup) {
+      toast.error("Vui lòng chọn nhóm nghiên cứu");
+      return;
+    }
+
     try {
-      // TODO: Xóa văn bản
-      // await researchGroupService.deleteDocument(selectedDocument.id);
+      await researchGroupService.deleteDocument(currentGroup.id, selectedDocument.id);
       toast.success(SUCCESS_MESSAGES.DELETE_SUCCESS);
       setDeleteModalOpen(false);
       setSelectedDocument(null);
@@ -188,6 +192,22 @@ const ResearchGroupProfile = () => {
     }
   };
 
+  if (!currentGroup) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
+        <div className="text-center">
+          <Description className="mx-auto text-gray-300 mb-4" sx={{ fontSize: 64 }} />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Bạn chưa tham gia nhóm nghiên cứu nào
+          </h3>
+          <p className="text-gray-500">
+            Vui lòng tham gia một nhóm nghiên cứu để xem hồ sơ
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -195,7 +215,7 @@ const ResearchGroupProfile = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
             <Description className="text-blue-600" />
-            Hồ sơ nhóm
+            Hồ sơ nhóm: {currentGroup.groupName}
           </h1>
           <p className="mt-2 text-gray-600">
             Quản lý các văn bản và tài liệu của nhóm nghiên cứu
@@ -380,7 +400,7 @@ const ResearchGroupProfile = () => {
                     type="file"
                     onChange={handleFileChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx"
+                    accept="*/*"
                     required={!selectedDocument}
                   />
                   {selectedDocument && (
