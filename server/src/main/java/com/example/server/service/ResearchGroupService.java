@@ -1,12 +1,15 @@
 package com.example.server.service;
 
+import com.example.server.DTO.request.CreateResearchGroupDocumentRequest;
 import com.example.server.DTO.request.CreateResearchGroupRequest;
 import com.example.server.DTO.request.UpdateResearchGroupRequest;
+import com.example.server.DTO.response.ResearchGroupDocumentDTO;
 import com.example.server.DTO.response.ResearchGroupDTO;
 import com.example.server.domain.ResearchGroup;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -55,6 +58,12 @@ public interface ResearchGroupService {
     // Import thành viên từ Excel
     ResearchGroupDTO importMembersFromExcel(Integer groupId, Integer userId,
             org.springframework.web.multipart.MultipartFile file);
+
+    // Document management methods
+    List<ResearchGroupDocumentDTO> getDocumentsByGroupId(Integer groupId, Integer userId);
+    ResearchGroupDocumentDTO createDocument(Integer groupId, Integer userId, CreateResearchGroupDocumentRequest request, MultipartFile file);
+    ResearchGroupDocumentDTO updateDocument(Integer groupId, Integer documentId, Integer userId, CreateResearchGroupDocumentRequest request, MultipartFile file);
+    void deleteDocument(Integer groupId, Integer documentId, Integer userId);
 
     class GroupStatistics {
         public long totalGroups;

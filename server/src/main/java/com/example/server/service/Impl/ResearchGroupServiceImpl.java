@@ -1,32 +1,57 @@
 package com.example.server.service.Impl;
 
+import com.example.server.DTO.request.CreateResearchGroupDocumentRequest;
 import com.example.server.DTO.request.CreateResearchGroupRequest;
 import com.example.server.DTO.request.UpdateResearchGroupRequest;
+import com.example.server.DTO.response.ResearchGroupDocumentDTO;
 import com.example.server.DTO.response.ResearchGroupDTO;
 import com.example.server.domain.ResearchGroup;
+import com.example.server.domain.ResearchGroupDocument;
 import com.example.server.domain.User;
 //import com.example.server.dto.request.CreateResearchGroupRequest;
 //import com.example.server.dto.request.UpdateResearchGroupRequest;
 //import com.example.server.dto.response.ResearchGroupDTO;
 import com.example.server.domain.ResearchGroupMember;
+import com.example.server.repository.ResearchGroupDocumentRepository;
 import com.example.server.repository.ResearchGroupMemberRepository;
 import com.example.server.repository.ResearchGroupRepository;
 import com.example.server.repository.UserRepository;
+import com.example.server.service.FileService;
 import com.example.server.service.ResearchGroupService;
+import com.example.server.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,6 +62,10 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
     private final ResearchGroupRepository groupRepository;
     private final UserRepository userRepository;
     private final ResearchGroupMemberRepository memberRepository;
+    private final ResearchGroupDocumentRepository documentRepository;
+
+    @Value("${upload.dir}")
+    private String uploadDir;
 
     @Override
     @Transactional
@@ -124,7 +153,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
         // Kiểm tra quyền: chỉ leader hoặc admin mới được cập nhật
-        if (!group.isLeader(user) && !"ADMIN".equals(user.getIdRole().getName())) {
+        if (!group.isLeader(user) && !SecurityUtils.isAdmin(user)) {
             throw new RuntimeException("Bạn không có quyền cập nhật nhóm này");
         }
 
@@ -176,7 +205,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
         // Kiểm tra quyền
-        if (!group.isLeader(user) && !"ADMIN".equals(user.getIdRole().getName())) {
+        if (!group.isLeader(user) && !SecurityUtils.isAdmin(user)) {
             throw new RuntimeException("Chỉ trưởng nhóm hoặc admin mới có thể thêm thành viên");
         }
 
@@ -208,7 +237,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
         // Kiểm tra quyền
-        if (!group.isLeader(user) && !"ADMIN".equals(user.getIdRole().getName())) {
+        if (!group.isLeader(user) && !SecurityUtils.isAdmin(user)) {
             throw new RuntimeException("Chỉ trưởng nhóm hoặc admin mới có thể xóa thành viên");
         }
 
@@ -309,7 +338,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         boolean isLeader = group.isLeader(user);
         boolean isAdvisor = group.getAdvisor() != null && group.getAdvisor().getId().equals(userId);
         boolean isMember = group.isMember(user);
-        boolean isAdmin = "ADMIN".equals(user.getIdRole().getName());
+        boolean isAdmin = SecurityUtils.isAdmin(user);
 
         if (!isLeader && !isAdvisor && !isMember && !isAdmin) {
             throw new RuntimeException("Chỉ thành viên nhóm mới có quyền cập nhật link Google Sheet");
@@ -331,7 +360,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
         // Kiểm tra quyền: chỉ leader hoặc admin mới được cập nhật
-        if (!group.isLeader(user) && !"ADMIN".equals(user.getIdRole().getName())) {
+        if (!group.isLeader(user) && !SecurityUtils.isAdmin(user)) {
             throw new RuntimeException("Bạn không có quyền cập nhật thông tin thành viên");
         }
 
@@ -371,8 +400,18 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
         // Kiểm tra quyền: chỉ leader hoặc admin mới được import
-        if (!group.isLeader(user) && !"ADMIN".equals(user.getIdRole().getName())) {
+        if (!group.isLeader(user) && !SecurityUtils.isAdmin(user)) {
             throw new RuntimeException("Bạn không có quyền import thành viên");
+        }
+
+        // Cải thiện error handling cho Excel import
+        if (file == null || file.isEmpty()) {
+            throw new RuntimeException("File Excel không được để trống");
+        }
+
+        String filename = file.getOriginalFilename();
+        if (filename == null || (!filename.toLowerCase().endsWith(".xlsx") && !filename.toLowerCase().endsWith(".xls"))) {
+            throw new RuntimeException("File phải có định dạng Excel (.xlsx hoặc .xls)");
         }
 
         try (InputStream inputStream = file.getInputStream();
@@ -388,6 +427,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
             // Đọc header (dòng 0)
             Row headerRow = sheet.getRow(0);
             Map<String, Integer> columnMap = new HashMap<>();
+            
             for (int i = 0; i < headerRow.getPhysicalNumberOfCells(); i++) {
                 Cell cell = headerRow.getCell(i);
                 if (cell != null) {
@@ -396,9 +436,26 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                 }
             }
 
-            // Validate columns
-            if (!columnMap.containsKey("Họ và tên") || !columnMap.containsKey("Mã cán bộ")) {
-                throw new RuntimeException("File Excel phải có các cột: Họ và tên, Mã cán bộ");
+            // Tìm key cho các cột cần thiết (case-insensitive)
+            String hoVaTenKey = null;
+            String maCanBoKey = null;
+            
+            for (String key : columnMap.keySet()) {
+                String lowerKey = key.toLowerCase().trim();
+                // Tìm cột "Họ và tên"
+                if (hoVaTenKey == null && lowerKey.contains("họ") && lowerKey.contains("tên")) {
+                    hoVaTenKey = key;
+                }
+                // Tìm cột "Mã cán bộ"
+                if (maCanBoKey == null && lowerKey.contains("mã") && 
+                    (lowerKey.contains("cán") || lowerKey.contains("can")) && lowerKey.contains("bộ")) {
+                    maCanBoKey = key;
+                }
+            }
+            
+            if (hoVaTenKey == null || maCanBoKey == null) {
+                throw new RuntimeException("File Excel phải có các cột: 'Họ và tên' và 'Mã cán bộ'. " +
+                    "Các cột hiện có: " + String.join(", ", columnMap.keySet()));
             }
 
             int successCount = 0;
@@ -412,9 +469,9 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                     continue;
 
                 try {
-                    // Đọc các cột
-                    String name = getCellValueAsString(row, columnMap.get("Họ và tên"));
-                    String username = getCellValueAsString(row, columnMap.get("Mã cán bộ"));
+                    // Đọc các cột (sử dụng key đã chuẩn hóa)
+                    String name = getCellValueAsString(row, columnMap.get(hoVaTenKey));
+                    String username = getCellValueAsString(row, columnMap.get(maCanBoKey));
                     String email = columnMap.containsKey("Email") ? getCellValueAsString(row, columnMap.get("Email"))
                             : null;
                     String address = columnMap.containsKey("Đơn vị")
@@ -433,10 +490,13 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                         continue;
                     }
 
-                    // Tìm user theo username
-                    User member = userRepository.findByUsername(username.trim());
+                    // Tìm user theo username (Mã cán bộ)
+                    String trimmedUsername = username.trim();
+                    User member = userRepository.findByUsername(trimmedUsername);
                     if (member == null) {
-                        throw new RuntimeException("Không tìm thấy người dùng với mã cán bộ: " + username);
+                        errorCount++;
+                        errors.append("Dòng ").append(i + 1).append(": Không tìm thấy người dùng với mã cán bộ '").append(trimmedUsername).append("'\n");
+                        continue;
                     }
 
                     // Kiểm tra xem đã là member chưa
@@ -525,5 +585,192 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         } else {
             return null;
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ResearchGroupDocumentDTO> getDocumentsByGroupId(Integer groupId, Integer userId) {
+        ResearchGroup group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+        // Kiểm tra quyền: chỉ thành viên nhóm mới được xem documents
+        boolean isLeader = group.isLeader(user);
+        boolean isAdvisor = group.getAdvisor() != null && group.getAdvisor().getId().equals(userId);
+        boolean isMember = group.isMember(user);
+        boolean isAdmin = SecurityUtils.isAdmin(user);
+
+        if (!isLeader && !isAdvisor && !isMember && !isAdmin) {
+            throw new RuntimeException("Chỉ thành viên nhóm mới có quyền xem documents");
+        }
+
+        List<ResearchGroupDocument> documents = documentRepository.findByResearchGroupId(groupId);
+        return documents.stream()
+                .map(ResearchGroupDocumentDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public ResearchGroupDocumentDTO createDocument(Integer groupId, Integer userId, 
+            CreateResearchGroupDocumentRequest request, MultipartFile file) {
+        ResearchGroup group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+        // Kiểm tra quyền: chỉ thành viên nhóm mới được upload documents
+        boolean isLeader = group.isLeader(user);
+        boolean isAdvisor = group.getAdvisor() != null && group.getAdvisor().getId().equals(userId);
+        boolean isMember = group.isMember(user);
+        boolean isAdmin = SecurityUtils.isAdmin(user);
+
+        if (!isLeader && !isAdvisor && !isMember && !isAdmin) {
+            throw new RuntimeException("Chỉ thành viên nhóm mới có quyền upload documents");
+        }
+
+        if (file == null || file.isEmpty()) {
+            throw new RuntimeException("File không được để trống");
+        }
+
+        // Lưu file
+        String fileUrl;
+        try {
+            Path folderPath = Paths.get(uploadDir, "research-groups", groupId.toString());
+            if (!Files.exists(folderPath)) {
+                Files.createDirectories(folderPath);
+            }
+
+            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            Path targetLocation = folderPath.resolve(Objects.requireNonNull(fileName));
+            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+            
+            // Lưu relative path
+            fileUrl = "research-groups/" + groupId + "/" + fileName;
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi khi lưu file: " + e.getMessage(), e);
+        }
+
+        // Tạo document
+        ResearchGroupDocument document = ResearchGroupDocument.builder()
+                .documentName(request.getDocumentName())
+                .documentType(request.getDocumentType())
+                .fileUrl(fileUrl)
+                .description(request.getDescription())
+                .researchGroup(group)
+                .build();
+
+        ResearchGroupDocument savedDocument = documentRepository.save(document);
+        return ResearchGroupDocumentDTO.fromEntity(savedDocument);
+    }
+
+    @Override
+    @Transactional
+    public ResearchGroupDocumentDTO updateDocument(Integer groupId, Integer documentId, Integer userId,
+            CreateResearchGroupDocumentRequest request, MultipartFile file) {
+        ResearchGroupDocument document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy document"));
+
+        if (!document.getResearchGroup().getId().equals(groupId)) {
+            throw new RuntimeException("Document không thuộc nhóm này");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+        // Kiểm tra quyền: chỉ thành viên nhóm mới được cập nhật documents
+        ResearchGroup group = document.getResearchGroup();
+        boolean isLeader = group.isLeader(user);
+        boolean isAdvisor = group.getAdvisor() != null && group.getAdvisor().getId().equals(userId);
+        boolean isMember = group.isMember(user);
+        boolean isAdmin = SecurityUtils.isAdmin(user);
+
+        if (!isLeader && !isAdvisor && !isMember && !isAdmin) {
+            throw new RuntimeException("Chỉ thành viên nhóm mới có quyền cập nhật documents");
+        }
+
+        // Cập nhật thông tin
+        if (request.getDocumentName() != null) {
+            document.setDocumentName(request.getDocumentName());
+        }
+        if (request.getDocumentType() != null) {
+            document.setDocumentType(request.getDocumentType());
+        }
+        if (request.getDescription() != null) {
+            document.setDescription(request.getDescription());
+        }
+
+        // Cập nhật file nếu có
+        if (file != null && !file.isEmpty()) {
+            try {
+                // Xóa file cũ (optional)
+                if (document.getFileUrl() != null) {
+                    Path oldFile = Paths.get(uploadDir, document.getFileUrl());
+                    if (Files.exists(oldFile)) {
+                        Files.delete(oldFile);
+                    }
+                }
+
+                // Lưu file mới
+                Path folderPath = Paths.get(uploadDir, "research-groups", groupId.toString());
+                if (!Files.exists(folderPath)) {
+                    Files.createDirectories(folderPath);
+                }
+
+                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+                Path targetLocation = folderPath.resolve(Objects.requireNonNull(fileName));
+                Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+                
+                document.setFileUrl("research-groups/" + groupId + "/" + fileName);
+            } catch (IOException e) {
+                throw new RuntimeException("Lỗi khi lưu file: " + e.getMessage(), e);
+            }
+        }
+
+        ResearchGroupDocument savedDocument = documentRepository.save(document);
+        return ResearchGroupDocumentDTO.fromEntity(savedDocument);
+    }
+
+    @Override
+    @Transactional
+    public void deleteDocument(Integer groupId, Integer documentId, Integer userId) {
+        ResearchGroupDocument document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy document"));
+
+        if (!document.getResearchGroup().getId().equals(groupId)) {
+            throw new RuntimeException("Document không thuộc nhóm này");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+        // Kiểm tra quyền: chỉ thành viên nhóm mới được xóa documents
+        ResearchGroup group = document.getResearchGroup();
+        boolean isLeader = group.isLeader(user);
+        boolean isAdvisor = group.getAdvisor() != null && group.getAdvisor().getId().equals(userId);
+        boolean isMember = group.isMember(user);
+        boolean isAdmin = SecurityUtils.isAdmin(user);
+
+        if (!isLeader && !isAdvisor && !isMember && !isAdmin) {
+            throw new RuntimeException("Chỉ thành viên nhóm mới có quyền xóa documents");
+        }
+
+        // Xóa file
+        try {
+            if (document.getFileUrl() != null) {
+                Path filePath = Paths.get(uploadDir, document.getFileUrl());
+                if (Files.exists(filePath)) {
+                    Files.delete(filePath);
+                }
+            }
+        } catch (IOException e) {
+            // Log error nhưng vẫn xóa document
+            System.err.println("Lỗi khi xóa file: " + e.getMessage());
+        }
+
+        documentRepository.delete(document);
     }
 }

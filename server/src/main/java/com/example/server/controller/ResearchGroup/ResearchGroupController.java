@@ -1,7 +1,9 @@
 package com.example.server.controller.ResearchGroup;
 
+import com.example.server.DTO.request.CreateResearchGroupDocumentRequest;
 import com.example.server.DTO.request.CreateResearchGroupRequest;
 import com.example.server.DTO.request.UpdateResearchGroupRequest;
+import com.example.server.DTO.response.ResearchGroupDocumentDTO;
 import com.example.server.DTO.response.ResearchGroupDTO;
 import com.example.server.DTO.SuccessResponseDTO;
 import com.example.server.service.ResearchGroupService;
@@ -206,5 +208,85 @@ public class ResearchGroupController {
 
         ResearchGroupDTO group = researchGroupService.importMembersFromExcel(groupId, userId, file);
         return ResponseEntity.ok(new SuccessResponseDTO<>(group, "Import thành viên từ Excel thành công"));
+    }
+
+    /**
+     * Lấy danh sách documents của nhóm (chỉ thành viên nhóm mới xem được)
+     */
+    @GetMapping("/{groupId}/documents")
+    public ResponseEntity<SuccessResponseDTO<List<ResearchGroupDocumentDTO>>> getDocuments(
+            @PathVariable Integer groupId) {
+        Integer userId = SecurityUtils.getCurrentUserId();
+        if (userId == null) {
+            throw new RuntimeException("Vui lòng đăng nhập");
+        }
+
+        List<ResearchGroupDocumentDTO> documents = researchGroupService.getDocumentsByGroupId(groupId, userId);
+        return ResponseEntity.ok(new SuccessResponseDTO<>(documents, "Lấy danh sách documents thành công"));
+    }
+
+    /**
+     * Tạo document mới (chỉ thành viên nhóm mới upload được)
+     */
+    @PostMapping("/{groupId}/documents")
+    public ResponseEntity<SuccessResponseDTO<ResearchGroupDocumentDTO>> createDocument(
+            @PathVariable Integer groupId,
+            @RequestParam("documentName") String documentName,
+            @RequestParam("documentType") String documentType,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam("file") MultipartFile file) {
+        Integer userId = SecurityUtils.getCurrentUserId();
+        if (userId == null) {
+            throw new RuntimeException("Vui lòng đăng nhập");
+        }
+
+        CreateResearchGroupDocumentRequest request = new CreateResearchGroupDocumentRequest();
+        request.setDocumentName(documentName);
+        request.setDocumentType(documentType);
+        request.setDescription(description);
+
+        ResearchGroupDocumentDTO document = researchGroupService.createDocument(groupId, userId, request, file);
+        return ResponseEntity.ok(new SuccessResponseDTO<>(document, "Tạo document thành công"));
+    }
+
+    /**
+     * Cập nhật document (chỉ thành viên nhóm mới cập nhật được)
+     */
+    @PutMapping("/{groupId}/documents/{documentId}")
+    public ResponseEntity<SuccessResponseDTO<ResearchGroupDocumentDTO>> updateDocument(
+            @PathVariable Integer groupId,
+            @PathVariable Integer documentId,
+            @RequestParam(value = "documentName", required = false) String documentName,
+            @RequestParam(value = "documentType", required = false) String documentType,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "file", required = false) MultipartFile file) {
+        Integer userId = SecurityUtils.getCurrentUserId();
+        if (userId == null) {
+            throw new RuntimeException("Vui lòng đăng nhập");
+        }
+
+        CreateResearchGroupDocumentRequest request = new CreateResearchGroupDocumentRequest();
+        request.setDocumentName(documentName);
+        request.setDocumentType(documentType);
+        request.setDescription(description);
+
+        ResearchGroupDocumentDTO document = researchGroupService.updateDocument(groupId, documentId, userId, request, file);
+        return ResponseEntity.ok(new SuccessResponseDTO<>(document, "Cập nhật document thành công"));
+    }
+
+    /**
+     * Xóa document (chỉ thành viên nhóm mới xóa được)
+     */
+    @DeleteMapping("/{groupId}/documents/{documentId}")
+    public ResponseEntity<SuccessResponseDTO<String>> deleteDocument(
+            @PathVariable Integer groupId,
+            @PathVariable Integer documentId) {
+        Integer userId = SecurityUtils.getCurrentUserId();
+        if (userId == null) {
+            throw new RuntimeException("Vui lòng đăng nhập");
+        }
+
+        researchGroupService.deleteDocument(groupId, documentId, userId);
+        return ResponseEntity.ok(new SuccessResponseDTO<>("Xóa document thành công", "Xóa document thành công"));
     }
 }

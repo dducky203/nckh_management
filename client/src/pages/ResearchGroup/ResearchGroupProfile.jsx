@@ -19,7 +19,7 @@ const DOCUMENT_TYPES = [
   "Thông báo",
   "Hồ Sơ Thanh Toán",
   "Quyết Định",
-  "Tài liệu khác",
+  "Công Văn",
 ];
 
 const ResearchGroupProfile = () => {
@@ -65,19 +65,33 @@ const ResearchGroupProfile = () => {
   };
 
   const fetchDocuments = async () => {
-    if (!currentGroup) return;
-    
-    try {
-      setLoading(true);
-      const response = await researchGroupService.getDocuments(currentGroup.id);
-      setDocuments(response.data || []);
-    } catch (error) {
-      console.error("Error fetching documents:", error);
-      toast.error(error.message || ERROR_MESSAGES.LOAD_DATA_ERROR);
-    } finally {
-      setLoading(false);
+  if (!currentGroup) return;
+
+  try {
+    setLoading(true);
+
+    const response = await researchGroupService.getDocuments(currentGroup.id);
+
+    console.log("DOCUMENT RESPONSE:", response);
+
+    const data = response?.data || response || [];
+    setDocuments(Array.isArray(data) ? data : []);
+
+    if (!Array.isArray(data)) {
+      console.error("Documents is not array:", response);
+      toast.error("Dữ liệu văn bản không hợp lệ");
+      return;
     }
-  };
+
+    setDocuments(data);
+  } catch (error) {
+    console.error("Error fetching documents:", error);
+    toast.error(error.message || ERROR_MESSAGES.LOAD_DATA_ERROR);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleAddDocument = () => {
     setSelectedDocument(null);

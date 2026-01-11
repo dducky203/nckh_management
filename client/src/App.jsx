@@ -36,6 +36,7 @@ import NewsManager from "./pages/News/NewsManager";
 import ResearchGroupManagement from "./pages/ResearchGroup/ResearchGroupManagement";
 import ResearchGroupsPublic from "./pages/ResearchGroup/ResearchGroupsPublic";
 import ResearchGroupProfile from "./pages/ResearchGroup/ResearchGroupProfile";
+import ActivityStandards from "./pages/activity/ActivityStandards";
 
 function App() {
   // Load rooms data when app starts
@@ -73,6 +74,14 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <CreateEvent />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="activity/standards"
+                      element={
+                        <ProtectedRoute>
+                          <ActivityStandards />
                         </ProtectedRoute>
                       }
                     />
