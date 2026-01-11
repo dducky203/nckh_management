@@ -1,7 +1,7 @@
 import { Add } from "@mui/icons-material";
 import DashboardStats from "./DashboardStats";
 import YearlyTrendChart from "./YearlyTrendChart";
-import EventTypeChart from "./EventTypeChart";
+
 import MonthlyBarChart from "./MonthlyBarChart";
 import EventCard from "../EventCard";
 import Button from "../../../../components/common/Button";
@@ -13,8 +13,7 @@ const DashboardOverview = ({
   selectedYear,
   setSelectedYear,
   years,
-  eventTypes,
-  colors,
+
   setEditingEvent,
   setFormModalOpen,
   onViewDetails,
@@ -76,7 +75,6 @@ const DashboardOverview = ({
               Sự kiện chờ duyệt ({pendingEvents.length})
             </h3>
           </div>
-          ff
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {pendingEvents.slice(0, 6).map((event) => (
               <EventCard
@@ -95,17 +93,7 @@ const DashboardOverview = ({
 
       {/* Monthly Bar Chart - Full Width */}
       <MonthlyBarChart events={events} selectedYear={selectedYear} />
-
-      {/* Charts Row 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <YearlyTrendChart events={events} years={years} />
-        <EventTypeChart
-          events={events}
-          selectedYear={selectedYear}
-          eventTypes={eventTypes}
-          colors={colors}
-        />
-      </div>
+      <YearlyTrendChart events={events} years={years} />
     </div>
   );
 };

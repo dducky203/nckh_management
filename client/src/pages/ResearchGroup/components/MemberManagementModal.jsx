@@ -18,6 +18,7 @@ import { useToast } from "../../../context/ToastContext";
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../../constants";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import Modal from "../../../components/common/Modal";
+import Button from "../../../components/common/Button";
 
 const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
   const toast = useToast();
@@ -36,12 +37,36 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
   const [editRole, setEditRole] = useState("");
   const [editParticipationRate, setEditParticipationRate] = useState(100);
   const fileInputRef = useRef(null);
+  const searchContainerRef = useRef(null);
 
   useEffect(() => {
     if (isOpen && group) {
       fetchMembers();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, group]);
+
+  // Handle click outside to close search box
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target)
+      ) {
+        setShowAddMember(false);
+        setSearchTerm("");
+        setSearchResults([]);
+      }
+    };
+
+    if (showAddMember) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showAddMember]);
 
   const fetchMembers = async () => {
     if (!group?.id) return;
@@ -68,25 +93,25 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
     try {
       setSearching(true);
       const response = await userService.searchUsers(searchTerm, 0, 10);
-      
+
       // Backend trả về SuccessResponseDTO: { success: true, data: { users: [...], totalItems, ... }, message: "..." }
       // API interceptor đã unwrap response.data, nên response = SuccessResponseDTO
       // Vậy cần lấy: response.data.users
       const responseData = response?.data || response;
       const users = responseData?.users || [];
-      
+
       if (!Array.isArray(users)) {
         console.error("Invalid response format:", response);
         toast.error("Định dạng dữ liệu không hợp lệ");
         return;
       }
-      
+
       // Lọc bỏ những user đã là thành viên
       const existingMemberIds = members.map((m) => m.id);
       const filteredUsers = users.filter(
         (user) => !existingMemberIds.includes(user.id)
       );
-      
+
       setSearchResults(filteredUsers);
     } catch (error) {
       console.error("Error searching users:", error);
@@ -121,10 +146,7 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
 
   const confirmDeleteMember = async () => {
     try {
-      await researchGroupService.removeMember(
-        group.id,
-        deleteConfirm.memberId
-      );
+      await researchGroupService.removeMember(group.id, deleteConfirm.memberId);
       toast.success(SUCCESS_MESSAGES.MEMBER_REMOVED);
       setDeleteConfirm({ isOpen: false, memberId: null, memberName: "" });
       fetchMembers();
@@ -166,34 +188,34 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
   };
 
   const handleImportExcel = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+    // const file = event.target.files[0];
+    // if (!file) return;
 
-    // Validate file type
-    const validTypes = [
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "application/vnd.ms-excel",
-    ];
-    if (!validTypes.includes(file.type)) {
-      toast.error("Vui lòng chọn file Excel (.xlsx hoặc .xls)");
-      return;
-    }
+    // // Validate file type
+    // const validTypes = [
+    //   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    //   "application/vnd.ms-excel",
+    // ];
+    // if (!validTypes.includes(file.type)) {
+    //   toast.error("Vui lòng chọn file Excel (.xlsx hoặc .xls)");
+    //   return;
+    // }
 
-    try {
-      setLoading(true);
-      await researchGroupService.importMembersFromExcel(group.id, file);
-      toast.success("Import thành viên từ Excel thành công");
-      fetchMembers();
-      if (onRefresh) onRefresh();
-    } catch (error) {
-      console.error("Error importing members:", error);
-      toast.error(error.message || "Không thể import thành viên từ Excel");
-    } finally {
-      setLoading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    }
+    // try {
+    //   setLoading(true);
+    //   await researchGroupService.importMembersFromExcel(group.id, file);
+    //   toast.success("Import thành viên từ Excel thành công");
+    //   fetchMembers();
+    //   if (onRefresh) onRefresh();
+    // } catch (error) {
+    //   console.error("Error importing members:", error);
+    //   toast.error(error.message || "Không thể import thành viên từ Excel");
+    // } finally {
+    //   setLoading(false);
+    //   if (fileInputRef.current) {
+    //     fileInputRef.current.value = "";
+    //   }
+    // }
   };
 
   if (!isOpen || !group) return null;
@@ -201,53 +223,62 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="bg-white rounded-xl shadow-2xl max-w-7xl w-full max-h-[90vh] flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white z-10">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-white">
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold text-gray-900 mb-1">
                 Quản lý thành viên
               </h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Nhóm: {group.groupName}
+              <p className="text-sm text-gray-500">
+                Nhóm:{" "}
+                <span className="font-medium text-gray-700">
+                  {group.groupName}
+                </span>
               </p>
             </div>
-            <button
+            <Button
+              variant="danger"
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className=" transition-colors !px-2 !py-1  !rounded-lg"
+              aria-label="Đóng"
             >
               <Close />
-            </button>
+            </Button>
           </div>
 
           {/* Content */}
-          <div className="p-6">
-            {/* Add Member Section */}
-            <div className="mb-6 flex gap-3">
-              <button
-                onClick={() => setShowAddMember(!showAddMember)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Add />
-                Thêm thành viên
-              </button>
-              <label className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer">
-                <UploadFile />
-                Import từ Excel
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".xlsx,.xls"
-                  onChange={handleImportExcel}
-                  className="hidden"
-                />
-              </label>
-
-            </div>
+          <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
+            <div className="max-w-full mx-auto">
+              {/* Add Member Section */}
+              <div className="mb-6 flex gap-3">
+                <button
+                  onClick={() => setShowAddMember(!showAddMember)}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-sm hover:shadow-md font-medium"
+                >
+                  <Add />
+                  Thêm thành viên
+                </button>
+                <label className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all shadow-sm hover:shadow-md cursor-pointer font-medium">
+                  <UploadFile />
+                  Import từ Excel
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".xlsx,.xls"
+                    onChange={handleImportExcel}
+                    className="hidden"
+                  />
+                </label>
+              </div>
 
               {showAddMember && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                  <div className="flex gap-2 mb-4">
+                <div
+                  ref={searchContainerRef}
+                  className="mt-4 p-5 bg-white rounded-xl border border-gray-200 shadow-sm relative"
+                >
+                  
+                  <div className="flex gap-3 mb-4">
                     <div className="flex-1 relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                       <input
@@ -258,28 +289,30 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
                         onKeyPress={(e) => {
                           if (e.key === "Enter") handleSearchUsers();
                         }}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                       />
                     </div>
                     <button
                       onClick={handleSearchUsers}
                       disabled={searching}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
+                      className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md font-medium"
                     >
                       {searching ? "Đang tìm..." : "Tìm kiếm"}
                     </button>
                   </div>
 
                   {searchResults.length > 0 && (
-                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                    <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
                       {searchResults.map((user) => (
                         <div
                           key={user.id}
-                          className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-colors"
+                          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                              <Person />
+                            <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                              {user.name?.charAt(0)?.toUpperCase() || (
+                                <Person />
+                              )}
                             </div>
                             <div>
                               <p className="font-medium text-gray-900">
@@ -297,7 +330,7 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
                           </div>
                           <button
                             onClick={() => handleAddMember(user.id)}
-                            className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm"
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all text-sm font-medium shadow-sm hover:shadow-md"
                           >
                             Thêm
                           </button>
@@ -316,47 +349,55 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
             </div>
 
             {/* Members List - Table Format */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Danh sách thành viên ({members.length})
-              </h3>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Danh sách thành viên
+                  <span className="ml-2 px-2.5 py-0.5 text-sm bg-blue-100 text-blue-700 rounded-full font-medium">
+                    {members.length}
+                  </span>
+                </h3>
+              </div>
 
               {loading ? (
-                <div className="flex justify-center py-8">
+                <div className="flex justify-center py-12">
                   <LoadingSpinner />
                 </div>
               ) : members.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <People className="mx-auto mb-2 text-gray-300" />
-                  <p>Chưa có thành viên nào</p>
+                <div className="text-center py-12 text-gray-500">
+                  <People
+                    className="mx-auto mb-3 text-gray-300"
+                    sx={{ fontSize: 48 }}
+                  />
+                  <p className="text-base">Chưa có thành viên nào</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                  <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                          TT
+                        <th className="pl-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          STT
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                        <th className="px-2 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                           Họ và tên
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                           Mã cán bộ
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                           Email
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                           Đơn vị
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                           Nhiệm vụ
                         </th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                          Tỷ lệ tham gia (%)
+                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          Tỷ lệ tham gia
                         </th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                           Thao tác
                         </th>
                       </tr>
@@ -367,69 +408,77 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
                         let role = member.role || "Thành viên";
                         if (group.leader?.id === member.id) {
                           role = "Trưởng nhóm";
-                        } else if (group.advisor?.id === member.id && !member.role) {
+                        } else if (
+                          group.advisor?.id === member.id &&
+                          !member.role
+                        ) {
                           role = "Thư ký";
                         }
 
-                        const participationRate = member.participationRate || 100;
+                        const participationRate =
+                          member.participationRate || 100;
                         const isEditing = editingMember === member.id;
 
                         return (
                           <tr
                             key={member.id}
-                            className="hover:bg-gray-50 transition-colors"
+                            className="hover:bg-blue-50 transition-all border-b border-gray-100 last:border-0"
                           >
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                            <td className="pl-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                               {index + 1}
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-900">
-                              <div className="flex items-center gap-2">
-                                {member.title && (
-                                  <span className="text-xs text-gray-500">
-                                    {member.title}
-                                  </span>
-                                )}
-                                <span className="font-medium">
-                                  {member.name || member.username}
-                                </span>
+                            <td className="px-1 py-4">
+                              <div className="flex items-center gap-3">
+                                <div>
+                                  <div className="text-sm font-semibold text-gray-900">
+                                    {member.name || member.username}
+                                  </div>
+                                  {member.title && (
+                                    <div className="text-xs text-gray-500">
+                                      {member.title}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                               {member.username || "N/A"}
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-600">
+                            <td className="px-6 py-4 text-sm text-gray-600">
                               {member.email || "N/A"}
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-600">
+                            <td className="px-6 py-4 text-sm text-gray-600">
                               {member.address || "N/A"}
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
+                            <td className="px-6 py-4 whitespace-nowrap">
                               {isEditing ? (
                                 <select
                                   value={editRole}
                                   onChange={(e) => setEditRole(e.target.value)}
-                                  className="px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                                   disabled={group.leader?.id === member.id}
                                 >
-                                  <option value="Trưởng nhóm">Trưởng nhóm</option>
+                                  <option value="Trưởng nhóm">
+                                    Trưởng nhóm
+                                  </option>
                                   <option value="Thư ký">Thư ký</option>
                                   <option value="Thành viên">Thành viên</option>
                                 </select>
                               ) : (
                                 <span
-                                  className={`px-2 py-1 text-xs font-semibold rounded ${
+                                  className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-md ${
                                     role === "Trưởng nhóm"
-                                      ? "bg-yellow-100 text-yellow-800"
+                                      ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
                                       : role === "Thư ký"
-                                      ? "bg-blue-100 text-blue-800"
-                                      : "bg-gray-100 text-gray-800"
+                                      ? "bg-blue-100 text-blue-800 border border-blue-200"
+                                      : "bg-gray-100 text-gray-800 border border-gray-200"
                                   }`}
                                 >
                                   {role}
                                 </span>
                               )}
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-900">
+                            <td className="px-6 py-4 whitespace-nowrap text-center">
                               {isEditing ? (
                                 <div className="flex items-center gap-2 justify-center">
                                   <input
@@ -442,28 +491,34 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
                                         parseInt(e.target.value) || 0
                                       )
                                     }
-                                    className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-20 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
                                   />
-                                  <span className="text-xs">%</span>
+                                  <span className="text-sm font-medium text-gray-600">
+                                    %
+                                  </span>
                                 </div>
                               ) : (
-                                `${participationRate}%`
+                                <span className="inline-flex items-center px-3 py-1 text-sm font-semibold text-gray-700 bg-gray-100 rounded-md">
+                                  {participationRate}%
+                                </span>
                               )}
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-center">
-                              <div className="flex items-center justify-center gap-1">
+                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                              <div className="flex items-center justify-center gap-2">
                                 {isEditing ? (
                                   <>
                                     <button
-                                      onClick={() => handleSaveMember(member.id)}
-                                      className="p-1 text-green-600 hover:bg-green-50 rounded transition-colors"
+                                      onClick={() =>
+                                        handleSaveMember(member.id)
+                                      }
+                                      className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-all hover:shadow-sm"
                                       title="Lưu"
                                     >
                                       <Save fontSize="small" />
                                     </button>
                                     <button
                                       onClick={handleCancelEdit}
-                                      className="p-1 text-gray-600 hover:bg-gray-50 rounded transition-colors"
+                                      className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all hover:shadow-sm"
                                       title="Hủy"
                                     >
                                       <Close fontSize="small" />
@@ -474,7 +529,7 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
                                     {group.leader?.id !== member.id && (
                                       <button
                                         onClick={() => handleEditMember(member)}
-                                        className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                        className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-all hover:shadow-sm"
                                         title="Chỉnh sửa"
                                       >
                                         <Edit fontSize="small" />
@@ -482,8 +537,10 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
                                     )}
                                     {group.leader?.id !== member.id && (
                                       <button
-                                        onClick={() => handleDeleteMember(member)}
-                                        className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                        onClick={() =>
+                                          handleDeleteMember(member)
+                                        }
+                                        className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-all hover:shadow-sm"
                                         title="Xóa thành viên"
                                       >
                                         <Delete fontSize="small" />
@@ -498,25 +555,12 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
                       })}
                     </tbody>
                   </table>
-                  <div className="bg-gray-50 px-4 py-2 text-sm text-gray-600 border-t">
-                    Danh sách này có {members.length} thành viên
-                  </div>
                 </div>
               )}
             </div>
           </div>
-
-          {/* Footer */}
-          <div className="flex justify-end gap-3 p-6 border-t bg-gray-50">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Đóng
-            </button>
-          </div>
         </div>
-      
+      </div>
 
       {/* Delete Confirmation Modal */}
       <Modal
@@ -536,4 +580,3 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
 };
 
 export default MemberManagementModal;
-

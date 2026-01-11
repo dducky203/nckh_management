@@ -10,6 +10,7 @@ import com.example.server.domain.*;
 import com.example.server.mapper.UserMapper;
 import com.example.server.repository.*;
 import com.example.server.service.EmailService;
+import com.example.server.service.ExcelService;
 import com.example.server.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -61,6 +62,8 @@ public class ManagerUserController {
     private UserService userService;
     @Autowired
     private EmailService emailService;
+    @Autowired
+    private ExcelService excelService;
 
     @GetMapping("/get-all-user")
     @ResponseBody
@@ -191,6 +194,37 @@ public class ManagerUserController {
             emailService.sendForgotPasswordEmail(toEmail, name, token);
         } catch (Exception e) {
             throw new RuntimeException("Không thể gửi email đặt lại mật khẩu: " + e.getMessage());
+        }
+    }
+    @PostMapping("/export-excel")
+    public ResponseEntity<Resource> exportUsersToExcel(@RequestBody List<Integer> userIds) {
+        try {
+            if (userIds == null || userIds.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(null);
+            }
+
+            // Xuất file
+            byte[] excelData = excelService.exportExcelFile(userIds);
+            ByteArrayResource resource = new ByteArrayResource(excelData);
+
+            String timestamp = LocalDateTime.now()
+                    .format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+            String fileName = "DanhSachNguoiDung_" + timestamp + ".xlsx";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentDispositionFormData("attachment", fileName);
+            headers.setContentType(
+                    MediaType.parseMediaType(
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .contentLength(excelData.length)
+                    .body(resource);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 

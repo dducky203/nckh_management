@@ -103,3 +103,163 @@ export const TIME_SLOTS = [
   { value: 9, label: "Tiết 9 (16:00 - 16:50)" },
   { value: 10, label: "Tiết 10 (17:00 - 17:50)" },
 ];
+
+export const CRITERIA_RESEARCH = [
+  {
+    id: "1",
+    name: "Seminar",
+    children: [
+      { id: "1.1", name: "Trình bày Seminar", unit: "Giờ/bài", quota: 10 },
+    ],
+  },
+  {
+    id: "2",
+    name: "Hội thảo",
+    children: [
+      {
+        id: "2.1",
+        name: "Tổ chức hội thảo",
+        children: [
+          {
+            id: "2.1.1",
+            name: "Cấp Quốc tế",
+            unit: "Giờ/hội thảo",
+            quota: 100,
+          },
+          {
+            id: "2.1.2",
+            name: "Cấp Quốc gia",
+            unit: "Giờ/hội thảo",
+            quota: 60,
+          },
+          {
+            id: "2.1.3",
+            name: "Cấp Học viện",
+            unit: "Giờ/hội thảo",
+            quota: 20,
+          },
+        ],
+      },
+      {
+        id: "2.2",
+        name: "Bài tham luận trình bày",
+        children: [
+          { id: "2.2.1", name: "Cấp Quốc tế", unit: "Giờ/bài", quota: 50 },
+          { id: "2.2.2", name: "Cấp Quốc gia", unit: "Giờ/bài", quota: 30 },
+          { id: "2.2.3", name: "Cấp Học viện", unit: "Giờ/bài", quota: 20 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "3",
+    name: "Bài báo quốc tế",
+    children: [
+      { id: "3.1", name: "WoS", unit: "Giờ/bài", quota: 210 },
+      { id: "3.2", name: "Scopus", unit: "Giờ/bài", quota: 140 },
+      { id: "3.3", name: "Tạp chí Học viện (EN)", unit: "Giờ/bài", quota: 70 },
+      { id: "3.4", name: "Không WoS/Scopus", unit: "Giờ/bài", quota: 60 },
+      { id: "3.5", name: "Trích dẫn", unit: "Giờ/lượt", quota: 1 },
+    ],
+  },
+  {
+    id: "4",
+    name: "Bài báo tiếng Việt",
+    children: [
+      { id: "4.1", name: "Tạp chí Học viện", unit: "Giờ/bài", quota: 40 },
+      { id: "4.2", name: "Tạp chí khác", unit: "Giờ/bài", quota: 20 },
+    ],
+  },
+  {
+    id: "5",
+    name: "Bài tham luận đăng kỷ yếu",
+    children: [
+      { id: "5.1", name: "Quốc tế", unit: "Giờ/bài", quota: 25 },
+      { id: "5.2", name: "Quốc gia", unit: "Giờ/bài", quota: 15 },
+      { id: "5.3", name: "Học viện", unit: "Giờ/bài", quota: 10 },
+    ],
+  },
+  {
+    id: "6",
+    name: "Bài tổng quan lĩnh vực nghiên cứu",
+    children: [
+      { id: "6.1", name: "Bài tổng quan", unit: "Giờ/bài", quota: 10 },
+    ],
+  },
+  {
+    id: "7",
+    name: "Bản tin KH&CN Website Học viện",
+    children: [{ id: "7.1", name: "Sản phẩm", unit: "Giờ/sản phẩm", quota: 5 }],
+  },
+  {
+    id: "8",
+    name: "Quy trình / Tiêu chuẩn kỹ thuật",
+    children: [
+      { id: "8.1", name: "Sản phẩm", unit: "Giờ/sản phẩm", quota: 10 },
+    ],
+  },
+  {
+    id: "9",
+    name: "Đề xuất tuyển chọn",
+    children: [
+      { id: "9.1", name: "Cấp Quốc gia", unit: "Giờ/đề xuất", quota: 10 },
+      { id: "9.2", name: "Cấp Bộ", unit: "Giờ/đề xuất", quota: 5 },
+      {
+        id: "9.3",
+        name: "Học viện trọng điểm",
+        unit: "Giờ/đề xuất",
+        quota: 2.5,
+      },
+    ],
+  },
+  {
+    id: "10",
+    name: "Nhiệm vụ KH&CN được phê duyệt",
+    children: [
+      {
+        id: "10.1",
+        name: "Cấp Quốc gia",
+        children: [
+          { id: "10.1.1", name: "Chủ nhiệm", unit: "Giờ/đề tài", quota: 90 },
+          { id: "10.1.2", name: "Thư ký", unit: "Giờ/đề tài", quota: 40 },
+          { id: "10.1.3", name: "Tham gia", unit: "Giờ/đề tài", quota: 150 },
+        ],
+      },
+      {
+        id: "10.2",
+        name: "Cấp Bộ",
+        children: [
+          { id: "10.2.1", name: "Chủ nhiệm", unit: "Giờ/đề tài", quota: 70 },
+          { id: "10.2.2", name: "Thư ký", unit: "Giờ/đề tài", quota: 30 },
+          { id: "10.2.3", name: "Tham gia", unit: "Giờ/đề tài", quota: 110 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "11",
+    name: "Tổ chức Hội đồng tư vấn",
+    children: [
+      { id: "11.1", name: "Hội đồng", unit: "Giờ/hội đồng", quota: 20 },
+    ],
+  },
+  {
+    id: "12",
+    name: "Mời chuyên gia trình bày Seminar",
+    children: [{ id: "12.1", name: "Seminar", unit: "Giờ/Seminar", quota: 15 }],
+  },
+  {
+    id: "13",
+    name: "Hoạt động KH&CN khác",
+    children: [
+      { id: "13.1", name: "Chương sách ISBN", unit: "Giờ/chương", quota: 80 },
+      { id: "13.2", name: "Đề án Học viện", unit: "Giờ/đề án", quota: 80 },
+      { id: "13.3", name: "Bài quảng bá", unit: "Giờ/bài", quota: 10 },
+      { id: "13.4", name: "Giáo trình", unit: "Giờ/giáo trình", quota: 50 },
+      { id: "13.5", name: "Bài giảng mới", unit: "Giờ/bài giảng", quota: 30 },
+      { id: "13.6", name: "Sách chuyên khảo", unit: "Giờ/sách", quota: 40 },
+      { id: "13.7", name: "Sách tham khảo", unit: "Giờ/sách", quota: 20 },
+      { id: "13.8", name: "Hợp đồng KH&CN", unit: "Giờ/10tr", quota: 1 },
+    ],
+  },
+];

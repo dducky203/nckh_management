@@ -29,12 +29,12 @@ const ResearchGroupManagement = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
-  const [yearFilter, setYearFilter] = useState("");
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState(null);
   const [memberModalOpen, setMemberModalOpen] = useState(false);
   const [productModalOpen, setProductModalOpen] = useState(false);
-  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [managementGroup, setManagementGroup] = useState(null);
   const [statistics, setStatistics] = useState(null);
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
@@ -55,7 +55,7 @@ const ResearchGroupManagement = () => {
     getPageNumbers,
     updatePaginationData,
     resetPagination,
-  } = usePagination(0, 6);
+  } = usePagination(0, 9);
 
   const isAdmin = user?.role === "admin";
 
@@ -65,7 +65,7 @@ const ResearchGroupManagement = () => {
       fetchStatistics();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, statusFilter, yearFilter]);
+  }, [currentPage, statusFilter]);
 
   const fetchGroups = async () => {
     try {
@@ -74,8 +74,7 @@ const ResearchGroupManagement = () => {
         searchTerm,
         statusFilter,
         currentPage,
-        6,
-        yearFilter
+        9
       );
       const responseData = response.data || response;
       setGroups(responseData?.groups || []);
@@ -116,6 +115,16 @@ const ResearchGroupManagement = () => {
   const handleViewDetail = (group) => {
     setSelectedGroup(group);
     setDetailModalOpen(true);
+  };
+
+  const handleManageMembers = (group) => {
+    setManagementGroup(group);
+    setMemberModalOpen(true);
+  };
+
+  const handleManageProductsAndCompletion = (group) => {
+    setManagementGroup(group);
+    setProductModalOpen(true);
   };
 
   const handleApprove = (groupId) => {
@@ -168,19 +177,6 @@ const ResearchGroupManagement = () => {
       toast.error(error.message || ERROR_MESSAGES.SERVER_ERROR);
     }
   };
-
-  // Handler cho quản lý thành viên
-  const handleManageMembers = (group) => {
-    setSelectedGroup(group);
-    setMemberModalOpen(true);
-  };
-
-  // Quản lý sản phẩm & mức độ hoàn thành
-  const handleManageProductsAndCompletion = (group) => {
-    setSelectedGroup(group);
-    setProductModalOpen(true);
-  };
-
 
   const handleSaveGroup = async (groupData) => {
     try {
@@ -307,20 +303,6 @@ const ResearchGroupManagement = () => {
 
             <div className="flex gap-4">
               <select
-                value={yearFilter}
-                onChange={(e) => {
-                  setYearFilter(e.target.value);
-                  resetPagination();
-                }}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Tất cả năm</option>
-                <option value="2022">2022</option>
-                <option value="2023">2023</option>
-                <option value="2024">2024</option>
-                <option value="2025">2025</option>
-              </select>
-              <select
                 value={statusFilter}
                 onChange={(e) => {
                   setStatusFilter(e.target.value);
@@ -375,15 +357,18 @@ const ResearchGroupManagement = () => {
         ) : (
           <>
             <GroupTable
-            groups={groups}
-            isAdmin={isAdmin}
-            onViewDetail={handleViewDetail}
-            onDelete={handleDelete}
-            getStatusBadge={getStatusBadge}
-            onManageMembers={handleManageMembers}
-            onManageProductsAndCompletion={handleManageProductsAndCompletion}
-          />
-
+              groups={groups}
+              isAdmin={isAdmin}
+              currentUserId={user?.id}
+              onViewDetail={handleViewDetail}
+              onEdit={handleEditGroup}
+              onApprove={handleApprove}
+              onReject={handleReject}
+              onDelete={handleDelete}
+              getStatusBadge={getStatusBadge}
+              onManageMembers={handleManageMembers}
+              onManageProductsAndCompletion={handleManageProductsAndCompletion}
+            />
 
             {/* Pagination */}
             <div className="bg-white rounded-lg shadow-sm">
@@ -391,9 +376,9 @@ const ResearchGroupManagement = () => {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 totalItems={totalItems}
-                itemsPerPage={6}
-                startIndex={currentPage * 6}
-                endIndex={Math.min((currentPage + 1) * 6, totalItems)}
+                itemsPerPage={9}
+                startIndex={0}
+                endIndex={groups.length}
                 onPageChange={goToPage}
                 onFirstPage={goToFirstPage}
                 onLastPage={() => goToLastPage(totalPages)}
@@ -432,27 +417,25 @@ const ResearchGroupManagement = () => {
         />
       )}
 
-      {memberModalOpen && selectedGroup && (
+      {memberModalOpen && managementGroup && (
         <MemberManagementModal
           isOpen={memberModalOpen}
           onClose={() => {
             setMemberModalOpen(false);
-            setSelectedGroup(null);
+            setManagementGroup(null);
           }}
-          group={selectedGroup}
+          group={managementGroup}
           onRefresh={fetchGroups}
         />
       )}
 
-      {productModalOpen && selectedGroup && (
+      {productModalOpen && (
         <ProductManagementModal
           isOpen={productModalOpen}
           onClose={() => {
             setProductModalOpen(false);
-            setSelectedGroup(null);
+            setManagementGroup(null);
           }}
-          group={selectedGroup}
-          onRefresh={fetchGroups}
         />
       )}
 

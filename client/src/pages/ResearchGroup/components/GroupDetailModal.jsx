@@ -7,17 +7,14 @@ const GroupDetailModal = ({
   onClose,
   group,
   isAdmin,
-  currentUserId,
   onApprove,
   onReject,
-  onEdit,
   getStatusBadge,
 }) => {
   if (!isOpen || !group) return null;
 
   const statusBadge = getStatusBadge(group.status);
   const StatusIcon = statusBadge.icon;
-  const isLeader = group.leader?.id === currentUserId;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -170,7 +167,7 @@ const GroupDetailModal = ({
 
         {/* Action Buttons */}
         <div className="flex gap-4 p-6 border-t bg-gray-50">
-          {(isAdmin || isLeader) && (
+          {/* {(isAdmin || isLeader) && (
             <Button
               onClick={() => {
                 onClose();
@@ -181,7 +178,7 @@ const GroupDetailModal = ({
               <Edit fontSize="small" />
               Chỉnh sửa
             </Button>
-          )}
+          )} */}
 
           {isAdmin && group.status === "PENDING" && (
             <>

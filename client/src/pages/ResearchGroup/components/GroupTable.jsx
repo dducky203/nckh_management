@@ -12,8 +12,8 @@ const GroupTable = ({
   onViewDetail,
   onDelete,
   getStatusBadge,
-  onManageMembers,
-  onManageProductsAndCompletion,
+  onManageMembers = () => {},
+  onManageProductsAndCompletion = () => {},
 }) => {
   // TODO: sau này có thể lấy từ backend
   const isActive = true;
