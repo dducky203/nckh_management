@@ -9,12 +9,38 @@ import "./EventFormModal.css";
 const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
   const toast = useToast();
 
+  const toTimeInputValue = (value) => {
+    if (!value) return "";
+    if (typeof value === "string") {
+      // ISO LocalDateTime: 2026-01-11T09:00:00
+      if (value.includes("T")) return value.split("T")[1].slice(0, 5);
+      // LocalTime: 09:00:00 or 09:00
+      if (value.includes(":")) return value.slice(0, 5);
+      return "";
+    }
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+      return value.toTimeString().slice(0, 5);
+    }
+    return "";
+  };
+
+  const timeToMinutes = (timeStr) => {
+    if (!timeStr || typeof timeStr !== "string" || !timeStr.includes(":")) {
+      return null;
+    }
+    const [h, m] = timeStr.split(":");
+    const hh = Number(h);
+    const mm = Number(m);
+    if (Number.isNaN(hh) || Number.isNaN(mm)) return null;
+    return hh * 60 + mm;
+  };
+
   const [formData, setFormData] = useState({
     title: "",
     type: "Hội thảo",
     date: "",
-    startTime: 1,
-    endTime: 5,
+    startTime: "08:00",
+    endTime: "10:00",
     location: "",
     description: "",
     image: null,
@@ -31,8 +57,8 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
         title: event.title || "",
         type: event.type || "Hội thảo",
         date: event.date || "",
-        startTime: event.startTime || 1,
-        endTime: event.endTime || 5,
+        startTime: toTimeInputValue(event.startTime) || "08:00",
+        endTime: toTimeInputValue(event.endTime) || "10:00",
         location: event.location || "",
         description: event.description || "",
         image: null,
@@ -42,8 +68,8 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
         title: "",
         type: "Hội thảo",
         date: "",
-        startTime: 1,
-        endTime: 5,
+        startTime: "08:00",
+        endTime: "10:00",
         location: "",
         description: "",
         image: null,
@@ -105,8 +131,14 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
     }
 
     if (formData.startTime && formData.endTime) {
-      if (parseInt(formData.endTime) <= parseInt(formData.startTime)) {
-        newErrors.endTime = "Tiết kết thúc phải sau tiết bắt đầu";
+      const startMinutes = timeToMinutes(formData.startTime);
+      const endMinutes = timeToMinutes(formData.endTime);
+      if (
+        startMinutes !== null &&
+        endMinutes !== null &&
+        endMinutes <= startMinutes
+      ) {
+        newErrors.endTime = "Giờ kết thúc phải sau giờ bắt đầu";
       }
     }
 
@@ -212,42 +244,32 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
               )}
             </div>
 
-            {/* Tiết bắt đầu */}
+            {/* Giờ bắt đầu */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tiết bắt đầu <span className="text-red-500">*</span>
+                Giờ bắt đầu <span className="text-red-500">*</span>
               </label>
-              <select
+              <input
+                type="time"
                 name="startTime"
                 value={formData.startTime}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((time) => (
-                  <option key={time} value={time}>
-                    Tiết {time}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
-            {/* Tiết kết thúc */}
+            {/* Giờ kết thúc */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tiết kết thúc <span className="text-red-500">*</span>
+                Giờ kết thúc <span className="text-red-500">*</span>
               </label>
-              <select
+              <input
+                type="time"
                 name="endTime"
                 value={formData.endTime}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((time) => (
-                  <option key={time} value={time}>
-                    Tiết {time}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             {/* Địa điểm */}

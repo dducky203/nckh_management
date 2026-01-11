@@ -62,6 +62,15 @@ const EventDetailModal = ({
 
   const statusBadge = getStatusBadge(event.status);
 
+  const toTimeLabel = (value) => {
+    if (!value) return "";
+    if (typeof value === "string") {
+      if (value.includes("T")) return value.split("T")[1].slice(0, 5);
+      if (value.includes(":")) return value.slice(0, 5);
+    }
+    return "";
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -143,6 +152,10 @@ const EventDetailModal = ({
                         0,
                         5
                       )} - ${event.endTimeDetail.slice(0, 5)}`
+                    : event.startTime && event.endTime
+                    ? `${toTimeLabel(event.startTime)} - ${toTimeLabel(
+                        event.endTime
+                      )}`
                     : "Chưa xác định giờ"}
                 </div>
               </div>

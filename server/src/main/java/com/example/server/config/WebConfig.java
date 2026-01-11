@@ -17,8 +17,18 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Giả sử bạn muốn ảnh truy cập qua: http://localhost:8080/images/ten_anh.jpg
-        registry.addResourceHandler("/images/**")
-                .addResourceLocations("file:" + uploadDir + "/");
+    String location = "file:" + uploadDir;
+    // Normalize Windows paths for Spring's file: URL handling
+    location = location.replace("\\\\", "/");
+    if (!location.endsWith("/")) {
+        location = location + "/";
+    }
+
+    // Serve uploaded files. With spring.mvc.servlet.path=/api, these become /api/file/** and /api/images/**
+    registry.addResourceHandler("/file/**")
+        .addResourceLocations(location);
+
+    registry.addResourceHandler("/images/**")
+        .addResourceLocations(location);
     }
 }

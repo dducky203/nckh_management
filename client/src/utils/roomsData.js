@@ -1,4 +1,4 @@
-import roomService from '../services/roomService';
+import roomService from "../services/roomService";
 
 // Global rooms data
 let roomsData = [];
@@ -13,14 +13,14 @@ export const fetchRoomsData = async () => {
 
   try {
     isLoading = true;
-    console.log('Fetching rooms data...');
+    console.log("Fetching rooms data...");
     const response = await roomService.getPublicRooms();
     roomsData = response || [];
     isLoaded = true;
-    console.log('Rooms data loaded:', roomsData);
+    console.log("Rooms data loaded:", roomsData);
     return roomsData;
   } catch (error) {
-    console.error('Error fetching rooms data:', error);
+    console.error("Error fetching rooms data:", error);
     roomsData = [];
     return [];
   } finally {
@@ -43,22 +43,23 @@ export const getRoomsDataSync = () => {
 
 // Get room options for dropdown
 export const getRoomOptions = () => {
-  return roomsData.map(room => ({
+  return roomsData.map((room) => ({
     value: room.id,
     label: room.displayName,
-    room: room
+    room: room,
   }));
 };
 
 // Get room by ID
 export const getRoomById = (id) => {
-  return roomsData.find(room => room.id === id);
+  const target = String(id);
+  return roomsData.find((room) => String(room.id) === target);
 };
 
 // Get room display name
 export const getRoomDisplayName = (id) => {
   const room = getRoomById(id);
-  return room ? room.displayName : '';
+  return room ? room.displayName : "";
 };
 
 // Check if rooms are loaded
@@ -79,5 +80,5 @@ export default {
   getRoomById,
   getRoomDisplayName,
   isRoomsLoaded,
-  refreshRoomsData
+  refreshRoomsData,
 };

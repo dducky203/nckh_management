@@ -21,7 +21,7 @@ import {
 } from "../../utils/roomsData";
 import eventService from "../../services/eventService";
 import Button from "../../components/common/Button";
-import { EVENT_CATEGORIES, TIME_SLOTS } from "../../utils";
+import { EVENT_CATEGORIES } from "../../utils";
 import { ERROR_MESSAGES } from "../../constants";
 
 const CreateEvent = () => {
@@ -61,22 +61,7 @@ const CreateEvent = () => {
     loadRooms();
   }, [toast]);
 
-  console.log("Rooms debug:", {
-    rooms,
-    roomsLength: rooms?.length,
-    roomsLoading,
-    getRoomOptions: getRoomOptions(),
-  });
-
   const [errors, setErrors] = useState({});
-
-  const eventTypes = [
-    { value: "seminar", label: "Hội thảo" },
-    { value: "workshop", label: "Workshop" },
-    { value: "conference", label: "Hội nghị" },
-    { value: "competition", label: "Cuộc thi" },
-    { value: "other", label: "Khác" },
-  ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -117,6 +102,17 @@ const CreateEvent = () => {
   const validateForm = () => {
     const newErrors = {};
 
+    const timeToMinutes = (timeStr) => {
+      if (!timeStr || typeof timeStr !== "string" || !timeStr.includes(":")) {
+        return null;
+      }
+      const [h, m] = timeStr.split(":");
+      const hh = Number(h);
+      const mm = Number(m);
+      if (Number.isNaN(hh) || Number.isNaN(mm)) return null;
+      return hh * 60 + mm;
+    };
+
     if (!formData.eventName.trim()) {
       newErrors.eventName = "Tên sự kiện là bắt buộc";
     }
@@ -138,19 +134,21 @@ const CreateEvent = () => {
     }
 
     if (!formData.startTime) {
-      newErrors.startTime = "Tiết bắt đầu là bắt buộc";
+      newErrors.startTime = "Giờ bắt đầu là bắt buộc";
     }
 
     if (!formData.endTime) {
-      newErrors.endTime = "Tiết kết thúc là bắt buộc";
+      newErrors.endTime = "Giờ kết thúc là bắt buộc";
     }
 
     if (
       formData.startTime &&
       formData.endTime &&
-      parseInt(formData.endTime) < parseInt(formData.startTime)
+      timeToMinutes(formData.endTime) !== null &&
+      timeToMinutes(formData.startTime) !== null &&
+      timeToMinutes(formData.endTime) <= timeToMinutes(formData.startTime)
     ) {
-      newErrors.endTime = "Tiết kết thúc phải sau tiết bắt đầu";
+      newErrors.endTime = "Giờ kết thúc phải sau giờ bắt đầu";
     }
 
     setErrors(newErrors);
@@ -179,8 +177,8 @@ const CreateEvent = () => {
       // Thêm các trường dữ liệu
       submitData.append("eventName", formData.eventName);
       submitData.append("dateOfEvent", formData.dateOfEvent);
-      submitData.append("startTime", formData.startTime || 1);
-      submitData.append("endTime", formData.endTime || 5);
+      submitData.append("startTime", formData.startTime);
+      submitData.append("endTime", formData.endTime);
       submitData.append("roomId", formData.roomId);
       submitData.append("type", formData.type);
       submitData.append("description", formData.description);
@@ -380,26 +378,20 @@ const CreateEvent = () => {
                   htmlFor="startTime"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Tiết bắt đầu <span className="text-red-500">*</span>
+                  Giờ bắt đầu <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <AccessTime className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <select
+                  <input
                     id="startTime"
                     name="startTime"
+                    type="time"
                     value={formData.startTime}
                     onChange={handleChange}
                     className={`w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor ${
                       errors.startTime ? "border-red-500" : "border-gray-300"
                     }`}
-                  >
-                    <option value="">Chọn tiết bắt đầu</option>
-                    {TIME_SLOTS.map((slot) => (
-                      <option key={slot.value} value={slot.value}>
-                        {slot.label}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
                 {errors.startTime && (
                   <p className="text-red-500 text-sm mt-1">
@@ -413,26 +405,20 @@ const CreateEvent = () => {
                   htmlFor="endTime"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Tiết kết thúc <span className="text-red-500">*</span>
+                  Giờ kết thúc <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <AccessTime className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <select
+                  <input
                     id="endTime"
                     name="endTime"
+                    type="time"
                     value={formData.endTime}
                     onChange={handleChange}
                     className={`w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor ${
                       errors.endTime ? "border-red-500" : "border-gray-300"
                     }`}
-                  >
-                    <option value="">Chọn tiết kết thúc</option>
-                    {TIME_SLOTS.map((slot) => (
-                      <option key={slot.value} value={slot.value}>
-                        {slot.label}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
                 {errors.endTime && (
                   <p className="text-red-500 text-sm mt-1">{errors.endTime}</p>
@@ -464,8 +450,10 @@ const CreateEvent = () => {
                     {roomsLoading ? "Đang tải..." : "Chọn địa điểm tổ chức"}
                   </option>
                   {rooms.map((room) => (
-                    <option key={room.id} value={room.id}>
-                      {room.displayName}
+                    <option key={room.id} value={String(room.id)}>
+                      {room.displayName ||
+                        room.roomName ||
+                        "(Không có tên phòng)"}
                     </option>
                   ))}
                 </select>

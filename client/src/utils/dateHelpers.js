@@ -11,7 +11,7 @@ export const formatDateForInput = (dateString) => {
     }
   };
 
-
+export const targetDate = (dateString) => new Date(Date.now() + dateString * 24 * 60 * 60 * 1000);
 
 export const formatDate = (date, format = DATE_FORMATS.DISPLAY) => {
   if (!date) return "";

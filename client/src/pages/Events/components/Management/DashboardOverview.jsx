@@ -150,7 +150,6 @@ const ResearchGroupManagement = () => {
   const handleDelete = (groupId) => {
     setConfirmModal({ isOpen: true, type: "delete", groupId });
   };
-
   const confirmDelete = async () => {
     try {
       await researchGroupService.deleteGroup(confirmModal.groupId);

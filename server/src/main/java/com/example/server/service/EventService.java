@@ -3,10 +3,9 @@ package com.example.server.service;
 import com.example.server.DTO.AllEventDto;
 import com.example.server.DTO.RemainingEventDTO;
 import com.example.server.domain.Event;
-import com.example.server.domain.Time;
 import com.example.server.projection.IEvent;
 import com.example.server.repository.EventRepository;
-import com.example.server.repository.TImeRepository;
+//import com.example.server.repository.TImeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
@@ -17,6 +16,7 @@ import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.function.Function;
@@ -26,8 +26,8 @@ import java.util.stream.Collectors;
 public class EventService {
     @Autowired
     private EventRepository eventRepository;
-    @Autowired
-    TImeRepository timeRepository;
+//    @Autowired
+//    TImeRepository timeRepository;
 
     public EventService(EventRepository eventRepository) {
         this.eventRepository = eventRepository;
@@ -36,23 +36,15 @@ public class EventService {
     // count tgian sap dien ra su kien
     public List<RemainingEventDTO> getRemainingEvents() {
         List<IEvent> events = eventRepository.getUpcomingEvents();
-        List<Integer> timeIds = events.stream()
-                .map(IEvent::getStartTime)
-                .collect(Collectors.toList());
-
-        Map<Integer, LocalTime> timeMap = timeRepository.findAllById(timeIds)
-                .stream()
-                .collect(Collectors.toMap(Time::getId, Time::getTime));
-
         List<RemainingEventDTO> dtos = new ArrayList<>();
         for (IEvent e : events) {
-            LocalTime time = timeMap.get(e.getStartTime());
-            if (time != null) {
+            LocalDateTime startDateTime = e.getStartTime();
+            if (startDateTime != null) {
                 RemainingEventDTO dto = new RemainingEventDTO();
                 dto.setId(e.getId());
                 dto.setName(e.getEventName());
                 dto.setDate(e.getDateOfEvent());
-                dto.setTime(time);
+                dto.setTime(startDateTime.toLocalTime());
                 dtos.add(dto);
             }
         }
@@ -79,30 +71,20 @@ public class EventService {
     }
     public String saveE(AllEventDto allEventDto) {
         Event event = allEventDto.getEvent();
-        // ktra trung lap room
+
+
         List<Event> events = eventRepository.findAll();
         for (Event e : events) {
-            if (e.getId() != event.getId()) {
-                if (Objects.equals(String.valueOf(e.getDateOfEvent()), String.valueOf(event.getDateOfEvent()))) { // ss date of event
-                    if (Objects.equals(e.getIdRoom(), event.getIdRoom())){ // ss event room
-                        // so sánh tiết cùng 1 phòng để không trùng lặp
-                        if ((event.getStartTime() < e.getStartTime() && event.getEndTime() > e.getStartTime()) ||  // Event mới bắt đầu trước và kết thúc sau sự kiện cũ bắt đầu
-                                (event.getStartTime() < e.getEndTime() && event.getEndTime() > e.getEndTime()) ||    // Event mới bắt đầu trước và kết thúc sau sự kiện cũ kết thúc
-                                (event.getStartTime() == e.getStartTime() || event.getEndTime() == e.getEndTime())) { // Event mới có thời gian bắt đầu hoặc kết thúc giống sự kiện cũ
-                            return "Sự kiện trùng thời gian với sự kiện khác trong cùng phòng vào cùng ngày." +
-                                    "Hãy đổi phòng tổ chức sự kiện khác hoặc thay đổi lại tiết bắt đầu và tiết kết thúc";
-                        }
-                    }
-
+            if (e.getId() != null && event.getId() != null && Objects.equals(e.getId(), event.getId())) {
+                continue;
+            }
+            if (event.getDateOfEvent() != null && e.getDateOfEvent() != null && event.getDateOfEvent().equals(e.getDateOfEvent())) {
+                if (Objects.equals(e.getIdRoom(), event.getIdRoom())) {
+//                    if (isOverlapping(event.getStartTime(), event.getEndTime(), e.getStartTime(), e.getEndTime())) {
+//                        return "Sự kiện trùng thời gian với sự kiện khác trong cùng phòng vào cùng ngày." +
+//                                "Hãy đổi phòng tổ chức sự kiện khác hoặc thay đổi lại giờ bắt đầu và giờ kết thúc";
+//                    }
                 }
-            }
-        }
-        if (event.getStartTime() != null && event.getEndTime() != null) {
-            if (event.getStartTime() > event.getEndTime() || event.getStartTime() == event.getEndTime()){
-                return "Tiết bắt đầu phải nhỏ hơn tiết kết thúc.";
-            }
-            if (event.getStartTime() < 0){
-                return "Bạn đang để tiết bắt đầu là số âm.";
             }
         }
         // Kiểm tra xem đối tượng Event có ID không (đã tồn tại trong CSDL chưa)
@@ -123,26 +105,19 @@ public class EventService {
 //        }
 //        event.setCreateDate(LocalDate.now());
         // Kiểm tra tiết bắt đầu và kết thúc
-        if (event.getStartTime()!= null && event.getEndTime()!= null){
-            if (event.getStartTime() >= event.getEndTime()) {
-                return "Tiết bắt đầu phải nhỏ hơn tiết kết thúc.";
-            }
-            if (event.getStartTime() < 0) {
-                return "Bạn đang để tiết bắt đầu là số âm.";
-            }
+        if (event.getStartTime() != null && event.getEndTime() != null) {
+
 
             // Kiểm tra trùng lịch trong cùng phòng và cùng ngày
             List<Event> events = eventRepository.findAll();
             for (Event e : events) {
-                if (Objects.equals(String.valueOf(e.getDateOfEvent()), String.valueOf(event.getDateOfEvent()))) {
-                    if (Objects.equals(e.getIdRoom(), event.getIdRoom())) {
-                        if ((event.getStartTime() < e.getStartTime() && event.getEndTime() > e.getStartTime()) ||
-                                (event.getStartTime() < e.getEndTime() && event.getEndTime() > e.getEndTime()) ||
-                                (event.getStartTime() == e.getStartTime() || event.getEndTime() == e.getEndTime())) {
-                            return "Sự kiện trùng thời gian với sự kiện khác trong cùng phòng vào cùng ngày. " +
-                                    "Hãy đổi phòng tổ chức sự kiện khác hoặc thay đổi lại tiết bắt đầu và tiết kết thúc.";
-                        }
-                    }
+                if (event.getDateOfEvent() != null && e.getDateOfEvent() != null && event.getDateOfEvent().equals(e.getDateOfEvent())) {
+//                    if (Objects.equals(e.getIdRoom(), event.getIdRoom())) {
+////                        if (isOverlapping(event.getStartTime(), event.getEndTime(), e.getStartTime(), e.getEndTime())) {
+////                            return "Sự kiện trùng thời gian với sự kiện khác trong cùng phòng vào cùng ngày. " +
+////                                    "Hãy đổi phòng tổ chức sự kiện khác hoặc thay đổi lại giờ bắt đầu và giờ kết thúc.";
+////                        }
+//                    }
                 }
             }
         }
@@ -150,6 +125,11 @@ public class EventService {
         // Tạo mới sự kiện
         eventRepository.save(event);
         return "null";
+    }
+
+    private boolean isOverlapping(LocalDateTime startA, LocalDateTime endA, LocalDateTime startB, LocalDateTime endB) {
+        if (startA == null || endA == null || startB == null || endB == null) return false;
+        return startA.isBefore(endB) && endA.isAfter(startB);
     }
     public Event getReferenceById(Integer integer) {
         return eventRepository.getReferenceById(integer);

@@ -8,7 +8,8 @@ import com.example.server.service.EventPublicService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,8 @@ public class EventPublicServiceImpl implements EventPublicService {
 
     @Autowired
     private TImeRepository timeRepository;
+
+    private static final DateTimeFormatter TIME_DETAIL_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     @Override
     public List<EventPublicDTO> getPublicEvents(String status) {
@@ -75,7 +78,7 @@ public class EventPublicServiceImpl implements EventPublicService {
                 break;
             default:
                 events = eventRepository.findAll().stream()
-                    .filter(e -> e.getIsDelete() != null && e.getIsDelete() == 1)
+                    .filter(e -> e.getIsDelete() != null && e.getIsDelete() == 1 && e.getDateOfEvent().equals(LocalDate.now()))
                     .collect(Collectors.toList());
                 break;
         }
@@ -282,6 +285,10 @@ public class EventPublicServiceImpl implements EventPublicService {
         dto.setId(event.getId());
         dto.setEventName(event.getEventName());
         dto.setDateOfEvent(event.getDateOfEvent());
+        dto.setStartTime(event.getStartTime());
+        dto.setEndTime(event.getEndTime());
+        dto.setStartTimeDetail(formatTimeDetail(event.getStartTime()));
+        dto.setEndTimeDetail(formatTimeDetail(event.getEndTime()));
         dto.setStatus(event.getStatus());
         dto.setCreatedAt(event.getCreatedAt());
         dto.setUpdatedAt(event.getUpdatedAt());
@@ -349,6 +356,10 @@ public class EventPublicServiceImpl implements EventPublicService {
         dto.setId(event.getId());
         dto.setEventName(event.getEventName());
         dto.setDateOfEvent(event.getDateOfEvent());
+        dto.setStartTime(event.getStartTime());
+        dto.setEndTime(event.getEndTime());
+        dto.setStartTimeDetail(formatTimeDetail(event.getStartTime()));
+        dto.setEndTimeDetail(formatTimeDetail(event.getEndTime()));
         dto.setStatus(event.getStatus());
         dto.setCreatedAt(event.getCreatedAt());
         dto.setUpdatedAt(event.getUpdatedAt());
@@ -401,6 +412,11 @@ public class EventPublicServiceImpl implements EventPublicService {
         }
 
         return dto;
+    }
+
+    private String formatTimeDetail(LocalDateTime dateTime) {
+        if (dateTime == null) return null;
+        return dateTime.toLocalTime().format(TIME_DETAIL_FORMATTER);
     }
 
     @Override

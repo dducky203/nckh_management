@@ -6,6 +6,7 @@ import lombok.Setter;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -28,10 +29,10 @@ public class Event extends EntityBase implements Serializable {
     private Integer creator;
 
     @Column(name = "start_time")
-    private Integer startTime;
+    private LocalDateTime startTime;
 
     @Column(name = "end_time")
-    private Integer endTime;
+    private LocalDateTime endTime;
 
     // @ManyToOne(fetch = FetchType.LAZY)
     @Column(name = "id_operating_standard_2")
