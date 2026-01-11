@@ -41,6 +41,6 @@ jwt:
 # Gemini AI Configuration
 gemini:
   api:
-    key: AIzaSyDBWJrfVmHaR_sQ363zVcdMhDi4N_yQkqM
+    key: AIzaSyDznsvN4-ADEFRqpTIBPwP70EkMHFj4kJg
     model: gemini-2.5-flash
     endpoint: https://generativelanguage.googleapis.com/v1beta/models/

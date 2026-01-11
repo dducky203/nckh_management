@@ -61,22 +61,7 @@ const CreateEvent = () => {
     loadRooms();
   }, [toast]);
 
-  console.log("Rooms debug:", {
-    rooms,
-    roomsLength: rooms?.length,
-    roomsLoading,
-    getRoomOptions: getRoomOptions(),
-  });
-
   const [errors, setErrors] = useState({});
-
-  const eventTypes = [
-    { value: "seminar", label: "Hội thảo" },
-    { value: "workshop", label: "Workshop" },
-    { value: "conference", label: "Hội nghị" },
-    { value: "competition", label: "Cuộc thi" },
-    { value: "other", label: "Khác" },
-  ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -464,8 +449,10 @@ const CreateEvent = () => {
                     {roomsLoading ? "Đang tải..." : "Chọn địa điểm tổ chức"}
                   </option>
                   {rooms.map((room) => (
-                    <option key={room.id} value={room.id}>
-                      {room.displayName}
+                    <option key={room.id} value={String(room.id)}>
+                      {room.displayName ||
+                        room.roomName ||
+                        "(Không có tên phòng)"}
                     </option>
                   ))}
                 </select>
