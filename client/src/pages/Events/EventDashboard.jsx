@@ -206,8 +206,8 @@ const EventDashboard = () => {
         // Thêm các trường dữ liệu
         submitData.append("eventName", formData.title);
         submitData.append("dateOfEvent", formData.date);
-        submitData.append("startTime", formData.startTime || 1);
-        submitData.append("endTime", formData.endTime || 5);
+        submitData.append("startTime", formData.startTime);
+        submitData.append("endTime", formData.endTime);
         submitData.append("location", formData.location);
         submitData.append("type", formData.type);
         submitData.append("description", formData.description);

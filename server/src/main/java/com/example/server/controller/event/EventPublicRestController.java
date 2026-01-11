@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -145,8 +147,8 @@ public class EventPublicRestController {
             @RequestParam(value = "banner", required = false) MultipartFile bannerFile,
             @RequestParam("eventName") String eventName,
             @RequestParam("dateOfEvent") String dateOfEvent,
-            @RequestParam("startTime") Integer startTime,
-            @RequestParam("endTime") Integer endTime,
+            @RequestParam("startTime") String startTime,
+            @RequestParam("endTime") String endTime,
             @RequestParam(value = "roomId", required = false) Integer roomId,
             @RequestParam("type") String type,
             @RequestParam("description") String description,
@@ -167,11 +169,19 @@ public class EventPublicRestController {
             }
 
             // Tạo EventPublicDTO
+            LocalDate eventDate = LocalDate.parse(dateOfEvent);
+            LocalTime startLocalTime = LocalTime.parse(startTime);
+            LocalTime endLocalTime = LocalTime.parse(endTime);
+
+            if (!startLocalTime.isBefore(endLocalTime)) {
+                throw new RuntimeException("Giờ bắt đầu phải nhỏ hơn giờ kết thúc.");
+            }
+
             EventPublicDTO eventData = new EventPublicDTO();
             eventData.setEventName(eventName);
-            eventData.setDateOfEvent(java.time.LocalDate.parse(dateOfEvent));
-            eventData.setStartTime(startTime);
-            eventData.setEndTime(endTime);
+            eventData.setDateOfEvent(eventDate);
+            eventData.setStartTime(eventDate.atTime(startLocalTime));
+            eventData.setEndTime(eventDate.atTime(endLocalTime));
             eventData.setRoomId(roomId);
             eventData.setType(type);
             eventData.setDescription(description);

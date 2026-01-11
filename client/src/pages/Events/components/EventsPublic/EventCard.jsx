@@ -8,6 +8,7 @@ import Button from "../../../../components/common/Button";
 import { formatDateTime, getCountdown } from "../../utils/eventHelpers";
 import { API_BASE_URL } from "../../../../constants";
 import EventCountdown from "./EventCountdown";
+import { targetDate } from "../../../../utils";
 
 const EventCard = ({ event, activeTab, onViewDetail, onRegister }) => {
   return (
@@ -30,12 +31,12 @@ const EventCard = ({ event, activeTab, onViewDetail, onRegister }) => {
         >
           {event.type || "Sự kiện"}
         </div>
-        {activeTab === "ongoing" && (
+        {activeTab === "ongoing"  && (
           <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded text-xs font-medium animate-pulse">
             Đang diễn ra
           </div>
         )}
-        {activeTab === "upcoming" && (
+        {activeTab === "upcoming" && new Date(event.dateOfEvent) < targetDate(5) && (
           <div className="absolute top-4 left-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-lg backdrop-blur-sm">
             <EventCountdown targetDate={event.dateOfEvent} />
           </div>

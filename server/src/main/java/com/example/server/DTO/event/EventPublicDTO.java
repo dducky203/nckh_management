@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Data
@@ -14,8 +15,8 @@ public class EventPublicDTO {
     private Integer id;
     private String eventName;
     private LocalDate dateOfEvent;
-    private Integer startTime; // Tiết bắt đầu (1-10)
-    private Integer endTime; // Tiết kết thúc (1-10)
+    private LocalDateTime startTime; // Datetime bắt đầu
+    private LocalDateTime endTime; // Datetime kết thúc
     private String startTimeDetail; // Giờ chi tiết từ bảng Time (VD: "07:00:00")
     private String endTimeDetail; // Giờ chi tiết từ bảng Time (VD: "11:00:00")
     private String location; // from Room
