@@ -6,6 +6,8 @@ import {
   CheckCircle,
   Cancel,
   Pending,
+  Menu,
+  ChevronLeft,
 } from "@mui/icons-material";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
@@ -21,6 +23,7 @@ import MemberManagementModal from "./components/MemberManagementModal";
 import ProductManagementModal from "./components/ProductManagementModal";
 import { usePagination } from "../../hooks/usePagination";
 import Button from "../../components/common/Button";
+import Statistic from "./components/Statistic";
 
 const ResearchGroupManagement = () => {
   const { user } = useContext(AuthContext);
@@ -29,6 +32,8 @@ const ResearchGroupManagement = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [activeTab, setActiveTab] = useState("student"); // STUDENT or LECTURER
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -65,7 +70,7 @@ const ResearchGroupManagement = () => {
       fetchStatistics();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, statusFilter]);
+  }, [currentPage, statusFilter, activeTab]);
 
   const fetchGroups = async () => {
     try {
@@ -73,8 +78,9 @@ const ResearchGroupManagement = () => {
       const response = await researchGroupService.getAllGroups(
         searchTerm,
         statusFilter,
+        activeTab,
         currentPage,
-        9
+        9,
       );
       const responseData = response.data || response;
       setGroups(responseData?.groups || []);
@@ -222,174 +228,196 @@ const ResearchGroupManagement = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-8 flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
             <Group className="text-blue-600" />
             Quản lý Nhóm NCKH
           </h1>
         </div>
 
-        {/* Statistics Cards - Admin Only */}
-        {isAdmin && statistics && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Tổng nhóm</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {statistics.totalGroups}
-                  </p>
+        <div className="flex gap-3">
+          {/* Sidebar Navigation */}
+          <div
+            className={`bg-white rounded-lg shadow-sm transition-all duration-300 ${
+              sidebarOpen ? "w-48" : "w-0 overflow-hidden"
+            }`}
+          >
+            {sidebarOpen && (
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-700">Loại nhóm</h3>
+                  <button
+                    onClick={() => setSidebarOpen(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <ChevronLeft />
+                  </button>
                 </div>
-                <Group className="text-blue-600" fontSize="large" />
+                <nav className="space-y-2">
+                  
+                  <button
+                    onClick={() => {
+                      setActiveTab("lecturer");
+                      resetPagination();
+                    }}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
+                      activeTab === "lecturer"
+                        ? "bg-blue-50 text-blue-700 font-medium"
+                        : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    Nhóm Giảng viên
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveTab("student");
+                      resetPagination();
+                    }}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
+                      activeTab === "student"
+                        ? "bg-blue-50 text-blue-700 font-medium"
+                        : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    Nhóm Sinh viên
+                  </button>
+                </nav>
               </div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Chờ duyệt</p>
-                  <p className="text-2xl font-bold text-yellow-600">
-                    {statistics.pendingGroups}
-                  </p>
-                </div>
-                <Pending className="text-yellow-600" fontSize="large" />
-              </div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Đã duyệt</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {statistics.approvedGroups}
-                  </p>
-                </div>
-                <CheckCircle className="text-green-600" fontSize="large" />
-              </div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Từ chối</p>
-                  <p className="text-2xl font-bold text-red-600">
-                    {statistics.rejectedGroups}
-                  </p>
-                </div>
-                <Cancel className="text-red-600" fontSize="large" />
-              </div>
-            </div>
+            )}
           </div>
-        )}
 
-        {/* Search and Filter Bar */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <form onSubmit={handleSearch} className="flex-1 flex gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm theo tên nhóm hoặc đề tài..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <Button
-                type="submit"
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Tìm kiếm
-              </Button>
-            </form>
-
-            <div className="flex gap-4">
-              <select
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  resetPagination();
-                }}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="ALL">Tất cả trạng thái</option>
-                <option value="PENDING">Chờ duyệt</option>
-                <option value="APPROVED">Đã duyệt</option>
-                <option value="REJECTED">Từ chối</option>
-              </select>
-
+          {/* Main Content */}
+          <div className="flex-1">
+            {/* Toggle Button when sidebar is closed */}
+            {!sidebarOpen && (
               <button
-                onClick={handleCreateGroup}
-                className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                onClick={() => setSidebarOpen(true)}
+                className="mb-4 p-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow text-gray-600 hover:text-gray-900"
               >
-                <Add />
-                Tạo nhóm mới
+                <Menu />
               </button>
+            )}
+
+            {/* Statistics Cards - Admin Only */}
+            {isAdmin && statistics && (
+              <Statistic statistics={statistics} />
+            )}
+
+            {/* Search and Filter Bar */}
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+              <div className="flex flex-col md:flex-row gap-4">
+                <form onSubmit={handleSearch} className="flex-1 flex gap-4">
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Tìm kiếm theo tên nhóm hoặc đề tài..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Tìm kiếm
+                  </Button>
+                </form>
+
+                <div className="flex gap-4">
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => {
+                      setStatusFilter(e.target.value);
+                      resetPagination();
+                    }}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="ALL">Tất cả trạng thái</option>
+                    <option value="PENDING">Chờ duyệt</option>
+                    <option value="APPROVED">Đã duyệt</option>
+                    <option value="REJECTED">Từ chối</option>
+                  </select>
+
+                  <button
+                    onClick={handleCreateGroup}
+                    className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Add />
+                    Tạo nhóm mới
+                  </button>
+                </div>
+              </div>
             </div>
+
+            {/* Groups Table */}
+            {loading ? (
+              <div className="flex justify-center items-center py-12">
+                <LoadingSpinner />
+              </div>
+            ) : groups.length === 0 ? (
+              <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+                <Group
+                  className="mx-auto text-gray-300 mb-4"
+                  sx={{ fontSize: 64 }}
+                />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Chưa có nhóm nào
+                </h3>
+                <p className="text-gray-500 mb-4">
+                  {searchTerm
+                    ? "Không tìm thấy nhóm phù hợp"
+                    : "Hãy tạo nhóm NCKH đầu tiên"}
+                </p>
+                <button
+                  onClick={handleCreateGroup}
+                  className="inline-flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Add />
+                  Tạo nhóm mới
+                </button>
+              </div>
+            ) : (
+              <>
+                <GroupTable
+                  groups={groups}
+                  isAdmin={isAdmin}
+                  currentUserId={user?.id}
+                  onViewDetail={handleViewDetail}
+                  onEdit={handleEditGroup}
+                  onApprove={handleApprove}
+                  onReject={handleReject}
+                  onDelete={handleDelete}
+                  getStatusBadge={getStatusBadge}
+                  onManageMembers={handleManageMembers}
+                  onManageProductsAndCompletion={
+                    handleManageProductsAndCompletion
+                  }
+                />
+
+                {/* Pagination */}
+                <div className="bg-white rounded-lg shadow-sm">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={totalItems}
+                    itemsPerPage={9}
+                    startIndex={0}
+                    endIndex={groups.length}
+                    onPageChange={goToPage}
+                    onFirstPage={goToFirstPage}
+                    onLastPage={() => goToLastPage(totalPages)}
+                    onPreviousPage={goToPreviousPage}
+                    onNextPage={() => goToNextPage(totalPages)}
+                    getPageNumbers={getPageNumbers}
+                    itemName="nhóm"
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
-
-        {/* Groups Table */}
-        {loading ? (
-          <div className="flex justify-center items-center py-12">
-            <LoadingSpinner />
-          </div>
-        ) : groups.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <Group
-              className="mx-auto text-gray-300 mb-4"
-              sx={{ fontSize: 64 }}
-            />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Chưa có nhóm nào
-            </h3>
-            <p className="text-gray-500 mb-4">
-              {searchTerm
-                ? "Không tìm thấy nhóm phù hợp"
-                : "Hãy tạo nhóm NCKH đầu tiên"}
-            </p>
-            <button
-              onClick={handleCreateGroup}
-              className="inline-flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Add />
-              Tạo nhóm mới
-            </button>
-          </div>
-        ) : (
-          <>
-            <GroupTable
-              groups={groups}
-              isAdmin={isAdmin}
-              currentUserId={user?.id}
-              onViewDetail={handleViewDetail}
-              onEdit={handleEditGroup}
-              onApprove={handleApprove}
-              onReject={handleReject}
-              onDelete={handleDelete}
-              getStatusBadge={getStatusBadge}
-              onManageMembers={handleManageMembers}
-              onManageProductsAndCompletion={handleManageProductsAndCompletion}
-            />
-
-            {/* Pagination */}
-            <div className="bg-white rounded-lg shadow-sm">
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalItems={totalItems}
-                itemsPerPage={9}
-                startIndex={0}
-                endIndex={groups.length}
-                onPageChange={goToPage}
-                onFirstPage={goToFirstPage}
-                onLastPage={() => goToLastPage(totalPages)}
-                onPreviousPage={goToPreviousPage}
-                onNextPage={() => goToNextPage(totalPages)}
-                getPageNumbers={getPageNumbers}
-                itemName="nhóm"
-              />
-            </div>
-          </>
-        )}
       </div>
 
       {/* Modals */}

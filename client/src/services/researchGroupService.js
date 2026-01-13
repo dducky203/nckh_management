@@ -9,29 +9,28 @@ const researchGroupService = {
   getAllGroups: async (
     keyword = "",
     status = "",
+    type = "",
     page = 0,
-    size = 10,
-    year = ""
+    size = 10
   ) => {
     const params = {
       keyword,
       status,
+      type,
       page,
       size,
       sortBy: "createdAt",
       sortDir: "DESC",
     };
-    if (year) {
-      params.year = year;
-    }
-    const response = await api.get("/research-groups", {
+
+    const response = await api.get("/admin/research-groups", {
       params,
     });
     return response;
   },
 
   getGroupById: async (groupId) => {
-    const response = await api.get(`/research-groups/${groupId}`);
+    const response = await api.get(`/admin/research-groups/${groupId}`);
     return response;
   },
 
@@ -60,14 +59,12 @@ const researchGroupService = {
   },
 
   getStatistics: async () => {
-    const response = await api.get("/research-groups/statistics");
-    return response;
+    return await api.get("/admin/research-groups/statistics");
   },
 
   // Admin APIs
   approveGroup: async (groupId) => {
-    const response = await api.put(`/admin/research-groups/${groupId}/approve`);
-    return response;
+    return await api.put(`/admin/research-groups/${groupId}/approve`);
   },
 
   rejectGroup: async (groupId, reason) => {
@@ -126,7 +123,13 @@ const researchGroupService = {
     return response.data;
   },
 
-  createDocument: async (groupId, documentName, documentType, description, file) => {
+  createDocument: async (
+    groupId,
+    documentName,
+    documentType,
+    description,
+    file
+  ) => {
     const formData = new FormData();
     formData.append("documentName", documentName);
     formData.append("documentType", documentType);
@@ -144,7 +147,14 @@ const researchGroupService = {
     return response.data;
   },
 
-  updateDocument: async (groupId, documentId, documentName, documentType, description, file) => {
+  updateDocument: async (
+    groupId,
+    documentId,
+    documentName,
+    documentType,
+    description,
+    file
+  ) => {
     const formData = new FormData();
     if (documentName) formData.append("documentName", documentName);
     if (documentType) formData.append("documentType", documentType);
@@ -169,13 +179,5 @@ const researchGroupService = {
     return response.data;
   },
 };
-
-  export const exportMembers = (groupId) => {
-  return axios.get(
-    `/research-groups/${groupId}/members/export`,
-    { responseType: "blob" }
-  );
-};
-
 
 export default researchGroupService;

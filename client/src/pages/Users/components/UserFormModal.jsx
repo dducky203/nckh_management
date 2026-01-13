@@ -324,11 +324,11 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
                         className="sr-only peer"
                       />
                       <div
-                        className={`w-11 h-6 rounded-md peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-offset-1 transition-all duration-300 shadow-inner ${
+                        className={`w-11 h-6 rounded-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-offset-1 transition-all duration-300 shadow-inner ${
                           normalizeInActiveValue(formData.inActive) === 0
                             ? "bg-green-500 peer-focus:ring-green-300"
                             : "bg-red-500 peer-focus:ring-red-300"
-                        } peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-md after:h-5 after:w-5 after:transition-all after:duration-300 after:shadow-md`}
+                        } peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all after:duration-300 after:shadow-md`}
                       ></div>
                     </label>
                   </div>

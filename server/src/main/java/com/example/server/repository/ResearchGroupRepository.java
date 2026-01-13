@@ -15,8 +15,6 @@ import java.util.Optional;
 @Repository
 public interface ResearchGroupRepository extends JpaRepository<ResearchGroup, Integer> {
 
-    // Tìm nhóm theo trạng thái
-    Page<ResearchGroup> findByStatus(ResearchGroup.GroupStatus status, Pageable pageable);
 
     // Tìm nhóm theo leader
     List<ResearchGroup> findByLeader(User leader);
@@ -30,21 +28,33 @@ public interface ResearchGroupRepository extends JpaRepository<ResearchGroup, In
 
     // Tìm kiếm theo tên nhóm hoặc tên đề tài
     @Query("SELECT rg FROM ResearchGroup rg WHERE " +
-           "LOWER(rg.groupName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(rg.topicName) LIKE LOWER(CONCAT('%', :keyword, '%'))")
-    Page<ResearchGroup> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
+            "(LOWER(rg.groupName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(rg.topicName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND rg.type = :type")
+    Page<ResearchGroup> searchByKeyword(
+            @Param("keyword") String keyword,
+            @Param("type") String type,
+            Pageable pageable
+    );
 
     // Tìm kiếm theo keyword và status
     @Query("SELECT rg FROM ResearchGroup rg WHERE " +
-           "(LOWER(rg.groupName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(rg.topicName) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND " +
-           "rg.status = :status")
+            "(LOWER(rg.groupName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(rg.topicName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND rg.status = :status " +
+            "AND rg.type = :type"
+    )
     Page<ResearchGroup> searchByKeywordAndStatus(
-        @Param("keyword") String keyword,
-        @Param("status") ResearchGroup.GroupStatus status,
-        Pageable pageable
+            @Param("keyword") String keyword,
+            @Param("type") String type,
+            @Param("status") ResearchGroup.GroupStatus status,
+            Pageable pageable
     );
 
     // Đếm số nhóm theo status
     long countByStatus(ResearchGroup.GroupStatus status);
+
+    Page<ResearchGroup> findByStatusAndType(ResearchGroup.GroupStatus groupStatus, String type, Pageable pageable);
+
+    Page<ResearchGroup> findAllByType(String type, Pageable pageable);
 }

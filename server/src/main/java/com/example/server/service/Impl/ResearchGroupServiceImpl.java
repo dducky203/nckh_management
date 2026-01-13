@@ -258,21 +258,21 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ResearchGroupDTO> getAllGroups(String keyword, String status, Pageable pageable) {
+    public Page<ResearchGroupDTO> getAllGroups(String keyword, String status, String type, Pageable pageable) {
         Page<ResearchGroup> groups;
 
         if (status != null && !status.isEmpty() && !"ALL".equalsIgnoreCase(status)) {
             ResearchGroup.GroupStatus groupStatus = ResearchGroup.GroupStatus.valueOf(status.toUpperCase());
             if (keyword != null && !keyword.isEmpty()) {
-                groups = groupRepository.searchByKeywordAndStatus(keyword, groupStatus, pageable);
+                groups = groupRepository.searchByKeywordAndStatus(keyword, type, groupStatus, pageable);
             } else {
-                groups = groupRepository.findByStatus(groupStatus, pageable);
+                groups = groupRepository.findByStatusAndType(groupStatus, type, pageable);
             }
         } else {
             if (keyword != null && !keyword.isEmpty()) {
-                groups = groupRepository.searchByKeyword(keyword, pageable);
+                groups = groupRepository.searchByKeyword(keyword, type, pageable);
             } else {
-                groups = groupRepository.findAll(pageable);
+                groups = groupRepository.findAllByType(type,pageable);
             }
         }
 

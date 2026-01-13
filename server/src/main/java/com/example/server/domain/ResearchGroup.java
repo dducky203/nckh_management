@@ -26,11 +26,14 @@ public class ResearchGroup extends EntityBase {
     @Column(nullable = false, length = 500)
     private String topicName;
 
-    @Column(length = 2000)
+    @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(columnDefinition = "TEXT")
+    private String googleSheetLink;
+
     @Column(length = 500)
-    private String googleSheetLink; // Link Google Sheet để cập nhật minh chứng
+    private String type;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

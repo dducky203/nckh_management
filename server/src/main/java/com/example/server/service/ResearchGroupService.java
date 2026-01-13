@@ -38,7 +38,7 @@ public interface ResearchGroupService {
     ResearchGroupDTO removeMember(Integer groupId, Integer userId, Integer memberId);
 
     // Lấy danh sách nhóm (có phân trang, filter)
-    Page<ResearchGroupDTO> getAllGroups(String keyword, String status, Pageable pageable);
+    Page<ResearchGroupDTO> getAllGroups(String keyword, String status, String type, Pageable pageable);
 
     // Lấy chi tiết nhóm
     ResearchGroupDTO getGroupById(Integer groupId);

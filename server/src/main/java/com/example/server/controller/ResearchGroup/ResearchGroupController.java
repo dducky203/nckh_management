@@ -53,34 +53,8 @@ public class ResearchGroupController {
         return ResponseEntity.ok(new SuccessResponseDTO<>(group, "Tạo nhóm thành công! Chờ admin duyệt."));
     }
 
-    /**
-     * Lấy danh sách nhóm (có phân trang, tìm kiếm, filter)
-     */
-    @GetMapping
-    public ResponseEntity<SuccessResponseDTO<Map<String, Object>>> getAllGroups(
-            @RequestParam(defaultValue = "") String keyword,
-            @RequestParam(required = false) String status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "DESC") String sortDir) {
-        Sort.Direction direction = sortDir.equalsIgnoreCase("ASC") ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
-        Page<ResearchGroupDTO> groupsPage = researchGroupService.getAllGroups(keyword, status, pageable);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("groups", groupsPage.getContent());
-        response.put("currentPage", groupsPage.getNumber());
-        response.put("totalItems", groupsPage.getTotalElements());
-        response.put("totalPages", groupsPage.getTotalPages());
-        response.put("itemsPerPage", groupsPage.getSize());
-        response.put("hasNext", groupsPage.hasNext());
-        response.put("hasPrevious", groupsPage.hasPrevious());
-        // Cannot read properties of undefined (reading 'groups')
-
-        return ResponseEntity.ok(new SuccessResponseDTO<>(response, "Lấy danh sách nhóm thành công"));
-    }
 
     /**
      * Lấy chi tiết nhóm
@@ -157,11 +131,7 @@ public class ResearchGroupController {
     /**
      * Lấy thống kê
      */
-    @GetMapping("/statistics")
-    public ResponseEntity<SuccessResponseDTO<ResearchGroupService.GroupStatistics>> getStatistics() {
-        ResearchGroupService.GroupStatistics stats = researchGroupService.getStatistics();
-        return ResponseEntity.ok(new SuccessResponseDTO<>(stats, "Lấy thống kê thành công"));
-    }
+
 
     /**
      * Cập nhật Google Sheet link (chỉ thành viên nhóm mới có quyền)
