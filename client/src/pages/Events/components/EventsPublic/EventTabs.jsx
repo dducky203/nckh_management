@@ -1,6 +1,6 @@
 import { Schedule, EventAvailable, CheckCircle } from "@mui/icons-material";
 
-const EventTabs = ({ activeTab, setActiveTab, eventCount }) => {
+const EventTabs = ({ activeTab, setActiveTab, eventCount  = 0}) => {
   return (
     <div className="flex border-b overflow-x-auto">
       <button
@@ -13,7 +13,7 @@ const EventTabs = ({ activeTab, setActiveTab, eventCount }) => {
       >
         <Schedule fontSize="small" />
         Sắp diễn ra
-        {activeTab === "upcoming" && eventCount > 0 && (
+        {activeTab === "upcoming" && (
           <span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-md">
             {eventCount}
           </span>
@@ -29,7 +29,7 @@ const EventTabs = ({ activeTab, setActiveTab, eventCount }) => {
       >
         <EventAvailable fontSize="small" />
         Đang diễn ra
-        {activeTab === "ongoing" && eventCount > 0 && (
+        {activeTab === "ongoing" && (
           <span className="bg-green-600 text-white text-xs px-2 py-0.5 rounded-md">
             {eventCount}
           </span>
@@ -45,7 +45,7 @@ const EventTabs = ({ activeTab, setActiveTab, eventCount }) => {
       >
         <CheckCircle fontSize="small" />
         Đã kết thúc
-        {activeTab === "completed" && eventCount > 0 && (
+        {activeTab === "completed" && (
           <span className="bg-gray-600 text-white text-xs px-2 py-0.5 rounded-md">
             {eventCount}
           </span>

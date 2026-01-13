@@ -4,6 +4,7 @@ import eventService from "../../../services/eventService";
 
 export const useEvents = (activeTab, page = 0, size = 12) => {
   const [events, setEvents] = useState([]);
+  const [eventSize, setEventSize] = useState(0);
   const [pagination, setPagination] = useState({
     currentPage: 0,
     totalPages: 0,
@@ -32,7 +33,7 @@ export const useEvents = (activeTab, page = 0, size = 12) => {
       );
       const responseData = response?.data || {};
       const eventsData = responseData.events || [];
-
+      
       // Map backend data to frontend format
       const mappedEvents = eventsData.map((event) => ({
         id: event.id,
@@ -48,17 +49,15 @@ export const useEvents = (activeTab, page = 0, size = 12) => {
         contactPhone: event.contactPhone || "0243.827.6346",
         maxParticipants: event.maxParticipants || 100,
         status: event.status,
-        startTime: event.startTime, // Tiết bắt đầu (1-10)
-        endTime: event.endTime, // Tiết kết thúc (1-10)
-        startTimeDetail: event.startTimeDetail, // Giờ chi tiết (VD: "07:00:00")
-        endTimeDetail: event.endTimeDetail, // Giờ chi tiết (VD: "11:00:00")
-        articleLink: event.articleLink,
+        startTime: event.startTime, 
+        endTime: event.endTime, 
+        startTimeDetail: event.startTimeDetail, 
+        endTimeDetail: event.endTimeDetail, 
       }));
 
       setEvents(mappedEvents);
-
-      console.log({responseData});
-      // Set pagination info từ backend
+      setEventSize(responseData?.totalItems || 0);
+    
       setPagination({
         currentPage: responseData.currentPage || 0,
         totalPages: responseData.totalPages || 0,
@@ -78,5 +77,5 @@ export const useEvents = (activeTab, page = 0, size = 12) => {
   
   
 
-  return { events, pagination, loading, error, refetchEvents: fetchEvents };
+  return { eventSize, events, pagination, loading, error, refetchEvents: fetchEvents };
 };

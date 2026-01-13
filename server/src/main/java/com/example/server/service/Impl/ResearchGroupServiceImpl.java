@@ -5,24 +5,24 @@ import com.example.server.DTO.request.CreateResearchGroupRequest;
 import com.example.server.DTO.request.UpdateResearchGroupRequest;
 import com.example.server.DTO.response.ResearchGroupDocumentDTO;
 import com.example.server.DTO.response.ResearchGroupDTO;
+import com.example.server.DTO.users.UserDetailsDTO;
 import com.example.server.domain.ResearchGroup;
 import com.example.server.domain.ResearchGroupDocument;
 import com.example.server.domain.User;
-//import com.example.server.dto.request.CreateResearchGroupRequest;
-//import com.example.server.dto.request.UpdateResearchGroupRequest;
-//import com.example.server.dto.response.ResearchGroupDTO;
+
 import com.example.server.domain.ResearchGroupMember;
 import com.example.server.repository.ResearchGroupDocumentRepository;
 import com.example.server.repository.ResearchGroupMemberRepository;
 import com.example.server.repository.ResearchGroupRepository;
 import com.example.server.repository.UserRepository;
-import com.example.server.service.FileService;
+
 import com.example.server.service.ResearchGroupService;
 import com.example.server.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,6 +31,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
@@ -41,19 +42,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
+
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -352,7 +350,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
     @Override
     @Transactional
     public ResearchGroupDTO updateMemberInfo(Integer groupId, Integer userId, Integer memberId, String role,
-            Integer participationRate) {
+                                             Integer participationRate) {
         ResearchGroup group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
 
@@ -390,9 +388,35 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
     }
 
     @Override
+    public byte[] exportTemplate() {
+        try (
+                InputStream is = getClass()
+                        .getClassLoader()
+                        .getResourceAsStream("templates/template.xlsx")
+        ) {
+
+            if (is == null) {
+                throw new RuntimeException("Không tìm thấy file template.xlsx trong resources/templates");
+            }
+
+            try (
+                    XSSFWorkbook workbook = new XSSFWorkbook(is);
+                    ByteArrayOutputStream out = new ByteArrayOutputStream()
+            ) {
+                workbook.write(out);
+                return out.toByteArray();
+            }
+
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi khi xuất file Excel: " + e.getMessage(), e);
+        }
+    }
+
+
+    @Override
     @Transactional
     public ResearchGroupDTO importMembersFromExcel(Integer groupId, Integer userId,
-            org.springframework.web.multipart.MultipartFile file) {
+                                                   MultipartFile file) throws IOException {
         ResearchGroup group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
 
@@ -404,10 +428,6 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
             throw new RuntimeException("Bạn không có quyền import thành viên");
         }
 
-        // Cải thiện error handling cho Excel import
-        if (file == null || file.isEmpty()) {
-            throw new RuntimeException("File Excel không được để trống");
-        }
 
         String filename = file.getOriginalFilename();
         if (filename == null || (!filename.toLowerCase().endsWith(".xlsx") && !filename.toLowerCase().endsWith(".xls"))) {
@@ -415,19 +435,15 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         }
 
         try (InputStream inputStream = file.getInputStream();
-                Workbook workbook = new XSSFWorkbook(inputStream)) {
+             Workbook workbook = new XSSFWorkbook(inputStream)) {
 
             Sheet sheet = workbook.getSheetAt(0);
             int rowCount = sheet.getPhysicalNumberOfRows();
 
-            if (rowCount < 2) {
-                throw new RuntimeException("File Excel phải có ít nhất 1 dòng dữ liệu (không tính header)");
-            }
-
             // Đọc header (dòng 0)
             Row headerRow = sheet.getRow(0);
             Map<String, Integer> columnMap = new HashMap<>();
-            
+
             for (int i = 0; i < headerRow.getPhysicalNumberOfCells(); i++) {
                 Cell cell = headerRow.getCell(i);
                 if (cell != null) {
@@ -439,7 +455,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
             // Tìm key cho các cột cần thiết (case-insensitive)
             String hoVaTenKey = null;
             String maCanBoKey = null;
-            
+
             for (String key : columnMap.keySet()) {
                 String lowerKey = key.toLowerCase().trim();
                 // Tìm cột "Họ và tên"
@@ -447,15 +463,10 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                     hoVaTenKey = key;
                 }
                 // Tìm cột "Mã cán bộ"
-                if (maCanBoKey == null && lowerKey.contains("mã") && 
-                    (lowerKey.contains("cán") || lowerKey.contains("can")) && lowerKey.contains("bộ")) {
+                if (maCanBoKey == null && lowerKey.contains("mã") &&
+                        (lowerKey.contains("cán") || lowerKey.contains("can")) && lowerKey.contains("bộ")) {
                     maCanBoKey = key;
                 }
-            }
-            
-            if (hoVaTenKey == null || maCanBoKey == null) {
-                throw new RuntimeException("File Excel phải có các cột: 'Họ và tên' và 'Mã cán bộ'. " +
-                    "Các cột hiện có: " + String.join(", ", columnMap.keySet()));
             }
 
             int successCount = 0;
@@ -470,15 +481,15 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
 
                 try {
                     // Đọc các cột (sử dụng key đã chuẩn hóa)
-                    String name = getCellValueAsString(row, columnMap.get(hoVaTenKey));
-                    String username = getCellValueAsString(row, columnMap.get(maCanBoKey));
-                    String email = columnMap.containsKey("Email") ? getCellValueAsString(row, columnMap.get("Email"))
+                    String name = getStingValue(row, columnMap.get(hoVaTenKey));
+                    String username = getStingValue(row, columnMap.get(maCanBoKey));
+                    String email = columnMap.containsKey("Email") ? getStingValue(row, columnMap.get("Email"))
                             : null;
                     String address = columnMap.containsKey("Đơn vị")
-                            ? getCellValueAsString(row, columnMap.get("Đơn vị"))
+                            ? getStingValue(row, columnMap.get("Đơn vị"))
                             : null;
                     String role = columnMap.containsKey("Nhiệm vụ")
-                            ? getCellValueAsString(row, columnMap.get("Nhiệm vụ"))
+                            ? getStingValue(row, columnMap.get("Nhiệm vụ"))
                             : "Thành viên";
                     Integer participationRate = columnMap.containsKey("Tỷ lệ tham gia (%)")
                             ? getCellValueAsInteger(row, columnMap.get("Tỷ lệ tham gia (%)"))
@@ -491,11 +502,10 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                     }
 
                     // Tìm user theo username (Mã cán bộ)
-                    String trimmedUsername = username.trim();
-                    User member = userRepository.findByUsername(trimmedUsername);
+                    User member = userRepository.findByUsername(username);
                     if (member == null) {
                         errorCount++;
-                        errors.append("Dòng ").append(i + 1).append(": Không tìm thấy người dùng với mã cán bộ '").append(trimmedUsername).append("'\n");
+                        errors.append("Dòng ").append(i + 1).append(": Không tìm thấy người dùng với mã cán bộ '").append(username).append("'\n");
                         continue;
                     }
 
@@ -543,7 +553,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         }
     }
 
-    private String getCellValueAsString(Row row, Integer columnIndex) {
+    private String getStingValue(Row row, Integer columnIndex) {
         if (columnIndex == null)
             return null;
         Cell cell = row.getCell(columnIndex);
@@ -614,8 +624,8 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
 
     @Override
     @Transactional
-    public ResearchGroupDocumentDTO createDocument(Integer groupId, Integer userId, 
-            CreateResearchGroupDocumentRequest request, MultipartFile file) {
+    public ResearchGroupDocumentDTO createDocument(Integer groupId, Integer userId,
+                                                   CreateResearchGroupDocumentRequest request, MultipartFile file) {
         ResearchGroup group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
 
@@ -647,7 +657,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
             String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
             Path targetLocation = folderPath.resolve(Objects.requireNonNull(fileName));
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-            
+
             // Lưu relative path
             fileUrl = "research-groups/" + groupId + "/" + fileName;
         } catch (IOException e) {
@@ -670,7 +680,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
     @Override
     @Transactional
     public ResearchGroupDocumentDTO updateDocument(Integer groupId, Integer documentId, Integer userId,
-            CreateResearchGroupDocumentRequest request, MultipartFile file) {
+                                                   CreateResearchGroupDocumentRequest request, MultipartFile file) {
         ResearchGroupDocument document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy document"));
 
@@ -723,7 +733,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                 String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
                 Path targetLocation = folderPath.resolve(Objects.requireNonNull(fileName));
                 Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-                
+
                 document.setFileUrl("research-groups/" + groupId + "/" + fileName);
             } catch (IOException e) {
                 throw new RuntimeException("Lỗi khi lưu file: " + e.getMessage(), e);

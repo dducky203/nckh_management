@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface ResearchGroupService {
@@ -57,7 +58,9 @@ public interface ResearchGroupService {
 
     // Import thành viên từ Excel
     ResearchGroupDTO importMembersFromExcel(Integer groupId, Integer userId,
-            org.springframework.web.multipart.MultipartFile file);
+       MultipartFile file) throws IOException;
+
+    byte[] exportTemplate();
 
     // Document management methods
     List<ResearchGroupDocumentDTO> getDocumentsByGroupId(Integer groupId, Integer userId);

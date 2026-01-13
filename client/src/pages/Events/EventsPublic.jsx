@@ -32,12 +32,13 @@ const EventsPublic = () => {
   const navigate = useNavigate();
 
   // Custom hooks - backend pagination
-  const { events, pagination, loading, error, refetchEvents } = useEvents(
+  const { eventSize, events, pagination, loading, error, refetchEvents } = useEvents(
     activeTab,
     currentPage,
     12
   );
 
+  
   // Client-side filtering
   const {
     searchTerm,
@@ -122,26 +123,15 @@ const EventsPublic = () => {
     }
 
     try {
-      console.log("Fetching details for event:", event);
-
       // Gọi API song song: lấy chi tiết event và kiểm tra đã đăng ký chưa
       const [eventResponse, registrationResponse] = await Promise.all([
         eventService.getEventById(event.id),
         eventService.checkRegistration(event.id, user.id),
       ]);
 
-      console.log("API responses:", { eventResponse, registrationResponse });
-
       // Backend trả về {data: {data: eventDTO, message: ...}}
       const eventData = eventResponse.data?.data || eventResponse.data;
       const isUserRegistered = registrationResponse.data?.data || false;
-
-      console.log(
-        "Setting selected event:",
-        eventData,
-        "Is registered:",
-        isUserRegistered
-      );
 
       setSelectedEvent(eventData);
       setIsRegistered(isUserRegistered);
@@ -199,6 +189,8 @@ const EventsPublic = () => {
 
   const tabConfig = getTabConfig(activeTab);
 
+ 
+  
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
@@ -211,7 +203,7 @@ const EventsPublic = () => {
           <EventTabs
             activeTab={activeTab}
             setActiveTab={handleTabChange}
-            eventCount={events.length}
+            eventCount={eventSize}
           />
           <EventFilters
             searchTerm={searchTerm}

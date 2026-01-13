@@ -117,7 +117,7 @@ const researchGroupService = {
         },
       }
     );
-    return response.data;
+    return response;
   },
 
   // Document management

@@ -6,11 +6,6 @@ export const useEventFilters = (events) => {
   const [filteredEvents, setFilteredEvents] = useState([]);
 
   useEffect(() => {
-    console.log("useEventFilters - events input:", events);
-    console.log("useEventFilters - events length:", events.length);
-    console.log("useEventFilters - searchTerm:", searchTerm);
-    console.log("useEventFilters - filterType:", filterType);
-
     let filtered = [...events];
 
     // Search filter
@@ -28,8 +23,6 @@ export const useEventFilters = (events) => {
       filtered = filtered.filter((event) => event.type === filterType);
     }
 
-    console.log("useEventFilters - filtered events:", filtered);
-    console.log("useEventFilters - filtered events length:", filtered.length);
     setFilteredEvents(filtered);
   }, [searchTerm, filterType, events]);
 

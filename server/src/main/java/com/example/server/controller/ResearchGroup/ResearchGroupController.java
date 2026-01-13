@@ -6,18 +6,27 @@ import com.example.server.DTO.request.UpdateResearchGroupRequest;
 import com.example.server.DTO.response.ResearchGroupDocumentDTO;
 import com.example.server.DTO.response.ResearchGroupDTO;
 import com.example.server.DTO.SuccessResponseDTO;
+import com.example.server.exception.ExcelValidationException;
 import com.example.server.service.ResearchGroupService;
 import com.example.server.utils.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -197,17 +206,61 @@ public class ResearchGroupController {
     /**
      * Import thành viên từ Excel
      */
+
+    @GetMapping("/export-template")
+    public ResponseEntity<Resource> exportTemplate() {
+        try {
+
+            byte[] excelData = researchGroupService.exportTemplate();
+            ByteArrayResource resource = new ByteArrayResource(excelData);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentDispositionFormData("attachment", "template.xlsx");
+            headers.setContentType(
+                    MediaType.parseMediaType(
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(resource);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+
     @PostMapping("/{groupId}/members/import")
-    public ResponseEntity<SuccessResponseDTO<ResearchGroupDTO>> importMembersFromExcel(
+    public ResponseEntity<?> importMembersFromExcel(
             @PathVariable Integer groupId,
             @RequestParam("file") MultipartFile file) {
-        Integer userId = SecurityUtils.getCurrentUserId();
-        if (userId == null) {
-            throw new RuntimeException("Vui lòng đăng nhập");
-        }
+        try {
+            Integer userId = SecurityUtils.getCurrentUserId();
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Vui lòng đăng nhập để thực hiện chức năng này");
+            }
 
-        ResearchGroupDTO group = researchGroupService.importMembersFromExcel(groupId, userId, file);
-        return ResponseEntity.ok(new SuccessResponseDTO<>(group, "Import thành viên từ Excel thành công"));
+            if (file == null || file.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body("File Excel không được để trống");
+            }
+
+            ResearchGroupDTO group = researchGroupService.importMembersFromExcel(groupId, userId, file);
+
+            return ResponseEntity.ok(new SuccessResponseDTO<>(group, "Import thành viên thành công"));
+
+        } catch (ExcelValidationException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=error_details.xlsx")
+                    .body(e.getMessage());
+        } catch (java.nio.file.NoSuchFileException e) {
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Lỗi hệ thống: File tạm đã bị xóa trước khi xử lý. Vui lòng thử lại.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Đã xảy ra lỗi không mong muốn: " + e.getMessage());
+        }
     }
 
     /**

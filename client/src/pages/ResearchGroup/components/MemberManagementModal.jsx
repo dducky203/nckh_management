@@ -188,8 +188,8 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
   };
 
   const handleImportExcel = async (event) => {
-    // const file = event.target.files[0];
-    // if (!file) return;
+    const file = event.target.files[0];
+    if (!file) return;
 
     // // Validate file type
     // const validTypes = [
@@ -201,21 +201,21 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
     //   return;
     // }
 
-    // try {
-    //   setLoading(true);
-    //   await researchGroupService.importMembersFromExcel(group.id, file);
-    //   toast.success("Import thành viên từ Excel thành công");
-    //   fetchMembers();
-    //   if (onRefresh) onRefresh();
-    // } catch (error) {
-    //   console.error("Error importing members:", error);
-    //   toast.error(error.message || "Không thể import thành viên từ Excel");
-    // } finally {
-    //   setLoading(false);
-    //   if (fileInputRef.current) {
-    //     fileInputRef.current.value = "";
-    //   }
-    // }
+    try {
+      setLoading(true);
+      await researchGroupService.importMembersFromExcel(group.id, file);
+      toast.success("Import thành viên từ Excel thành công");
+      fetchMembers();
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      console.error("Error importing members:", error);
+      toast.error(error.message || "Không thể import thành viên từ Excel");
+    } finally {
+      setLoading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
 
   if (!isOpen || !group) return null;
@@ -265,7 +265,7 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept=".xlsx,.xls"
+                    accept=".xlsx"
                     onChange={handleImportExcel}
                     className="hidden"
                   />
