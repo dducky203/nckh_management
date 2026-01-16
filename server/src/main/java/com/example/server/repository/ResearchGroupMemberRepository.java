@@ -21,4 +21,6 @@ public interface ResearchGroupMemberRepository
 
     @Query("SELECT rgm FROM ResearchGroupMember rgm WHERE rgm.groupId = :groupId")
     List<ResearchGroupMember> findAllByGroupId(@Param("groupId") Integer groupId);
+
+    List<ResearchGroupMember> findAllByUserId(Integer userId);
 }

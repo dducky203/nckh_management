@@ -9,8 +9,15 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,6 +27,28 @@ import java.util.Map;
 public class ResearchGroupAdminController {
 
     private final ResearchGroupService researchGroupService;
+
+//    @GetMapping("/export-template")
+//    public ResponseEntity<Resource> exportTemplate() {
+//        try {
+//            byte[] excelData = researchGroupService.exportTemplate();
+//            ByteArrayResource resource = new ByteArrayResource(excelData);
+//
+//            String fileName = "template_import_user_research.xlsx";
+//
+//            HttpHeaders headers = new HttpHeaders();
+//            headers.setContentDispositionFormData("attachment", fileName);
+//            headers.setContentType(MediaType.parseMediaType(
+//                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+//
+//            return ResponseEntity.ok()
+//                    .headers(headers)
+//                    .contentLength(excelData.length)
+//                    .body(resource);
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+//        }
+//    }
 
 
     @GetMapping

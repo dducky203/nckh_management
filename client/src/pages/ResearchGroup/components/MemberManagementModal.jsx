@@ -11,16 +11,24 @@ import {
   Edit,
   Save,
   UploadFile,
+  Download,
 } from "@mui/icons-material";
 import researchGroupService from "../../../services/researchGroupService";
 import userService from "../../../services/userService";
 import { useToast } from "../../../context/ToastContext";
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../../constants";
+import { downloadFileFromResponse } from "../../../utils";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import Modal from "../../../components/common/Modal";
 import Button from "../../../components/common/Button";
 
-const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
+const MemberManagementModal = ({
+  isOpen,
+  onClose,
+  group,
+  onRefresh,
+  currentUserId,
+}) => {
   const toast = useToast();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -218,6 +226,23 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
     }
   };
 
+  const handleDownloadTemplate = async () => {
+    try {
+      setLoading(true);
+      const response =
+        await researchGroupService.downloadMemberImportTemplate();
+
+      downloadFileFromResponse(response, "template_import_user_research.xlsx");
+
+      toast.success("Tải file mẫu thành công");
+    } catch (error) {
+      console.error("Error downloading template:", error);
+      toast.error(error.message || "Không thể tải file mẫu");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!isOpen || !group) return null;
 
   return (
@@ -251,16 +276,17 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
           <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
             <div className="max-w-full mx-auto">
               {/* Add Member Section */}
-              <div className="mb-6 flex gap-3">
+              <div className="mb-4 flex gap-2">
                 <button
                   onClick={() => setShowAddMember(!showAddMember)}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-sm hover:shadow-md font-medium"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all shadow-sm hover:shadow-md text-sm font-medium"
                 >
-                  <Add />
+                  <Add fontSize="small" />
                   Thêm thành viên
                 </button>
-                <label className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all shadow-sm hover:shadow-md cursor-pointer font-medium">
-                  <UploadFile />
+
+                <label className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-all shadow-sm hover:shadow-md cursor-pointer text-sm font-medium">
+                  <UploadFile fontSize="small" />
                   Import từ Excel
                   <input
                     ref={fileInputRef}
@@ -270,6 +296,16 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
                     className="hidden"
                   />
                 </label>
+
+                <button
+                  type="button"
+                  title="Tải xuống file mẫu"
+                  onClick={handleDownloadTemplate}
+                  disabled={loading}
+                  className="flex items-center justify-center p-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-all shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <Download fontSize="small" />
+                </button>
               </div>
 
               {showAddMember && (
@@ -277,7 +313,6 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
                   ref={searchContainerRef}
                   className="mt-4 p-5 bg-white rounded-xl border border-gray-200 shadow-sm relative"
                 >
-                  
                   <div className="flex gap-3 mb-4">
                     <div className="flex-1 relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -374,7 +409,7 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
               ) : (
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-gray-200">
                       <tr>
                         <th className="pl-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                           STT
@@ -422,7 +457,11 @@ const MemberManagementModal = ({ isOpen, onClose, group, onRefresh }) => {
                         return (
                           <tr
                             key={member.id}
-                            className="hover:bg-blue-50 transition-all border-b border-gray-100 last:border-0"
+                            className={`transition-all border-b border-gray-100 last:border-0 ${
+                              member.id === currentUserId
+                                ? "border-2 border-blue-500 bg-blue-100/50 "
+                                : "hover:bg-blue-50"
+                            }`}
                           >
                             <td className="pl-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                               {index + 1}

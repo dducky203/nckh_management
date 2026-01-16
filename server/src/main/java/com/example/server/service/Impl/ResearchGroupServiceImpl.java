@@ -19,16 +19,16 @@ import com.example.server.repository.UserRepository;
 import com.example.server.service.ResearchGroupService;
 import com.example.server.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -37,19 +37,11 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
-
-import java.io.InputStream;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 
@@ -389,26 +381,19 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
 
     @Override
     public byte[] exportTemplate() {
-        try (
-                InputStream is = getClass()
-                        .getClassLoader()
-                        .getResourceAsStream("templates/template.xlsx")
-        ) {
+        try {
+            ClassPathResource templateResource = new ClassPathResource(
+                    "templates/research-group/template_import_user_research.xlsx");
 
-            if (is == null) {
-                throw new RuntimeException("Không tìm thấy file template.xlsx trong resources/templates");
+            if (!templateResource.exists()) {
+                throw new RuntimeException("Không tìm thấy template tại resources/templates/research-group/template_import_user_research.xlsx");
             }
 
-            try (
-                    XSSFWorkbook workbook = new XSSFWorkbook(is);
-                    ByteArrayOutputStream out = new ByteArrayOutputStream()
-            ) {
-                workbook.write(out);
-                return out.toByteArray();
+            try (InputStream inputStream = templateResource.getInputStream()) {
+                return inputStream.readAllBytes();
             }
-
         } catch (IOException e) {
-            throw new RuntimeException("Lỗi khi xuất file Excel: " + e.getMessage(), e);
+            throw new RuntimeException("Lỗi khi đọc file template Excel: " + e.getMessage(), e);
         }
     }
 
@@ -428,7 +413,6 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
             throw new RuntimeException("Bạn không có quyền import thành viên");
         }
 
-
         String filename = file.getOriginalFilename();
         if (filename == null || (!filename.toLowerCase().endsWith(".xlsx") && !filename.toLowerCase().endsWith(".xls"))) {
             throw new RuntimeException("File phải có định dạng Excel (.xlsx hoặc .xls)");
@@ -438,75 +422,111 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
              Workbook workbook = new XSSFWorkbook(inputStream)) {
 
             Sheet sheet = workbook.getSheetAt(0);
-            int rowCount = sheet.getPhysicalNumberOfRows();
 
-            // Đọc header (dòng 0)
-            Row headerRow = sheet.getRow(0);
-            Map<String, Integer> columnMap = new HashMap<>();
+            // Định nghĩa index các cột cố định
+            final int COL_HO_TEN = 0;
+            final int COL_MA_CAN_BO = 1;
+            final int COL_EMAIL = 2;
+            final int COL_DON_VI = 3;
+            final int COL_NHIEM_VU = 4;
+            final int COL_TY_LE_THAM_GIA = 5;
 
-            for (int i = 0; i < headerRow.getPhysicalNumberOfCells(); i++) {
-                Cell cell = headerRow.getCell(i);
-                if (cell != null) {
-                    String headerValue = cell.getStringCellValue().trim();
-                    columnMap.put(headerValue, i);
-                }
-            }
-
-            // Tìm key cho các cột cần thiết (case-insensitive)
-            String hoVaTenKey = null;
-            String maCanBoKey = null;
-
-            for (String key : columnMap.keySet()) {
-                String lowerKey = key.toLowerCase().trim();
-                // Tìm cột "Họ và tên"
-                if (hoVaTenKey == null && lowerKey.contains("họ") && lowerKey.contains("tên")) {
-                    hoVaTenKey = key;
-                }
-                // Tìm cột "Mã cán bộ"
-                if (maCanBoKey == null && lowerKey.contains("mã") &&
-                        (lowerKey.contains("cán") || lowerKey.contains("can")) && lowerKey.contains("bộ")) {
-                    maCanBoKey = key;
-                }
-            }
+            // Validate role constants
+            final String ROLE_TRUONG_NHOM = "Trưởng nhóm";
+            final String ROLE_THU_KY = "Thư ký";
+            final String ROLE_THANH_VIEN = "Thành viên";
 
             int successCount = 0;
             int errorCount = 0;
             StringBuilder errors = new StringBuilder();
 
-            // Đọc dữ liệu từ dòng 1 trở đi
-            for (int i = 1; i < rowCount; i++) {
-                Row row = sheet.getRow(i);
-                if (row == null)
-                    continue;
+            // Track số lượng role để validate
+            int countTruongNhom = 0;
+            int countThuKy = 0;
+
+            // Đọc dữ liệu từ dòng 1 (bỏ qua header dòng 0)
+            int rowIndex = 1;
+            while (true) {
+                Row row = sheet.getRow(rowIndex);
+                
+                // Dừng khi gặp dòng null hoặc dòng trống (cột mã cán bộ trống)
+                if (row == null) {
+                    break;
+                }
+
+                String username = getStingValue(row, COL_MA_CAN_BO);
+                
+                // Dừng khi gặp dòng trống (mã cán bộ trống)
+                if (username == null || username.trim().isEmpty()) {
+                    break;
+                }
 
                 try {
-                    // Đọc các cột (sử dụng key đã chuẩn hóa)
-                    String name = getStingValue(row, columnMap.get(hoVaTenKey));
-                    String username = getStingValue(row, columnMap.get(maCanBoKey));
-                    String email = columnMap.containsKey("Email") ? getStingValue(row, columnMap.get("Email"))
-                            : null;
-                    String address = columnMap.containsKey("Đơn vị")
-                            ? getStingValue(row, columnMap.get("Đơn vị"))
-                            : null;
-                    String role = columnMap.containsKey("Nhiệm vụ")
-                            ? getStingValue(row, columnMap.get("Nhiệm vụ"))
-                            : "Thành viên";
-                    Integer participationRate = columnMap.containsKey("Tỷ lệ tham gia (%)")
-                            ? getCellValueAsInteger(row, columnMap.get("Tỷ lệ tham gia (%)"))
-                            : 100;
+                    // Đọc dữ liệu từ Excel theo index cột
+                    String donVi = getStingValue(row, COL_DON_VI);
+                    String nhiemVu = getStingValue(row, COL_NHIEM_VU);
+                    Integer tyLeThamGia = getCellValueAsInteger(row, COL_TY_LE_THAM_GIA);
 
-                    if (username == null || username.trim().isEmpty()) {
-                        errorCount++;
-                        errors.append("Dòng ").append(i + 1).append(": Mã cán bộ không được để trống\n");
-                        continue;
-                    }
 
-                    // Tìm user theo username (Mã cán bộ)
+                    // Tìm user theo username (Mã cán bộ) trong DB
                     User member = userRepository.findByUsername(username);
                     if (member == null) {
                         errorCount++;
-                        errors.append("Dòng ").append(i + 1).append(": Không tìm thấy người dùng với mã cán bộ '").append(username).append("'\n");
+                        errors.append("Dòng ").append(rowIndex + 1)
+                              .append(": Không tìm thấy người dùng với mã cán bộ '")
+                              .append(username).append("'\n");
+                        rowIndex++;
                         continue;
+                    }
+
+                    if (donVi == null || donVi.trim().isEmpty()) {
+                        donVi = member.getIdResume().getAddress();
+                    }
+
+                    // Validate nhiệm vụ
+                    if (nhiemVu == null || nhiemVu.trim().isEmpty()) {
+                        nhiemVu = ROLE_THANH_VIEN;
+                    } else {
+                        nhiemVu = nhiemVu.trim();
+                        // Kiểm tra nhiệm vụ chỉ được là 1 trong 3 giá trị
+                        if (!nhiemVu.equalsIgnoreCase(ROLE_TRUONG_NHOM) &&
+                            !nhiemVu.equalsIgnoreCase(ROLE_THU_KY) &&
+                            !nhiemVu.equalsIgnoreCase(ROLE_THANH_VIEN)) {
+                            errorCount++;
+                            errors.append("Dòng ").append(rowIndex + 1)
+                                  .append(": Nhiệm vụ không hợp lệ.");
+                            rowIndex++;
+                            continue;
+                        }
+
+                        // Validate số lượng Trưởng nhóm
+                        if (nhiemVu.equals(ROLE_TRUONG_NHOM)) {
+                            countTruongNhom++;
+                            if (countTruongNhom > 1) {
+                                errorCount++;
+                                errors.append("Dòng ").append(rowIndex + 1)
+                                      .append(": Mỗi nhóm chỉ được có 1 Trưởng nhóm\n");
+                                rowIndex++;
+                                continue;
+                            }
+                        }
+
+                        // Validate số lượng Thư ký
+                        if (nhiemVu.equals(ROLE_THU_KY)) {
+                            countThuKy++;
+                            if (countThuKy > 1) {
+                                errorCount++;
+                                errors.append("Dòng ").append(rowIndex + 1)
+                                      .append(": Mỗi nhóm chỉ được có 1 Thư ký\n");
+                                rowIndex++;
+                                continue;
+                            }
+                        }
+                    }
+
+                    // Tỷ lệ tham gia lấy từ Excel, mặc định 100 nếu trống hoặc không hợp lệ
+                    if (tyLeThamGia == null || tyLeThamGia < 0 || tyLeThamGia > 100) {
+                        tyLeThamGia = 100;
                     }
 
                     // Kiểm tra xem đã là member chưa
@@ -523,20 +543,19 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                                     .participationRate(100)
                                     .build());
 
-                    if (role != null && !role.trim().isEmpty()) {
-                        memberInfo.setRole(role.trim());
-                    }
-                    if (participationRate != null && participationRate >= 0 && participationRate <= 100) {
-                        memberInfo.setParticipationRate(participationRate);
-                    }
+                    memberInfo.setRole(nhiemVu);
+                    memberInfo.setParticipationRate(tyLeThamGia);
 
                     memberRepository.save(memberInfo);
                     successCount++;
 
                 } catch (Exception e) {
                     errorCount++;
-                    errors.append("Dòng ").append(i + 1).append(": ").append(e.getMessage()).append("\n");
+                    errors.append("Dòng ").append(rowIndex + 1)
+                          .append(": ").append(e.getMessage()).append("\n");
                 }
+
+                rowIndex++;
             }
 
             groupRepository.save(group);

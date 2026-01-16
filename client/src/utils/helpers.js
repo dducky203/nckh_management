@@ -40,3 +40,47 @@ export const titleStringToInt = (titleString) => {
 
   return converted;
 };
+
+export const downloadFileFromResponse = (
+  response,
+  fileName = "download.xlsx",
+  options = {}
+) => {
+  const { tryGetFileNameFromHeader = true } = options;
+
+  if (!response) {
+    throw new Error("Response is required");
+  }
+
+  const blob = response?.data;
+  if (!blob) {
+    throw new Error("Response does not contain file data");
+  }
+
+  let finalName = fileName;
+
+  if (tryGetFileNameFromHeader) {
+    const contentDisposition = response?.headers?.["content-disposition"];
+    if (contentDisposition) {
+      const match = contentDisposition.match(
+        /filename\*?=(?:UTF-8''|")?([^";]+)"?/i
+      );
+      if (match?.[1]) {
+        try {
+          finalName = decodeURIComponent(match[1]);
+        } catch {
+          finalName = match[1];
+        }
+      }
+    }
+  }
+
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = finalName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};

@@ -30,7 +30,7 @@ const researchGroupService = {
   },
 
   getGroupById: async (groupId) => {
-    const response = await api.get(`/admin/research-groups/${groupId}`);
+    const response = await api.get(`/research-groups/${groupId}`);
     return response;
   },
 
@@ -115,6 +115,13 @@ const researchGroupService = {
       }
     );
     return response;
+  },
+
+  // Download Excel template for importing members
+  downloadMemberImportTemplate: async () => {
+    return await api.get("/research-groups/export-template", {
+      responseType: "blob",
+    });
   },
 
   // Document management

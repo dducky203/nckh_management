@@ -32,7 +32,7 @@ const ResearchGroupManagement = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
-  const [activeTab, setActiveTab] = useState("student"); // STUDENT or LECTURER
+  const [activeTab, setActiveTab] = useState("my-groups"); // my-groups, student, or lecturer
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -75,16 +75,32 @@ const ResearchGroupManagement = () => {
   const fetchGroups = async () => {
     try {
       setLoading(true);
-      const response = await researchGroupService.getAllGroups(
-        searchTerm,
-        statusFilter,
-        activeTab,
-        currentPage,
-        9,
-      );
-      const responseData = response.data || response;
-      setGroups(responseData?.groups || []);
-      updatePaginationData(responseData);
+
+      if (activeTab === "my-groups") {
+        // Call my-groups API endpoint
+        const response = await researchGroupService.getMyGroups();
+        const responseData = response.data || response;
+        const myGroups = Array.isArray(responseData) ? responseData : [];
+        setGroups(myGroups);
+        // No pagination for my-groups
+        updatePaginationData({
+          totalItems: myGroups.length,
+          totalPages: 1,
+          currentPage: 0,
+        });
+      } else {
+        // Call admin getAllGroups API for student/lecturer tabs
+        const response = await researchGroupService.getAllGroups(
+          searchTerm,
+          statusFilter,
+          activeTab,
+          currentPage,
+          9
+        );
+        const responseData = response.data || response;
+        setGroups(responseData?.groups || []);
+        updatePaginationData(responseData);
+      }
     } catch (error) {
       console.error("Error fetching groups:", error);
       toast.error(error.message || ERROR_MESSAGES.LOAD_DATA_ERROR);
@@ -254,7 +270,19 @@ const ResearchGroupManagement = () => {
                   </button>
                 </div>
                 <nav className="space-y-2">
-                  
+                  <button
+                    onClick={() => {
+                      setActiveTab("my-groups");
+                      resetPagination();
+                    }}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
+                      activeTab === "my-groups"
+                        ? "bg-blue-50 text-blue-700 font-medium"
+                        : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    Nhóm của tôi
+                  </button>
                   <button
                     onClick={() => {
                       setActiveTab("lecturer");
@@ -299,9 +327,7 @@ const ResearchGroupManagement = () => {
             )}
 
             {/* Statistics Cards - Admin Only */}
-            {isAdmin && statistics && (
-              <Statistic statistics={statistics} />
-            )}
+            {isAdmin && statistics && <Statistic statistics={statistics} />}
 
             {/* Search and Filter Bar */}
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
@@ -454,6 +480,7 @@ const ResearchGroupManagement = () => {
           }}
           group={managementGroup}
           onRefresh={fetchGroups}
+          currentUserId={user?.id}
         />
       )}
 

@@ -6,7 +6,9 @@ import com.example.server.DTO.request.UpdateResearchGroupRequest;
 import com.example.server.DTO.response.ResearchGroupDocumentDTO;
 import com.example.server.DTO.response.ResearchGroupDTO;
 import com.example.server.DTO.SuccessResponseDTO;
+import com.example.server.domain.ResearchGroupMember;
 import com.example.server.exception.ExcelValidationException;
+import com.example.server.repository.ResearchGroupMemberRepository;
 import com.example.server.service.ResearchGroupService;
 import com.example.server.utils.SecurityUtils;
 import jakarta.validation.Valid;
@@ -27,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +40,7 @@ import java.util.Map;
 public class ResearchGroupController {
 
     private final ResearchGroupService researchGroupService;
+    private final ResearchGroupMemberRepository researchGroupMemberRepository;
 
     /**
      * User tạo nhóm mới (chờ duyệt)
@@ -52,10 +56,6 @@ public class ResearchGroupController {
         ResearchGroupDTO group = researchGroupService.createGroup(userId, request);
         return ResponseEntity.ok(new SuccessResponseDTO<>(group, "Tạo nhóm thành công! Chờ admin duyệt."));
     }
-
-
-
-
     /**
      * Lấy chi tiết nhóm
      */
@@ -64,6 +64,18 @@ public class ResearchGroupController {
             @PathVariable Integer groupId) {
         ResearchGroupDTO group = researchGroupService.getGroupById(groupId);
         return ResponseEntity.ok(new SuccessResponseDTO<>(group, "Lấy chi tiết nhóm thành công"));
+    }
+
+    @GetMapping("/my-group")
+    public ResponseEntity<SuccessResponseDTO<List<ResearchGroupDTO> >> getMyGroup() {
+        List<ResearchGroupDTO> groups = new ArrayList<>();
+        Integer userId = SecurityUtils.getCurrentUserId();
+        List<ResearchGroupMember>  researchGroupMembers = researchGroupMemberRepository.findAllByUserId(userId);
+        for(ResearchGroupMember dto : researchGroupMembers){
+            ResearchGroupDTO group = researchGroupService.getGroupById(dto.getGroupId());
+            groups.add(group);
+        }
+        return ResponseEntity.ok(new SuccessResponseDTO<>(groups, "Lấy danh sách nhóm thành công"));
     }
 
     /**
@@ -129,11 +141,6 @@ public class ResearchGroupController {
     }
 
     /**
-     * Lấy thống kê
-     */
-
-
-    /**
      * Cập nhật Google Sheet link (chỉ thành viên nhóm mới có quyền)
      */
     @PutMapping("/{groupId}/google-sheet-link")
@@ -185,16 +192,18 @@ public class ResearchGroupController {
             ByteArrayResource resource = new ByteArrayResource(excelData);
 
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentDispositionFormData("attachment", "template.xlsx");
+                headers.setContentDispositionFormData("attachment", "[Template]Import thành viên.xlsx");
             headers.setContentType(
                     MediaType.parseMediaType(
                             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
 
             return ResponseEntity.ok()
                     .headers(headers)
+                    .contentLength(excelData.length)
                     .body(resource);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null);
         }
     }
 
