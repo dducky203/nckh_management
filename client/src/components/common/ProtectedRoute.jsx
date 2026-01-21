@@ -1,31 +1,24 @@
-import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../../context/useAuth";
+import { useContext } from "react";
+import { Navigate } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
+import { isAdmin } from "../../utils/permissions";
 
-const ProtectedRoute = ({ children, requiredPower }) => {
-  const { isAuthenticated, hasPermission, isInitializing } = useAuth();
-  const location = useLocation();
+const ProtectedRoute = ({ children, requiredPower = null }) => {
+  const { user, loading } = useContext(AuthContext);
 
-  // Hiển thị loading trong khi đang khởi tạo
-  if (isInitializing) {
+  if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh' 
-      }}>
-        Loading...
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mainColor"></div>
       </div>
     );
   }
 
-  // Kiểm tra xác thực
-  if (!isAuthenticated()) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  if (!user) {
+    return <Navigate to="/login" replace />;
   }
 
-  // Kiểm tra quyền (nếu cần)
-  if (requiredPower !== undefined && !hasPermission(requiredPower)) {
+  if (requiredPower === "admin" && !isAdmin(user)) {
     return <Navigate to="/unauthorized" replace />;
   }
 

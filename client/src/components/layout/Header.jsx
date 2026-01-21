@@ -23,6 +23,7 @@ import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../constants";
 import { AuthContext } from "../../context/AuthContext";
 import { logout } from "../../utils/cookieUtils";
 import { useToast } from "../../context/ToastContext";
+import { isAdmin } from "../../utils/permissions";
 import Modal from "../common/Modal";
 import logoFita from "../../assets/logo_fita.png";
 import noAvatarImg from "../../assets/no-avatar-user.png";
@@ -59,8 +60,9 @@ const Header = () => {
     };
   }, []);
 
-  // Lấy thông tin người dùng và các hàm từ AuthContext
   const { user } = useContext(AuthContext);
+
+  const userIsAdmin = isAdmin(user);
 
   const toggleDropdown = (dropdownName) => {
     setActiveDropdown(activeDropdown === dropdownName ? null : dropdownName);
@@ -160,16 +162,18 @@ const Header = () => {
                         <span>Hồ sơ</span>
                       </Link>
 
-                      <Link
-                        to="/events/manage"
-                        className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                        onClick={() => setActiveDropdown(null)}
-                      >
-                        <EventNote className="w-4 h-4 mr-2 text-gray-400" />
-                        <span>Quản lý sự kiện</span>
-                      </Link>
+                      {userIsAdmin && (
+                        <Link
+                          to="/events/manage"
+                          className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
+                          onClick={() => setActiveDropdown(null)}
+                        >
+                          <EventNote className="w-4 h-4 mr-2 text-gray-400" />
+                          <span>Quản lý sự kiện</span>
+                        </Link>
+                      )}
 
-                      {user.role === "admin" && (
+                      {userIsAdmin && (
                         <Link
                           to="/user/manager"
                           className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
@@ -180,14 +184,16 @@ const Header = () => {
                         </Link>
                       )}
 
-                      <Link
-                        to="/news/manager"
-                        className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                        onClick={() => setActiveDropdown(null)}
-                      >
-                        <Article className="w-4 h-4 mr-2 text-gray-400" />
-                        <span>Quản lí tin tức</span>
-                      </Link>
+                      {userIsAdmin && (
+                        <Link
+                          to="/news/manager"
+                          className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
+                          onClick={() => setActiveDropdown(null)}
+                        >
+                          <Article className="w-4 h-4 mr-2 text-gray-400" />
+                          <span>Quản lí tin tức</span>
+                        </Link>
+                      )}
 
                       <Link
                         to="/activity/standards"

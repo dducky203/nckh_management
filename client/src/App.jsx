@@ -186,7 +186,7 @@ function App() {
                     <Route
                       path="/news/manager"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requiredPower="admin">
                           <NewsManager />
                         </ProtectedRoute>
                       }

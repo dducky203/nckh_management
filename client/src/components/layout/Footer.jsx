@@ -39,7 +39,7 @@ const Footer = () => {
         {/* Thông tin liên hệ */}
         <div className="text-sm ">
           <h1 className="font-bold mb-2 text-center md:text-left">
-            BẢN QUYỀN THUỘC KHOA CÔNG NGHỆ THÔNG TIN - HỌC VIỆN NÔNG NGHIỆP VIỆT
+            KHOA CÔNG NGHỆ THÔNG TIN - HỌC VIỆN NÔNG NGHIỆP VIỆT
             NAM
           </h1>
           {contactInfo.map((info, index) => (

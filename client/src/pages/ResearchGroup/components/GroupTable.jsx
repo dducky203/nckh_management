@@ -5,17 +5,18 @@ import {
   Cancel,
   Circle,
 } from "@mui/icons-material";
+import { canEditGroup } from "../../../utils/permissions";
 
 const GroupTable = ({
   groups,
   isAdmin,
+  currentUser,
   onViewDetail,
   onDelete,
   getStatusBadge,
   onManageMembers = () => {},
   onManageProductsAndCompletion = () => {},
 }) => {
-  // TODO: sau này có thể lấy từ backend
   const isActive = true;
 
   return (
@@ -23,6 +24,7 @@ const GroupTable = ({
       {groups.map((group) => {
         const statusBadge = getStatusBadge(group.status);
         const StatusIcon = statusBadge.icon;
+        const userCanEdit = canEditGroup(currentUser, group);
 
         return (
           <div
@@ -68,7 +70,7 @@ const GroupTable = ({
                     <Visibility fontSize="small" />
                   </button>
 
-                  {isAdmin && (
+                  {userCanEdit && (
                     <button
                       onClick={() => onDelete(group.id)}
                       className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -86,41 +88,40 @@ const GroupTable = ({
               </h3>
             </div>
 
-            {/* ===== Actions ===== */}
-            <div className="flex-1 divide-y divide-gray-100">
-              {/* Quản lý thành viên */}
-              <button
-                onClick={() => onManageMembers(group)}
-                className="w-full px-6 py-5 flex items-center justify-between transition-all hover:bg-mainColor/5 group/item"
-              >
-                <span className="text-gray-600 font-bold group-hover/item:text-mainColor">
-                  Quản lý thành viên
-                </span>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-black text-gray-400 group-hover/item:text-mainColor/70">
-                    ({group.members?.length || 0})
+            {userCanEdit && (
+              <div className="flex-1 divide-y divide-gray-100">
+                <button
+                  onClick={() => onManageMembers(group)}
+                  className="w-full px-6 py-5 flex items-center justify-between transition-all hover:bg-mainColor/5 group/item"
+                >
+                  <span className="text-gray-600 font-bold group-hover/item:text-mainColor">
+                    Quản lý thành viên
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-black text-gray-400 group-hover/item:text-mainColor/70">
+                      ({group.members?.length || 0})
+                    </span>
+                    <ChevronRight
+                      fontSize="small"
+                      className="text-gray-300 group-hover/item:text-mainColor group-hover/item:translate-x-1 transition-all"
+                    />
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => onManageProductsAndCompletion(group)}
+                  className="w-full px-6 py-5 flex items-center justify-between transition-all hover:bg-mainColor/5 group/item"
+                >
+                  <span className="text-gray-600 font-bold group-hover/item:text-mainColor">
+                    Quản lý sản phẩm & mức độ hoàn thành
                   </span>
                   <ChevronRight
                     fontSize="small"
                     className="text-gray-300 group-hover/item:text-mainColor group-hover/item:translate-x-1 transition-all"
                   />
-                </div>
-              </button>
-
-              {/* Quản lý sản phẩm & mức độ hoàn thành */}
-              <button
-                onClick={() => onManageProductsAndCompletion(group)}
-                className="w-full px-6 py-5 flex items-center justify-between transition-all hover:bg-mainColor/5 group/item"
-              >
-                <span className="text-gray-600 font-bold group-hover/item:text-mainColor">
-                  Quản lý sản phẩm & mức độ hoàn thành
-                </span>
-                <ChevronRight
-                  fontSize="small"
-                  className="text-gray-300 group-hover/item:text-mainColor group-hover/item:translate-x-1 transition-all"
-                />
-              </button>
-            </div>
+                </button>
+              </div>
+            )}
           </div>
         );
       })}

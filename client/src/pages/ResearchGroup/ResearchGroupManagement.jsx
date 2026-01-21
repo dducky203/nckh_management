@@ -17,6 +17,7 @@ import Pagination from "../../components/common/Pagination";
 import Modal from "../../components/common/Modal";
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../constants";
 import GroupTable from "./components/GroupTable";
+import { isAdmin as checkIsAdmin } from "../../utils/permissions";
 import GroupFormModal from "./components/GroupFormModal";
 import GroupDetailModal from "./components/GroupDetailModal";
 import MemberManagementModal from "./components/MemberManagementModal";
@@ -62,7 +63,14 @@ const ResearchGroupManagement = () => {
     resetPagination,
   } = usePagination(0, 9);
 
-  const isAdmin = user?.role === "admin";
+  const isAdmin = checkIsAdmin(user);
+
+  useEffect(() => {
+    if (!isAdmin && activeTab !== "my-groups") {
+      setActiveTab("my-groups");
+      resetPagination();
+    }
+  }, [isAdmin, activeTab, resetPagination]);
 
   useEffect(() => {
     fetchGroups();
@@ -253,71 +261,73 @@ const ResearchGroupManagement = () => {
 
         <div className="flex gap-3">
           {/* Sidebar Navigation */}
-          <div
-            className={`bg-white rounded-lg shadow-sm transition-all duration-300 ${
-              sidebarOpen ? "w-48" : "w-0 overflow-hidden"
-            }`}
-          >
-            {sidebarOpen && (
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-gray-700">Loại nhóm</h3>
-                  <button
-                    onClick={() => setSidebarOpen(false)}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <ChevronLeft />
-                  </button>
+          {isAdmin && (
+            <div
+              className={`bg-white rounded-lg shadow-sm transition-all duration-300 ${
+                sidebarOpen ? "w-48" : "w-0 overflow-hidden"
+              }`}
+            >
+              {sidebarOpen && (
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-gray-700">Loại nhóm</h3>
+                    <button
+                      onClick={() => setSidebarOpen(false)}
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <ChevronLeft />
+                    </button>
+                  </div>
+                  <nav className="space-y-2">
+                    <button
+                      onClick={() => {
+                        setActiveTab("my-groups");
+                        resetPagination();
+                      }}
+                      className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
+                        activeTab === "my-groups"
+                          ? "bg-blue-50 text-blue-700 font-medium"
+                          : "text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      Nhóm của tôi
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveTab("lecturer");
+                        resetPagination();
+                      }}
+                      className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
+                        activeTab === "lecturer"
+                          ? "bg-blue-50 text-blue-700 font-medium"
+                          : "text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      Nhóm Giảng viên
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveTab("student");
+                        resetPagination();
+                      }}
+                      className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
+                        activeTab === "student"
+                          ? "bg-blue-50 text-blue-700 font-medium"
+                          : "text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      Nhóm Sinh viên
+                    </button>
+                  </nav>
                 </div>
-                <nav className="space-y-2">
-                  <button
-                    onClick={() => {
-                      setActiveTab("my-groups");
-                      resetPagination();
-                    }}
-                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
-                      activeTab === "my-groups"
-                        ? "bg-blue-50 text-blue-700 font-medium"
-                        : "text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    Nhóm của tôi
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveTab("lecturer");
-                      resetPagination();
-                    }}
-                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
-                      activeTab === "lecturer"
-                        ? "bg-blue-50 text-blue-700 font-medium"
-                        : "text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    Nhóm Giảng viên
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveTab("student");
-                      resetPagination();
-                    }}
-                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
-                      activeTab === "student"
-                        ? "bg-blue-50 text-blue-700 font-medium"
-                        : "text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    Nhóm Sinh viên
-                  </button>
-                </nav>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           {/* Main Content */}
           <div className="flex-1">
             {/* Toggle Button when sidebar is closed */}
-            {!sidebarOpen && (
+            {isAdmin && !sidebarOpen && (
               <button
                 onClick={() => setSidebarOpen(true)}
                 className="mb-4 p-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow text-gray-600 hover:text-gray-900"
@@ -352,6 +362,7 @@ const ResearchGroupManagement = () => {
                 </form>
 
                 <div className="flex gap-4">
+                  {isAdmin && (
                   <select
                     value={statusFilter}
                     onChange={(e) => {
@@ -364,7 +375,7 @@ const ResearchGroupManagement = () => {
                     <option value="PENDING">Chờ duyệt</option>
                     <option value="APPROVED">Đã duyệt</option>
                     <option value="REJECTED">Từ chối</option>
-                  </select>
+                  </select>)}
 
                   <button
                     onClick={handleCreateGroup}
@@ -409,7 +420,7 @@ const ResearchGroupManagement = () => {
                 <GroupTable
                   groups={groups}
                   isAdmin={isAdmin}
-                  currentUserId={user?.id}
+                  currentUser={user}
                   onViewDetail={handleViewDetail}
                   onEdit={handleEditGroup}
                   onApprove={handleApprove}

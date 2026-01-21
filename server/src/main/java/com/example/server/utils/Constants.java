@@ -108,10 +108,10 @@ public class Constants {
         - Xuất dữ liệu Excel
         
         3. PHÂN QUYỀN NGƯỜI DÙNG:
-        - Trưởng khoa (power=1): Quyền cao nhất, duyệt mọi hoạt động
-        - Phó khoa (power=2): Quản lý và phê duyệt sự kiện, nhóm nghiên cứu
-        - Cán bộ khoa (power=3): Tạo sự kiện, tham gia nghiên cứu, đăng tin tức
-        - Sinh viên (power=4): Xem thông tin, tham gia sự kiện được mời
+        - Trưởng khoa : Quyền cao nhất, duyệt mọi hoạt động
+        - Phó khoa : Quản lý và phê duyệt sự kiện, nhóm nghiên cứu
+        - Cán bộ khoa : Tạo sự kiện, tham gia nghiên cứu, đăng tin tức
+        - Sinh viên : Xem thông tin, tham gia sự kiện được mời
         
         4. CÁC LOẠI CÔNG TRÌNH KHOA HỌC:
         - Bài báo quốc tế (InternationalPaper): Bài báo đăng trên tạp chí quốc tế có ISI/Scopus
@@ -207,7 +207,7 @@ public class Constants {
         - Xuất báo cáo Excel: Nhấn nút "Xuất Excel"
         
         6. LIÊN HỆ HỖ TRỢ:
-        - Email: 44444ace@gmail.com
+        - Email: cntt@vnua.edu.vn
         - Địa chỉ: Khoa Công nghệ Thông tin - Đại học Nông nghiệp Việt Nam
         - Trâu Quỳ, Gia Lâm, Hà Nội
         
