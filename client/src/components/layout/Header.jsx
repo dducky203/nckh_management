@@ -115,7 +115,7 @@ const Header = () => {
                   >
                     <div>
                       <img
-                        src={user.avatar || noAvatarImg}
+                        src={user?.avatar || noAvatarImg}
                         alt={user.name}
                         className={`${
                           user.role === "admin"

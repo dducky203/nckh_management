@@ -139,11 +139,11 @@ const Login = () => {
                   formData.username.trim().length <= 4
                     ? "border-red-300 bg-red-50"
                     : formData.username.trim() &&
-                      formData.password.trim() &&
-                      formData.username.trim().toLowerCase() ===
-                        formData.password.trim().toLowerCase()
-                    ? "border-red-300 bg-red-50"
-                    : "border-gray-300"
+                        formData.password.trim() &&
+                        formData.username.trim().toLowerCase() ===
+                          formData.password.trim().toLowerCase()
+                      ? "border-red-300 bg-red-50"
+                      : "border-gray-300"
                 }`}
                 placeholder="Nhập tên đăng nhập"
               />

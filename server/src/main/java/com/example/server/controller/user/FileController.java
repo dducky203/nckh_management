@@ -1,27 +1,34 @@
 package com.example.server.controller.user;
 
+import com.example.server.service.CloudinaryService;
+import com.example.server.domain.User;
+import com.example.server.repository.UserRepository;
+import com.example.server.exception.ErrorException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
+import java.util.Map;
 
 
 @RestController
+@RequestMapping
+@CrossOrigin(origins = "*")
 public class FileController {
-    // Cấu hình đường dẫn thư mục lưu trữ file
-    @Value("${upload.dir}")
-    private String uploadDir;
+    
+    @Autowired
+    private CloudinaryService cloudinaryService;
+    
+    @Autowired
+    private UserRepository userRepository;
 
     @GetMapping("/download/{fileName}")
     public ResponseEntity<Resource> downloadFile(@PathVariable String fileName) {
@@ -64,16 +71,89 @@ public class FileController {
         }
     }
 
-
-
-    public  String handleFileUpload(@RequestParam("file") MultipartFile file) {
+    /**
+     * Upload file lên Cloudinary
+     */
+    @PostMapping("/api/upload")
+    public ResponseEntity<?> uploadFile(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "folder", defaultValue = "general") String folder) {
         try {
-            // Lưu file vào thư mục
-            Path path = Path.of(uploadDir + file.getOriginalFilename());
-            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-            return "null";
-        } catch (IOException e) {
-            return "Có lỗi xảy ra khi tải lên file.";
+            String fileUrl = cloudinaryService.uploadFile(file, folder);
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("url", fileUrl);
+            response.put("fileName", file.getOriginalFilename());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
+     * Xóa file từ Cloudinary bằng URL
+     */
+    @DeleteMapping("/api/delete-file")
+    public ResponseEntity<?> deleteFile(@RequestParam("url") String fileUrl) {
+        try {
+            // Extract publicId from Cloudinary URL
+            // URL format: https://res.cloudinary.com/{cloud_name}/image/upload/{version}/{publicId}.{extension}
+            String publicId = cloudinaryService.extractPublicIdFromUrl(fileUrl);
+            cloudinaryService.deleteFile(publicId);
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "File deleted successfully");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
+     * Upload avatar - xóa ảnh cũ nếu có
+     */
+    @PostMapping("/api/users/upload-avatar")
+    public ResponseEntity<?> uploadAvatar(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("username") String username) {
+        try {
+            User user = userRepository.findByUsername(username);
+            if (user == null) {
+                throw new ErrorException("Người dùng không tồn tại!", HttpStatus.NOT_FOUND);
+            }
+
+            // Xóa ảnh cũ nếu có
+            if (user.getAvatar() != null && !user.getAvatar().isEmpty()) {
+                try {
+                    String oldPublicId = cloudinaryService.extractPublicIdFromUrl(user.getAvatar());
+                    if (oldPublicId != null) {
+                        cloudinaryService.deleteFile(oldPublicId);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Không thể xóa ảnh cũ: " + e.getMessage());
+                }
+            }
+
+            // Upload ảnh mới
+            String avatarUrl = cloudinaryService.uploadFile(file, "avatars");
+            user.setAvatar(avatarUrl);
+            userRepository.save(user);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("url", avatarUrl);
+            response.put("message", "Upload avatar thành công");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
 

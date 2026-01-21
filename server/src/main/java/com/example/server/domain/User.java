@@ -29,11 +29,13 @@ public class User extends EntityBase implements Serializable {
     private Role idRole;
 
     @Column(name = "username",unique = true, length = 250)
-
     private String username;
 
     @Column(name = "password", length = 250)
     private String password;
+
+    @Column(name = "avatar", length = 250)
+    private String avatar;
 
     @Column(name = "power")
     private Integer power;

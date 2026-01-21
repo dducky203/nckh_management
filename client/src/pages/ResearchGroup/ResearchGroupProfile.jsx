@@ -8,12 +8,11 @@ import {
 } from "@mui/icons-material";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
-import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../constants";
+import { SUCCESS_MESSAGES, ERROR_MESSAGES, getImageUrl } from "../../constants";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import Modal from "../../components/common/Modal";
 import researchGroupService from "../../services/researchGroupService";
 import api from "../../services/api";
-import { BASE_IMG_URL } from "../../constants";
 
 const DOCUMENT_TYPES = [
   "Thông báo",
@@ -199,10 +198,10 @@ const ResearchGroupProfile = () => {
   };
 
   const handleDownload = (document) => {
-    // TODO: Tải file về
+    // Tải file về
     const fileUrl = document.fileUrl || document.url;
     if (fileUrl) {
-      window.open(`${BASE_IMG_URL}${fileUrl}`, "_blank");
+      window.open(getImageUrl(fileUrl), "_blank");
     }
   };
 

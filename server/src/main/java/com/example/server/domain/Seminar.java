@@ -20,7 +20,7 @@ public class Seminar extends EntityBase implements Serializable {
 //    @Column(name = "member_count")
 //    private Integer memberCount;
 
-    @Column(name = "main_author", length = 250)
+    @Column(name = "main_author", columnDefinition = "TEXT")
     private String mainAuthor;
 
     @Column(name = "presentation_file", length = 250)

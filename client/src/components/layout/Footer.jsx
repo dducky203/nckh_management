@@ -21,7 +21,7 @@ const Footer = () => {
   ];
 
   const contactInfo = [
-    "Địa chỉ Văn phòng Khoa: P316, Tầng 3 Nhà Hành chính, Học viện Nông nghiệp Việt Nam",
+    "Địa chỉ Văn phòng Khoa: P316, Tầng 3 Tòa Bùi Huy Đáp, Học viện Nông nghiệp Việt Nam",
     "Điện thoại: (024) 62617701 – Fax: (024) 38276554",
     "Email: cntt@vnua.edu.vn - Website: https://fita.vnua.edu.vn",
   ];

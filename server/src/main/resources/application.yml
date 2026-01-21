@@ -44,3 +44,9 @@ gemini:
     key: AIzaSyDznsvN4-ADEFRqpTIBPwP70EkMHFj4kJg
     model: gemini-2.5-flash
     endpoint: https://generativelanguage.googleapis.com/v1beta/models/
+
+# Cloudinary Configuration
+cloudinary:
+  cloud-name: doslcoy82
+  api-key: 782598553554941
+  api-secret: XIrVpff4K5tVeMm4nd4NW8XB0Bo

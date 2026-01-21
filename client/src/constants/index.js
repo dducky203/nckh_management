@@ -5,6 +5,23 @@ export const JWT_EXPIRATION_DAYS =
   Number(import.meta.env.VITE_JWT_EXPIRATION_DAYS) || 1;
 export const ITEMS_PER_PAGE = 15;
 
+/**
+ * Helper để lấy URL hình ảnh
+ * Nếu đã là URL Cloudinary thì return luôn
+ * Nếu là path cũ (local) thì convert sang API URL
+ */
+export const getImageUrl = (url) => {
+  if (!url) return null;
+  
+  // Nếu đã là URL đầy đủ (Cloudinary hoặc external), return luôn
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  
+  // Nếu là path cũ (local), convert sang API URL
+  return `${API_BASE_URL}/file/${url}`;
+};
+
 export const formatDate = (dateString) => {
   if (!dateString) return "Không có thông tin";
 

@@ -4,9 +4,9 @@ import { AuthContext } from "../../context/AuthContext";
 import { isAdmin } from "../../utils/permissions";
 
 const ProtectedRoute = ({ children, requiredPower = null }) => {
-  const { user, loading } = useContext(AuthContext);
+  const { user, isInitializing } = useContext(AuthContext);
 
-  if (loading) {
+  if (isInitializing) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mainColor"></div>

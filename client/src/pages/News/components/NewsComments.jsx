@@ -1,11 +1,18 @@
 import { useState, useEffect, useContext } from "react";
-import { Send } from "@mui/icons-material";
+import { 
+  Send, 
+  ChatBubbleOutline, 
+  Lock, 
+  KeyboardArrowDown, 
+  KeyboardArrowUp 
+} from "@mui/icons-material";
 import { AuthContext } from "../../../context/AuthContext";
 import { useToast } from "../../../context/ToastContext";
 import { ERROR_MESSAGES } from "../../../constants";
 import newsService from "../../../services/newsService";
 import noAvatarImg from "../../../assets/no-avatar-user.png";
 import CommentList from "./CommentList";
+import { Link } from "react-router-dom";
 
 const NewsComments = ({ newsId }) => {
   const { user } = useContext(AuthContext);
@@ -57,82 +64,115 @@ const NewsComments = ({ newsId }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mt-8">
-      <h3 className="text-2xl font-bold text-gray-800 mb-6">
-        Bình luận ({comments.length})
-      </h3>
+    <div className="p-6 bg-white border-t border-gray-100 pt-8 mt-8">
+      {/* Header Section */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 bg-blue-50 text-mainColor rounded-full">
+          <ChatBubbleOutline fontSize="small" />
+        </div>
+        <h3 className="text-xl font-bold text-gray-800">
+          Thảo luận <span className="text-gray-500 font-normal text-base ml-1">({comments.length})</span>
+        </h3>
+      </div>
 
-      {/* Comment Form */}
-      {user ? (
-        <form onSubmit={handleSubmitComment} className="mb-6">
-          <div className="flex gap-3">
+      {/* Comment Form Section */}
+      <div className="mb-8">
+        {user ? (
+          <form onSubmit={handleSubmitComment} className="flex gap-4 items-start">
             <img
               src={user.avatar || noAvatarImg}
               alt={user.name}
-              className="w-10 h-10 rounded-md border border-gray-300 object-cover"
+              className="w-10 h-10 rounded-full border border-gray-200 object-cover shadow-sm shrink-0"
             />
-            <div className="flex w-full gap-x-4">
-              <textarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Viết bình luận..."
-                className="w-full px-4  border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                disabled={submitting}
-              />
-              <div className="flex justify-end">
+            <div className="flex-1 relative group">
+              <div className="relative">
+                <textarea
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Chia sẻ ý kiến của bạn..."
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-mainColor/20 focus:border-mainColor transition-all resize-none text-sm min-h-[100px]"
+                  disabled={submitting}
+                />
+              </div>
+              
+              <div className="flex justify-between items-center mt-2">
+                <span className="text-xs text-gray-400 italic">
+                  *Bình luận văn minh, lịch sự
+                </span>
                 <button
                   type="submit"
                   disabled={submitting || !newComment.trim()}
-                  className="w-32 inline-flex items-center px-4 py-2 bg-mainColor text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="inline-flex items-center px-6 py-2 bg-mainColor text-white text-sm font-semibold rounded-lg hover:bg-opacity-90 transition-all shadow-sm hover:shadow-md disabled:bg-gray-300 disabled:cursor-not-allowed disabled:shadow-none"
                 >
-                  <Send className="mr-2" fontSize="small" />
-                  {submitting ? "Đang gửi..." : "Bình luận"}
+                  {submitting ? (
+                    <span className="flex items-center gap-2">
+                       <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                       </svg>
+                       Đang gửi...
+                    </span>
+                  ) : (
+                    <>
+                      <Send className="mr-2" style={{ fontSize: 16 }} />
+                      Gửi bình luận
+                    </>
+                  )}
                 </button>
               </div>
             </div>
+          </form>
+        ) : (
+          <div className="flex items-center gap-4 bg-blue-50/50 border border-blue-100 rounded-xl p-4">
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-500 shrink-0">
+              <Lock fontSize="small" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-gray-700">
+                Vui lòng <Link to="/login" className="font-bold text-mainColor hover:underline">đăng nhập</Link> để tham gia thảo luận về bài viết này.
+              </p>
+            </div>
           </div>
-        </form>
-      ) : (
-        <div className="bg-gray-50 rounded-lg p-4 mb-6 text-center">
-          <p className="text-gray-600">
-            Vui lòng{" "}
-            <a href="/login" className="text-blue-600 hover:underline">
-              đăng nhập
-            </a>{" "}
-            để bình luận
-          </p>
+        )}
+      </div>
+
+      {/* Comments List Section */}
+      <div className="space-y-6">
+        <CommentList
+          comments={showAll ? comments : comments.slice(0, 5)} // Mặc định hiện 5 thôi cho gọn
+          loading={loading}
+          user={user}
+          onCommentsChange={fetchComments}
+        />
+      </div>
+
+      {/* Expand/Collapse Actions */}
+      {comments.length > 5 && (
+        <div className="mt-6 pt-4 border-t border-gray-100 flex justify-center">
+          {!showAll ? (
+            <button
+              onClick={() => setShowAll(true)}
+              className="group flex flex-col items-center gap-1 text-xs font-semibold text-gray-500 hover:text-mainColor transition-colors"
+            >
+              <span>Xem thêm {comments.length - 5} bình luận</span>
+              <KeyboardArrowDown className="group-hover:translate-y-1 transition-transform" fontSize="small" />
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowAll(false)}
+              className="group flex flex-col items-center gap-1 text-xs font-semibold text-gray-500 hover:text-mainColor transition-colors"
+            >
+              <KeyboardArrowUp className="group-hover:-translate-y-1 transition-transform" fontSize="small" />
+              <span>Thu gọn danh sách</span>
+            </button>
+          )}
         </div>
       )}
-
-      {/* Comments List */}
-      <CommentList
-        comments={showAll ? comments : comments.slice(0, 10)}
-        loading={loading}
-        user={user}
-        onCommentsChange={fetchComments}
-      />
-
-      {/* Show More Button */}
-      {!showAll && comments.length > 10 && (
-        <div className="mt-4 text-center">
-          <button
-            onClick={() => setShowAll(true)}
-            className="text-blue-600 hover:text-blue-700 font-medium text-sm hover:underline"
-          >
-            Xem tất cả {comments.length} bình luận
-          </button>
-        </div>
-      )}
-
-      {showAll && comments.length > 10 && (
-        <div className="mt-4 text-center">
-          <button
-            onClick={() => setShowAll(false)}
-            className="text-gray-600 hover:text-gray-700 font-medium text-sm hover:underline"
-          >
-            Thu gọn
-          </button>
-        </div>
+      
+      {comments.length === 0 && !loading && (
+        <p className="text-center text-gray-400 text-sm italic py-4">
+          Chưa có bình luận nào. Hãy là người đầu tiên chia sẻ ý kiến!
+        </p>
       )}
     </div>
   );

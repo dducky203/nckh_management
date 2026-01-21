@@ -3,7 +3,10 @@ package com.example.server.controller.event;
 import com.example.server.DTO.SuccessResponseDTO;
 import com.example.server.DTO.event.EventPublicDTO;
 import com.example.server.DTO.event.EventRegistrationDTO;
+import com.example.server.service.CloudinaryService;
 import com.example.server.service.EventPublicService;
+import com.example.server.service.TypeOfCriterionService;
+import com.example.server.domain.TypeOfCriterion;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -17,9 +20,11 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/events")
@@ -28,9 +33,35 @@ public class EventPublicRestController {
 
     @Autowired
     private EventPublicService eventPublicService;
+    
+    @Autowired
+    private CloudinaryService cloudinaryService;
 
-    @Value("${upload.dir}")
-    private String uploadDir;
+    @Autowired
+    private TypeOfCriterionService typeOfCriterionService;
+
+    @GetMapping("/types")
+    public ResponseEntity<?> getEventTypes() {
+        try {
+            List<TypeOfCriterion> allTypes = typeOfCriterionService.findAll();
+            // Lọc các type có is_event = true
+            List<Map<String, Object>> eventTypes = allTypes.stream()
+                    .filter(TypeOfCriterion::isEvent)
+                    .map(type -> {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("id", type.getId());
+                        map.put("name", type.getName());
+                        map.put("is_event", type.isEvent());
+                        return map;
+                    })
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(
+                    new SuccessResponseDTO<>(eventTypes, "Lấy danh sách loại sự kiện thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Có lỗi xảy ra: " + e.getMessage());
+        }
+    }
 
     @GetMapping
     public ResponseEntity<?> getPublicEvents(
@@ -150,22 +181,15 @@ public class EventPublicRestController {
             @RequestParam("startTime") String startTime,
             @RequestParam("endTime") String endTime,
             @RequestParam(value = "roomId", required = false) Integer roomId,
+            @RequestParam(value = "typeId", required = false) Integer typeId,
             @RequestParam("type") String type,
             @RequestParam("description") String description,
             @RequestParam("creator") Integer creator) {
         try {
-            // Upload banner nếu có
+            // Upload banner lên Cloudinary nếu có
             String bannerUrl = null;
             if (bannerFile != null && !bannerFile.isEmpty()) {
-                String originalFilename = bannerFile.getOriginalFilename();
-                String extension = originalFilename != null
-                        ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                        : ".jpg";
-                String filename = "event-banner-" + UUID.randomUUID() + extension;
-
-                Path path = Path.of(uploadDir + filename);
-                Files.copy(bannerFile.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-                bannerUrl = "/file/" + filename;
+                bannerUrl = cloudinaryService.uploadFile(bannerFile, "events");
             }
 
             // Tạo EventPublicDTO
@@ -183,6 +207,7 @@ public class EventPublicRestController {
             eventData.setStartTime(eventDate.atTime(startLocalTime));
             eventData.setEndTime(eventDate.atTime(endLocalTime));
             eventData.setRoomId(roomId);
+            eventData.setTypeId(typeId);
             eventData.setType(type);
             eventData.setDescription(description);
             eventData.setCreator(creator);

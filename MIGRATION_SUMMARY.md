@@ -3,17 +3,21 @@
 ## 🔧 Backend - Các file đã sửa
 
 ### 1. ✅ CloudinaryService.java (Đã tạo)
+
 **Location:** `server/src/main/java/com/example/server/service/CloudinaryService.java`
 
 Service chính để upload/delete file lên Cloudinary:
+
 - `uploadFile(file, folder)` - Upload file lên Cloudinary
 - `deleteFile(publicId)` - Xóa file từ Cloudinary
 - Tự động extract public_id từ URL
 
 ### 2. ✅ NewsController.java (Đã sửa)
+
 **Location:** `server/src/main/java/com/example/server/controller/user/NewsController.java`
 
 **Thay đổi:**
+
 - ✅ Import `CloudinaryService`
 - ✅ Inject `CloudinaryService`
 - ✅ Upload ảnh tin tức lên Cloudinary (thay vì `fileService.store()`)
@@ -21,15 +25,18 @@ Service chính để upload/delete file lên Cloudinary:
 - ✅ Xóa ảnh cũ trên Cloudinary khi update tin tức
 
 **Dòng code quan trọng:**
+
 ```java
 String imageUrl = cloudinaryService.uploadFile(file, "news");
 newsImage.setImageName(imageUrl);  // Lưu URL thay vì tên file
 ```
 
 ### 3. ✅ EventPublicRestController.java (Đã sửa)
+
 **Location:** `server/src/main/java/com/example/server/controller/event/EventPublicRestController.java`
 
 **Thay đổi:**
+
 - ✅ Import `CloudinaryService`
 - ✅ Inject `CloudinaryService`
 - ✅ Xóa `@Value("${upload.dir}")`
@@ -37,15 +44,18 @@ newsImage.setImageName(imageUrl);  // Lưu URL thay vì tên file
 - ✅ Lưu URL Cloudinary vào database
 
 **Dòng code quan trọng:**
+
 ```java
 String bannerUrl = cloudinaryService.uploadFile(bannerFile, "events");
 eventData.setBannerImg(bannerUrl);
 ```
 
 ### 4. ✅ FileController.java (Đã sửa)
+
 **Location:** `server/src/main/java/com/example/server/controller/user/FileController.java`
 
 **Thay đổi:**
+
 - ✅ Import `CloudinaryService`
 - ✅ Inject `CloudinaryService`
 - ✅ Thêm endpoint mới: `POST /api/upload`
@@ -53,6 +63,7 @@ eventData.setBannerImg(bannerUrl);
 - ✅ Thêm `@CrossOrigin(origins = "*")`
 
 **API mới:**
+
 ```java
 POST /api/upload
 - Params: file, folder (optional)
@@ -60,9 +71,11 @@ POST /api/upload
 ```
 
 ### 5. ✅ application.yml (Đã cập nhật)
+
 **Location:** `server/src/main/resources/application.yml`
 
 **Thêm config:**
+
 ```yaml
 cloudinary:
   cloud-name: doslcoy82
@@ -75,32 +88,37 @@ cloudinary:
 ## 🎨 Frontend - Các file đã sửa
 
 ### 6. ✅ uploadService.js (Đã cập nhật)
+
 **Location:** `client/src/services/uploadService.js`
 
 **Thêm functions:**
+
 - `uploadToCloudinary(file, folder)` - Upload file đơn giản
 - `uploadWithProgress(file, folder, onProgress)` - Upload với progress tracking
 
 **Cách dùng:**
-```javascript
-import uploadToCloudinary from '@/services/uploadService';
 
-const url = await uploadToCloudinary(file, 'events');
+```javascript
+import uploadToCloudinary from "@/services/uploadService";
+
+const url = await uploadToCloudinary(file, "events");
 ```
 
 ### 7. ✅ constants/index.js (Đã thêm helper)
+
 **Location:** `client/src/constants/index.js`
 
 **Thêm function:**
+
 ```javascript
 export const getImageUrl = (url) => {
   if (!url) return null;
-  
+
   // Nếu đã là URL Cloudinary, return luôn
   if (url.startsWith("http://") || url.startsWith("https://")) {
     return url;
   }
-  
+
   // Nếu là path cũ, convert sang API URL
   return `${API_BASE_URL}/file/${url}`;
 };
@@ -109,19 +127,22 @@ export const getImageUrl = (url) => {
 **Mục đích:** Tự động detect URL Cloudinary vs local path
 
 ### 8. ✅ EventDashboard.jsx (Đã sửa)
+
 **Location:** `client/src/pages/Events/EventDashboard.jsx`
 
 **Thay đổi:**
+
 - ✅ Import `uploadToCloudinary`
 - ✅ Upload ảnh lên Cloudinary trước khi submit form
 - ✅ Gửi URL Cloudinary thay vì File object
 
 **Dòng code quan trọng:**
+
 ```javascript
 // Upload ảnh lên Cloudinary trước
 let imageUrl = null;
-if (formData.image && typeof formData.image !== 'string') {
-  imageUrl = await uploadToCloudinary(formData.image, 'events');
+if (formData.image && typeof formData.image !== "string") {
+  imageUrl = await uploadToCloudinary(formData.image, "events");
 }
 
 // Gửi URL thay vì file
@@ -138,14 +159,15 @@ Tất cả các nơi hiển thị ảnh cần import và sử dụng `getImageUr
 
 ```javascript
 // Thay vì:
-<img src={`${BASE_IMG_URL}${event.image}`} />
+<img src={`${BASE_IMG_URL}${event.image}`} />;
 
 // Dùng:
-import { getImageUrl } from '@/constants';
-<img src={getImageUrl(event.image)} />
+import { getImageUrl } from "@/constants";
+<img src={getImageUrl(event.image)} />;
 ```
 
 **Các file cần kiểm tra:**
+
 - `client/src/pages/Events/components/EventCard.jsx`
 - `client/src/pages/Events/components/EventDetailModal.jsx`
 - `client/src/pages/News/**/*.jsx`
@@ -158,19 +180,18 @@ import { getImageUrl } from '@/constants';
 ### Upload file từ Frontend
 
 ```javascript
-import uploadToCloudinary from '@/services/uploadService';
+import uploadToCloudinary from "@/services/uploadService";
 
 const handleFileUpload = async (file) => {
   try {
     // Upload lên Cloudinary
-    const url = await uploadToCloudinary(file, 'events');
-    
+    const url = await uploadToCloudinary(file, "events");
+
     // Sử dụng URL để lưu vào database hoặc hiển thị
-    console.log('Cloudinary URL:', url);
+    console.log("Cloudinary URL:", url);
     // url = "https://res.cloudinary.com/doslcoy82/image/upload/..."
-    
   } catch (error) {
-    console.error('Upload failed:', error);
+    console.error("Upload failed:", error);
   }
 };
 ```
@@ -178,15 +199,15 @@ const handleFileUpload = async (file) => {
 ### Hiển thị ảnh
 
 ```javascript
-import { getImageUrl } from '@/constants';
+import { getImageUrl } from "@/constants";
 
 function EventCard({ event }) {
   return (
-    <img 
-      src={getImageUrl(event.image)} 
+    <img
+      src={getImageUrl(event.image)}
       alt={event.title}
       onError={(e) => {
-        e.target.src = '/default-image.jpg'; // Fallback
+        e.target.src = "/default-image.jpg"; // Fallback
       }}
     />
   );
@@ -198,6 +219,7 @@ function EventCard({ event }) {
 ## 🔍 Cách kiểm tra
 
 ### 1. Test Upload
+
 ```bash
 # Start backend
 cd server
@@ -209,12 +231,14 @@ npm run dev
 ```
 
 ### 2. Test upload ảnh:
+
 - Vào EventDashboard
 - Tạo sự kiện mới
 - Upload ảnh banner
 - Check console: phải thấy URL Cloudinary (https://res.cloudinary.com/...)
 
 ### 3. Test hiển thị ảnh:
+
 - Các ảnh mới sẽ load từ Cloudinary
 - Các ảnh cũ (nếu có) sẽ load từ local
 
@@ -232,6 +256,7 @@ npm run dev
    - `getImageUrl()` tự động detect và xử lý
 
 3. **Folders trên Cloudinary:**
+
    ```
    nckh/
    ├── events/     (banner sự kiện)
@@ -249,7 +274,9 @@ npm run dev
 ## 🎯 Các bước tiếp theo
 
 ### Bước 1: Cập nhật các component hiển thị ảnh
+
 Tìm tất cả nơi hiển thị ảnh và thay thế:
+
 ```javascript
 // Old
 <img src={`${BASE_IMG_URL}${image}`} />
@@ -259,18 +286,21 @@ Tìm tất cả nơi hiển thị ảnh và thay thế:
 ```
 
 ### Bước 2: Xóa thư mục uploads local (optional)
+
 ```bash
 cd server
 rm -rf src/main/resources/static/file/*
 ```
 
 Thêm vào `.gitignore`:
+
 ```
 server/src/main/resources/static/file/
 server/uploads/
 ```
 
 ### Bước 3: Test đầy đủ
+
 - [ ] Upload ảnh tin tức
 - [ ] Upload banner sự kiện
 - [ ] Update tin tức (có xóa ảnh cũ)
@@ -282,6 +312,7 @@ server/uploads/
 ## 📊 So sánh Before vs After
 
 ### Before (Local Storage):
+
 ```
 User upload → Save to server/uploads → DB lưu filename
                                       ↓
@@ -291,6 +322,7 @@ User upload → Save to server/uploads → DB lưu filename
 ```
 
 ### After (Cloudinary):
+
 ```
 User upload → Cloudinary API → DB lưu full URL
                               ↓
@@ -301,6 +333,6 @@ User upload → Cloudinary API → DB lưu full URL
 
 ---
 
-**Hoàn tất! 🎉** 
+**Hoàn tất! 🎉**
 
 Tất cả file upload/ảnh giờ đã được lưu trên Cloudinary và sẽ không bị mất khi deploy!

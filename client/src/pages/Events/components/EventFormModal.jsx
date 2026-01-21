@@ -4,6 +4,7 @@ import { useToast } from "../../../context/ToastContext";
 import { ERROR_MESSAGES } from "../../../constants";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
+import { getQuillModules, quillFormats } from "../../../utils/quillConfig";
 import "./EventFormModal.css";
 
 const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
@@ -48,6 +49,9 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Quill config with Cloudinary upload
+  const quillModules = getQuillModules();
 
   const EVENT_TYPES = ["Hội thảo", "Workshop", "Cuộc thi", "Seminar", "Khác"];
 
@@ -304,31 +308,8 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
                   onChange={(value) =>
                     handleRichTextChange("description", value || "")
                   }
-                  modules={{
-                    toolbar: [
-                      [{ header: [1, 2, 3, false] }],
-                      ["bold", "italic", "underline", "strike"],
-                      [{ list: "ordered" }, { list: "bullet" }],
-                      [{ color: [] }, { background: [] }],
-                      [{ align: [] }],
-                      ["link", "image"],
-                      ["clean"],
-                    ],
-                  }}
-                  formats={[
-                    "header",
-                    "bold",
-                    "italic",
-                    "underline",
-                    "strike",
-                    "list",
-                    "bullet",
-                    "color",
-                    "background",
-                    "align",
-                    "link",
-                    "image",
-                  ]}
+                  modules={quillModules}
+                  formats={quillFormats}
                   className="h-[200px]"
                   placeholder="Mô tả chi tiết về sự kiện..."
                 />

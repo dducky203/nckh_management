@@ -1,7 +1,6 @@
 import api from "./api";
 
 const researchGroupService = {
-  // User APIs
   createGroup: async (groupData) => {
     return await api.post("/research-groups/create", groupData);
   },
@@ -24,6 +23,27 @@ const researchGroupService = {
     };
 
     const response = await api.get("/admin/research-groups", {
+      params,
+    });
+    return response;
+  },
+
+  getAllGroupPublic: async (
+    keyword = "",
+    type = "",
+    page = 0,
+    size = 10
+  ) => {
+    const params = {
+      keyword,
+      type,
+      page,
+      size,
+      sortBy: "createdAt",
+      sortDir: "DESC",
+    };
+
+    const response = await api.get("/research-groups", {
       params,
     });
     return response;

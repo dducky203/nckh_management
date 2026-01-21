@@ -105,7 +105,7 @@ public class NewsCommentServiceImpl implements NewsCommentService {
         dto.setNewsId(comment.getIdNews().getId());
         dto.setUserId(comment.getIdUser().getId());
         dto.setUserName(comment.getIdUser().getName());
-        dto.setUserAvatar(null); // User entity không có avatar field
+        dto.setUserAvatar(comment.getIdUser().getAvatar());
         dto.setContent(comment.getComment());
         dto.setCreatedAt(comment.getCreatedAt());
         dto.setUpdatedAt(comment.getUpdatedAt());

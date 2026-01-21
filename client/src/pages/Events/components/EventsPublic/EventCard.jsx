@@ -10,6 +10,56 @@ import { API_BASE_URL } from "../../../../constants";
 import EventCountdown from "./EventCountdown";
 import { targetDate } from "../../../../utils";
 
+// Helper function để lấy màu tag cho event type
+const getEventTypeColor = (type, activeTab) => {
+  if (!type) {
+    return activeTab === "upcoming"
+      ? "bg-blue-600 text-white"
+      : activeTab === "ongoing"
+        ? "bg-green-600 text-white"
+        : "bg-gray-600 text-white";
+  }
+
+  const lowerType = type.toLowerCase();
+
+  if (lowerType.includes("seminar") || lowerType.includes("hội thảo")) {
+    return "bg-blue-600 text-white";
+  } else if (
+    lowerType.includes("hội nghị") ||
+    lowerType.includes("conference")
+  ) {
+    return "bg-green-600 text-white";
+  } else if (
+    lowerType.includes("bài báo quốc tế") ||
+    lowerType.includes("international")
+  ) {
+    return "bg-purple-600 text-white";
+  } else if (
+    lowerType.includes("bài báo tiếng việt") ||
+    lowerType.includes("vietnamese")
+  ) {
+    return "bg-orange-600 text-white";
+  } else if (
+    lowerType.includes("workshop") ||
+    lowerType.includes("chuyên đề")
+  ) {
+    return "bg-pink-600 text-white";
+  } else if (lowerType.includes("tham dự") || lowerType.includes("advisory")) {
+    return "bg-indigo-600 text-white";
+  } else if (
+    lowerType.includes("tổng quan") ||
+    lowerType.includes("overview")
+  ) {
+    return "bg-teal-600 text-white";
+  } else {
+    return activeTab === "upcoming"
+      ? "bg-blue-600 text-white"
+      : activeTab === "ongoing"
+        ? "bg-green-600 text-white"
+        : "bg-gray-600 text-white";
+  }
+};
+
 const EventCard = ({ event, activeTab, onViewDetail, onRegister }) => {
   return (
     <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all overflow-hidden group">
@@ -21,26 +71,21 @@ const EventCard = ({ event, activeTab, onViewDetail, onRegister }) => {
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
         />
         <div
-          className={`absolute top-4 right-4 px-3 py-1 rounded text-sm font-medium ${
-            activeTab === "upcoming"
-              ? "bg-blue-600 text-white"
-              : activeTab === "ongoing"
-              ? "bg-green-600 text-white"
-              : "bg-gray-600 text-white"
-          }`}
+          className={`absolute top-4 right-4 px-3 py-1 rounded text-sm font-medium ${getEventTypeColor(event.type, activeTab)}`}
         >
           {event.type || "Sự kiện"}
         </div>
-        {activeTab === "ongoing"  && (
+        {activeTab === "ongoing" && (
           <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded text-xs font-medium animate-pulse">
             Đang diễn ra
           </div>
         )}
-        {activeTab === "upcoming" && new Date(event.dateOfEvent) < targetDate(5) && (
-          <div className="absolute top-4 left-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-lg backdrop-blur-sm">
-            <EventCountdown targetDate={event.dateOfEvent} />
-          </div>
-        )}
+        {activeTab === "upcoming" &&
+          new Date(event.dateOfEvent) < targetDate(5) && (
+            <div className="absolute top-4 left-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-lg backdrop-blur-sm">
+              <EventCountdown targetDate={event.dateOfEvent} />
+            </div>
+          )}
       </div>
 
       {/* Event Content */}

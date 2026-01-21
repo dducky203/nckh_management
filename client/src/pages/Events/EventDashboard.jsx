@@ -14,6 +14,7 @@ import EventApprovalModal from "./components/EventApprovalModal";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import EventList from "./components/EventList";
 import eventService from "../../services/eventService";
+import uploadToCloudinary from "../../services/uploadService";
 
 // Dashboard Components
 import DashboardSidebar from "./components/Management/DashboardSidebar";
@@ -195,15 +196,19 @@ const EventDashboard = () => {
         // TODO: Implement update event API
         toast.success("Cập nhật sự kiện thành công");
       } else {
-        // Tạo FormData để gửi file và data
-        const submitData = new FormData();
-
-        // Thêm file banner nếu có
-        if (formData.image) {
-          submitData.append("banner", formData.image);
+        // Upload ảnh lên Cloudinary trước nếu có
+        let imageUrl = null;
+        if (formData.image && typeof formData.image !== 'string') {
+          try {
+            imageUrl = await uploadToCloudinary(formData.image, 'events');
+          } catch (uploadError) {
+            toast.error("Lỗi upload ảnh: " + uploadError.message);
+            throw uploadError;
+          }
         }
 
-        // Thêm các trường dữ liệu
+        // Tạo FormData để gửi
+        const submitData = new FormData();
         submitData.append("eventName", formData.title);
         submitData.append("dateOfEvent", formData.date);
         submitData.append("startTime", formData.startTime);
@@ -212,6 +217,11 @@ const EventDashboard = () => {
         submitData.append("type", formData.type);
         submitData.append("description", formData.description);
         submitData.append("creator", user.id);
+        
+        // Gửi URL Cloudinary thay vì file
+        if (imageUrl) {
+          submitData.append("bannerUrl", imageUrl);
+        }
 
         // Gọi API tạo event
         await eventService.createEvent(submitData);

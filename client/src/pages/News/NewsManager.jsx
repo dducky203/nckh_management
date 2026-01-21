@@ -11,6 +11,7 @@ import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
+import { getQuillModules, quillFormats } from "../../utils/quillConfig";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import Modal from "../../components/common/Modal";
 import newsService from "../../services/newsService";
@@ -162,38 +163,9 @@ const NewsManager = () => {
     });
   };
 
-  // Quill editor configuration
-  const modules = {
-    toolbar: [
-      [{ header: [1, 2, 3, 4, 5, 6, false] }],
-      ["bold", "italic", "underline", "strike"],
-      [{ list: "ordered" }, { list: "bullet" }],
-      [{ script: "sub" }, { script: "super" }],
-      [{ indent: "-1" }, { indent: "+1" }],
-      [{ color: [] }, { background: [] }],
-      [{ align: [] }],
-      ["link", "image", "video"],
-      ["clean"],
-    ],
-  };
-
-  const formats = [
-    "header",
-    "bold",
-    "italic",
-    "underline",
-    "strike",
-    "list",
-    "bullet",
-    "script",
-    "indent",
-    "color",
-    "background",
-    "align",
-    "link",
-    "image",
-    "video",
-  ];
+  // Quill editor configuration with Cloudinary upload
+  const modules = getQuillModules();
+  const formats = quillFormats;
 
   if (loading) {
     return (

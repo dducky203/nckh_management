@@ -69,16 +69,16 @@ const CommentList = ({ comments, loading, user, onCommentsChange }) => {
     );
   }
 
-  if (comments.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-        <ChatBubbleOutline
-          style={{ fontSize: 48, marginBottom: 8, opacity: 0.5 }}
-        />
-        <p className="text-sm">Chưa có bình luận nào. Hãy là người đầu tiên!</p>
-      </div>
-    );
-  }
+  // if (comments.length === 0) {
+  //   return (
+  //     <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+  //       <ChatBubbleOutline
+  //         style={{ fontSize: 48, marginBottom: 8, opacity: 0.5 }}
+  //       />
+  //       <p className="text-sm">Chưa có bình luận nào. Hãy là người đầu tiên!</p>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="space-y-5">
@@ -131,8 +131,7 @@ const CommentList = ({ comments, loading, user, onCommentsChange }) => {
                     className="text-[14px] text-gray-800 leading-relaxed whitespace-pre-wrap break-words"
                     dangerouslySetInnerHTML={{ __html: comment.content }} // Nếu dùng Rich Text Editor
                   />
-                  {/* Nếu không dùng Rich Text thì dùng dòng dưới và bỏ dòng trên */}
-                  {/* <p className="text-[14px] text-gray-800 leading-relaxed whitespace-pre-wrap break-words">{comment.content}</p> */}
+                
                 </div>
 
                 {canEditOrDelete(comment) && (

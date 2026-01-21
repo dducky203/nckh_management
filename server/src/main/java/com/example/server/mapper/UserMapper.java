@@ -33,9 +33,7 @@ public interface UserMapper {
     @Mapping(source = "idRole.name", target = "role")
     @Mapping(source = "idTitle.name", target = "title")
     List<UserDetailsDTO> toUserDetailDTO(List<User> users);
-
-
-
+    
     User toEntity(UserRequest user);
 
 }

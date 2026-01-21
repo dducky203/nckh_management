@@ -38,7 +38,7 @@ const Profile = () => {
     username: user.username,
     title: user.title || "",
     researchGroup: user.researchGroup || "",
-    // avatar: user.avatar || "",
+    avatar: user.avatar || "",
     phone: user.phone || "",
     address: user.address || "",
     birthday: user.birthday ? user.birthday.split("T")[0] : "",
@@ -47,7 +47,8 @@ const Profile = () => {
   });
 
   const [avatarPreview, setAvatarPreview] = useState(null);
-  // const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [showProfileConfirmModal, setShowProfileConfirmModal] = useState(false);
   const [userResearchGroup, setUserResearchGroup] = useState("");
 
@@ -63,13 +64,13 @@ const Profile = () => {
     try {
       const response = await researchGroupService.getMyGroups();
       const groups = response.data || response;
-      
+
       if (groups && groups.length > 0) {
         // Lấy nhóm đầu tiên (hoặc có thể lấy nhóm active)
         const group = Array.isArray(groups) ? groups[0] : groups;
         const groupName = group.groupName || group.name || "";
         setUserResearchGroup(groupName);
-        
+
         // Cập nhật vào profileData
         setProfileData((prev) => ({
           ...prev,
@@ -82,7 +83,7 @@ const Profile = () => {
     }
   };
 
-  console.log({ profileData });
+  console.log({ user });
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -111,19 +112,32 @@ const Profile = () => {
     }));
   };
 
-  // const handleAvatarChange = (e) => {
-  //   if (e.target.files && e.target.files[0]) {
-  //     const file = e.target.files[0];
-  //     setAvatarFile(file);
+  const handleAvatarChange = async (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
 
-  //     // Create preview
-  //     const reader = new FileReader();
-  //     reader.onloadend = () => {
-  //       setAvatarPreview(reader.result);
-  //     };
-  //     reader.readAsDataURL(file);
-  //   }
-  // };
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        toast.error("Vui lòng chọn file hình ảnh");
+        return;
+      }
+
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Kích thước ảnh không được vượt quá 5MB");
+        return;
+      }
+
+      setAvatarFile(file);
+
+      // Create preview - chỉ preview, chưa upload
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleProfileSubmit = (e) => {
     e.preventDefault();
@@ -143,16 +157,21 @@ const Profile = () => {
     setShowProfileConfirmModal(false);
 
     try {
-      const response = await userService.updateProfile(profileData);
+      // Gọi updateProfile với avatar file
+      const response = await userService.updateProfile(profileData, avatarFile);
 
-      if (response.success) {
+      if (response.success || response.data) {
+        const userData = response.data || response;
+
         updateUser({
           ...user,
-          ...response.data,
+          ...userData,
         });
 
         toast.success(SUCCESS_MESSAGES.UPDATE_PROFILE);
         setIsEditing(false);
+        setAvatarPreview(null);
+        setAvatarFile(null);
       } else {
         toast.error(response.message || ERROR_MESSAGES.SERVER_ERROR);
       }
@@ -226,23 +245,30 @@ const Profile = () => {
                 <div className="flex flex-col items-center space-y-4">
                   <div className="relative">
                     <img
-                      src={avatarPreview || profileData.avatar || noAvatarImg}
+                      src={avatarPreview || user?.avatar || noAvatarImg}
                       alt="Avatar"
                       className="w-40 h-40 rounded-full object-cover border-2 border-gray-300 shadow-md"
                     />
                     {isEditing && (
                       <label
                         title="Đổi avatar"
-                        className="absolute bottom-2 right-2 bg-mainColor flex items-center text-white p-2 rounded-full cursor-pointer"
+                        className="absolute bottom-2 right-2 bg-mainColor flex items-center text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 transition-colors"
                       >
                         <PhotoCamera fontSize="small" />
                         <input
                           type="file"
                           className="hidden"
                           accept="image/*"
-                          // onChange={handleAvatarChange}
+                          onChange={handleAvatarChange}
                         />
                       </label>
+                    )}
+                    {avatarPreview && isEditing && (
+                      <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
+                        <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                          Preview - chưa lưu
+                        </span>
+                      </div>
                     )}
                   </div>
                   <div className="text-center">
@@ -378,7 +404,9 @@ const Profile = () => {
                             type="text"
                             id="researchGroup"
                             name="researchGroup"
-                            value={userResearchGroup || profileData.researchGroup}
+                            value={
+                              userResearchGroup || profileData.researchGroup
+                            }
                             onChange={handleProfileChange}
                             disabled={true}
                             className="w-full py-2 px-3 border-0 outline-none disabled:bg-gray-50"
@@ -388,7 +416,8 @@ const Profile = () => {
                         </div>
                         {!userResearchGroup && (
                           <p className="text-xs text-gray-500 mt-1">
-                            Nhóm nghiên cứu sẽ tự động hiển thị khi bạn tham gia nhóm hoặc được phân công hướng dẫn
+                            Nhóm nghiên cứu sẽ tự động hiển thị khi bạn tham gia
+                            nhóm hoặc được phân công hướng dẫn
                           </p>
                         )}
                       </div>

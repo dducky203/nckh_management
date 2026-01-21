@@ -6,6 +6,7 @@ import com.example.server.domain.NewsImage;
 import com.example.server.domain.User;
 import com.example.server.repository.*;
 import com.example.server.service.BreadcrumbService;
+import com.example.server.service.CloudinaryService;
 import com.example.server.service.FileService;
 import com.example.server.service.LikeNewsService;
 import com.example.server.service.PageService;
@@ -31,6 +32,8 @@ import java.util.stream.IntStream;
 @Controller
 @RequestMapping("/news")
 public class NewsController {
+    @Autowired
+    CloudinaryService cloudinaryService;
     @Autowired
     FileService  fileService;
     @Autowired
@@ -133,19 +136,19 @@ public class NewsController {
         news.setStatus(1);
         news.setUser(UserRepository.findById(idUser).get());
         newsRepository.save(news);
-        // Xử lý upload file image
-        String imageName = null;
+        // Xử lý upload file image lên Cloudinary
         for (MultipartFile file : images) {
             if (!file.isEmpty()) {
-                imageName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
-                fileService.store(file);
-
-                System.out.println("Đã lưu file: " + imageName);
-                if (imageName != null) {
+                try {
+                    String imageUrl = cloudinaryService.uploadFile(file, "news");
+                    System.out.println("Đã upload lên Cloudinary: " + imageUrl);
+                    
                     NewsImage newsImage = new NewsImage();
-                    newsImage.setImageName(imageName);
+                    newsImage.setImageName(imageUrl);  // Lưu URL thay vì tên file
                     newsImage.setIdNews(news);
                     newsImageRepository.save(newsImage);
+                } catch (IOException e) {
+                    System.err.println("Lỗi upload ảnh: " + e.getMessage());
                 }
             }
         }
@@ -279,20 +282,34 @@ public class NewsController {
             List<Integer> idsToDelete = Arrays.stream(deletedImageIds.split(","))
                     .map(Integer::parseInt)
                     .collect(Collectors.toList());
+            
+            // Xóa ảnh trên Cloudinary trước khi xóa khỏi DB
+            for (Integer imageId : idsToDelete) {
+                newsImageRepository.findById(imageId).ifPresent(newsImage -> {
+                    try {
+                        cloudinaryService.deleteFile(newsImage.getImageName());
+                    } catch (IOException e) {
+                        System.err.println("Lỗi xóa ảnh: " + e.getMessage());
+                    }
+                });
+            }
 
             newsImageRepository.deleteAllById(idsToDelete);
         }
 
-        // Thêm ảnh mới
+        // Thêm ảnh mới lên Cloudinary
         for (MultipartFile file : images) {
             if (!file.isEmpty()) {
-                String imageName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
-                fileService.store(file);
-
-                NewsImage newsImage = new NewsImage();
-                newsImage.setImageName(imageName);
-                newsImage.setIdNews(news);
-                newsImageRepository.save(newsImage);
+                try {
+                    String imageUrl = cloudinaryService.uploadFile(file, "news");
+                    
+                    NewsImage newsImage = new NewsImage();
+                    newsImage.setImageName(imageUrl);  // Lưu URL thay vì tên file
+                    newsImage.setIdNews(news);
+                    newsImageRepository.save(newsImage);
+                } catch (IOException e) {
+                    System.err.println("Lỗi upload ảnh: " + e.getMessage());
+                }
             }
         }
     }

@@ -9,9 +9,6 @@ import {
   AccessTime,
   LocationOn,
   Person,
-  School,
-  Lightbulb,
-  Groups,
 } from "@mui/icons-material";
 import { AuthContext } from "../../context/AuthContext";
 import eventService from "../../services/eventService";
@@ -26,11 +23,62 @@ import logoFitaImg from "../../assets/logo_fita.png";
 import banner2 from "../../assets/gt.jpg";
 // import noAvatarImg from '../../assets/no-avatar-user.png';
 
+// Helper function to strip HTML tags and get plain text
+const stripHtml = (html) => {
+  if (!html) return "";
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || "";
+};
+
+// Helper function để lấy màu tag cho event type
+const getEventTypeColor = (type) => {
+  if (!type) return "bg-slate-100 text-slate-700";
+
+  const lowerType = type.toLowerCase();
+
+  if (lowerType.includes("seminar") || lowerType.includes("hội thảo")) {
+    return "bg-blue-100 text-blue-700";
+  } else if (
+    lowerType.includes("hội nghị") ||
+    lowerType.includes("conference")
+  ) {
+    return "bg-green-100 text-green-700";
+  } else if (
+    lowerType.includes("bài báo quốc tế") ||
+    lowerType.includes("international")
+  ) {
+    return "bg-purple-100 text-purple-700";
+  } else if (
+    lowerType.includes("bài báo tiếng việt") ||
+    lowerType.includes("vietnamese")
+  ) {
+    return "bg-orange-100 text-orange-700";
+  } else if (
+    lowerType.includes("workshop") ||
+    lowerType.includes("chuyên đề")
+  ) {
+    return "bg-pink-100 text-pink-700";
+  } else if (lowerType.includes("tham dự") || lowerType.includes("advisory")) {
+    return "bg-indigo-100 text-indigo-700";
+  } else if (
+    lowerType.includes("tổng quan") ||
+    lowerType.includes("overview")
+  ) {
+    return "bg-teal-100 text-teal-700";
+  } else {
+    return "bg-slate-100 text-slate-700";
+  }
+};
+
 const Home = () => {
   const { user } = useContext(AuthContext);
 
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [researchActivities, setResearchActivities] = useState([]);
+  const [teacherResearchActivities, setTeacherResearchActivities] = useState(
+    [],
+  );
   const [latestNews, setLatestNews] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -73,17 +121,22 @@ const Home = () => {
       try {
         setLoading(true);
 
-        const [eventsRes, groupsRes, newsRes] = await Promise.all([
-          eventService.getPublicEvents("upcoming", 0, 6),
-          researchGroupService.getAllGroups("", "APPROVED", 0, 6),
-          newsService.getNews("", 0, 4),
-        ]);
+        const [eventsRes, studentGroupsRes, teacherGroupsRes, newsRes] =
+          await Promise.all([
+            eventService.getPublicEvents("upcoming", 0, 6),
+            researchGroupService.getAllGroupPublic("", "student", 0, 3),
+            researchGroupService.getAllGroupPublic("", "lecturer", 0, 3),
+            newsService.getNews("", 0, 4),
+          ]);
 
         const eventsData = eventsRes?.data || eventsRes;
         setUpcomingEvents(eventsData?.events || []);
 
-        const groupsData = groupsRes?.data || groupsRes;
-        setResearchActivities(groupsData?.groups || []);
+        const studentGroupsData = studentGroupsRes?.data || studentGroupsRes;
+        setResearchActivities(studentGroupsData?.groups || []);
+
+        const teacherGroupsData = teacherGroupsRes?.data || teacherGroupsRes;
+        setTeacherResearchActivities(teacherGroupsData?.groups || []);
 
         const newsData = newsRes?.data || newsRes;
         setLatestNews(newsData?.news || []);
@@ -221,7 +274,9 @@ const Home = () => {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
-                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm text-slate-800 px-3 py-1 rounded-full text-xs font-bold shadow-sm uppercase tracking-wide">
+                    <div
+                      className={`absolute top-4 right-4 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold shadow-sm uppercase tracking-wide ${getEventTypeColor(event.type)}`}
+                    >
                       {event.type || "Sự kiện"}
                     </div>
                   </div>
@@ -285,23 +340,23 @@ const Home = () => {
         </div>
       </section>
 
-      {/* --- RESEARCH SECTION (TÁCH RIÊNG) --- */}
+      {/* --- RESEARCH SECTION - SINH VIÊN --- */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="flex flex-col md:flex-row items-end justify-between mb-12 gap-4">
             <div>
               <h2 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
                 <span className="w-1.5 h-8 bg-green-600 rounded-full block"></span>
-                Hoạt động NCKH
+                Hoạt động NCKH Sinh viên
               </h2>
               <p className="text-slate-500">
-                Các đề tài, nhóm nghiên cứu nổi bật của khoa
+                Các đề tài, nhóm nghiên cứu của sinh viên
               </p>
             </div>
             <Link to="/research-groups">
               <Button
                 variant="outline"
-                className="hidden md:flex bg-white border-slate-200"
+                className="hidden md:flex bg-white border-slate-200 hover:border-green-600 hover:text-green-700"
               >
                 Xem tất cả <ArrowForward className="ml-2" fontSize="small" />
               </Button>
@@ -315,7 +370,7 @@ const Home = () => {
                 sx={{ fontSize: 64 }}
               />
               <p className="text-slate-500 mb-6">
-                Hiện chưa có hoạt động nghiên cứu mới
+                Hiện chưa có hoạt động nghiên cứu mới của sinh viên
               </p>
               <Link to="/research-groups">
                 <Button
@@ -338,11 +393,11 @@ const Home = () => {
                     <div className="flex items-start justify-between gap-3 mb-4">
                       <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">
                         <Science sx={{ fontSize: 14 }} />
-                        Nghiên cứu
+                        Sinh viên
                       </span>
                       <span className="text-xs text-slate-400 font-medium whitespace-nowrap">
                         {formatDateTime(
-                          activity.createdAt || activity.createDate
+                          activity.createdAt || activity.createDate,
                         )}
                       </span>
                     </div>
@@ -359,7 +414,103 @@ const Home = () => {
                     <Link to="/research-groups" className="mt-auto">
                       <Button
                         variant="outline"
-                        className="w-full justify-center border-slate-200 text-slate-600  "
+                        className="w-full justify-center border-slate-200 text-slate-600 hover:bg-green-50 hover:text-green-700 hover:border-green-200"
+                      >
+                        Xem chi tiết
+                        <ArrowForward className="ml-2" fontSize="small" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="text-center mt-8 md:hidden">
+            <Link to="/research-groups">
+              <Button variant="outline" className="w-full justify-center">
+                Xem tất cả <ArrowForward className="ml-2" fontSize="small" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* --- RESEARCH SECTION - GIẢNG VIÊN --- */}
+      <section className="py-20 bg-slate-50">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <div className="flex flex-col md:flex-row items-end justify-between mb-12 gap-4">
+            <div>
+              <h2 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
+                <span className="w-1.5 h-8 bg-blue-600 rounded-full block"></span>
+                Hoạt động NCKH Giảng viên
+              </h2>
+              <p className="text-slate-500">
+                Các đề tài, nhóm nghiên cứu của giảng viên
+              </p>
+            </div>
+            <Link to="/research-groups">
+              <Button
+                variant="outline"
+                className="hidden md:flex bg-white border-slate-200 hover:border-blue-600 hover:text-blue-700"
+              >
+                Xem tất cả <ArrowForward className="ml-2" fontSize="small" />
+              </Button>
+            </Link>
+          </div>
+
+          {teacherResearchActivities.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-slate-300">
+              <Science
+                className="text-slate-300 mx-auto mb-4"
+                sx={{ fontSize: 64 }}
+              />
+              <p className="text-slate-500 mb-6">
+                Hiện chưa có hoạt động nghiên cứu mới của giảng viên
+              </p>
+              <Link to="/research-groups">
+                <Button
+                  variant="outline"
+                  className="border-slate-200 hover:border-blue-600 hover:text-blue-700"
+                >
+                  Xem danh sách nhóm nghiên cứu
+                  <ArrowForward className="ml-2" fontSize="small" />
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {teacherResearchActivities.map((activity) => (
+                <div
+                  key={activity.id}
+                  className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-blue-500/10 hover:border-blue-200 transition-all duration-300 overflow-hidden flex flex-col"
+                >
+                  <div className="p-6 flex-1 flex flex-col">
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">
+                        <Science sx={{ fontSize: 14 }} />
+                        Giảng viên
+                      </span>
+                      <span className="text-xs text-slate-400 font-medium whitespace-nowrap">
+                        {formatDateTime(
+                          activity.createdAt || activity.createDate,
+                        )}
+                      </span>
+                    </div>
+
+                    <h3 className="text-lg font-bold text-slate-800 mb-3 line-clamp-2 group-hover:text-blue-700 transition-colors">
+                      {activity.topicName || activity.groupName}
+                    </h3>
+
+                    <p className="text-slate-500 text-sm mb-6 line-clamp-3 leading-relaxed flex-1">
+                      {activity.description ||
+                        "Mô tả chi tiết về hoạt động nghiên cứu này..."}
+                    </p>
+
+                    <Link to="/research-groups" className="mt-auto">
+                      <Button
+                        variant="outline"
+                        className="w-full justify-center border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200"
                       >
                         Xem chi tiết
                         <ArrowForward className="ml-2" fontSize="small" />
@@ -453,7 +604,7 @@ const Home = () => {
                         {news.title}
                       </h3>
                       <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed mb-4">
-                        {news.summary || news.content}
+                        {stripHtml(news.summary || news.content)}
                       </p>
                       <span className="text-sm font-semibold text-blue-500 group-hover:underline mt-auto">
                         Đọc tiếp

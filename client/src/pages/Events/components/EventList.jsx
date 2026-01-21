@@ -65,6 +65,7 @@ const EventList = ({
 
   return (
     <div className="space-y-6">
+      
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -120,6 +121,7 @@ const EventList = ({
               </select>
             </div>
           </div>
+          
         </div>
 
         {/* Results count */}
@@ -133,29 +135,7 @@ const EventList = ({
         </div>
       </div>
 
-      {/* Events Grid */}
-      {filteredEvents.length === 0 ? (
-        <div className="bg-white rounded-lg border border-gray-200">
-          <EmptyState />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEvents.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              type={type}
-              onViewDetails={onViewDetails}
-              onApprove={onApprove}
-              onReject={onReject}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              isAdmin={isAdmin}
-            />
-          ))}
-        </div>
-      )}
-
+      
       {/* Summary Stats */}
       {filteredEvents.length > 0 && (
         <div className="bg-white p-4 rounded-lg border border-gray-200">
@@ -189,6 +169,30 @@ const EventList = ({
           </div>
         </div>
       )}
+
+      {/* Events Grid */}
+      {filteredEvents.length === 0 ? (
+        <div className="bg-white rounded-lg border border-gray-200">
+          <EmptyState />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredEvents.map((event) => (
+            <EventCard
+              key={event.id}
+              event={event}
+              type={type}
+              onViewDetails={onViewDetails}
+              onApprove={onApprove}
+              onReject={onReject}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              isAdmin={isAdmin}
+            />
+          ))}
+        </div>
+      )}
+
     </div>
   );
 };

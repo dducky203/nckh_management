@@ -24,7 +24,6 @@ public class Event extends EntityBase implements Serializable {
     @Column(name = "date_of_event")
     private LocalDate dateOfEvent;
 
-
     @Column(name = "creator")
     private Integer creator;
 
@@ -41,6 +40,10 @@ public class Event extends EntityBase implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_room")
     private Room idRoom;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "type_id")
+    private TypeOfCriterion typeId;
 
     @Column(name = "status")
     private String status; // upcoming, pending, completed, rejected

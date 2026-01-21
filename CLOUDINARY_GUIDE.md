@@ -3,12 +3,14 @@
 ## ✅ Đã hoàn tất setup
 
 ### Backend
+
 - ✅ Config Cloudinary trong `application.yml`
 - ✅ `CloudinaryService.java` - Service upload file
 - ✅ `FileUploadController.java` - API endpoint
 - ✅ Đã sửa `NewsController`, `EventPublicRestController`, `FileController`
 
 ### Frontend
+
 - ✅ `uploadService.js` - Function upload từ FE
 - ✅ `constants/index.js` - Helper `getImageUrl()`
 - ✅ Đã sửa `EventDashboard`, `ResearchGroupProfile`
@@ -20,22 +22,22 @@
 ### 1. Upload file từ Frontend
 
 ```javascript
-import uploadToCloudinary from '@/services/uploadService';
+import uploadToCloudinary from "@/services/uploadService";
 
 // Upload file/ảnh
 const handleFileChange = async (e) => {
   const file = e.target.files[0];
-  
+
   try {
     // Upload và nhận URL
-    const fileUrl = await uploadToCloudinary(file, 'events');
-    console.log('File URL:', fileUrl);
+    const fileUrl = await uploadToCloudinary(file, "events");
+    console.log("File URL:", fileUrl);
     // fileUrl = "https://res.cloudinary.com/doslcoy82/image/upload/..."
-    
+
     // Dùng URL này để lưu vào database
     setFormData({ ...formData, image: fileUrl });
   } catch (error) {
-    console.error('Upload failed:', error);
+    console.error("Upload failed:", error);
   }
 };
 ```
@@ -43,21 +45,17 @@ const handleFileChange = async (e) => {
 ### 2. Upload với progress tracking
 
 ```javascript
-import { uploadWithProgress } from '@/services/uploadService';
+import { uploadWithProgress } from "@/services/uploadService";
 
 const handleUpload = async (file) => {
   try {
-    const url = await uploadWithProgress(
-      file, 
-      'events',
-      (progress) => {
-        console.log(`Progress: ${progress}%`);
-        setUploadProgress(progress);
-      }
-    );
-    console.log('Uploaded:', url);
+    const url = await uploadWithProgress(file, "events", (progress) => {
+      console.log(`Progress: ${progress}%`);
+      setUploadProgress(progress);
+    });
+    console.log("Uploaded:", url);
   } catch (error) {
-    console.error('Upload failed:', error);
+    console.error("Upload failed:", error);
   }
 };
 ```
@@ -65,15 +63,15 @@ const handleUpload = async (file) => {
 ### 3. Hiển thị ảnh
 
 ```javascript
-import { getImageUrl } from '@/constants';
+import { getImageUrl } from "@/constants";
 
 function EventCard({ event }) {
   return (
-    <img 
-      src={getImageUrl(event.image)} 
+    <img
+      src={getImageUrl(event.image)}
       alt={event.title}
       onError={(e) => {
-        e.target.src = '/default-image.jpg'; // Fallback
+        e.target.src = "/default-image.jpg"; // Fallback
       }}
     />
   );
@@ -81,6 +79,7 @@ function EventCard({ event }) {
 ```
 
 **Tại sao dùng `getImageUrl()`?**
+
 - Tự động detect URL Cloudinary (https://...) và return luôn
 - Với path cũ (local), tự động convert sang API URL
 - Backward compatible với data cũ
@@ -117,12 +116,12 @@ curl -X POST http://localhost:8080/api/upload \
 ## 💡 Ví dụ Component React
 
 ```jsx
-import { useState } from 'react';
-import uploadToCloudinary from '@/services/uploadService';
-import { getImageUrl } from '@/constants';
+import { useState } from "react";
+import uploadToCloudinary from "@/services/uploadService";
+import { getImageUrl } from "@/constants";
 
 export default function ImageUploader() {
-  const [imageUrl, setImageUrl] = useState('');
+  const [imageUrl, setImageUrl] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleUpload = async (e) => {
@@ -131,11 +130,11 @@ export default function ImageUploader() {
 
     setLoading(true);
     try {
-      const url = await uploadToCloudinary(file, 'images');
+      const url = await uploadToCloudinary(file, "images");
       setImageUrl(url);
-      alert('Upload thành công!');
+      alert("Upload thành công!");
     } catch (error) {
-      alert('Lỗi: ' + error.message);
+      alert("Lỗi: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -143,22 +142,22 @@ export default function ImageUploader() {
 
   return (
     <div>
-      <input 
-        type="file" 
+      <input
+        type="file"
         accept="image/*"
         onChange={handleUpload}
         disabled={loading}
       />
-      
+
       {loading && <p>Đang tải lên...</p>}
-      
+
       {imageUrl && (
         <div>
           <p>URL: {imageUrl}</p>
-          <img 
-            src={getImageUrl(imageUrl)} 
-            alt="Uploaded" 
-            style={{maxWidth: '300px'}} 
+          <img
+            src={getImageUrl(imageUrl)}
+            alt="Uploaded"
+            style={{ maxWidth: "300px" }}
           />
         </div>
       )}
@@ -172,11 +171,11 @@ export default function ImageUploader() {
 ## 📝 Các folders thường dùng
 
 ```javascript
-'events'     // Banner sự kiện
-'news'       // Ảnh tin tức
-'documents'  // Tài liệu PDF, DOC
-'avatars'    // Avatar người dùng
-'general'    // File chung (mặc định)
+"events"; // Banner sự kiện
+"news"; // Ảnh tin tức
+"documents"; // Tài liệu PDF, DOC
+"avatars"; // Avatar người dùng
+"general"; // File chung (mặc định)
 ```
 
 ---
@@ -210,27 +209,29 @@ export default function ImageUploader() {
 ## 🔍 Troubleshooting
 
 ### Lỗi upload
+
 ```javascript
 try {
-  const url = await uploadToCloudinary(file, 'events');
+  const url = await uploadToCloudinary(file, "events");
 } catch (error) {
   if (error.response?.status === 400) {
-    console.error('File không hợp lệ');
+    console.error("File không hợp lệ");
   } else if (error.response?.status === 500) {
-    console.error('Lỗi server hoặc Cloudinary');
+    console.error("Lỗi server hoặc Cloudinary");
   } else {
-    console.error('Lỗi kết nối:', error.message);
+    console.error("Lỗi kết nối:", error.message);
   }
 }
 ```
 
 ### Ảnh không hiển thị
+
 1. Check URL trong database (phải là URL đầy đủ)
 2. Check console log xem có lỗi CORS không
 3. Dùng `getImageUrl()` thay vì concat string
 
 ---
 
-**Hoàn tất! 🎉** 
+**Hoàn tất! 🎉**
 
 Xem chi tiết migration trong [MIGRATION_SUMMARY.md](MIGRATION_SUMMARY.md)

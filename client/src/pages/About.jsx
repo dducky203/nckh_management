@@ -1,28 +1,14 @@
 import { useState, useEffect } from "react";
 import {
-  Grid,
-  Typography,
-  Box,
-  Card,
-  CardContent,
-  Divider,
-  Container,
-} from "@mui/material";
-import {
   School,
   People,
   Insights,
   History,
   CheckCircleOutline,
-  ContactPhone,
   Computer,
-  Psychology,
-  Lightbulb,
   Stars,
-  FunctionsRounded,
 } from "@mui/icons-material";
 import { DEPARTMENTS } from "../utils";
-// import { DEPARTMENTS } from "../utils";
 
 const About = () => {
   const [loading, setLoading] = useState(true);
@@ -35,7 +21,6 @@ const About = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Core values
   const coreValues = [
     {
       title: "Đoàn kết",
@@ -44,370 +29,261 @@ const About = () => {
     {
       title: "Trách nhiệm",
       description:
-        "Trách nhiệm, tận tâm và cống hiến hết mình là giá trị cao quý của các thế hệ cán bộ Khoa Công nghệ thông tin, Học viện Nông nghiệp Việt Nam.",
+        "Trách nhiệm, tận tâm và cống hiến hết mình là giá trị cao quý của các thế hệ cán bộ Khoa Công nghệ thông tin.",
     },
     {
       title: "Hội nhập",
       description:
-        "Hội nhập quốc tế để tiếp cận chuẩn mực giáo dục đại học khu vực và thế giới, hợp tác Học viện – Khoa – Doanh nghiệp để đáp ứng yêu cầu thực tiễn.",
+        "Hội nhập quốc tế để tiếp cận chuẩn mực giáo dục đại học khu vực và thế giới, hợp tác Học viện – Khoa – Doanh nghiệp.",
     },
     {
       title: "Sáng tạo",
       description:
-        "Đổi mới sáng tạo dựa trên tiếp thu những tinh hoa tri thức của nhân loại, kế thừa những thành quả đã đạt được và phát huy những giá trị truyền thống tốt đẹp nhằm đạt được chất lượng cao trong đào tạo và nghiên cứu khoa học.",
+        "Đổi mới sáng tạo dựa trên tiếp thu tinh hoa tri thức, kế thừa thành quả và phát huy giá trị truyền thống tốt đẹp.",
     },
     {
       title: "Chất lượng",
       description:
-        "Chất lượng cao là mục tiêu, là động lực phấn đấu, là yếu tố cốt lõi làm nên thương hiệu Khoa Công nghệ thông tin – Học viện Nông nghiệp Việt Nam.",
+        "Chất lượng cao là mục tiêu, là động lực phấn đấu, là yếu tố cốt lõi làm nên thương hiệu Khoa CNTT.",
     },
   ];
 
-  // Strategic goals
   const strategicGoals = [
-    "Chương trình đào tạo linh hoạt giữa đào tạo theo định hướng nghiên cứu và định hướng nghề nghiệp phục vụ nhu cầu xã hội, tạo danh tiếng của cơ sở đào tạo có uy tín cao về công nghệ thông tin ứng dụng trong nông nghiệp và phát triển nông thôn của Việt Nam.",
-    "Đội ngũ cán bộ tâm huyết, giỏi chuyên môn, nghiệp vụ, năng lực nghiên cứu, cơ sở vật chất hiện đại, phấn đấu trở thành trung tâm nghiên cứu chuyển giao tiến bộ khoa học kỹ thuật, dịch vụ công nghệ thông tin trong nông nghiệp và phát triển nông thôn vào năm 2030.",
+    "Chương trình đào tạo linh hoạt giữa định hướng nghiên cứu và nghề nghiệp.",
+    "Đội ngũ cán bộ tâm huyết, giỏi chuyên môn, cơ sở vật chất hiện đại.",
     "Môi trường làm việc, học tập lý tưởng cho cán bộ, giảng viên và sinh viên.",
-    "Hợp tác trong nước và quốc tế, đẩy mạnh truyền thông, quảng bá, khẳng định thương hiệu.",
-    "Ưu tiên nghiên cứu phát triển các hệ thống thông minh và các ứng dụng công nghệ thông tin công nghệ cao trong nông nghiệp và phát triển nông thôn.",
+    "Hợp tác trong nước và quốc tế, đẩy mạnh truyền thông, khẳng định thương hiệu.",
+    "Ưu tiên nghiên cứu hệ thống thông minh và ứng dụng CNTT trong nông nghiệp.",
   ];
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "60vh",
-        }}
-      >
-        <div className="animate-pulse flex flex-col items-center">
+      <div className="flex justify-center items-center h-[60vh] bg-gray-100">
+        <div className="flex flex-col items-center animate-pulse">
           <div className="rounded-md bg-mainColor/30 h-12 w-12 mb-4"></div>
           <div className="h-4 bg-mainColor/30 rounded w-32 mb-2"></div>
           <div className="h-3 bg-mainColor/20 rounded w-24"></div>
         </div>
-      </Box>
+      </div>
     );
   }
 
   return (
-    <div className="bg-gray-50 py-8">
-      {/* Hero section with faculty image */}
-      <div className="relative h-64 md:h-80 overflow-hidden mb-8">
+    <div className="bg-gray-100 min-h-screen font-sans text-gray-700 pb-16">
+      <div className="relative h-64 md:h-80 overflow-hidden mb-10 group">
         <img
           src="/src/assets/banner23.png"
           alt="Khoa Công nghệ thông tin"
-          className="w-full h-full object-scale-down"
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-mainColor/80 to-transparent flex items-center">
+        <div className="absolute inset-0 bg-gradient-to-r from-mainColor/90 via-mainColor/40 to-transparent flex items-center">
           <div className="container mx-auto px-4">
-            <h1 className="text-white text-3xl md:text-4xl font-bold drop-shadow-lg">
-              Giới thiệu Khoa Công nghệ Thông tin
+            <h1 className="text-white text-3xl md:text-5xl font-bold drop-shadow-md mb-2">
+              Giới thiệu Khoa CNTT
             </h1>
-            <p className="text-white text-lg mt-2 max-w-xl drop-shadow-md">
-              Đào tạo, nghiên cứu và ứng dụng công nghệ thông tin phục vụ nông
-              nghiệp và phát triển nông thôn
+            <p className="text-white text-lg md:text-xl font-light max-w-xl drop-shadow-sm border-l-4 border-white pl-4">
+              Đào tạo, nghiên cứu và ứng dụng CNTT phục vụ nông nghiệp và phát triển nông thôn
             </p>
           </div>
         </div>
       </div>
 
-      <Container maxWidth="lg">
-        {/* General Information */}
-        <Box className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex items-center space-x-2 border-b border-mainColor pb-2 mb-4">
+      <div className="container mx-auto px-4 lg:px-8">
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-8 border border-gray-200">
+          <div className="flex items-center space-x-2 border-b border-gray-200 pb-3 mb-4">
             <School className="text-mainColor" />
-            <Typography
-              variant="h5"
-              component="h2"
-              className="font-bold text-mainColor"
-            >
+            <h2 className="text-xl font-bold text-mainColor uppercase">
               Thông tin chung
-            </Typography>
+            </h2>
           </div>
 
-          <Typography>
-            <strong>Địa chỉ Văn phòng Khoa:</strong> P316, Tầng 3 Nhà Hành
-            chính, Học viện Nông nghiệp Việt Nam, Thị trấn Trâu Quỳ, huyện Gia
-            Lâm, TP. Hà Nội
-          </Typography>
-          <Typography>
-            <strong>Điện thoại:</strong> (024) 62617701
-          </Typography>
-          <Typography>
-            <strong>Email:</strong> cntt@vnua.edu.vn <strong>Website:</strong>{" "}
-            <a
-              href="https://fita.vnua.edu.vn"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-mainColor hover:underline"
-            >
-              https://fita.vnua.edu.vn
-            </a>
-          </Typography>
-          <Typography>
-            <strong>Ngày thành lập:</strong> 10-10-2005
-          </Typography>
-          <Typography>
-            <strong>Bộ môn:</strong> Hiện nay Khoa có 05 Bộ môn và 01 Tổ văn
-            phòng
-          </Typography>
-        </Box>
+          <div className="space-y-3 text-sm md:text-base">
+            <p>
+              <strong className="font-semibold text-gray-900">Địa chỉ:</strong>Tầng 3 Tòa Bùi Huy Đáp, Học viện Nông nghiệp Việt Nam, Trâu Quỳ, Gia Lâm, Hà Nội.
+            </p>
+            <p>
+              <strong className="font-semibold text-gray-900">Điện thoại:</strong> (024) 62617701
+            </p>
+            <p>
+              <strong className="font-semibold text-gray-900">Email:</strong> cntt@vnua.edu.vn -{" "}
+              <strong className="font-semibold text-gray-900">Website:</strong>{" "}
+              <a
+                href="https://fita.vnua.edu.vn"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-mainColor hover:underline font-medium"
+              >
+                https://fita.vnua.edu.vn
+              </a>
+            </p>
+            <p>
+              <strong className="font-semibold text-gray-900">Ngày thành lập:</strong> 10-10-2005
+            </p>
+            <p>
+              <strong className="font-semibold text-gray-900">Quy mô:</strong> 05 Bộ môn và 01 Tổ văn phòng.
+            </p>
+          </div>
+        </div>
 
-        {/* Departments */}
-        <Box className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex items-center space-x-2 border-b border-mainColor pb-2 mb-6">
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-8 border border-gray-200">
+          <div className="flex items-center space-x-2 border-b border-gray-200 pb-3 mb-6">
             <School className="text-mainColor" />
-            <Typography
-              variant="h5"
-              component="h2"
-              className="font-bold text-mainColor"
-            >
-              Các Bộ môn
-            </Typography>
+            <h2 className="text-xl font-bold text-mainColor uppercase">
+              Các bộ môn
+            </h2>
           </div>
 
-          <Grid container spacing={3}>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {DEPARTMENTS.map((department, index) => {
               const IconComponent = department.icon;
               return (
-                <Grid item xs={4} md={4} key={index}>
-                  <Card className="h-full shadow-sm hover:shadow-md transition-shadow border-l-4 border-l-mainColor">
-                    <CardContent className="flex items-center">
-                      <div className="mr-3 text-mainColor">
-                        <IconComponent className="text-mainColor" />
-                      </div>
-                      <Typography variant="body1" className="font-medium">
-                        {department.name}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
+                <div
+                  key={index}
+                  className="flex flex-col md:flex-row items-center p-4 rounded-lg border-l-4 border-mainColor bg-gray-50 hover:bg-white hover:shadow-md transition-all duration-300 border-r border-t border-b border-gray-200"
+                >
+                  <div className="mb-2 md:mb-0 md:mr-3 text-mainColor">
+                    <IconComponent fontSize="medium" />
+                  </div>
+                  <span className="font-semibold text-gray-800 text-center md:text-left text-sm">
+                    {department.name}
+                  </span>
+                </div>
               );
             })}
-          </Grid>
-        </Box>
+          </div>
+        </div>
 
-        {/* Facilities */}
-        <Box className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex items-center space-x-2 border-b border-mainColor pb-2 mb-4">
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-8 border border-gray-200">
+          <div className="flex items-center space-x-2 border-b border-gray-200 pb-3 mb-4">
             <Computer className="text-mainColor" />
-            <Typography
-              variant="h5"
-              component="h2"
-              className="font-bold text-mainColor"
-            >
+            <h2 className="text-xl font-bold text-mainColor uppercase">
               Cơ sở vật chất
-            </Typography>
+            </h2>
+          </div>
+          <p className="text-gray-600 leading-relaxed text-justify">
+            Hệ thống giảng đường trung tâm hiện đại, trang bị đầy đủ máy chiếu. 
+            Khoa CNTT sở hữu <strong>05 phòng thực hành computer lab</strong> cấu hình cao, 
+            kết nối Internet tốc độ cao qua mạng nội bộ, đáp ứng tốt nhu cầu học tập 
+            và nghiên cứu của sinh viên toàn trường.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border-t-4 border-[#f6a309] border-x border-b border-gray-200">
+            <div className="flex items-center space-x-2 mb-4">
+              <Insights className="text-[#f6a309]" />
+              <h2 className="text-xl font-bold text-gray-800">Tầm nhìn</h2>
+            </div>
+            <p className="text-gray-600 text-sm leading-relaxed text-justify">
+              Trở thành cơ sở đào tạo uy tín trong khu vực về CNTT, AI và Big Data. 
+              Ứng dụng công nghệ phục vụ phát triển nông nghiệp, nông thôn, góp phần 
+              vào sự nghiệp Công nghiệp hóa – Hiện đại hóa đất nước.
+            </p>
           </div>
 
-          <Typography>
-            Hệ thống giảng đường trung tâm của trường Học viện Nông nghiệp Việt
-            Nam đều được trang bị máy chiếu projector. Hệ thống phòng thực hành
-            máy tính của khoa CNTT gồm có 05 phòng được trang bị thiết bị máy
-            tính hiện đại, màn hình cỡ lớn hoặc projector, kết nối mạng Internet
-            thông qua hệ thống mạng nội bộ của trường để đáp ứng nhu cầu học tập
-            của sinh viên trong toàn trường.
-          </Typography>
-        </Box>
+          <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border-t-4 border-[#f6a309] border-x border-b border-gray-200">
+            <div className="flex items-center space-x-2 mb-4">
+              <History className="text-[#f6a309]" />
+              <h2 className="text-xl font-bold text-gray-800">Sứ mệnh</h2>
+            </div>
+            <p className="text-gray-600 text-sm leading-relaxed text-justify">
+              Đào tạo nhân lực chất lượng cao, nghiên cứu và chuyển giao công nghệ. 
+              Cung cấp giải pháp thông minh cho nông nghiệp & phát triển nông thôn, 
+              đóng góp vào sự hội nhập quốc tế sâu rộng.
+            </p>
+          </div>
+        </div>
 
-        {/* Vision & Mission */}
-        <Grid container spacing={4} className="mb-8">
-          <Grid item xs={12} md={6}>
-            <Card className="h-full shadow-md hover:shadow-lg transition-shadow">
-              <CardContent>
-                <div className="flex items-center space-x-2 border-b border-[#f6a309] pb-2 mb-4">
-                  <Insights className="text-[#f6a309]" />
-                  <Typography
-                    variant="h5"
-                    component="h2"
-                    className="font-bold text-gray-800"
-                  >
-                    Tầm nhìn
-                  </Typography>
-                </div>
-                <Typography>
-                  Trở thành một cơ sở đào tạo có uy tín cao trong nước và khu
-                  vực về đào tạo nguồn nhân lực có chất lượng cao, NCKH, ứng
-                  dụng tri thức và phát triển công nghệ trong lĩnh vực khoa học
-                  máy tính, CNTT, trí tuệ nhân tạo, truyền thông và dữ liệu lớn
-                  phục vụ công cuộc phát triển nông nghiệp, nông dân, nông thôn
-                  góp phần vào sự nghiệp Công nghiệp hóa – Hiện đại hóa đất
-                  nước.
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Card className="h-full shadow-md hover:shadow-lg transition-shadow">
-              <CardContent>
-                <div className="flex items-center space-x-2 border-b border-[#f6a309] pb-2 mb-4">
-                  <History className="text-[#f6a309]" />
-                  <Typography
-                    variant="h5"
-                    component="h2"
-                    className="font-bold text-gray-800"
-                  >
-                    Sứ mệnh
-                  </Typography>
-                </div>
-                <Typography>
-                  Đào tạo và cung cấp nguồn nhân lực chất lượng cao, NCKH, phát
-                  triển công nghệ, chuyển giao tri thức, sản phẩm mới về khoa
-                  học máy tính, CNTT, trí tuệ nhân tạo, truyền thông và dữ liệu
-                  lớn. Đồng thời, cung cấp nguồn nhân lực chất lượng cao để có
-                  thể ứng dụng CNTT, trí tuệ nhân tạo, truyền thông và dữ liệu
-                  lớn trong nông nghiệp & phát triển nông thôn, đóng góp đắc lực
-                  và hiệu quả vào sự nghiệp phát triển nông nghiệp, nông dân,
-                  nông thôn và hội nhập quốc tế ngày càng sâu rộng của đất nước.
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+        <div className="rounded-xl shadow-md p-8 text-white mb-8 bg-gradient-to-r from-mainColor to-blue-800 text-center relative overflow-hidden">
+            <Stars className="absolute top-2 right-2 opacity-10 text-6xl" />
+            
+            <h2 className="text-xl font-bold mb-4 uppercase tracking-wider opacity-90">
+                Triết lý giáo dục
+            </h2>
+            <div className="text-2xl md:text-3xl font-bold mb-6 font-serif">
+                "Chuyên nghiệp – Sáng tạo – Hội nhập – Trách nhiệm"
+            </div>
+            <div className="w-16 h-1 bg-yellow-400 mx-auto mb-6"></div>
+            <p className="max-w-4xl mx-auto opacity-90 leading-relaxed text-sm md:text-base font-light">
+                Hướng đến mục tiêu đào tạo nguồn nhân lực chuyên nghiệp, năng động, 
+                sáng tạo, đáp ứng yêu cầu thực tiễn và hội nhập quốc tế. Hình thành 
+                thế hệ công dân mới có năng lực và trách nhiệm phụng sự xã hội.
+            </p>
+        </div>
 
-        {/* Educational Philosophy */}
-        <Box className="bg-gradient-to-r from-mainColor to-[#154c6e] rounded-lg shadow-md p-6 text-white mb-8">
-          <Typography
-            variant="h5"
-            component="h2"
-            className="font-bold mb-3 text-center"
-          >
-            Triết lý giáo dục
-          </Typography>
-
-          <Typography
-            variant="h4"
-            component="div"
-            className="text-center mb-4 font-bold"
-          >
-            "Chuyên nghiệp – Sáng tạo – Hội nhập – Trách nhiệm"
-          </Typography>
-
-          <Typography>
-            "Chuyên nghiệp – Sáng tạo – Hội nhập – Trách nhiệm" hướng đến mục
-            tiêu đào tạo nguồn nhân lực có năng lực chuyên môn tốt và chuyên
-            nghiệp, năng động và sáng tạo trong công việc, đáp ứng yêu cầu thực
-            tiễn và hội nhập quốc tế, có trách nhiệm với bản thân, gia đình và
-            xã hội. Mục tiêu giáo dục của đại học định hướng nghiên cứu không
-            chỉ là tiếp cận tri thức và công nghệ tiên tiến mà còn nâng cao năng
-            lực sáng tạo tri thức và công nghệ mới, định hướng áp dụng công nghệ
-            vị nhân sinh và phát triển bền vững, góp phần hình thành thế hệ công
-            dân mới có năng lực và trách nhiệm phụng sự xã hội.
-          </Typography>
-        </Box>
-
-        {/* Strategic Goals */}
-        <Box className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex items-center space-x-2 border-b border-mainColor pb-2 mb-4">
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-8 border border-gray-200">
+          <div className="flex items-center space-x-2 border-b border-gray-200 pb-3 mb-4">
             <Stars className="text-mainColor" />
-            <Typography
-              variant="h5"
-              component="h2"
-              className="font-bold text-mainColor"
-            >
+            <h2 className="text-xl font-bold text-mainColor uppercase">
               Mục tiêu chiến lược
-            </Typography>
+            </h2>
           </div>
-
-          <Typography className="font-medium">
-            Mục tiêu chiến lược đến năm 2030 và tầm nhìn đến năm 2050:
-          </Typography>
+          
+          <p className="font-semibold text-gray-700 mb-4">
+             Đến năm 2030 và tầm nhìn 2050:
+          </p>
 
           <ul className="space-y-3">
             {strategicGoals.map((goal, index) => (
-              <li key={index} className="flex items-start">
+              <li key={index} className="flex items-start text-gray-600">
                 <CheckCircleOutline
-                  className="text-mainColor mr-2 mt-1 flex-shrink-0"
+                  className="text-mainColor mr-3 mt-0.5 flex-shrink-0"
                   fontSize="small"
                 />
-                <Typography>{goal}</Typography>
+                <span className="text-sm md:text-base">{goal}</span>
               </li>
             ))}
           </ul>
-        </Box>
+        </div>
 
-        {/* Core Values */}
-        <Box className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex items-center space-x-2 border-b border-mainColor pb-2 mb-6">
-            <People className="text-mainColor" />
-            <Typography
-              variant="h5"
-              component="h2"
-              className="font-bold text-mainColor"
-            >
-              Giá trị cốt lõi
-            </Typography>
-          </div>
+        <div className="mb-8">
+            <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <People className="text-mainColor" /> 
+                <span className="uppercase text-mainColor">Giá trị cốt lõi</span>
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {coreValues.map((value, index) => (
+                    <div key={index} className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:border-mainColor transition-colors duration-300">
+                        <h3 className="font-bold text-mainColor text-lg mb-2">
+                            {value.title}
+                        </h3>
+                        <p className="text-gray-600 text-sm">
+                            {value.description}
+                        </p>
+                    </div>
+                ))}
+            </div>
+        </div>
 
-          <Typography className="mb-4 font-medium">
-            Khoa Công nghệ thông tin không ngừng phấn đấu để kiến tạo nên "sự
-            khác biệt, đặc trưng":
-          </Typography>
-
-          <Grid container spacing={3}>
-            {coreValues.map((value, index) => (
-              <Grid item xs={12} md={6} key={index}>
-                <Card className="h-full shadow-sm hover:shadow-md transition-shadow border-l-4 border-l-mainColor">
-                  <CardContent>
-                    <Typography
-                      variant="h6"
-                      component="h3"
-                      className="font-bold mb-2 text-mainColor"
-                    >
-                      {value.title}
-                    </Typography>
-                    <Typography variant="body2">{value.description}</Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-
-        {/* Statistics */}
-        <Box className="bg-gradient-to-r from-mainColor to-[#154c6e] rounded-lg shadow-md p-6 text-white mb-8">
-          <Typography
-            variant="h5"
-            component="h2"
-            className="font-bold mb-6 text-center"
-          >
-            Khoa Công nghệ Thông tin trong con số
-          </Typography>
-
-          <div className="flex justify-center py-4">
-            <Grid container spacing={3}>
-              <Grid item xs={6} sm={3}>
-                <div className="text-center">
-                  <div className="text-4xl font-bold mb-2">2005</div>
-                  <Typography variant="body2">Năm thành lập</Typography>
+        <div className="bg-white rounded-xl p-6 shadow-sm border-t-4 border-mainColor border-x border-b border-gray-200">
+             <h2 className="text-xl font-bold text-center text-gray-800 mb-8 uppercase">
+                Khoa Công nghệ Thông tin trong con số
+             </h2>
+             
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
+                    <div className="text-3xl font-bold text-mainColor mb-1">2005</div>
+                    <div className="text-xs font-semibold text-gray-500 uppercase">Năm thành lập</div>
                 </div>
-              </Grid>
-              <Grid item xs={6} sm={3}>
-                <div className="text-center">
-                  <div className="text-4xl font-bold mb-2">6</div>
-                  <Typography variant="body2">Đơn vị trực thuộc</Typography>
+                <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
+                    <div className="text-3xl font-bold text-mainColor mb-1">6</div>
+                    <div className="text-xs font-semibold text-gray-500 uppercase">Đơn vị trực thuộc</div>
                 </div>
-              </Grid>
-              <Grid item xs={6} sm={3}>
-                <div className="text-center">
-                  <div className="text-4xl font-bold mb-2">15+</div>
-                  <Typography variant="body2">Phòng thực hành</Typography>
+                <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
+                    <div className="text-3xl font-bold text-mainColor mb-1">15+</div>
+                    <div className="text-xs font-semibold text-gray-500 uppercase">Phòng thực hành</div>
                 </div>
-              </Grid>
-              <Grid item xs={6} sm={3}>
-                <div className="text-center">
-                  <div className="text-4xl font-bold mb-2">
-                    {new Date().getFullYear() - 2005}+
-                  </div>
-                  <Typography variant="body2">Năm phát triển</Typography>
+                <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
+                    <div className="text-3xl font-bold text-mainColor mb-1">
+                        {new Date().getFullYear() - 2005}+
+                    </div>
+                    <div className="text-xs font-semibold text-gray-500 uppercase">Năm phát triển</div>
                 </div>
-              </Grid>
-            </Grid>
-          </div>
-        </Box>
-      </Container>
+             </div>
+        </div>
+
+      </div>
     </div>
   );
 };

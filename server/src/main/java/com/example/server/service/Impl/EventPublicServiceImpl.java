@@ -40,8 +40,8 @@ public class EventPublicServiceImpl implements EventPublicService {
     @Autowired
     private MemberRepository memberRepository;
 
-    @Autowired
-    private TImeRepository timeRepository;
+//    @Autowired
+//    private TImeRepository timeRepository;
 
     private static final DateTimeFormatter TIME_DETAIL_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
 
@@ -225,6 +225,14 @@ public class EventPublicServiceImpl implements EventPublicService {
             }
         }
 
+        // Set typeId nếu có
+        if (eventData.getTypeId() != null) {
+            TypeOfCriterion typeOfCriterion = typeOfCriterionRepository.findById(eventData.getTypeId()).orElse(null);
+            if (typeOfCriterion != null) {
+                event.setTypeId(typeOfCriterion);
+            }
+        }
+
         Event savedEvent = eventRepository.save(event);
 
 
@@ -239,7 +247,7 @@ public class EventPublicServiceImpl implements EventPublicService {
             Seminar seminar = new Seminar();
             seminar.setIdEvent(savedEvent.getId());
             seminar.setSeminarPhoto(eventData.getImage());
-            seminar.setMainAuthor(eventData.getDescription());
+            seminar.setMainAuthor(eventData.getOrganizer());
             seminar.setArticleLink(eventData.getArticleLink());
             seminarRepository.save(seminar);
         }
@@ -293,6 +301,7 @@ public class EventPublicServiceImpl implements EventPublicService {
         dto.setCreatedAt(event.getCreatedAt());
         dto.setUpdatedAt(event.getUpdatedAt());
         dto.setBannerImg(event.getBannerImg());
+        dto.setType(event.getTypeId().getName());
 
         // Get room info
         String location = "VNUA"; // default
@@ -321,7 +330,13 @@ public class EventPublicServiceImpl implements EventPublicService {
         dto.setContactEmail("contact@vnua.edu.vn");
         dto.setContactPhone("0243.827.6346");
         dto.setMaxParticipants(100);
-        dto.setType("other");
+//        dto.setType("other");
+
+        // Get type from TypeOfCriterion
+        if (event.getTypeId() != null) {
+            dto.setTypeId(event.getTypeId().getId());
+            dto.setType(event.getTypeId().getName());
+        }
 
         // Conference info
         Conference conference = conferenceMap.get(event.getId());
@@ -329,7 +344,7 @@ public class EventPublicServiceImpl implements EventPublicService {
             dto.setImage(conference.getImage());
             dto.setDescription(conference.getPaperTitle());
             dto.setArticleLink(conference.getArticleLink());
-            dto.setType("conference");
+//            dto.setType("conference");
         }
 
         // Seminar info
@@ -338,13 +353,13 @@ public class EventPublicServiceImpl implements EventPublicService {
             dto.setImage(seminar.getSeminarPhoto());
             dto.setDescription(seminar.getMainAuthor());
             dto.setArticleLink(seminar.getArticleLink());
-            dto.setType("seminar");
+//            dto.setType("seminar");
         }
 
         // Fallback image
-        if (dto.getImage() == null || dto.getImage().isEmpty()) {
-            dto.setImage(dto.getBannerImg() != null ? dto.getBannerImg() : "/file/default-event.jpg");
-        }
+//        if (dto.getImage() == null || dto.getImage().isEmpty()) {
+//            dto.setImage(dto.getBannerImg() != null ? dto.getBannerImg() : "/file/default-event.jpg");
+//        }
 
         return dto;
     }
@@ -392,6 +407,12 @@ public class EventPublicServiceImpl implements EventPublicService {
         dto.setMaxParticipants(100);
         dto.setType("other");
         dto.setImage("/file/default-event.jpg");
+
+        // Get type from TypeOfCriterion
+        if (event.getTypeId() != null) {
+            dto.setTypeId(event.getTypeId().getId());
+            dto.setType(event.getTypeId().getName());
+        }
 
         // Check conference
         Conference conference = conferenceRepository.findByIdEvent(event.getId());

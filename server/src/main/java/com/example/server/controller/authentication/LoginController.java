@@ -67,18 +67,6 @@ public class LoginController {
             UserDetailsDTO userInfo = userMapper.toUserDetailDTO(user);
             return ResponseEntity.ok(new LoginResponseDTO(true, "Đăng nhập thành công", token, userInfo));
         }
-
-        // // Get current NCM for the user and include if exists
-        // NcmDTO currentNcm = ncmService.getNcmByUserId(user.getId())
-        // .stream()
-        // .filter(ncm -> ncm.getYear() == LocalDate.now().getYear())
-        // .findFirst()
-        // .orElse(null);
-        //
-        // if (currentNcm != null) {
-        // response.put("ncmData", currentNcm);
-        // }
-
     }
 
     @PostMapping("/logout")
@@ -87,12 +75,6 @@ public class LoginController {
         Map<String, Object> response = new HashMap<>();
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            // String token = authHeader.substring(7);
-
-            // // Phương pháp 1: Thêm token vào blacklist/revoked token storage
-            // jwtService.addToBlacklist(token);
-
-            // Hoặc Phương pháp 2: Nếu dùng Spring Security + JWT, invalidate session
             SecurityContextHolder.clearContext();
 
             return ResponseEntity.ok(new SuccessResponseDTO("Đăng xuất thành công !"));

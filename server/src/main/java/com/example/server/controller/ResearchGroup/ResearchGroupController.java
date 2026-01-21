@@ -15,6 +15,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,8 +28,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+
+import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -59,6 +60,33 @@ public class ResearchGroupController {
     /**
      * Lấy chi tiết nhóm
      */
+
+
+    @GetMapping
+    public ResponseEntity<SuccessResponseDTO<Map<String, Object>>> getAllGroupPublic(
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam String type,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir) {
+        Sort.Direction direction = sortDir.equalsIgnoreCase("ASC") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+        Page<ResearchGroupDTO> groupsPage = researchGroupService.getAllGroups(keyword, "APPROVED", type, pageable);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("groups", groupsPage.getContent());
+        response.put("currentPage", groupsPage.getNumber());
+        response.put("totalItems", groupsPage.getTotalElements());
+        response.put("totalPages", groupsPage.getTotalPages());
+        response.put("itemsPerPage", groupsPage.getSize());
+        response.put("hasNext", groupsPage.hasNext());
+        response.put("hasPrevious", groupsPage.hasPrevious());
+
+        return ResponseEntity.ok(new SuccessResponseDTO<>(response, "Lấy danh sách nhóm thành công"));
+    }
+
     @GetMapping("/{groupId}")
     public ResponseEntity<SuccessResponseDTO<ResearchGroupDTO>> getGroupById(
             @PathVariable Integer groupId) {
@@ -211,7 +239,7 @@ public class ResearchGroupController {
     @PostMapping("/{groupId}/members/import")
     public ResponseEntity<?> importMembersFromExcel(
             @PathVariable Integer groupId,
-            @RequestParam("file") MultipartFile file) {
+            @RequestParam("file") MultipartFile file) throws IOException {
         try {
             Integer userId = SecurityUtils.getCurrentUserId();
             if (userId == null) {
@@ -228,11 +256,11 @@ public class ResearchGroupController {
 
             return ResponseEntity.ok(new SuccessResponseDTO<>(group, "Import thành viên thành công"));
 
-        } catch (ExcelValidationException e) {
+        } catch (ExcelValidationException  e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=error_details.xlsx")
                     .body(e.getMessage());
-        } catch (java.nio.file.NoSuchFileException e) {
+        } catch (NoSuchFileException e) {
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Lỗi hệ thống: File tạm đã bị xóa trước khi xử lý. Vui lòng thử lại.");

@@ -34,7 +34,7 @@ const eventService = {
   updateEventStatus: async (eventId, status, reason = "") => {
     return await api.post(
       `/events/${eventId}?status=${status}`,
-      { reason } // Body
+      { reason }, // Body
     );
   },
 
@@ -71,7 +71,7 @@ const eventService = {
   registerForEvent: async (eventId, userId, formData) => {
     return await api.post(
       `/events/${eventId}/register?userId=${userId}`,
-      formData
+      formData,
     );
   },
 
@@ -87,6 +87,11 @@ const eventService = {
     return await api.delete(`/events/${eventId}/register`, {
       params: { userId },
     });
+  },
+
+  // Lấy danh sách loại sự kiện
+  getEventTypes: async () => {
+    return await api.get("/events/types");
   },
 };
 

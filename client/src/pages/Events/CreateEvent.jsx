@@ -14,6 +14,7 @@ import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
+import { getQuillModules, quillFormats } from "../../utils/quillConfig";
 import {
   fetchRoomsData,
   getRoomOptions,
@@ -31,6 +32,7 @@ const CreateEvent = () => {
   const [loading, setLoading] = useState(false);
   const [roomsLoading, setRoomsLoading] = useState(false);
   const [rooms, setRooms] = useState([]);
+  const [eventTypes, setEventTypes] = useState([]);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [formData, setFormData] = useState({
@@ -40,35 +42,57 @@ const CreateEvent = () => {
     startTime: "",
     endTime: "",
     roomId: "",
+    typeId: "",
     type: "",
   });
 
-  // Fetch rooms khi component mount
+  // Quill config with Cloudinary upload
+  const quillModules = getQuillModules();
+
+  // Fetch rooms và event types khi component mount
   useEffect(() => {
-    const loadRooms = async () => {
+    const loadData = async () => {
       try {
         setRoomsLoading(true);
         await fetchRoomsData();
         setRooms(getRoomsDataSync());
+
+        // Fetch event types
+        const typesResponse = await eventService.getEventTypes();
+        if (typesResponse?.data) {
+          setEventTypes(typesResponse.data);
+        }
       } catch (error) {
-        console.error("Error loading rooms:", error);
+        console.error("Error loading data:", error);
         toast.error(ERROR_MESSAGES.LOAD_ROOM_ERROR);
       } finally {
         setRoomsLoading(false);
       }
     };
 
-    loadRooms();
+    loadData();
   }, [toast]);
 
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+
+    // Nếu chọn typeId, cần update cả type (tên)
+    if (name === "typeId") {
+      const selectedType = eventTypes.find((t) => t.id === parseInt(value));
+      setFormData((prev) => ({
+        ...prev,
+        typeId: value,
+        type: selectedType ? selectedType.name : "",
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+
     // Clear error when user types
     if (errors[name]) {
       setErrors((prev) => ({
@@ -180,6 +204,7 @@ const CreateEvent = () => {
       submitData.append("startTime", formData.startTime);
       submitData.append("endTime", formData.endTime);
       submitData.append("roomId", formData.roomId);
+      submitData.append("typeId", formData.typeId);
       submitData.append("type", formData.type);
       submitData.append("description", formData.description);
       submitData.append("creator", user?.id);
@@ -187,7 +212,7 @@ const CreateEvent = () => {
       await eventService.createEvent(submitData);
 
       toast.success(
-        "Đăng ký sự kiện thành công! Chờ phê duyệt từ quản trị viên."
+        "Đăng ký sự kiện thành công! Chờ phê duyệt từ quản trị viên.",
       );
       navigate("/events");
     } catch (error) {
@@ -195,7 +220,7 @@ const CreateEvent = () => {
       toast.error(
         error.response?.data?.message ||
           error.message ||
-          "Có lỗi xảy ra khi đăng ký sự kiện!"
+          "Có lỗi xảy ra khi đăng ký sự kiện!",
       );
     } finally {
       setLoading(false);
@@ -259,7 +284,7 @@ const CreateEvent = () => {
             {/* Event Type */}
             <div>
               <label
-                htmlFor="type"
+                htmlFor="typeId"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
                 Loại sự kiện <span className="text-red-500">*</span>
@@ -267,17 +292,17 @@ const CreateEvent = () => {
               <div className="relative">
                 <Category className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <select
-                  id="type"
-                  name="type"
-                  value={formData.type}
+                  id="typeId"
+                  name="typeId"
+                  value={formData.typeId}
                   onChange={handleChange}
                   className={`w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor ${
                     errors.type ? "border-red-500" : "border-gray-300"
                   }`}
                 >
                   <option value="">Chọn loại sự kiện</option>
-                  {EVENT_CATEGORIES.map((type) => (
-                    <option key={type.id} value={type.name}>
+                  {eventTypes.map((type) => (
+                    <option key={type.id} value={type.id}>
                       {type.name}
                     </option>
                   ))}
@@ -303,31 +328,8 @@ const CreateEvent = () => {
                   onChange={(value) =>
                     setFormData({ ...formData, description: value })
                   }
-                  modules={{
-                    toolbar: [
-                      [{ header: [1, 2, 3, false] }],
-                      ["bold", "italic", "underline", "strike"],
-                      [{ list: "ordered" }, { list: "bullet" }],
-                      [{ color: [] }, { background: [] }],
-                      [{ align: [] }],
-                      ["link", "image"],
-                      ["clean"],
-                    ],
-                  }}
-                  formats={[
-                    "header",
-                    "bold",
-                    "italic",
-                    "underline",
-                    "strike",
-                    "list",
-                    "bullet",
-                    "color",
-                    "background",
-                    "align",
-                    "link",
-                    "image",
-                  ]}
+                  modules={quillModules}
+                  formats={quillFormats}
                   className="h-[300px]"
                   placeholder="Nhập mô tả chi tiết về sự kiện..."
                 />

@@ -44,9 +44,38 @@ const userService = {
     return await api.get("/users/profile");
   },
 
-  // Cập nhật profile
-  updateProfile: async (data) => {
-    return await api.post(`/users/update-profile`, data);
+  // Cập nhật profile với avatar
+  updateProfile: async (data, avatarFile = null) => {
+    const formData = new FormData();
+    
+    // Thêm các trường thông tin
+    formData.append('username', data.username);
+    if (data.name) formData.append('name', data.name);
+    if (data.email) formData.append('email', data.email);
+    if (data.title) formData.append('title', data.title);
+    if (data.phone) formData.append('phone', data.phone);
+    if (data.address) formData.append('address', data.address);
+    if (data.birthday) formData.append('birthday', data.birthday);
+    
+    // Thêm file avatar nếu có
+    if (avatarFile) {
+      formData.append('file', avatarFile);
+    }
+    
+    return await api.post('/users/update-profile', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+
+  // Upload avatar (không cần nữa, đã gộp vào updateProfile)
+  uploadAvatar: async (file, username) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('username', username);
+    
+    return await api.post('/api/users/upload-avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
   },
 
   // Đổi mật khẩu
