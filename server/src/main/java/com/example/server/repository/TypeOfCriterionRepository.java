@@ -15,4 +15,6 @@ public interface TypeOfCriterionRepository extends JpaRepository<TypeOfCriterion
     // find type of criteria by idOs
     @Query(value = SQL.FIND_TYPE_O_C_BY_OS,nativeQuery = true)
     TypeOfCriterion getTypeOfCriterionByOS(Integer idOperatingStandard);
+
+    List<TypeOfCriterion> findAllByIsEvent(boolean isEvent);
 }

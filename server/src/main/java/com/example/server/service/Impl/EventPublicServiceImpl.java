@@ -40,48 +40,17 @@ public class EventPublicServiceImpl implements EventPublicService {
     @Autowired
     private MemberRepository memberRepository;
 
-//    @Autowired
-//    private TImeRepository timeRepository;
 
     private static final DateTimeFormatter TIME_DETAIL_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     @Override
     public List<EventPublicDTO> getPublicEvents(String status) {
-        List<Event> events;
-        
-        switch (status.toLowerCase()) {
-            case "upcoming":
-                events = eventRepository.findAll().stream()
-                    .filter(e -> e.getIsDelete() != null && e.getIsDelete() == 1)
-                    .filter(e -> "upcoming".equals(e.getStatus()))
-                    .filter(e -> e.getDateOfEvent() != null && e.getDateOfEvent().isAfter(LocalDate.now()))
-                    .collect(Collectors.toList());
-                break;
-            case "completed":
-                events = eventRepository.findAll().stream()
-                    .filter(e -> e.getIsDelete() != null && e.getIsDelete() == 1)
-                    .filter(e -> "completed".equals(e.getStatus()) || 
-                            (e.getDateOfEvent() != null && e.getDateOfEvent().isBefore(LocalDate.now())))
-                    .collect(Collectors.toList());
-                break;
-            case "pending":
-                events = eventRepository.findAll().stream()
-                    .filter(e -> e.getIsDelete() != null && e.getIsDelete() == 1)
-                    .filter(e -> "pending".equals(e.getStatus()))
-                    .collect(Collectors.toList());
-                break;
-            case "rejected":
-                events = eventRepository.findAll().stream()
-                    .filter(e -> e.getIsDelete() != null && e.getIsDelete() == 1)
-                    .filter(e -> "rejected".equals(e.getStatus()))
-                    .collect(Collectors.toList());
-                break;
-            default:
-                events = eventRepository.findAll().stream()
-                    .filter(e -> e.getIsDelete() != null && e.getIsDelete() == 1 && e.getDateOfEvent().equals(LocalDate.now()))
-                    .collect(Collectors.toList());
-                break;
-        }
+
+        Integer typeId = 1;
+        List<Event> events = eventRepository.findByStatusAndType(
+                status != null ? status.toLowerCase() : null,
+                typeId
+        );
         
         return convertToDTOsBatch(events);
     }
@@ -260,7 +229,7 @@ public class EventPublicServiceImpl implements EventPublicService {
         if (events.isEmpty()) return new ArrayList<>();
 
         // Batch load conferences, seminars và rooms
-        List<Integer> eventIds = events.stream().map(Event::getId).collect(Collectors.toList());
+        List<Integer> eventIds = events.stream().map(Event::getId).toList();
         
         Map<Integer, Conference> conferenceMap = conferenceRepository.findAll().stream()
                 .filter(c -> eventIds.contains(c.getIdEvent()))

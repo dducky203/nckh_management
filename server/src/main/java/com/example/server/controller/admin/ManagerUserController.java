@@ -1,10 +1,8 @@
 package com.example.server.controller.admin;
 
 import com.example.server.DTO.SuccessResponseDTO;
-import com.example.server.DTO.users.ChangePasswordRequest;
 import com.example.server.DTO.users.UserDetailsDTO;
 import com.example.server.DTO.users.UserRequest;
-import com.example.server.controller.user.CommonController;
 import com.example.server.controller.user.EmailController;
 import com.example.server.domain.*;
 import com.example.server.mapper.UserMapper;
@@ -12,7 +10,6 @@ import com.example.server.repository.*;
 import com.example.server.service.EmailService;
 import com.example.server.service.ExcelService;
 import com.example.server.service.UserService;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
@@ -21,17 +18,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.SecureRandom;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -52,8 +46,7 @@ public class ManagerUserController {
     EmailController emailController;
     @Autowired
     TypeOfCriterionRepository typeOfCriterionRepository;
-    @Autowired
-    CommonController commonController;
+
     @Autowired
     GroupRepository groupRepository;
     @Autowired

@@ -3,28 +3,21 @@ package com.example.server.controller.event;
 import com.example.server.DTO.SuccessResponseDTO;
 import com.example.server.DTO.event.EventPublicDTO;
 import com.example.server.DTO.event.EventRegistrationDTO;
+import com.example.server.DTO.typeOfCriteria.TypeOfCriteriaDto;
 import com.example.server.service.CloudinaryService;
 import com.example.server.service.EventPublicService;
 import com.example.server.service.TypeOfCriterionService;
-import com.example.server.domain.TypeOfCriterion;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/events")
@@ -40,23 +33,13 @@ public class EventPublicRestController {
     @Autowired
     private TypeOfCriterionService typeOfCriterionService;
 
-    @GetMapping("/types")
+    @GetMapping("/get-types")
     public ResponseEntity<?> getEventTypes() {
         try {
-            List<TypeOfCriterion> allTypes = typeOfCriterionService.findAll();
-            // Lọc các type có is_event = true
-            List<Map<String, Object>> eventTypes = allTypes.stream()
-                    .filter(TypeOfCriterion::isEvent)
-                    .map(type -> {
-                        Map<String, Object> map = new HashMap<>();
-                        map.put("id", type.getId());
-                        map.put("name", type.getName());
-                        map.put("is_event", type.isEvent());
-                        return map;
-                    })
-                    .collect(Collectors.toList());
+            List<TypeOfCriteriaDto> allTypes = typeOfCriterionService.findAllTypeEvent();
+
             return ResponseEntity.ok(
-                    new SuccessResponseDTO<>(eventTypes, "Lấy danh sách loại sự kiện thành công"));
+                    new SuccessResponseDTO<>(allTypes, "Lấy danh sách loại sự kiện thành công"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Có lỗi xảy ra: " + e.getMessage());

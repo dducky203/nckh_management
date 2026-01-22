@@ -39,7 +39,7 @@ const eventService = {
   },
 
   // === PUBLIC EVENT APIs ===
-  // Lấy danh sách sự kiện công khai theo trạng thái (có phân trang)
+  // Lấy danh sách sự kiện công khai theo trạng thái 
   getPublicEvents: async (status = "upcoming", page = 0, size = 12) => {
     return await api.get(`/events`, {
       params: { status, page, size },
@@ -91,7 +91,7 @@ const eventService = {
 
   // Lấy danh sách loại sự kiện
   getEventTypes: async () => {
-    return await api.get("/events/types");
+    return await api.get("/events/get-types");
   },
 };
 

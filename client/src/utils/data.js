@@ -48,17 +48,17 @@ export const RESEARCH_CATEGORIES = [
 ];
 
 export const EVENT_CATEGORIES = [
-  { id: 1, name: "Hội thảo", path: "/events" },
-  { id: 2, name: "Hội nghị", path: "/events/conferences" },
+  { id: 1, name: "Hội thảo", path: "/events?type=conference" },
+  { id: 2, name: "Hội nghị", path: "/events?type=conference" },
   {
     id: 3,
     name: "Tham dự hội đồng tư vấn khoa học tư vấn định hướng nghiên cứu, xây dựng các thuyết minh đề tài,dự án",
-    path: "/events/conferences",
+    path: "/events?type=conference",
   },
   {
     id: 4,
     name: "Tham dự Seminar/ chuyên đề do chuyên gia (quốc tế, trong nước, cơ quan quản lí, doanh nghiệp, ...) trình bày",
-    path: "/events/conferences",
+    path: "/events?type=conference",
   },
 ];
 

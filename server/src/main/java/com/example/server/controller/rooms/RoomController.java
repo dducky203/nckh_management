@@ -1,4 +1,4 @@
-package com.example.server.controller;
+package com.example.server.controller.rooms;
 
 import com.example.server.domain.Room;
 import com.example.server.repository.RoomRepository;
