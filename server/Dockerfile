@@ -16,6 +16,9 @@ FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
+# Healthcheck uses wget; install it in alpine
+RUN apk add --no-cache wget
+
 # Copy JAR file từ build stage
 COPY --from=build /app/target/*.jar app.jar
 
