@@ -2,6 +2,7 @@ package com.example.server.DTO.response;
 
 import com.example.server.domain.ResearchGroup;
 import com.example.server.domain.ResearchGroupMember;
+import com.example.server.domain.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,6 +26,7 @@ public class ResearchGroupDTO {
     private String topicName;
     private String description;
     private String googleSheetLink;
+        private String type;
     private String status;
     private Date createdAt;
     private Date updatedAt;
@@ -59,6 +62,7 @@ public class ResearchGroupDTO {
                 .topicName(group.getTopicName())
                 .description(group.getDescription())
                 .googleSheetLink(group.getGoogleSheetLink())
+                .type(group.getType())
                 .status(group.getStatus().name())
                 .createdAt(group.getCreatedAt())
                 .updatedAt(group.getUpdatedAt())
@@ -90,32 +94,40 @@ public class ResearchGroupDTO {
                                 ? group.getAdvisor().getIdResume().getAddress()
                                 : null)
                         .build() : null)
-                .members(group.getMembers().stream()
-                        .map(user -> UserSimpleDTO.builder()
-                                .id(user.getId())
-                                .name(user.getName())
-                                .email(user.getIdResume() != null
-                                        ? user.getIdResume().getEmail()
-                                        : null)
-                                .username(user.getUsername())
-                                .title(user.getIdTitle() != null
-                                        ? user.getIdTitle().getName()
-                                        : null)
-                                .address(user.getIdResume() != null
-                                        ? user.getIdResume().getAddress()
-                                        : null)
-                                .role(null) // Sẽ được set bên ngoài
-                                .participationRate(null) // Sẽ được set bên ngoài
-                                .build())
-                        .collect(Collectors.toSet()))
+                .members(Set.of())
                 .build();
     }
 
     public static ResearchGroupDTO fromEntity(ResearchGroup group, List<ResearchGroupMember> memberInfos) {
         ResearchGroupDTO dto = fromEntity(group);
 
+                List<ResearchGroupMember> safeMemberInfos = memberInfos != null ? memberInfos : List.of();
+
+                // Build members from ResearchGroupMember rows
+                {
+                        Set<UserSimpleDTO> members = safeMemberInfos.stream()
+                                        .map(mi -> {
+                                                if (mi == null || mi.getUser() == null) return null;
+                                                User user = mi.getUser();
+                                                return UserSimpleDTO.builder()
+                                                                .id(user.getId())
+                                                                .name(user.getName())
+                                                                .email(user.getIdResume() != null ? user.getIdResume().getEmail() : null)
+                                                                .username(user.getUsername())
+                                                                .title(user.getIdTitle() != null ? user.getIdTitle().getName() : null)
+                                                                .address(user.getIdResume() != null ? user.getIdResume().getAddress() : null)
+                                                                .role(mi.getRole())
+                                                                .participationRate(mi.getParticipationRate())
+                                                                .build();
+                                        })
+                                        .filter(Objects::nonNull)
+                                        .collect(Collectors.toSet());
+
+                        dto.setMembers(members);
+                }
+
         // Tạo map để tra cứu nhanh role và participationRate
-        Map<Integer, ResearchGroupMember> memberInfoMap = memberInfos.stream()
+                Map<Integer, ResearchGroupMember> memberInfoMap = safeMemberInfos.stream()
                 .collect(Collectors.toMap(ResearchGroupMember::getUserId, m -> m));
 
         // Cập nhật role và participationRate cho từng member

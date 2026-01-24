@@ -5,7 +5,7 @@ import {
   ArrowForward,
 } from "@mui/icons-material";
 import Button from "../../../../components/common/Button";
-import { formatDateTime, getCountdown } from "../../utils/eventHelpers";
+import { formatDateTime } from "../../utils/eventHelpers";
 import { API_BASE_URL } from "../../../../constants";
 import EventCountdown from "./EventCountdown";
 import { targetDate } from "../../../../utils";
@@ -61,12 +61,14 @@ const getEventTypeColor = (type, activeTab) => {
 };
 
 const EventCard = ({ event, activeTab, onViewDetail, onRegister }) => {
+  console.log(event);
+
   return (
     <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all overflow-hidden group">
       {/* Event Image */}
       <div className="relative h-48 overflow-hidden">
         <img
-          src={`${API_BASE_URL}${event.image}`}
+          src={event.bannerImg || event.image}
           alt={event.eventName}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
         />

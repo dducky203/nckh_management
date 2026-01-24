@@ -2,6 +2,7 @@ package com.example.server.DTO.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -9,6 +10,10 @@ import java.util.Set;
 
 @Data
 public class CreateResearchGroupRequest {
+
+    // student | lecturer
+    @Pattern(regexp = "^(student|lecturer)$", message = "Type phải là student hoặc lecturer")
+    private String type;
 
     @NotBlank(message = "Tên nhóm không được để trống")
     @Size(max = 200, message = "Tên nhóm không được vượt quá 200 ký tự")

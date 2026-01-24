@@ -22,7 +22,11 @@ const eventService = {
 
   // Cập nhật event
   updateEvent: async (eventId, eventData) => {
-    return await api.put(`/events/${eventId}`, eventData);
+    return await api.put(`/events/${eventId}`, eventData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
   },
 
   // Xóa event

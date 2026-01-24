@@ -27,6 +27,8 @@ public interface EventPublicService {
     String unregisterEvent(Integer eventId, Integer userId);
 
     EventPublicDTO createEvent(EventPublicDTO eventData);
+
+    EventPublicDTO updateEvent(Integer eventId, EventPublicDTO eventData);
  
     String approveEvent(Integer eventId);
 

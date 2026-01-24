@@ -269,7 +269,7 @@ const Home = () => {
                 >
                   <div className="relative h-56 overflow-hidden">
                     <img
-                      src={event.image || "/src/assets/default-event.jpg"}
+                      src={event.bannerImg || "/src/assets/default-event.jpg"}
                       alt={event.eventName}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />

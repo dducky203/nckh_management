@@ -58,7 +58,7 @@ const ResearchGroupsPublic = () => {
         searchTerm,
         activeTab,
         currentPage,
-        12
+        12,
       );
       const responseData = response.data || response;
       setGroups(responseData?.groups || []);
@@ -321,6 +321,7 @@ const ResearchGroupsPublic = () => {
           onSave={handleSaveGroup}
           group={null}
           currentUserId={user?.id}
+          defaultType={activeTab}
         />
       )}
       {detailModalOpen && selectedGroup && (

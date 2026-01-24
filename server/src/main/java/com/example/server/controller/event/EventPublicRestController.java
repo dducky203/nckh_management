@@ -10,6 +10,7 @@ import com.example.server.domain.TypeOfCriterion;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -176,6 +177,7 @@ public class EventPublicRestController {
     @PostMapping("/create")
     public ResponseEntity<?> createEvent(
             @RequestParam(value = "banner", required = false) MultipartFile bannerFile,
+            @RequestParam(value = "bannerUrl", required = false) String bannerUrlParam,
             @RequestParam("eventName") String eventName,
             @RequestParam("dateOfEvent") String dateOfEvent,
             @RequestParam("startTime") String startTime,
@@ -187,7 +189,7 @@ public class EventPublicRestController {
             @RequestParam("creator") Integer creator) {
         try {
             // Upload banner lên Cloudinary nếu có
-            String bannerUrl = null;
+            String bannerUrl = (bannerUrlParam != null && !bannerUrlParam.isBlank()) ? bannerUrlParam : null;
             if (bannerFile != null && !bannerFile.isEmpty()) {
                 bannerUrl = cloudinaryService.uploadFile(bannerFile, "events");
             }
@@ -217,6 +219,63 @@ public class EventPublicRestController {
             EventPublicDTO createdEvent = eventPublicService.createEvent(eventData);
             return ResponseEntity.ok(
                     new SuccessResponseDTO<>(createdEvent, "Đăng ký sự kiện thành công! Chờ phê duyệt."));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Có lỗi upload file: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Có lỗi xảy ra: " + e.getMessage());
+        }
+    }
+
+    @PutMapping(value = "/{eventId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateEvent(
+            @PathVariable Integer eventId,
+            @RequestParam(value = "banner", required = false) MultipartFile bannerFile,
+            @RequestParam(value = "bannerUrl", required = false) String bannerUrlParam,
+            @RequestParam("eventName") String eventName,
+            @RequestParam("dateOfEvent") String dateOfEvent,
+            @RequestParam("startTime") String startTime,
+            @RequestParam("endTime") String endTime,
+            @RequestParam(value = "roomId", required = false) Integer roomId,
+            @RequestParam(value = "typeId", required = false) Integer typeId,
+            @RequestParam("type") String type,
+            @RequestParam("description") String description,
+            @RequestParam(value = "creator", required = false) Integer creator) {
+        try {
+            String bannerUrl = (bannerUrlParam != null && !bannerUrlParam.isBlank()) ? bannerUrlParam : null;
+            if (bannerFile != null && !bannerFile.isEmpty()) {
+                bannerUrl = cloudinaryService.uploadFile(bannerFile, "events");
+            }
+
+            LocalDate eventDate = LocalDate.parse(dateOfEvent);
+            LocalTime startLocalTime = LocalTime.parse(startTime);
+            LocalTime endLocalTime = LocalTime.parse(endTime);
+
+            if (!startLocalTime.isBefore(endLocalTime)) {
+                throw new RuntimeException("Giờ bắt đầu phải nhỏ hơn giờ kết thúc.");
+            }
+
+            EventPublicDTO eventData = new EventPublicDTO();
+            eventData.setEventName(eventName);
+            eventData.setDateOfEvent(eventDate);
+            eventData.setStartTime(eventDate.atTime(startLocalTime));
+            eventData.setEndTime(eventDate.atTime(endLocalTime));
+            eventData.setRoomId(roomId);
+            eventData.setTypeId(typeId);
+            eventData.setType(type);
+            eventData.setDescription(description);
+            if (creator != null) {
+                eventData.setCreator(creator);
+            }
+            eventData.setBannerImg(bannerUrl);
+            eventData.setImage(bannerUrl);
+
+            EventPublicDTO updatedEvent = eventPublicService.updateEvent(eventId, eventData);
+            return ResponseEntity.ok(new SuccessResponseDTO<>(updatedEvent, "Cập nhật sự kiện thành công"));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(e.getMessage());

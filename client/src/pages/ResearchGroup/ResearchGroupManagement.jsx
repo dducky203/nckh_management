@@ -103,7 +103,7 @@ const ResearchGroupManagement = () => {
           statusFilter,
           activeTab,
           currentPage,
-          9
+          9,
         );
         const responseData = response.data || response;
         setGroups(responseData?.groups || []);
@@ -181,7 +181,7 @@ const ResearchGroupManagement = () => {
     try {
       await researchGroupService.rejectGroup(
         confirmModal.groupId,
-        confirmModal.reason
+        confirmModal.reason,
       );
       toast.success(SUCCESS_MESSAGES.GROUP_REJECTED);
       setConfirmModal({ isOpen: false, type: "", groupId: null, reason: "" });
@@ -363,19 +363,20 @@ const ResearchGroupManagement = () => {
 
                 <div className="flex gap-4">
                   {isAdmin && (
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => {
-                      setStatusFilter(e.target.value);
-                      resetPagination();
-                    }}
-                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="ALL">Tất cả trạng thái</option>
-                    <option value="PENDING">Chờ duyệt</option>
-                    <option value="APPROVED">Đã duyệt</option>
-                    <option value="REJECTED">Từ chối</option>
-                  </select>)}
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => {
+                        setStatusFilter(e.target.value);
+                        resetPagination();
+                      }}
+                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="ALL">Tất cả trạng thái</option>
+                      <option value="PENDING">Chờ duyệt</option>
+                      <option value="APPROVED">Đã duyệt</option>
+                      <option value="REJECTED">Từ chối</option>
+                    </select>
+                  )}
 
                   <button
                     onClick={handleCreateGroup}
@@ -465,6 +466,11 @@ const ResearchGroupManagement = () => {
           onSave={handleSaveGroup}
           group={selectedGroup}
           currentUserId={user?.id}
+          defaultType={
+            activeTab === "student" || activeTab === "lecturer"
+              ? activeTab
+              : "student"
+          }
         />
       )}
 

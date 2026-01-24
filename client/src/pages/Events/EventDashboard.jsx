@@ -87,7 +87,7 @@ const EventDashboard = () => {
           maxParticipants: event.maxParticipants || 0,
           createdAt: event.createdAt,
           approvalStatus: event.status,
-          bannerUrl: event.image,
+          bannerUrl: event.bannerImg || event.image,
         };
       };
 
@@ -115,7 +115,7 @@ const EventDashboard = () => {
       setApprovedEvents(approved);
     } catch (error) {
       console.error("Error loading data:", error);
-      toast.error(ERROR_MESSAGES.LOAD_DATA_ERROR);
+      toast.error("Không thể tải dữ liệu sự kiện");
     } finally {
       setLoading(false);
     }
@@ -193,7 +193,23 @@ const EventDashboard = () => {
   const handleSave = async (formData) => {
     try {
       if (editingEvent) {
-        // TODO: Implement update event API
+        const submitData = new FormData();
+        submitData.append("eventName", formData.title);
+        submitData.append("dateOfEvent", formData.date);
+        submitData.append("startTime", formData.startTime);
+        submitData.append("endTime", formData.endTime);
+        submitData.append("type", formData.type);
+        submitData.append("description", formData.description);
+
+        if (formData.image) {
+          if (typeof formData.image === "string") {
+            submitData.append("bannerUrl", formData.image.trim());
+          } else {
+            submitData.append("banner", formData.image);
+          }
+        }
+
+        await eventService.updateEvent(editingEvent.id, submitData);
         toast.success("Cập nhật sự kiện thành công");
       } else {
         // Upload ảnh lên Cloudinary trước nếu có
