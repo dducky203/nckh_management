@@ -1,22 +1,16 @@
 package com.example.server.mapper;
 
-import com.example.server.DTO.users.UserDTO;
+
 import com.example.server.DTO.users.UserDetailsDTO;
 import com.example.server.DTO.users.UserRequest;
 import com.example.server.domain.User;
-import com.example.server.utils.NormalizeUtils;
-import org.mapstruct.BeforeMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-
 import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
-//    @Mapping(source = "idResume.email", target = "email")
-//    @Mapping(source = "idRole.name", target = "role")
-//    @Mapping(source = "idTitle.name", target = "title")
-//    UserDTO toDTO(User user);
+
 
     @Mapping(source = "idResume.email", target = "email")
     @Mapping(source = "idResume.phone", target = "phone")
@@ -33,7 +27,7 @@ public interface UserMapper {
     @Mapping(source = "idRole.name", target = "role")
     @Mapping(source = "idTitle.name", target = "title")
     List<UserDetailsDTO> toUserDetailDTO(List<User> users);
-    
+
     User toEntity(UserRequest user);
 
 }

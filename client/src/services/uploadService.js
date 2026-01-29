@@ -67,8 +67,8 @@ export const uploadWithProgress = async (
  * @returns {Promise<void>}
  */
 export const deleteFromCloudinary = async (fileUrl) => {
-  await api.delete('/api/delete-file', {
-    params: { url: fileUrl }
+  await api.delete("/api/delete-file", {
+    params: { url: fileUrl },
   });
 };
 

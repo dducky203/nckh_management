@@ -67,18 +67,14 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người hướng dẫn"));
 
         // Validate: phải có ít nhất 2 thành viên (bao gồm leader)
-        if (request.getMemberIds().size() < 1) {
+        if (request.getMemberIds() == null || request.getMemberIds().size() < 1) {
             throw new RuntimeException("Nhóm phải có ít nhất 2 thành viên (bao gồm trưởng nhóm)");
         }
 
-        // Lấy danh sách members
-        Set<User> members = new HashSet<>();
-        members.add(leader); // Thêm leader vào danh sách members
-
+        // Validate member IDs tồn tại
         for (Integer memberId : request.getMemberIds()) {
-            User member = userRepository.findById(memberId)
+            userRepository.findById(memberId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy thành viên với ID: " + memberId));
-            members.add(member);
         }
 
         // Tạo nhóm mới
@@ -86,22 +82,25 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                 .groupName(request.getGroupName())
                 .topicName(request.getTopicName())
                 .description(request.getDescription())
+                .type(request.getType() != null ? request.getType() : "student")
                 .status(ResearchGroup.GroupStatus.PENDING) // Mặc định chờ duyệt
                 .leader(leader)
                 .advisor(advisor)
-                .members(members)
                 .build();
 
         ResearchGroup savedGroup = groupRepository.save(group);
 
-        // Tạo ResearchGroupMember cho tất cả members
-        for (User member : members) {
+        // Tạo ResearchGroupMember cho tất cả members (bao gồm leader)
+        Set<Integer> allMemberIds = new HashSet<>(request.getMemberIds());
+        allMemberIds.add(leader.getId());
+
+        for (Integer memberId : allMemberIds) {
             ResearchGroupMember memberInfo = ResearchGroupMember.builder()
-                    .groupId(savedGroup.getId())
-                    .userId(member.getId())
-                    .role(member.getId().equals(leader.getId()) ? "Trưởng nhóm" : "Thành viên")
-                    .participationRate(100)
-                    .build();
+                .groupId(savedGroup.getId())
+                .userId(memberId)
+                .role(memberId.equals(leader.getId()) ? "Trưởng nhóm" : "Thành viên")
+                .participationRate(100)
+                .build();
             memberRepository.save(memberInfo);
         }
 
@@ -163,18 +162,55 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
             group.setAdvisor(advisor);
         }
         if (request.getMemberIds() != null) {
-            Set<User> newMembers = new HashSet<>();
-            newMembers.add(group.getLeader()); // Giữ leader
-            for (Integer memberId : request.getMemberIds()) {
-                User member = userRepository.findById(memberId)
+            Set<Integer> desiredMemberIds = new HashSet<>(request.getMemberIds());
+            desiredMemberIds.add(group.getLeader().getId()); // Luôn giữ leader
+
+            // Validate users tồn tại
+            for (Integer memberId : desiredMemberIds) {
+                userRepository.findById(memberId)
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy thành viên"));
-                newMembers.add(member);
             }
-            group.setMembers(newMembers);
+
+            // Current members
+            List<ResearchGroupMember> currentInfos = memberRepository.findByGroupId(groupId);
+            Set<Integer> currentMemberIds = currentInfos.stream()
+                    .map(ResearchGroupMember::getUserId)
+                    .collect(Collectors.toSet());
+
+            // Delete removed members (không xóa leader)
+            for (Integer currentMemberId : currentMemberIds) {
+                if (!currentMemberId.equals(group.getLeader().getId()) && !desiredMemberIds.contains(currentMemberId)) {
+                    memberRepository.deleteByGroupIdAndUserId(groupId, currentMemberId);
+                }
+            }
+
+            // Add new members
+            for (Integer desiredMemberId : desiredMemberIds) {
+                if (!currentMemberIds.contains(desiredMemberId)) {
+                    memberRepository.save(ResearchGroupMember.builder()
+                            .groupId(groupId)
+                            .userId(desiredMemberId)
+                            .role(desiredMemberId.equals(group.getLeader().getId()) ? "Trưởng nhóm" : "Thành viên")
+                            .participationRate(100)
+                            .build());
+                }
+            }
+
+            // Ensure leader row exists + role đúng
+            ResearchGroupMember leaderInfo = memberRepository.findByGroupIdAndUserId(groupId, group.getLeader().getId())
+                    .orElse(ResearchGroupMember.builder()
+                            .groupId(groupId)
+                            .userId(group.getLeader().getId())
+                            .build());
+            leaderInfo.setRole("Trưởng nhóm");
+            if (leaderInfo.getParticipationRate() == null) {
+                leaderInfo.setParticipationRate(100);
+            }
+            memberRepository.save(leaderInfo);
         }
 
         ResearchGroup savedGroup = groupRepository.save(group);
-        return ResearchGroupDTO.fromEntity(savedGroup);
+        return getGroupById(savedGroup.getId());
     }
 
     @Override
@@ -182,6 +218,11 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
     public void deleteGroup(Integer groupId) {
         ResearchGroup group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
+
+        // Delete child rows first to avoid FK constraint violations
+        documentRepository.deleteByResearchGroupId(groupId);
+        memberRepository.deleteByGroupId(groupId);
+
         groupRepository.delete(group);
     }
 
@@ -199,11 +240,12 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
             throw new RuntimeException("Chỉ trưởng nhóm hoặc admin mới có thể thêm thành viên");
         }
 
-        User newMember = userRepository.findById(memberId)
+        userRepository.findById(memberId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thành viên"));
 
-        group.addMember(newMember);
-        ResearchGroup savedGroup = groupRepository.save(group);
+        if (memberRepository.findByGroupIdAndUserId(groupId, memberId).isPresent()) {
+            throw new RuntimeException("Thành viên đã tồn tại trong nhóm");
+        }
 
         // Tạo ResearchGroupMember với role và participationRate mặc định
         ResearchGroupMember memberInfo = ResearchGroupMember.builder()
@@ -236,11 +278,9 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
             throw new RuntimeException("Không thể xóa trưởng nhóm");
         }
 
-        User memberToRemove = userRepository.findById(memberId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy thành viên"));
-
-        group.removeMember(memberToRemove);
-        ResearchGroup savedGroup = groupRepository.save(group);
+        if (memberRepository.findByGroupIdAndUserId(groupId, memberId).isEmpty()) {
+            throw new RuntimeException("Thành viên không tồn tại trong nhóm");
+        }
 
         // Xóa ResearchGroupMember
         memberRepository.deleteByGroupIdAndUserId(groupId, memberId);
@@ -327,7 +367,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         // Kiểm tra quyền: chỉ leader, advisor hoặc member mới được cập nhật
         boolean isLeader = group.isLeader(user);
         boolean isAdvisor = group.getAdvisor() != null && group.getAdvisor().getId().equals(userId);
-        boolean isMember = group.isMember(user);
+        boolean isMember = memberRepository.findByGroupIdAndUserId(groupId, userId).isPresent();
         boolean isAdmin = SecurityUtils.isAdmin(user);
 
         if (!isLeader && !isAdvisor && !isMember && !isAdmin) {
@@ -529,11 +569,6 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                         tyLeThamGia = 100;
                     }
 
-                    // Kiểm tra xem đã là member chưa
-                    if (!group.isMember(member)) {
-                        group.addMember(member);
-                    }
-
                     // Tạo hoặc cập nhật ResearchGroupMember
                     ResearchGroupMember memberInfo = memberRepository.findByGroupIdAndUserId(groupId, member.getId())
                             .orElse(ResearchGroupMember.builder()
@@ -628,7 +663,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         // Kiểm tra quyền: chỉ thành viên nhóm mới được xem documents
         boolean isLeader = group.isLeader(user);
         boolean isAdvisor = group.getAdvisor() != null && group.getAdvisor().getId().equals(userId);
-        boolean isMember = group.isMember(user);
+        boolean isMember = memberRepository.findByGroupIdAndUserId(groupId, userId).isPresent();
         boolean isAdmin = SecurityUtils.isAdmin(user);
 
         if (!isLeader && !isAdvisor && !isMember && !isAdmin) {
@@ -654,7 +689,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         // Kiểm tra quyền: chỉ thành viên nhóm mới được upload documents
         boolean isLeader = group.isLeader(user);
         boolean isAdvisor = group.getAdvisor() != null && group.getAdvisor().getId().equals(userId);
-        boolean isMember = group.isMember(user);
+        boolean isMember = memberRepository.findByGroupIdAndUserId(groupId, userId).isPresent();
         boolean isAdmin = SecurityUtils.isAdmin(user);
 
         if (!isLeader && !isAdvisor && !isMember && !isAdmin) {
@@ -714,7 +749,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         ResearchGroup group = document.getResearchGroup();
         boolean isLeader = group.isLeader(user);
         boolean isAdvisor = group.getAdvisor() != null && group.getAdvisor().getId().equals(userId);
-        boolean isMember = group.isMember(user);
+        boolean isMember = memberRepository.findByGroupIdAndUserId(groupId, userId).isPresent();
         boolean isAdmin = SecurityUtils.isAdmin(user);
 
         if (!isLeader && !isAdvisor && !isMember && !isAdmin) {
@@ -780,7 +815,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         ResearchGroup group = document.getResearchGroup();
         boolean isLeader = group.isLeader(user);
         boolean isAdvisor = group.getAdvisor() != null && group.getAdvisor().getId().equals(userId);
-        boolean isMember = group.isMember(user);
+        boolean isMember = memberRepository.findByGroupIdAndUserId(groupId, userId).isPresent();
         boolean isAdmin = SecurityUtils.isAdmin(user);
 
         if (!isLeader && !isAdvisor && !isMember && !isAdmin) {

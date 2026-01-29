@@ -17,6 +17,8 @@ public interface ResearchGroupMemberRepository
 
     Optional<ResearchGroupMember> findByGroupIdAndUserId(Integer groupId, Integer userId);
 
+    void deleteByGroupId(Integer groupId);
+
     void deleteByGroupIdAndUserId(Integer groupId, Integer userId);
 
     @Query("SELECT rgm FROM ResearchGroupMember rgm WHERE rgm.groupId = :groupId")

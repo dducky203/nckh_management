@@ -4,7 +4,6 @@ import com.example.server.domain.EntityBase;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -50,27 +49,11 @@ public class ResearchGroup extends EntityBase {
     private User advisor;
 
     // Danh sách thành viên
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "research_group_members", joinColumns = @JoinColumn(name = "group_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
-    private Set<User> members = new HashSet<>();
 
     public enum GroupStatus {
         PENDING, // Chờ duyệt
         APPROVED, // Đã duyệt
         REJECTED // Bị từ chối
-    }
-
-    // Helper methods
-    public void addMember(User user) {
-        this.members.add(user);
-    }
-
-    public void removeMember(User user) {
-        this.members.remove(user);
-    }
-
-    public boolean isMember(User user) {
-        return this.members.contains(user);
     }
 
     public boolean isLeader(User user) {

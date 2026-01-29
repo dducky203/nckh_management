@@ -48,7 +48,6 @@ const Profile = () => {
 
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [showProfileConfirmModal, setShowProfileConfirmModal] = useState(false);
   const [userResearchGroup, setUserResearchGroup] = useState("");
 
@@ -263,13 +262,7 @@ const Profile = () => {
                         />
                       </label>
                     )}
-                    {avatarPreview && isEditing && (
-                      <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
-                        <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                          Preview - chưa lưu
-                        </span>
-                      </div>
-                    )}
+                    
                   </div>
                   <div className="text-center">
                     <h3 className="font-bold text-lg">{user?.name}</h3>

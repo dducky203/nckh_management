@@ -58,7 +58,7 @@ const ResearchGroupsPublic = () => {
         searchTerm,
         activeTab,
         currentPage,
-        12
+        12,
       );
       const responseData = response.data || response;
       setGroups(responseData?.groups || []);
@@ -235,18 +235,22 @@ const ResearchGroupsPublic = () => {
                     </h3>
 
                     <div className="space-y-3">
-                      <div className="flex items-start gap-3">
-                        <Topic
-                          className="text-gray-400 mt-0.5"
-                          fontSize="small"
-                        />
-                        <div>
-                          <p className="text-xs text-gray-500 mb-0.5">Đề tài</p>
-                          <p className="text-sm text-gray-900 font-medium line-clamp-2">
-                            {group.topicName}
-                          </p>
+                      {activeTab === "student" && (
+                        <div className="flex items-start gap-3">
+                          <Topic
+                            className="text-gray-400 mt-0.5"
+                            fontSize="small"
+                          />
+                          <div>
+                            <p className="text-xs text-gray-500 mb-0.5">
+                              Đề tài
+                            </p>
+                            <p className="text-sm text-gray-900 font-medium line-clamp-2">
+                              {group.topicName}
+                            </p>
+                          </div>
                         </div>
-                      </div>
+                      )}
 
                       <div className="w-full h-px bg-gray-100 my-2"></div>
 
@@ -260,18 +264,20 @@ const ResearchGroupsPublic = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        <SupervisorAccount
-                          className="text-gray-400"
-                          fontSize="small"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs text-gray-500">GVHD</p>
-                          <p className="text-sm font-medium text-gray-900 truncate">
-                            {group.advisor?.name || "N/A"}
-                          </p>
+                      {activeTab === "student" && (
+                        <div className="flex items-center gap-3">
+                          <SupervisorAccount
+                            className="text-gray-400"
+                            fontSize="small"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-gray-500">GVHD</p>
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {group.advisor?.name || "N/A"}
+                            </p>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
 
@@ -321,6 +327,7 @@ const ResearchGroupsPublic = () => {
           onSave={handleSaveGroup}
           group={null}
           currentUserId={user?.id}
+          defaultType={activeTab}
         />
       )}
       {detailModalOpen && selectedGroup && (

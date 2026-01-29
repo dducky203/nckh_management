@@ -88,17 +88,14 @@ const EventDetailModal = ({
         </div>
 
         {/* Content */}
-        <div className="p-6">
-          {/* Event Image */}
-          {event.image && (
+        <div className="p-6">    
             <div className="mb-6">
               <img
-                src={`${API_BASE_URL}` + event.image}
-                alt={event.eventName}
+                src={event?.bannerImg}
+                alt={event?.eventName}
                 className="w-full h-64 object-cover rounded-lg"
               />
             </div>
-          )}
 
           {/* Title and Badges */}
           <div className="mb-6">

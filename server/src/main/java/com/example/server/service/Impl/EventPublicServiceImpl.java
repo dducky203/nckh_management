@@ -224,6 +224,55 @@ public class EventPublicServiceImpl implements EventPublicService {
         return convertToDTO(savedEvent);
     }
 
+    @Override
+    public EventPublicDTO updateEvent(Integer eventId, EventPublicDTO eventData) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sự kiện"));
+
+        if (eventData.getEventName() != null) {
+            event.setEventName(eventData.getEventName());
+        }
+        if (eventData.getDateOfEvent() != null) {
+            event.setDateOfEvent(eventData.getDateOfEvent());
+        }
+        if (eventData.getStartTime() != null) {
+            event.setStartTime(eventData.getStartTime());
+        }
+        if (eventData.getEndTime() != null) {
+            event.setEndTime(eventData.getEndTime());
+        }
+        if (eventData.getBannerImg() != null && !eventData.getBannerImg().isEmpty()) {
+            event.setBannerImg(eventData.getBannerImg());
+        }
+
+        // Update related tables used for description/image in DTO
+        Conference conference = conferenceRepository.findByIdEvent(eventId);
+        if (conference != null) {
+            if (eventData.getImage() != null && !eventData.getImage().isEmpty()) {
+                conference.setImage(eventData.getImage());
+            }
+            if (eventData.getDescription() != null) {
+                conference.setPaperTitle(eventData.getDescription());
+            }
+            conferenceRepository.save(conference);
+        }
+
+        Seminar seminar = seminarRepository.findByIdEvent(eventId);
+        if (seminar != null) {
+            if (eventData.getImage() != null && !eventData.getImage().isEmpty()) {
+                seminar.setSeminarPhoto(eventData.getImage());
+            }
+            if (eventData.getDescription() != null) {
+                // Current DTO maps Seminar.mainAuthor -> description
+                seminar.setMainAuthor(eventData.getDescription());
+            }
+            seminarRepository.save(seminar);
+        }
+
+        Event savedEvent = eventRepository.save(event);
+        return convertToDTO(savedEvent);
+    }
+
 
     private List<EventPublicDTO> convertToDTOsBatch(List<Event> events) {
         if (events.isEmpty()) return new ArrayList<>();

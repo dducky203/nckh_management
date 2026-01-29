@@ -20,8 +20,8 @@ public interface ResearchGroupRepository extends JpaRepository<ResearchGroup, In
     List<ResearchGroup> findByLeader(User leader);
 
     // Tìm nhóm có chứa member
-    @Query("SELECT rg FROM ResearchGroup rg JOIN rg.members m WHERE m.id = :userId")
-    List<ResearchGroup> findGroupsByMemberId(@Param("userId") Integer userId);
+        @Query("SELECT DISTINCT rgm.group FROM ResearchGroupMember rgm WHERE rgm.userId = :userId")
+        List<ResearchGroup> findGroupsByMemberId(@Param("userId") Integer userId);
 
     // Tìm nhóm theo advisor
     List<ResearchGroup> findByAdvisor(User advisor);

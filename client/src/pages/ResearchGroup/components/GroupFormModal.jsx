@@ -4,8 +4,16 @@ import userService from "../../../services/userService";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import Button from "../../../components/common/Button";
 
-const GroupFormModal = ({ isOpen, onClose, onSave, group, currentUserId }) => {
+const GroupFormModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  group,
+  currentUserId,
+  defaultType = "student",
+}) => {
   const [formData, setFormData] = useState({
+    type: defaultType,
     groupName: "",
     topicName: "",
     description: "",
@@ -30,6 +38,7 @@ const GroupFormModal = ({ isOpen, onClose, onSave, group, currentUserId }) => {
   useEffect(() => {
     if (group) {
       setFormData({
+        type: group.type || defaultType,
         groupName: group.groupName || "",
         topicName: group.topicName || "",
         description: group.description || "",
@@ -39,13 +48,17 @@ const GroupFormModal = ({ isOpen, onClose, onSave, group, currentUserId }) => {
       setSelectedMembers(group.members || []);
       setSelectedAdvisor(group.advisor || null);
     } else {
+      setFormData((prev) => ({
+        ...prev,
+        type: defaultType,
+      }));
       // Auto-add current user as a member for new groups
       if (currentUserId) {
         fetchCurrentUser();
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [group, currentUserId]);
+  }, [group, currentUserId, defaultType]);
 
   const fetchCurrentUser = async () => {
     try {
@@ -136,6 +149,10 @@ const GroupFormModal = ({ isOpen, onClose, onSave, group, currentUserId }) => {
   const validate = () => {
     const newErrors = {};
 
+    if (!formData.type || !["student", "lecturer"].includes(formData.type)) {
+      newErrors.type = "Vui lòng chọn loại nhóm (Sinh viên/Giảng viên)";
+    }
+
     if (!formData.groupName.trim()) {
       newErrors.groupName = "Tên nhóm không được để trống";
     }
@@ -189,6 +206,55 @@ const GroupFormModal = ({ isOpen, onClose, onSave, group, currentUserId }) => {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Group Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Loại nhóm <span className="text-red-500">*</span>
+            </label>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <label
+                className={`flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer transition-colors ${
+                  formData.type === "student"
+                    ? "border-mainColor bg-mainColor/5"
+                    : "border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="type"
+                  value="student"
+                  checked={formData.type === "student"}
+                  onChange={handleChange}
+                />
+                <span className="text-sm font-medium text-gray-900">
+                  NCKH của Sinh viên
+                </span>
+              </label>
+
+              <label
+                className={`flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer transition-colors ${
+                  formData.type === "lecturer"
+                    ? "border-mainColor bg-mainColor/5"
+                    : "border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="type"
+                  value="lecturer"
+                  checked={formData.type === "lecturer"}
+                  onChange={handleChange}
+                />
+                <span className="text-sm font-medium text-gray-900">
+                  NCKH của Giảng viên
+                </span>
+              </label>
+            </div>
+            {errors.type && (
+              <p className="mt-1 text-sm text-red-500">{errors.type}</p>
+            )}
+          </div>
+
           {/* Group Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -388,7 +454,7 @@ const GroupFormModal = ({ isOpen, onClose, onSave, group, currentUserId }) => {
               <div className="border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
                 {memberSearchResults.map((user) => {
                   const isSelected = selectedMembers.find(
-                    (m) => m.id === user.id
+                    (m) => m.id === user.id,
                   );
                   return (
                     <button
