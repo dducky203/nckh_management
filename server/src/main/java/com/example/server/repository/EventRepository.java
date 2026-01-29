@@ -1,7 +1,7 @@
 package com.example.server.repository;
 
 import com.example.server.domain.Event;
-import com.example.server.projection.IEvent;
+
 import com.example.server.utils.SQL;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -48,9 +48,6 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     @Query(value = SQL.GET_TOP5_EV, nativeQuery = true)
     List<Event> getTop5Events();
 
-    // get upcoming events
-    @Query(value = SQL.GET_UPCOMING_E, nativeQuery = true)
-    List<IEvent> getUpcomingEvents();
 
     // get ev by user have power 5 ( thu ki NCM)
     @Query(value = "select * from event where status=1 or status IS NULL", nativeQuery = true)
