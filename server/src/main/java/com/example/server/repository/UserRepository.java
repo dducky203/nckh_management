@@ -1,5 +1,6 @@
 package com.example.server.repository;
 
+import com.example.server.domain.Title;
 import com.example.server.domain.User;
 import com.example.server.utils.SQL;
 import org.jetbrains.annotations.NotNull;
@@ -80,13 +81,16 @@ public interface UserRepository extends JpaRepository<User, Integer> {
                         @Param("isDeleted") Boolean isDeleted,
                         Pageable pageable);
 
-        // Search users by username, email, or name
         @Query("SELECT u FROM User u LEFT JOIN u.idResume r WHERE " +
-                        "(LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-                        "LOWER(r.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-                        "LOWER(u.name) LIKE LOWER(CONCAT('%', :keyword, '%')))")
-        Page<User> findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(
-                        @Param("keyword") String keyword,
-                        Pageable pageable);
+            "(LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(r.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(u.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:mode = 'ALL' " +
+            "     OR (:mode = 'STUDENT' AND u.idTitle.name = 'Sinh viên') " +
+            "     OR (:mode = 'OTHERS' AND u.idTitle.name != 'Sinh viên'))")
+        Page<User> searchUsers(
+                    @Param("keyword") String keyword,
+                    @Param("mode") String mode,
+                    Pageable pageable);
 
 }

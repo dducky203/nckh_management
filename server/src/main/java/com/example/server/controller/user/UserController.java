@@ -120,9 +120,10 @@ public class UserController {
     @GetMapping("/search")
     public ResponseEntity<?> searchUsers(
             @RequestParam(value = "keyword") String keyword,
+            @RequestParam(value = "type", defaultValue = "ALL") String type,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size) {
-        return userService.searchUsers(keyword, page, size);
+        return userService.searchUsers(keyword,type, page, size);
     }
 
     @GetMapping("/{id}")

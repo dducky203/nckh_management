@@ -91,9 +91,9 @@ const userService = {
   },
 
   // Tìm kiếm users theo username hoặc email
-  searchUsers: async (keyword, page = 0, size = 10) => {
+  searchUsers: async (keyword,type = 'ALL', page = 0, size = 10) => {
     return await api.get("/users/search", {
-      params: { keyword, page, size },
+      params: { keyword, type, page, size },
     });
   },
 };

@@ -2,9 +2,22 @@ import {
   Close,
   CalendarToday,
   LocationOn,
+  AccessTime,
+  Person,
   CheckCircle,
+  Email,
+  Phone,
 } from "@mui/icons-material";
-import { API_BASE_URL } from "../../../constants";
+
+const formatDate = (dateString) => {
+  if (!dateString) return "Chưa xác định";
+  return new Date(dateString).toLocaleDateString("vi-VN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+};
 
 const EventDetailModal = ({
   isOpen,
@@ -13,12 +26,7 @@ const EventDetailModal = ({
   onRegister,
   isRegistered = false,
 }) => {
-  console.log("EventDetailModal render:", { isOpen, event, isRegistered });
-
-  if (!isOpen || !event) {
-    console.log("Modal not rendering - isOpen:", isOpen, "event:", event);
-    return null;
-  }
+  if (!isOpen || !event) return null;
 
   const isUpcoming = () => {
     const eventDate = new Date(event.dateOfEvent);
@@ -26,7 +34,7 @@ const EventDetailModal = ({
   };
 
   const getStatusBadge = (status) => {
-    const statusConfig = {
+    const config = {
       pending: {
         label: "Chờ duyệt",
         className: "bg-yellow-100 text-yellow-800",
@@ -36,227 +44,177 @@ const EventDetailModal = ({
         className: "bg-green-100 text-green-800",
       },
       completed: {
-        label: "Đã hoàn thành",
-        className: "bg-blue-100 text-blue-800",
+        label: "Đã kết thúc",
+        className: "bg-gray-100 text-gray-800",
       },
-      rejected: { label: "Từ chối", className: "bg-red-100 text-red-800" },
+      rejected: { label: "Đã hủy", className: "bg-red-100 text-red-800" },
     };
     return (
-      statusConfig[status] || {
+      config[status] || {
         label: "Không xác định",
         className: "bg-gray-100 text-gray-800",
       }
     );
   };
 
-  const getTypeColor = (type) => {
-    const colors = {
-      "Hội thảo": "bg-blue-100 text-blue-800",
-      Workshop: "bg-green-100 text-green-800",
-      "Cuộc thi": "bg-red-100 text-red-800",
-      Seminar: "bg-purple-100 text-purple-800",
-      Khác: "bg-gray-100 text-gray-800",
-    };
-    return colors[type] || "bg-gray-100 text-gray-800";
-  };
-
-  const statusBadge = getStatusBadge(event.status);
-
-  const toTimeLabel = (value) => {
-    if (!value) return "";
-    if (typeof value === "string") {
-      if (value.includes("T")) return value.split("T")[1].slice(0, 5);
-      if (value.includes(":")) return value.slice(0, 5);
-    }
-    return "";
-  };
+  const statusInfo = getStatusBadge(event.status);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 bg-white flex items-center justify-between p-6 border-b">
-          <h3 className="text-xl font-semibold text-gray-900">
-            Chi tiết sự kiện
-          </h3>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-fade-in-up">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white sticky top-0 z-10">
+          <div>
+            <h2 className="text-xl font-bold text-gray-800">
+              Chi tiết sự kiện
+            </h2>
+          </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
           >
             <Close />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6">    
-            <div className="mb-6">
-              <img
-                src={event?.bannerImg}
-                alt={event?.eventName}
-                className="w-full h-64 object-cover rounded-lg"
-              />
-            </div>
-
-          {/* Title and Badges */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
           <div className="mb-6">
-            <div className="flex flex-wrap items-center gap-3 mb-3">
-              <span
-                className={`inline-flex px-3 py-1 rounded-md text-sm font-medium ${getTypeColor(
-                  event.type
-                )}`}
-              >
+            <img
+              src={
+                event?.bannerImg ||
+                "https://via.placeholder.com/800x400?text=No+Image"
+              }
+              alt={event?.eventName}
+              className="w-full h-64 object-cover rounded-lg border border-gray-100"
+            />
+          </div>
+
+          <div className="mb-6">
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full uppercase">
                 {event.type}
               </span>
               <span
-                className={`inline-flex px-3 py-1 rounded-md text-sm font-medium ${statusBadge.className}`}
+                className={`px-3 py-1 text-xs font-semibold rounded-full uppercase ${statusInfo.className}`}
               >
-                {statusBadge.label}
+                {statusInfo.label}
               </span>
             </div>
+
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               {event.eventName}
             </h1>
-            <p className="text-gray-600">
-              Tổ chức bởi:{" "}
-              <span className="font-medium">
-                {event.organizer || "Chưa cập nhật"}
+
+            <div className="flex items-center gap-2 text-gray-600 text-sm">
+              <Person fontSize="small" className="text-gray-400" />
+              <span>
+                Tổ chức bởi:{" "}
+                <span className="font-semibold text-gray-800">
+                  {event.organizer || "BTC"}
+                </span>
               </span>
-            </p>
+            </div>
           </div>
 
-          {/* Event Info Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            {/* Date & Time */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex items-center text-gray-700 mb-2">
-                <CalendarToday className="w-5 h-5 mr-2" />
-                <span className="font-medium">Thời gian</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 bg-gray-50 p-4 rounded-lg border border-gray-100">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-gray-700 font-medium text-sm">
+                <CalendarToday fontSize="small" className="text-blue-500" />
+                Thời gian
               </div>
-              <div className="text-sm text-gray-600">
-                <div className="font-medium">
-                  {event.dateOfEvent
-                    ? new Date(event.dateOfEvent).toLocaleDateString("vi-VN", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })
-                    : "Chưa xác định"}
-                </div>
-                <div className="mt-1">
-                  {event.startTimeDetail && event.endTimeDetail
-                    ? `${event.startTimeDetail.slice(
-                        0,
-                        5
-                      )} - ${event.endTimeDetail.slice(0, 5)}`
-                    : event.startTime && event.endTime
-                    ? `${toTimeLabel(event.startTime)} - ${toTimeLabel(
-                        event.endTime
-                      )}`
-                    : "Chưa xác định giờ"}
-                </div>
-              </div>
-            </div>
-
-            {/* Location */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex items-center text-gray-700 mb-2">
-                <LocationOn className="w-5 h-5 mr-2" />
-                <span className="font-medium">Địa điểm</span>
-              </div>
-              <p className="text-sm text-gray-600">
-                {event.location || "Chưa xác định"}
+              <p className="text-sm text-gray-600 pl-7">
+                {formatDate(event.dateOfEvent)}
+              </p>
+              <p className="text-sm text-gray-600 pl-7 flex items-center gap-1">
+                <AccessTime style={{ fontSize: 14 }} />
+                {event.startTime ? event.startTime.slice(0, 5) : "--:--"} -{" "}
+                {event.endTime ? event.endTime.slice(0, 5) : "--:--"}
               </p>
             </div>
-          </div>
 
-          {/* Description */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">
-              Mô tả sự kiện
-            </h3>
-            <div className="bg-gray-50 p-4 rounded-lg prose prose-sm max-w-none">
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: event.description || "Chưa có mô tả",
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Contact Info */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">
-              Thông tin liên hệ
-            </h3>
-            <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-              {event.contactEmail && (
-                <p className="text-gray-700">
-                  <span className="font-medium">Email:</span>{" "}
-                  {event.contactEmail}
-                </p>
-              )}
-              {event.contactPhone && (
-                <p className="text-gray-700">
-                  <span className="font-medium">Điện thoại:</span>{" "}
-                  {event.contactPhone}
-                </p>
-              )}
-              {!event.contactEmail && !event.contactPhone && (
-                <p className="text-gray-700">Chưa có thông tin liên hệ</p>
-              )}
-            </div>
-          </div>
-
-          {/* Created Date */}
-          <div className="text-sm text-gray-500 border-t pt-4">
-            <p>
-              Tạo ngày:{" "}
-              {event.createdAt
-                ? new Date(event.createdAt).toLocaleDateString("vi-VN")
-                : "Chưa xác định"}
-            </p>
-            {event.updatedAt && (
-              <p className="mt-1">
-                Cập nhật lần cuối:{" "}
-                {new Date(event.updatedAt).toLocaleDateString("vi-VN")}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-gray-700 font-medium text-sm">
+                <LocationOn fontSize="small" className="text-red-500" />
+                Địa điểm
+              </div>
+              <p className="text-sm text-gray-600 pl-7 line-clamp-2">
+                {event.location || "Online / Chưa cập nhật"}
               </p>
-            )}
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-gray-700 font-medium text-sm">
+                <Email fontSize="small" className="text-green-500" />
+                Liên hệ
+              </div>
+              <div className="pl-7 text-sm text-gray-600">
+                {event.contactEmail ? (
+                  <div className="truncate" title={event.contactEmail}>
+                    {event.contactEmail}
+                  </div>
+                ) : (
+                  <span className="italic text-gray-400">Không có email</span>
+                )}
+                {event.contactPhone && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <Phone style={{ fontSize: 12 }} /> {event.contactPhone}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-lg font-bold text-gray-800 border-l-4 border-blue-500 pl-3">
+              Nội dung chi tiết
+            </h3>
+            <div
+              className="prose prose-sm max-w-none text-gray-600 bg-white"
+              dangerouslySetInnerHTML={{
+                __html:
+                  event.description ||
+                  "<p class='italic text-gray-400'>Chưa có mô tả chi tiết.</p>",
+              }}
+            />
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t">
-          <div className="flex justify-end gap-3">
+        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center sticky bottom-0 z-10">
+          <span className="text-xs text-gray-400 hidden sm:block">
+            Cập nhật:{" "}
+            {new Date(event.updatedAt || Date.now()).toLocaleDateString(
+              "vi-VN",
+            )}
+          </span>
+
+          <div className="flex gap-3 w-full sm:w-auto justify-end">
             <button
               onClick={onClose}
-              className="px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+              className="px-5 py-2 rounded-lg text-gray-700 font-medium bg-white border border-gray-300 hover:bg-gray-100 transition-colors"
             >
               Đóng
             </button>
-            {onRegister && isUpcoming() && (
-              <>
-                {isRegistered ? (
-                  <button
-                    disabled
-                    className="px-6 py-2 bg-gray-400 text-white rounded-md cursor-not-allowed flex items-center gap-2"
-                  >
-                    <CheckCircle className="w-5 h-5" />
-                    Đã đăng ký
-                  </button>
-                ) : (
-                  <button
-                    onClick={(e) => {
-                      onClose();
-                      onRegister(event, e);
-                    }}
-                    className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                  >
-                    Đăng ký tham gia
-                  </button>
-                )}
-              </>
-            )}
+
+            {onRegister &&
+              isUpcoming() &&
+              (isRegistered ? (
+                <button
+                  disabled
+                  className="px-5 py-2 bg-gray-200 text-gray-500 font-medium rounded-lg flex items-center gap-2 cursor-not-allowed"
+                >
+                  <CheckCircle fontSize="small" />
+                  Đã đăng ký
+                </button>
+              ) : (
+                <button
+                  onClick={(e) => {
+                    onClose();
+                    onRegister(event, e);
+                  }}
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors"
+                >
+                  Đăng ký tham gia
+                </button>
+              ))}
           </div>
         </div>
       </div>

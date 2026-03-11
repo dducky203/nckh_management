@@ -16,12 +16,10 @@ import com.example.server.utils.DateTimeConstant;
 import com.example.server.utils.NormalizeUtils;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -366,11 +364,20 @@ public class UserService implements UserDetailsService {
         }
     }
 
-    public org.springframework.http.ResponseEntity<?> searchUsers(String keyword, int page, int size) {
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
-        org.springframework.data.domain.Page<User> userPage = userRepository
-                .findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(
-                        keyword, pageable);
+    public ResponseEntity<?> searchUsers(String keyword, String type, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        String mode;
+
+        if (type == null || type.equalsIgnoreCase("all")) {
+            mode = "ALL";
+        } else if (type.equalsIgnoreCase("Sinh viên")) {
+            mode = "STUDENT";
+        } else {
+            mode = "OTHERS";
+        }
+
+        // Gọi repository với mode tương ứng
+        Page<User> userPage = userRepository.searchUsers(keyword, mode, pageable);
 
         List<UserDetailsDTO> users = userPage.getContent().stream()
                 .map(userMapper::toUserDetailDTO)

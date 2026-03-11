@@ -37,9 +37,6 @@ public class EventPublicServiceImpl implements EventPublicService {
     @Autowired
     private GuestRepository guestRepository;
 
-    @Autowired
-    private MemberRepository memberRepository;
-
 
     private static final DateTimeFormatter TIME_DETAIL_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
 

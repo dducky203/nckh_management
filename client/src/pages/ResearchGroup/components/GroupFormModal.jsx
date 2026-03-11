@@ -12,6 +12,8 @@ const GroupFormModal = ({
   currentUserId,
   defaultType = "student",
 }) => {
+  const SEARCH_PAGE_SIZE = 5;
+
   const [formData, setFormData] = useState({
     type: defaultType,
     groupName: "",
@@ -24,11 +26,15 @@ const GroupFormModal = ({
   const [advisorSearchTerm, setAdvisorSearchTerm] = useState("");
   const [advisorSearchResults, setAdvisorSearchResults] = useState([]);
   const [searchingAdvisor, setSearchingAdvisor] = useState(false);
+  const [advisorPage, setAdvisorPage] = useState(0);
+  const [advisorHasMore, setAdvisorHasMore] = useState(false);
 
   // Separate states for member search
   const [memberSearchTerm, setMemberSearchTerm] = useState("");
   const [memberSearchResults, setMemberSearchResults] = useState([]);
   const [searchingMember, setSearchingMember] = useState(false);
+  const [memberPage, setMemberPage] = useState(0);
+  const [memberHasMore, setMemberHasMore] = useState(false);
 
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [selectedAdvisor, setSelectedAdvisor] = useState(null);
@@ -74,16 +80,62 @@ const GroupFormModal = ({
     }
   };
 
+  const mergeUniqueUsersById = (prevUsers, nextUsers) => {
+    const map = new Map();
+    [...prevUsers, ...nextUsers].forEach((u) => {
+      if (u?.id != null) map.set(u.id, u);
+    });
+    return Array.from(map.values());
+  };
+
   const handleSearchAdvisor = async (e) => {
     if (e) e.preventDefault();
     if (!advisorSearchTerm.trim()) return;
 
     try {
       setSearchingAdvisor(true);
-      const response = await userService.searchUsers(advisorSearchTerm, 0, 10);
-      setAdvisorSearchResults(response.data.users || []);
+      setAdvisorPage(0);
+      setAdvisorHasMore(false);
+      const response = await userService.searchUsers(
+        advisorSearchTerm,
+        "OTHERS",
+        0,
+        SEARCH_PAGE_SIZE,
+      );
+      const payload = response?.data || response;
+      const users = payload?.users || [];
+      const totalPages = payload?.totalPages ?? 0;
+      setAdvisorSearchResults(users);
+      setAdvisorHasMore(1 < totalPages);
     } catch (error) {
       console.error("Error searching advisors:", error);
+    } finally {
+      setSearchingAdvisor(false);
+    }
+  };
+
+  const handleShowMoreAdvisor = async () => {
+    if (!advisorHasMore || searchingAdvisor) return;
+    if (!advisorSearchTerm.trim()) return;
+
+    const nextPage = advisorPage + 1;
+    try {
+      setSearchingAdvisor(true);
+      const response = await userService.searchUsers(
+        advisorSearchTerm,
+        "OTHERS",
+        nextPage,
+        SEARCH_PAGE_SIZE,
+      );
+      const payload = response?.data || response;
+      const users = payload?.users || [];
+      const totalPages = payload?.totalPages ?? 0;
+
+      setAdvisorSearchResults((prev) => mergeUniqueUsersById(prev, users));
+      setAdvisorPage(nextPage);
+      setAdvisorHasMore(nextPage + 1 < totalPages);
+    } catch (error) {
+      console.error("Error loading more advisors:", error);
     } finally {
       setSearchingAdvisor(false);
     }
@@ -95,10 +147,60 @@ const GroupFormModal = ({
 
     try {
       setSearchingMember(true);
-      const response = await userService.searchUsers(memberSearchTerm, 0, 10);
-      setMemberSearchResults(response.data.users || []);
+      const memberType = formData.type === "student" ? "Sinh viên" : "OTHERS";
+      setMemberPage(0);
+      setMemberHasMore(false);
+      const response = await userService.searchUsers(
+        memberSearchTerm,
+        memberType,
+        0,
+        SEARCH_PAGE_SIZE,
+      );
+      const payload = response?.data || response;
+      const users = payload?.users || [];
+      const totalPages = payload?.totalPages ?? 0;
+
+      const selectedIds = new Set(selectedMembers.map((m) => m.id));
+      const filteredUsers = users.filter((u) => !selectedIds.has(u.id));
+
+      setMemberSearchResults(filteredUsers);
+      setMemberHasMore(1 < totalPages);
     } catch (error) {
       console.error("Error searching members:", error);
+    } finally {
+      setSearchingMember(false);
+    }
+  };
+
+  const handleShowMoreMember = async () => {
+    if (!memberHasMore || searchingMember) return;
+    if (!memberSearchTerm.trim()) return;
+
+    const memberType = formData.type === "student" ? "Sinh viên" : "OTHERS";
+    const nextPage = memberPage + 1;
+    try {
+      setSearchingMember(true);
+      const response = await userService.searchUsers(
+        memberSearchTerm,
+        memberType,
+        nextPage,
+        SEARCH_PAGE_SIZE,
+      );
+
+      const payload = response?.data || response;
+      const users = payload?.users || [];
+      const totalPages = payload?.totalPages ?? 0;
+
+      const selectedIds = new Set(selectedMembers.map((m) => m.id));
+      const filteredUsers = users.filter((u) => !selectedIds.has(u.id));
+
+      setMemberSearchResults((prev) =>
+        mergeUniqueUsersById(prev, filteredUsers),
+      );
+      setMemberPage(nextPage);
+      setMemberHasMore(nextPage + 1 < totalPages);
+    } catch (error) {
+      console.error("Error loading more members:", error);
     } finally {
       setSearchingMember(false);
     }
@@ -116,6 +218,8 @@ const GroupFormModal = ({
     });
     setMemberSearchTerm("");
     setMemberSearchResults([]);
+    setMemberPage(0);
+    setMemberHasMore(false);
   };
 
   const handleRemoveMember = (userId) => {
@@ -135,11 +239,23 @@ const GroupFormModal = ({
     });
     setAdvisorSearchTerm("");
     setAdvisorSearchResults([]);
+    setAdvisorPage(0);
+    setAdvisorHasMore(false);
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    // If switching group type, clear advisor when not applicable
+    if (name === "type" && value === "lecturer") {
+      setSelectedAdvisor(null);
+      setAdvisorSearchTerm("");
+      setAdvisorSearchResults([]);
+      setAdvisorPage(0);
+      setAdvisorHasMore(false);
+      setFormData({ ...formData, type: value, advisorId: null });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
     // Clear error for this field
     if (errors[name]) {
       setErrors({ ...errors, [name]: null });
@@ -310,84 +426,98 @@ const GroupFormModal = ({
             />
           </div>
 
-          {/* Advisor Selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Giảng viên hướng dẫn
-            </label>
-            {selectedAdvisor ? (
-              <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <div>
-                  <p className="font-medium text-gray-900">
-                    {selectedAdvisor.name}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {selectedAdvisor.email}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedAdvisor(null);
-                    setFormData({ ...formData, advisorId: null });
-                  }}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <Delete />
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={advisorSearchTerm}
-                    onChange={(e) => setAdvisorSearchTerm(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleSearchAdvisor(e);
-                      }
-                    }}
-                    placeholder="Tìm giảng viên theo tên hoặc email..."
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
+          {/* Advisor Selection (only for student groups) */}
+          {formData.type === "student" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Giảng viên hướng dẫn
+              </label>
+              {selectedAdvisor ? (
+                <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      {selectedAdvisor.name ||
+                        selectedAdvisor.fullName ||
+                        selectedAdvisor.username}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {selectedAdvisor.email}
+                    </p>
+                  </div>
                   <button
                     type="button"
-                    onClick={handleSearchAdvisor}
-                    disabled={searchingAdvisor}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                    onClick={() => {
+                      setSelectedAdvisor(null);
+                      setFormData({ ...formData, advisorId: null });
+                    }}
+                    className="text-red-500 hover:text-red-700"
                   >
-                    <Search />
+                    <Delete />
                   </button>
                 </div>
-
-                {searchingAdvisor && (
-                  <div className="flex justify-center py-4">
-                    <LoadingSpinner />
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={advisorSearchTerm}
+                      onChange={(e) => setAdvisorSearchTerm(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleSearchAdvisor(e);
+                        }
+                      }}
+                      placeholder="Tìm giảng viên theo tên hoặc email..."
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSearchAdvisor}
+                      disabled={searchingAdvisor}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      <Search />
+                    </button>
                   </div>
-                )}
 
-                {advisorSearchResults.length > 0 && (
-                  <div className="border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
-                    {advisorSearchResults.map((user) => (
-                      <button
-                        key={user.id}
-                        type="button"
-                        onClick={() => handleSelectAdvisor(user)}
-                        className="w-full text-left p-3 hover:bg-gray-50 border-b last:border-b-0"
-                      >
-                        <p className="font-medium text-gray-900">
-                          {user.fullName}
-                        </p>
-                        <p className="text-sm text-gray-500">{user.email}</p>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+                  {searchingAdvisor && (
+                    <div className="flex justify-center py-4">
+                      <LoadingSpinner />
+                    </div>
+                  )}
+
+                  {advisorSearchResults.length > 0 && (
+                    <div className="border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
+                      {advisorSearchResults.map((user) => (
+                        <button
+                          key={user.id}
+                          type="button"
+                          onClick={() => handleSelectAdvisor(user)}
+                          className="w-full text-left p-3 hover:bg-gray-50 border-b last:border-b-0"
+                        >
+                          <p className="font-medium text-gray-900">
+                            {user.name || user.fullName || user.username}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {advisorSearchResults.length > 0 && advisorHasMore && (
+                    <button
+                      type="button"
+                      onClick={handleShowMoreAdvisor}
+                      disabled={searchingAdvisor}
+                      className="w-full py-2 text-sm font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50"
+                    >
+                      {searchingAdvisor ? "Đang tải..." : "Xem thêm"}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Members Selection */}
           <div>
@@ -404,9 +534,9 @@ const GroupFormModal = ({
                 >
                   <div>
                     <p className="font-medium text-gray-900">
-                      {member.fullName}
+                      {member.name || member.fullName || member.username}
                     </p>
-                    <p className="text-sm text-gray-500">{member.name}</p>
+                    <p className="text-sm text-gray-500">{member.email}</p>
                   </div>
                   <button
                     type="button"
@@ -469,13 +599,24 @@ const GroupFormModal = ({
                       }`}
                     >
                       <p className="font-medium text-gray-900">
-                        {user.fullName} {isSelected && "(Đã thêm)"}
+                        {(user.name || user.fullName || user.username) +
+                          (isSelected ? " (Đã thêm)" : "")}
                       </p>
-                      <p className="text-sm text-gray-500">{user.email}</p>
                     </button>
                   );
                 })}
               </div>
+            )}
+
+            {memberSearchResults.length > 0 && memberHasMore && (
+              <button
+                type="button"
+                onClick={handleShowMoreMember}
+                disabled={searchingMember}
+                className="w-full py-2 text-sm font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50"
+              >
+                {searchingMember ? "Đang tải..." : "Xem thêm"}
+              </button>
             )}
 
             {errors.members && (

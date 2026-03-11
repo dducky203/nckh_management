@@ -29,12 +29,16 @@ const MemberManagementModal = ({
   onRefresh,
   currentUserId,
 }) => {
+  const SEARCH_PAGE_SIZE = 5;
+
   const toast = useToast();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
+  const [searchPage, setSearchPage] = useState(0);
+  const [searchHasMore, setSearchHasMore] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState({
     isOpen: false,
@@ -54,7 +58,6 @@ const MemberManagementModal = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, group]);
 
-  // Handle click outside to close search box
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -95,18 +98,24 @@ const MemberManagementModal = ({
   const handleSearchUsers = async () => {
     if (!searchTerm.trim()) {
       setSearchResults([]);
+      setSearchPage(0);
+      setSearchHasMore(false);
       return;
     }
 
     try {
       setSearching(true);
-      const response = await userService.searchUsers(searchTerm, 0, 10);
+      const memberType = group?.type === "student" ? "Sinh viên" : "OTHERS";
+      const response = await userService.searchUsers(
+        searchTerm,
+        memberType,
+        0,
+        SEARCH_PAGE_SIZE,
+      );
 
-      // Backend trả về SuccessResponseDTO: { success: true, data: { users: [...], totalItems, ... }, message: "..." }
-      // API interceptor đã unwrap response.data, nên response = SuccessResponseDTO
-      // Vậy cần lấy: response.data.users
       const responseData = response?.data || response;
       const users = responseData?.users || [];
+      const totalPages = responseData?.totalPages ?? 0;
 
       if (!Array.isArray(users)) {
         console.error("Invalid response format:", response);
@@ -117,13 +126,59 @@ const MemberManagementModal = ({
       // Lọc bỏ những user đã là thành viên
       const existingMemberIds = members.map((m) => m.id);
       const filteredUsers = users.filter(
-        (user) => !existingMemberIds.includes(user.id)
+        (user) => !existingMemberIds.includes(user.id),
       );
 
       setSearchResults(filteredUsers);
+      setSearchPage(0);
+      setSearchHasMore(1 < totalPages);
     } catch (error) {
       console.error("Error searching users:", error);
       toast.error(error.message || "Không thể tìm kiếm người dùng");
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const mergeUniqueUsersById = (prevUsers, nextUsers) => {
+    const map = new Map();
+    [...prevUsers, ...nextUsers].forEach((u) => {
+      if (u?.id != null) map.set(u.id, u);
+    });
+    return Array.from(map.values());
+  };
+
+  const handleShowMoreUsers = async () => {
+    if (!searchHasMore || searching) return;
+    if (!searchTerm.trim()) return;
+
+    const memberType = group?.type === "student" ? "Sinh viên" : "OTHERS";
+    const nextPage = searchPage + 1;
+
+    try {
+      setSearching(true);
+      const response = await userService.searchUsers(
+        searchTerm,
+        memberType,
+        nextPage,
+        SEARCH_PAGE_SIZE,
+      );
+
+      const responseData = response?.data || response;
+      const users = responseData?.users || [];
+      const totalPages = responseData?.totalPages ?? 0;
+
+      const existingMemberIds = members.map((m) => m.id);
+      const filteredUsers = users.filter(
+        (user) => !existingMemberIds.includes(user.id),
+      );
+
+      setSearchResults((prev) => mergeUniqueUsersById(prev, filteredUsers));
+      setSearchPage(nextPage);
+      setSearchHasMore(nextPage + 1 < totalPages);
+    } catch (error) {
+      console.error("Error loading more users:", error);
+      toast.error(error.message || "Không thể tải thêm người dùng");
     } finally {
       setSearching(false);
     }
@@ -136,6 +191,8 @@ const MemberManagementModal = ({
       setShowAddMember(false);
       setSearchTerm("");
       setSearchResults([]);
+      setSearchPage(0);
+      setSearchHasMore(false);
       fetchMembers();
       if (onRefresh) onRefresh();
     } catch (error) {
@@ -177,7 +234,7 @@ const MemberManagementModal = ({
         group.id,
         memberId,
         editRole,
-        editParticipationRate
+        editParticipationRate,
       );
       toast.success("Cập nhật thông tin thành viên thành công");
       setEditingMember(null);
@@ -374,6 +431,17 @@ const MemberManagementModal = ({
                     </div>
                   )}
 
+                  {searchResults.length > 0 && searchHasMore && (
+                    <button
+                      type="button"
+                      onClick={handleShowMoreUsers}
+                      disabled={searching}
+                      className="w-full mt-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50"
+                    >
+                      {searching ? "Đang tải..." : "Xem thêm"}
+                    </button>
+                  )}
+
                   {searchTerm && searchResults.length === 0 && !searching && (
                     <p className="text-sm text-gray-500 text-center py-4">
                       Không tìm thấy người dùng nào
@@ -509,8 +577,8 @@ const MemberManagementModal = ({
                                     role === "Trưởng nhóm"
                                       ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
                                       : role === "Thư ký"
-                                      ? "bg-blue-100 text-blue-800 border border-blue-200"
-                                      : "bg-gray-100 text-gray-800 border border-gray-200"
+                                        ? "bg-blue-100 text-blue-800 border border-blue-200"
+                                        : "bg-gray-100 text-gray-800 border border-gray-200"
                                   }`}
                                 >
                                   {role}
@@ -527,7 +595,7 @@ const MemberManagementModal = ({
                                     value={editParticipationRate}
                                     onChange={(e) =>
                                       setEditParticipationRate(
-                                        parseInt(e.target.value) || 0
+                                        parseInt(e.target.value) || 0,
                                       )
                                     }
                                     className="w-20 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"

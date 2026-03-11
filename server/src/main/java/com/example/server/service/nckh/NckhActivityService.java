@@ -77,7 +77,7 @@ public class NckhActivityService {
     }
 
     @Transactional
-    public NckhActivity submit(Long activityId, Integer userId) {
+    public NckhActivity  submit(Long activityId, Integer userId) {
         NckhActivity a = activityRepo.findById(activityId)
                 .orElseThrow(() -> new IllegalStateException("Activity không tồn tại"));
         if (!a.getCreatedByUserId().equals(userId)) {
