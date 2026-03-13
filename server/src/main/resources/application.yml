@@ -4,10 +4,10 @@ spring:
       max-file-size: 50MB
       max-request-size: 50MB
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: 44444ace@gmail.com
-    password: qzxc pqik tdog brxu
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -17,36 +17,33 @@ spring:
   application:
     name: "KLTN"
   datasource:
-    url: jdbc:mysql://gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/nckh?sslMode=VERIFY_IDENTITY
-    username: 3Bx2cAUiS293NeD.root
-    password: GqLF0LJRC8YuCB8g
-
-  #    url: jdbc:mariadb://localhost:3307/nckh?allowPublicKeyRetrieval=true&useSSL=false
-  #    username: root
-  #    password: duong
-  # #
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
 
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:true}
 upload:
-  dir: "src/main/resources/static/file/"
+  dir: ${UPLOAD_DIR:src/main/resources/static/file/}
 
 jwt:
-  secret: "nckh_management_secret_key_2024_secure_authentication_token_for_api"
-  expiration: 86400000 # 24 hours in milliseconds
-#  expiration: 1 # 24 hours in milliseconds
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds
 
 # Gemini AI Configuration
 gemini:
   api:
-    key: AIzaSyDznsvN4-ADEFRqpTIBPwP70EkMHFj4kJg
-    model: gemini-2.5-flash
-    endpoint: https://generativelanguage.googleapis.com/v1beta/models/
+    key: ${GEMINI_API_KEY}
+    model: ${GEMINI_MODEL:gemini-2.5-flash}
+    endpoint: ${GEMINI_ENDPOINT:https://generativelanguage.googleapis.com/v1beta/models/}
 
 # Cloudinary Configuration
 cloudinary:
-  cloud-name: doslcoy82
-  api-key: 782598553554941
-  api-secret: XIrVpff4K5tVeMm4nd4NW8XB0Bo
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}
+
+password:
+  reset-default: ${PASSWORD_DEFAULT}

@@ -244,9 +244,17 @@ const UserTable = ({
                     {/* Người dùng */}
                     <td className="px-6 py-3">
                       <div className="flex items-center">
-                        <div className="w-8 h-8 rounded bg-mainColor text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">
-                          {user.name.charAt(0).toUpperCase()}
-                        </div>
+                        {user.avatar ? (
+                          <img
+                            src={user.avatar}
+                            alt={user.name}
+                            className="w-8 h-8 rounded object-cover border border-gray-300 flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded bg-mainColor text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                            {user.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
                         <div className="ml-3">
                           <div className="text-sm font-medium text-gray-900">
                             {user.name}

@@ -68,7 +68,6 @@ const ResetPassword = () => {
       if (response.success) {
         setMessage(response.message || "Mật khẩu đã được đổi thành công!");
         setIsSuccess(true);
-       
         setTimeout(() => {
           navigate("/login");
         }, 3000);

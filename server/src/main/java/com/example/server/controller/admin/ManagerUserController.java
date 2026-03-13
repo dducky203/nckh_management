@@ -154,7 +154,7 @@ public class ManagerUserController {
     public ResponseEntity<?> resetPassword(@RequestParam(value = "username") String username) {
         try {
             userService.resetPassword(username);
-            return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Xóa user thành công!"));
+            return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Reset password thành công!"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(e.getMessage());

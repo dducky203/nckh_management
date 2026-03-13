@@ -21,6 +21,7 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -36,16 +37,19 @@ public class SecurityConfig {
                         .requestMatchers(
                                 // "/admin/**",
                                 "/auth/**",
-                                "/file/**",
-                                "/api/**"
+                                "/file/**"
+//                                "/api/**"
 //                        "a/api/public/**")
                         )
                         .permitAll()
                         // Tùy chọn: tắt xác thực, cho phép mọi request
                         .anyRequest().permitAll())
                         // Hoặc yêu cầu xác thực nếu cần
-                        // .anyRequest().authenticated())
+//                         .anyRequest().authenticated())
                 .csrf(AbstractHttpConfigurer::disable)
+                // Xử lý exception khi không có quyền truy cập
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 // Thêm JwtAuthenticationFilter để xử lý token JWT
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
@@ -54,8 +58,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173",
-                "https://rfc5lt36-5173.asse.devtunnels.ms", "https://nckh-management.vercel.app"));
+        configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:5173",
+                "https://rfc5lt36-5173.asse.devtunnels.ms",
+                "https://nckh-management.vercel.app"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);

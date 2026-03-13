@@ -16,6 +16,7 @@ import com.example.server.utils.DateTimeConstant;
 import com.example.server.utils.NormalizeUtils;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.http.HttpStatus;
@@ -33,6 +34,8 @@ import java.util.function.Function;
 
 @Service
 public class UserService implements UserDetailsService {
+    @Value("${password.reset-default}")
+    private String passwordDefault;
     @Autowired
     UserRepository userRepository;
     @Autowired
@@ -143,7 +146,7 @@ public class UserService implements UserDetailsService {
     public void resetPassword(String username) {
         User existingUser = userRepository.findByUsername(username);
         if (existingUser != null) {
-            existingUser.setPassword(SHA_256_password.GM_SHA_password("userfita@12345"));
+            existingUser.setPassword(SHA_256_password.GM_SHA_password(passwordDefault));
             userRepository.save(existingUser);
         } else {
             throw new ErrorException("Tài khoản không tồn tại", HttpStatus.NOT_FOUND);

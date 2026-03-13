@@ -3,3 +3,8 @@ server/target/
 node_modules/
 
 .vscode
+
+# Environment variables
+.env
+*.env
+!.env.example

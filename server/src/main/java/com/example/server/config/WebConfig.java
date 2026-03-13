@@ -11,10 +11,6 @@ public class WebConfig implements WebMvcConfigurer {
     private String uploadDir;
 
     // Trong một class cấu hình
-
-
-
-
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
     String location = "file:" + uploadDir;
