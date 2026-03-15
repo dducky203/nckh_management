@@ -1,8 +1,11 @@
 package com.example.server.controller.user;
 
+import com.example.server.DTO.SuccessResponseDTO;
 import com.example.server.DTO.nckh.SelectPlanRequest;
 import com.example.server.domain.nckh.UserPlanYear;
 import com.example.server.service.nckh.UserPlanYearService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,14 +18,15 @@ public class NckhPlanController {
         this.service = service;
     }
 
-    // TODO: thay userId bằng cách lấy từ SecurityContext/session của bạn
     @PostMapping("/select")
     public UserPlanYear select(@RequestBody SelectPlanRequest req, @RequestParam Integer userId) {
-        return service.selectAndLock(userId, req.academicYear, req.planCode);
+        return service.selectAndLock(userId,  req.planId, req.academicYear);
     }
 
     @GetMapping("/current")
-    public UserPlanYear current(@RequestParam Integer userId, @RequestParam Integer year) {
-        return service.getOrNull(userId, year);
+    public ResponseEntity<?> current(@RequestParam Integer userId, @RequestParam Integer year) {
+        UserPlanYear userPlanYear = service.getPlanCurrent(userId, year);
+        if (userPlanYear != null)  return ResponseEntity.ok(new SuccessResponseDTO<>(userPlanYear, "Lấy thành công thông tin phương án năm " + year));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Bạn chưa chọn phương án cho năm này");
     }
 }

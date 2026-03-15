@@ -33,8 +33,8 @@ public class ManagerNckhController {
             @RequestParam Integer adminId,
             @RequestParam Integer userId,
             @RequestParam Integer year,
-            @RequestParam String planCode,
+            @RequestParam Integer planId,
             @RequestParam String reason) {
-        return planService.adminOverride(adminId, userId, year, planCode, reason);
+        return planService.adminOverride(adminId, userId, year,planId, reason);
     }
 }

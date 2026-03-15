@@ -1,6 +1,7 @@
 package com.example.server.domain.nckh;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -31,6 +32,36 @@ public class NckhActivity {
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    @Column(name = "publication_name")
+    private String publicationName;
+
+    @Column(name = "activity_date")
+    private LocalDate activityDate;
+
+    @Column(name = "venue")
+    private String venue;
+
+    @Column(name = "identifier_code")
+    private String identifierCode;
+
+    @Column(name = "external_link")
+    private String externalLink;
+
+    @Column(name = "proof_file_url")
+    private String proofFileUrl;
+
+    @Column(name = "proof_image_url")
+    private String proofImageUrl;
+
+    @Column(name = "details_json", columnDefinition = "TEXT")
+    private String detailsJson;
+
+    @Column(name = "main_author_user_id")
+    private Integer mainAuthorUserId;
+
+    @Column(name = "member_user_ids", columnDefinition = "TEXT")
+    private String memberUserIds;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -119,6 +150,86 @@ public class NckhActivity {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getPublicationName() {
+        return publicationName;
+    }
+
+    public void setPublicationName(String publicationName) {
+        this.publicationName = publicationName;
+    }
+
+    public LocalDate getActivityDate() {
+        return activityDate;
+    }
+
+    public void setActivityDate(LocalDate activityDate) {
+        this.activityDate = activityDate;
+    }
+
+    public String getVenue() {
+        return venue;
+    }
+
+    public void setVenue(String venue) {
+        this.venue = venue;
+    }
+
+    public String getIdentifierCode() {
+        return identifierCode;
+    }
+
+    public void setIdentifierCode(String identifierCode) {
+        this.identifierCode = identifierCode;
+    }
+
+    public String getExternalLink() {
+        return externalLink;
+    }
+
+    public void setExternalLink(String externalLink) {
+        this.externalLink = externalLink;
+    }
+
+    public String getProofFileUrl() {
+        return proofFileUrl;
+    }
+
+    public void setProofFileUrl(String proofFileUrl) {
+        this.proofFileUrl = proofFileUrl;
+    }
+
+    public String getProofImageUrl() {
+        return proofImageUrl;
+    }
+
+    public void setProofImageUrl(String proofImageUrl) {
+        this.proofImageUrl = proofImageUrl;
+    }
+
+    public String getDetailsJson() {
+        return detailsJson;
+    }
+
+    public void setDetailsJson(String detailsJson) {
+        this.detailsJson = detailsJson;
+    }
+
+    public Integer getMainAuthorUserId() {
+        return mainAuthorUserId;
+    }
+
+    public void setMainAuthorUserId(Integer mainAuthorUserId) {
+        this.mainAuthorUserId = mainAuthorUserId;
+    }
+
+    public String getMemberUserIds() {
+        return memberUserIds;
+    }
+
+    public void setMemberUserIds(String memberUserIds) {
+        this.memberUserIds = memberUserIds;
     }
 
     public Status getStatus() {

@@ -4,9 +4,11 @@ import com.example.server.domain.TypeOfCriterion;
 import com.example.server.utils.SQL;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public interface TypeOfCriterionRepository extends JpaRepository<TypeOfCriterion, Integer> {
     // get all
     @Query(value = "select * from type_of_criteria",nativeQuery = true)

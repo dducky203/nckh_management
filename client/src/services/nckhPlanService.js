@@ -1,16 +1,16 @@
 import api from "./api";
 
 const nckhPlanService = {
-  getCurrent: async (userId, year) => {
+  getCurrentPlan: async (userId, year) => {
     return await api.get("/nckh/plan/current", {
       params: { userId, year },
     });
   },
 
-  selectAndLock: async (userId, academicYear, planCode) => {
+  selectAndLock: async (userId, planId, academicYear = null) => {
     return await api.post(
       "/nckh/plan/select",
-      { academicYear, planCode },
+      { planId, academicYear },
       { params: { userId } },
     );
   },

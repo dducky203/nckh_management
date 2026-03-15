@@ -9,4 +9,6 @@ public interface NckhActivityContributorRepository extends JpaRepository<NckhAct
     List<NckhActivityContributor> findByActivityId(Long activityId);
 
     List<NckhActivityContributor> findByUserId(Integer userId);
+
+    void deleteByActivityId(Long activityId);
 }

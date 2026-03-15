@@ -18,11 +18,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class NewsServiceImpl implements NewsService {
-
-    @Autowired
+    
     private NewsRepository newsRepository;
-
-    @Autowired
     private UserRepository userRepository;
 
     @Override

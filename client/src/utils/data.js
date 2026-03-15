@@ -11,39 +11,50 @@ import {
 } from "@mui/icons-material";
 
 export const RESEARCH_CATEGORIES = [
-  { id: 1, name: "Bài báo quốc tế", path: "/research/projects" },
-  { id: 2, name: "Bài báo tiếng việt", path: "/research/publications" },
+  {
+    id: 1,
+    name: "Khai báo Seminar",
+    path: "/activity/declarations/seminar",
+  },
+  {
+    id: 2,
+    name: "Khai báo Hội thảo",
+    path: "/activity/declarations/conference",
+  },
   {
     id: 3,
-    name: "Bài tham luận hội thảo đăng kỉ yếu",
-    path: "/research/conferences",
+    name: "Khai báo Bài báo Quốc tế",
+    path: "/activity/declarations/international-paper",
   },
   {
     id: 4,
-    name: "Bài tổng quan về lĩnh vực nghiên cứu",
-    path: "/research/competitions",
+    name: "Khai báo Bài báo Tiếng Việt",
+    path: "/activity/declarations/vietnamese-paper",
   },
   {
     id: 5,
-    name: "Các hoạt động tư vấn/ Hướng dẫn kỹ thuật/ Bản tin KH&CN đăng trên website học viện",
-    path: "/research/seminars",
+    name: "Khai báo Bài tham luận kỷ yếu (Fulltext)",
+    path: "/activity/declarations/proceeding",
   },
   {
     id: 6,
-    name: "Quy trình kỹ thuật/ Tiến bộ kỹ thuật/ Tiêu chuẩn kỹ thuật được công nhận cấp cơ sở ",
-    path: "/research/seminars",
+    name: "Khai báo Bài tổng quan lĩnh vực",
+    path: "/activity/declarations/review-paper",
   },
-  { id: 7, name: "Đề xuất nhiệm vụ NCKH", path: "/research/seminars" },
-  { id: 8, name: "Nhiệm vụ KH&CN được phê duyệt", path: "/research/seminars" },
+  {
+    id: 7,
+    name: "Khai báo Tư vấn / Hướng dẫn kỹ thuật",
+    path: "/activity/declarations/tech-consult",
+  },
+  {
+    id: 8,
+    name: "Khai báo Quy trình / Tiến bộ kỹ thuật",
+    path: "/activity/declarations/tech-procedure",
+  },
   {
     id: 9,
-    name: "Xây dựng và triển khai các đề án/ Nhiệm vụ KH&CN của học viện ",
-    path: "/research/seminars",
-  },
-  {
-    id: 10,
-    name: "Các nhóm NCKH",
-    path: "/research-groups",
+    name: "Khai báo Đề xuất tuyển chọn",
+    path: "/activity/declarations/proposal",
   },
 ];
 
@@ -105,12 +116,12 @@ export const TIME_SLOTS = [
 ];
 
 export const PLAN_OPTIONS = [
-  { id: 1, label: "PA0 - Định mức chuẩn" },
-  { id: 2, label: "PA1 - Nhóm nghiên cứu mạnh" },
-  { id: 3, label: "PA2 - Nhóm nghiên cứu xuất sắc" },
-  { id: 4, label: "PA3 - Nhóm nghiên cứu tinh hoa" },
-  { id: 5, label: "PA4 - Chỉ tiêu bài báo/đề tài" },
-  { id: 6, label: "PA5 - Chỉ tiêu bài báo KH" },
+  { id: 1, label: "PA1 - Định mức chuẩn" },
+  { id: 2, label: "PA2 - Nhóm nghiên cứu mạnh" },
+  { id: 3, label: "PA3 - Nhóm nghiên cứu xuất sắc" },
+  { id: 4, label: "PA4 - Nhóm nghiên cứu tinh hoa" },
+  { id: 5, label: "PA5 - Chỉ tiêu bài báo/đề tài" },
+  { id: 6, label: "PA6 - Chỉ tiêu bài báo KH" },
 ];
 
 export const CRITERIA_RESEARCH = [
@@ -272,7 +283,6 @@ export const CRITERIA_RESEARCH = [
     ],
   },
 ];
-
 
 export const CRITERIA = [
   {
@@ -509,8 +519,12 @@ export const CRITERIA = [
 
 export const TIEU_CHI_TO_METRIC = {
   SEMINAR: "sem",
+  SEMINAR_TRINH_BAY: "sem",
+  SEMINAR_THAM_DU: "sem",
   BB_SEMINAR: "sem",
   HOI_THAO: "conf",
+  HT_THAM_LUAN: "conf",
+  HT_THAM_GIA: "conf",
   BB_HOI_THAO: "conf",
   // Total int'l papers (not first-author) – PA0/PA1
   BB_QUOC_TE: "int_wos_scopus",
@@ -529,9 +543,11 @@ export const TIEU_CHI_TO_METRIC = {
   // Vietnamese papers (total)
   BB_VI: "vi",
   BB_TIENG_VIET: "vi",
+  BB_TV_HOCVIEN: "vi",
   // Vietnamese papers (first-author)
   BB_VI_FIRST: "vi_first",
   KY_YEU: "proceedings",
+  BTL_FULL_TEXT: "proceedings",
   TAM_LUAN: "proceedings",
   TONG_QUAN: "review",
   TU_VAN: "consult",
@@ -543,10 +559,14 @@ export const TIEU_CHI_TO_METRIC = {
   // Combined (PI + student guidance) – PA0/PA1
   NHIEM_VU_BO: "task_bo_pi",
   NHIEM_VU: "task_bo_pi",
+  HD_SVNCKH: "task_bo_pi",
   // Pure project PI – PA2/PA3
   DT_BO_CHUNHIEM: "bo_project_pi",
+  HOI_DONG_TU_VAN: "council",
   HOI_DONG: "council",
+  MOI_CHUYEN_GIA: "expert",
   CHUYEN_GIA: "expert",
+  XD_DE_AN_HV: "task_bo_pi",
   DT_TINH_DN: "province_or_company_pi",
   DT_TINH: "province_or_company_pi",
   DT_DN: "province_or_company_pi",

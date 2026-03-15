@@ -37,6 +37,16 @@ import ResearchGroupManagement from "./pages/ResearchGroup/ResearchGroupManageme
 import ResearchGroupsPublic from "./pages/ResearchGroup/ResearchGroupsPublic";
 import ResearchGroupProfile from "./pages/ResearchGroup/ResearchGroupProfile";
 import ActivityStandards from "./pages/activity/ActivityStandards";
+import NckhApprovalPage from "./pages/activity/NckhApprovalPage";
+import SeminarDeclarationPage from "./pages/activity/declarations/SeminarDeclarationPage";
+import ConferenceDeclarationPage from "./pages/activity/declarations/ConferenceDeclarationPage";
+import InternationalPaperDeclarationPage from "./pages/activity/declarations/InternationalPaperDeclarationPage";
+import VietnamesePaperDeclarationPage from "./pages/activity/declarations/VietnamesePaperDeclarationPage";
+import ProceedingDeclarationPage from "./pages/activity/declarations/ProceedingDeclarationPage";
+import ReviewPaperDeclarationPage from "./pages/activity/declarations/ReviewPaperDeclarationPage";
+import TechConsultDeclarationPage from "./pages/activity/declarations/TechConsultDeclarationPage";
+import TechProcedureDeclarationPage from "./pages/activity/declarations/TechProcedureDeclarationPage";
+import ProposalDeclarationPage from "./pages/activity/declarations/ProposalDeclarationPage";
 
 function App() {
   // Load rooms data when app starts
@@ -78,10 +88,90 @@ function App() {
                       }
                     />
                     <Route
-                      path="activity/standards"
+                      path="/activity/standards"
                       element={
                         <ProtectedRoute>
                           <ActivityStandards />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/admin/approval"
+                      element={
+                        <ProtectedRoute requiredPower="admin">
+                          <NckhApprovalPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/declarations/seminar"
+                      element={
+                        <ProtectedRoute>
+                          <SeminarDeclarationPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/declarations/conference"
+                      element={
+                        <ProtectedRoute>
+                          <ConferenceDeclarationPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/declarations/international-paper"
+                      element={
+                        <ProtectedRoute>
+                          <InternationalPaperDeclarationPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/declarations/vietnamese-paper"
+                      element={
+                        <ProtectedRoute>
+                          <VietnamesePaperDeclarationPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/declarations/proceeding"
+                      element={
+                        <ProtectedRoute>
+                          <ProceedingDeclarationPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/declarations/review-paper"
+                      element={
+                        <ProtectedRoute>
+                          <ReviewPaperDeclarationPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/declarations/tech-consult"
+                      element={
+                        <ProtectedRoute>
+                          <TechConsultDeclarationPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/declarations/tech-procedure"
+                      element={
+                        <ProtectedRoute>
+                          <TechProcedureDeclarationPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/declarations/proposal"
+                      element={
+                        <ProtectedRoute>
+                          <ProposalDeclarationPage />
                         </ProtectedRoute>
                       }
                     />

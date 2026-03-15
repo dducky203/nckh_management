@@ -2,5 +2,5 @@ package com.example.server.DTO.nckh;
 
 public class SelectPlanRequest {
     public Integer academicYear;
-    public String planCode; // "PA0".."PA5"
+    public Integer planId; // "PA0".."PA5"
 }

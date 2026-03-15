@@ -3,9 +3,11 @@ package com.example.server.repository.nckh;
 import com.example.server.domain.nckh.NckhTieuChiDinhMuc;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public interface NckhTieuChiDinhMucRepository extends JpaRepository<NckhTieuChiDinhMuc, Long> {
 
     @Query(value = "SELECT * FROM nckh_tieu_chi_dinh_muc " +

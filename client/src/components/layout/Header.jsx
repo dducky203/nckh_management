@@ -186,6 +186,17 @@ const Header = () => {
 
                       {userIsAdmin && (
                         <Link
+                          to="/activity/admin/approval"
+                          className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
+                          onClick={() => setActiveDropdown(null)}
+                        >
+                          <Science className="w-4 h-4 mr-2 text-gray-400" />
+                          <span>Duyệt khai báo NCKH</span>
+                        </Link>
+                      )}
+
+                      {userIsAdmin && (
+                        <Link
                           to="/news/manager"
                           className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
                           onClick={() => setActiveDropdown(null)}
