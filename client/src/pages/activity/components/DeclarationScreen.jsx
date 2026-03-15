@@ -23,22 +23,31 @@ import DeclarationHeaderForm from "./DeclarationHeaderForm";
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const TYPE_META = {
-  SEMINAR:        { label: "Seminar",                          color: "bg-blue-600 text-white" },
-  CONFERENCE:     { label: "Hội thảo",                        color: "bg-green-600 text-white" },
-  INTL_PAPER:     { label: "Bài báo Quốc tế",                 color: "bg-purple-600 text-white" },
-  VN_PAPER:       { label: "Bài báo Tiếng Việt",              color: "bg-orange-600 text-white" },
-  PROCEEDING:     { label: "Bài tham luận kỷ yếu",            color: "bg-indigo-600 text-white" },
-  REVIEW_PAPER:   { label: "Bài tổng quan lĩnh vực",          color: "bg-teal-600 text-white" },
-  TECH_CONSULT:   { label: "Tư vấn kỹ thuật",                 color: "bg-amber-600 text-white" },
-  TECH_PROCEDURE: { label: "Quy trình kỹ thuật",              color: "bg-cyan-600 text-white" },
-  PROPOSAL:       { label: "Đề xuất tuyển chọn",              color: "bg-pink-600 text-white" },
+  SEMINAR: { label: "Seminar", color: "bg-blue-600 text-white" },
+  CONFERENCE: { label: "Hội thảo", color: "bg-green-600 text-white" },
+  INTL_PAPER: { label: "Bài báo Quốc tế", color: "bg-purple-600 text-white" },
+  VN_PAPER: { label: "Bài báo Tiếng Việt", color: "bg-orange-600 text-white" },
+  PROCEEDING: {
+    label: "Bài tham luận kỷ yếu",
+    color: "bg-indigo-600 text-white",
+  },
+  REVIEW_PAPER: {
+    label: "Bài tổng quan lĩnh vực",
+    color: "bg-teal-600 text-white",
+  },
+  TECH_CONSULT: { label: "Tư vấn kỹ thuật", color: "bg-amber-600 text-white" },
+  TECH_PROCEDURE: {
+    label: "Quy trình kỹ thuật",
+    color: "bg-cyan-600 text-white",
+  },
+  PROPOSAL: { label: "Đề xuất tuyển chọn", color: "bg-pink-600 text-white" },
 };
 
 const STATUS_META = {
-  DRAFT:     { label: "Nháp",        cls: "bg-gray-100 text-gray-700" },
-  SUBMITTED: { label: "Chờ duyệt",   cls: "bg-yellow-100 text-yellow-800" },
-  APPROVED:  { label: "Đã duyệt",    cls: "bg-green-100 text-green-800" },
-  REJECTED:  { label: "Từ chối",     cls: "bg-red-100 text-red-800" },
+  DRAFT: { label: "Nháp", cls: "bg-gray-100 text-gray-700" },
+  SUBMITTED: { label: "Chờ duyệt", cls: "bg-yellow-100 text-yellow-800" },
+  APPROVED: { label: "Đã duyệt", cls: "bg-green-100 text-green-800" },
+  REJECTED: { label: "Từ chối", cls: "bg-red-100 text-red-800" },
 };
 
 const canEdit = (status) => status === "DRAFT" || status === "REJECTED";
@@ -94,9 +103,14 @@ const STATUS_TABS = [
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function StatusBadge({ status }) {
-  const s = STATUS_META[status] || { label: status, cls: "bg-gray-100 text-gray-600" };
+  const s = STATUS_META[status] || {
+    label: status,
+    cls: "bg-gray-100 text-gray-600",
+  };
   return (
-    <span className={`inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full ${s.cls}`}>
+    <span
+      className={`inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full ${s.cls}`}
+    >
       {s.label}
     </span>
   );
@@ -105,7 +119,9 @@ function StatusBadge({ status }) {
 function TypeBadge({ type }) {
   const t = TYPE_META[type] || { label: type, color: "bg-gray-600 text-white" };
   return (
-    <span className={`inline-block text-xs font-medium px-3 py-1 rounded ${t.color}`}>
+    <span
+      className={`inline-block text-xs font-medium px-3 py-1 rounded ${t.color}`}
+    >
       {t.label}
     </span>
   );
@@ -117,7 +133,9 @@ function ActivityCard({ item, onViewDetail, onEdit, onDelete }) {
   return (
     <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all overflow-hidden group flex flex-col">
       {/* Color bar top */}
-      <div className={`h-1.5 w-full ${TYPE_META[item.activityType]?.color?.split(" ")[0] || "bg-gray-400"}`} />
+      <div
+        className={`h-1.5 w-full ${TYPE_META[item.activityType]?.color?.split(" ")[0] || "bg-gray-400"}`}
+      />
 
       <div className="p-5 flex-1 flex flex-col">
         {/* Badges */}
@@ -138,19 +156,28 @@ function ActivityCard({ item, onViewDetail, onEdit, onDelete }) {
         <div className="space-y-1.5 text-sm text-gray-500 mb-4">
           {item.activityDate && (
             <div className="flex items-center gap-2">
-              <CalendarToday sx={{ fontSize: 15 }} className="text-gray-400 flex-shrink-0" />
+              <CalendarToday
+                sx={{ fontSize: 15 }}
+                className="text-gray-400 flex-shrink-0"
+              />
               <span>{item.activityDate}</span>
             </div>
           )}
           {item.venue && (
             <div className="flex items-center gap-2">
-              <LocationOn sx={{ fontSize: 15 }} className="text-gray-400 flex-shrink-0" />
+              <LocationOn
+                sx={{ fontSize: 15 }}
+                className="text-gray-400 flex-shrink-0"
+              />
               <span className="line-clamp-1">{item.venue}</span>
             </div>
           )}
           {item.publicationName && (
             <div className="flex items-center gap-2">
-              <Article sx={{ fontSize: 15 }} className="text-gray-400 flex-shrink-0" />
+              <Article
+                sx={{ fontSize: 15 }}
+                className="text-gray-400 flex-shrink-0"
+              />
               <span className="line-clamp-1">{item.publicationName}</span>
             </div>
           )}
@@ -192,7 +219,13 @@ function ActivityCard({ item, onViewDetail, onEdit, onDelete }) {
   );
 }
 
-function DetailModal({ item, contributors, loadingContributors, onClose, onEdit }) {
+function DetailModal({
+  item,
+  contributors,
+  loadingContributors,
+  onClose,
+  onEdit,
+}) {
   if (!item) return null;
 
   return (
@@ -223,26 +256,72 @@ function DetailModal({ item, contributors, loadingContributors, onClose, onEdit 
           {/* Info grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-100">
             {item.academicYear && (
-              <InfoBlock icon={<CalendarToday sx={{ fontSize: 16 }} className="text-blue-500" />} label="Năm học" value={item.academicYear} />
+              <InfoBlock
+                icon={
+                  <CalendarToday
+                    sx={{ fontSize: 16 }}
+                    className="text-blue-500"
+                  />
+                }
+                label="Năm học"
+                value={item.academicYear}
+              />
             )}
             {item.activityDate && (
-              <InfoBlock icon={<CalendarToday sx={{ fontSize: 16 }} className="text-blue-500" />} label="Ngày hoạt động" value={item.activityDate} />
+              <InfoBlock
+                icon={
+                  <CalendarToday
+                    sx={{ fontSize: 16 }}
+                    className="text-blue-500"
+                  />
+                }
+                label="Ngày hoạt động"
+                value={item.activityDate}
+              />
             )}
             {item.venue && (
-              <InfoBlock icon={<LocationOn sx={{ fontSize: 16 }} className="text-red-500" />} label="Địa điểm / Đơn vị" value={item.venue} />
+              <InfoBlock
+                icon={
+                  <LocationOn sx={{ fontSize: 16 }} className="text-red-500" />
+                }
+                label="Địa điểm / Đơn vị"
+                value={item.venue}
+              />
             )}
             {item.publicationName && (
-              <InfoBlock icon={<Article sx={{ fontSize: 16 }} className="text-purple-500" />} label="Tạp chí / Nơi công bố" value={item.publicationName} />
+              <InfoBlock
+                icon={
+                  <Article sx={{ fontSize: 16 }} className="text-purple-500" />
+                }
+                label="Tạp chí / Nơi công bố"
+                value={item.publicationName}
+              />
             )}
             {item.identifierCode && (
-              <InfoBlock icon={<Badge sx={{ fontSize: 16 }} className="text-amber-500" />} label="ISSN / DOI / ISBN" value={item.identifierCode} />
+              <InfoBlock
+                icon={
+                  <Badge sx={{ fontSize: 16 }} className="text-amber-500" />
+                }
+                label="ISSN / DOI / ISBN"
+                value={item.identifierCode}
+              />
             )}
             {item.externalLink && (
               <div className="flex gap-2 items-start">
-                <LinkIcon sx={{ fontSize: 16 }} className="text-green-500 mt-0.5 flex-shrink-0" />
+                <LinkIcon
+                  sx={{ fontSize: 16 }}
+                  className="text-green-500 mt-0.5 flex-shrink-0"
+                />
                 <div>
-                  <p className="text-[11px] font-bold text-gray-400 uppercase mb-0.5">Link minh chứng</p>
-                  <a href={item.externalLink} target="_blank" rel="noreferrer" className="text-sm text-blue-600 underline break-all">
+                  <p className="text-[11px] font-bold text-gray-400 uppercase mb-0.5">
+                    Link minh chứng
+                  </p>
+                  <a
+                    href={item.externalLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm text-blue-600 underline break-all"
+                  >
                     {item.externalLink}
                   </a>
                 </div>
@@ -256,7 +335,9 @@ function DetailModal({ item, contributors, loadingContributors, onClose, onEdit 
               <h3 className="text-sm font-bold text-gray-700 border-l-4 border-mainColor pl-3 mb-2">
                 Mô tả
               </h3>
-              <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                {item.description}
+              </p>
             </div>
           )}
 
@@ -268,14 +349,22 @@ function DetailModal({ item, contributors, loadingContributors, onClose, onEdit 
               </h3>
               <div className="flex gap-3 flex-wrap">
                 {item.proofFileUrl && (
-                  <a href={item.proofFileUrl} target="_blank" rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-sm text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
+                  <a
+                    href={item.proofFileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-sm text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+                  >
                     <Article sx={{ fontSize: 14 }} /> Tải file
                   </a>
                 )}
                 {item.proofImageUrl && (
-                  <a href={item.proofImageUrl} target="_blank" rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-sm text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
+                  <a
+                    href={item.proofImageUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-sm text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+                  >
                     Xem ảnh
                   </a>
                 )}
@@ -296,13 +385,20 @@ function DetailModal({ item, contributors, loadingContributors, onClose, onEdit 
             ) : (
               <div className="space-y-2">
                 {contributors.map((c, i) => (
-                  <div key={i} className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                  <div
+                    key={i}
+                    className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-3 py-2"
+                  >
                     <span className="text-sm text-gray-700">
                       {c.userName || c.name || `User #${c.userId}`}
                     </span>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                      c.role === "MAIN" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
-                    }`}>
+                    <span
+                      className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                        c.role === "MAIN"
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
                       {c.role === "MAIN" ? "Tác giả chính" : "Thành viên"}
                     </span>
                   </div>
@@ -326,7 +422,10 @@ function DetailModal({ item, contributors, loadingContributors, onClose, onEdit 
             </button>
             {canEdit(item.status) && (
               <button
-                onClick={() => { onClose(); onEdit(item); }}
+                onClick={() => {
+                  onClose();
+                  onEdit(item);
+                }}
                 className="px-5 py-2 rounded-lg bg-mainColor text-white font-medium hover:brightness-110 transition-colors text-sm flex items-center gap-2"
               >
                 <Edit sx={{ fontSize: 15 }} />
@@ -345,7 +444,9 @@ function InfoBlock({ icon, label, value }) {
     <div className="flex gap-2 items-start">
       <span className="mt-0.5 flex-shrink-0">{icon}</span>
       <div>
-        <p className="text-[11px] font-bold text-gray-400 uppercase mb-0.5">{label}</p>
+        <p className="text-[11px] font-bold text-gray-400 uppercase mb-0.5">
+          {label}
+        </p>
         <p className="text-sm text-gray-700">{value}</p>
       </div>
     </div>
@@ -354,7 +455,11 @@ function InfoBlock({ icon, label, value }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function DeclarationScreen({ title, description, activityType }) {
+export default function DeclarationScreen({
+  title,
+  description,
+  activityType,
+}) {
   const { user } = useAuth();
   const toast = useToast();
   const currentYear = new Date().getFullYear();
@@ -391,7 +496,9 @@ export default function DeclarationScreen({ title, description, activityType }) 
     }
   };
 
-  useEffect(() => { loadList(); }, [user?.id, activityType, selectedYear, statusFilter]);
+  useEffect(() => {
+    loadList();
+  }, [user?.id, activityType, selectedYear, statusFilter]);
 
   const openNewForm = () => {
     setEditingItem(null);
@@ -446,7 +553,10 @@ export default function DeclarationScreen({ title, description, activityType }) 
           <div className="flex items-center gap-2 text-sm mb-5">
             <button
               type="button"
-              onClick={() => { setShowForm(false); setEditingItem(null); }}
+              onClick={() => {
+                setShowForm(false);
+                setEditingItem(null);
+              }}
               className="flex items-center gap-1.5 font-medium text-gray-600 hover:text-mainColor transition-colors"
             >
               <ArrowBack sx={{ fontSize: 17 }} />
@@ -467,7 +577,11 @@ export default function DeclarationScreen({ title, description, activityType }) 
               initialActivityType={activityType}
               lockActivityType={true}
               heading={editingItem ? `Chỉnh sửa: ${title}` : title}
-              subheading={editingItem ? "Cập nhật thông tin khai báo" : "Nhập thông tin và lưu khai báo"}
+              subheading={
+                editingItem
+                  ? "Cập nhật thông tin khai báo"
+                  : "Nhập thông tin và lưu khai báo"
+              }
               initialData={editingItem}
               initialContributors={editingContributors}
               onCompleted={async () => {
@@ -514,14 +628,18 @@ export default function DeclarationScreen({ title, description, activityType }) 
                 key={tab.value}
                 onClick={() => setStatusFilter(tab.value)}
                 className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors
-                  ${statusFilter === tab.value
-                    ? `${tab.activeText} border-b-2 ${tab.activeBorder} ${tab.activeBg}`
-                    : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"}`}
+                  ${
+                    statusFilter === tab.value
+                      ? `${tab.activeText} border-b-2 ${tab.activeBorder} ${tab.activeBg}`
+                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                  }`}
               >
                 {tab.icon}
                 {tab.label}
                 {statusFilter === tab.value && myItems.length > 0 && (
-                  <span className={`text-xs px-2 py-0.5 rounded-md text-white ${tab.badgeBg}`}>
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-md text-white ${tab.badgeBg}`}
+                  >
                     {myItems.length}
                   </span>
                 )}
@@ -532,7 +650,10 @@ export default function DeclarationScreen({ title, description, activityType }) 
           {/* Search + Year — giống EventFilters */}
           <div className="p-4 bg-gray-50 flex flex-col md:flex-row gap-3">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fontSize="small" />
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                fontSize="small"
+              />
               <input
                 type="text"
                 value={searchKeyword}
@@ -546,7 +667,9 @@ export default function DeclarationScreen({ title, description, activityType }) 
               <input
                 type="number"
                 value={selectedYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value || currentYear))}
+                onChange={(e) =>
+                  setSelectedYear(Number(e.target.value || currentYear))
+                }
                 className="w-28 py-2 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor text-sm"
                 placeholder="Năm"
               />
@@ -561,34 +684,42 @@ export default function DeclarationScreen({ title, description, activityType }) 
             ? myItems.filter((it) => it.title?.toLowerCase().includes(kw))
             : myItems;
 
-          if (loadingList) return (
-            <div className="flex justify-center items-center py-20">
-              <div className="w-10 h-10 border-4 border-mainColor border-t-transparent rounded-full animate-spin" />
-            </div>
-          );
+          if (loadingList)
+            return (
+              <div className="flex justify-center items-center py-20">
+                <div className="w-10 h-10 border-4 border-mainColor border-t-transparent rounded-full animate-spin" />
+              </div>
+            );
 
-          if (displayed.length === 0) return (
-            <div className="text-center py-20 bg-white rounded-lg shadow-sm">
-              <p className="text-gray-400 text-base mb-3">
-                {kw ? `Không tìm thấy kết quả cho "${searchKeyword}"` : "Chưa có khai báo nào"}
-              </p>
-              {!kw && (
-                <button
-                  type="button"
-                  onClick={openNewForm}
-                  className="inline-flex items-center gap-2 bg-mainColor text-white px-5 py-2 rounded-lg hover:brightness-110 transition-colors text-sm font-semibold"
-                >
-                  <Add sx={{ fontSize: 18 }} />
-                  Tạo khai báo đầu tiên
-                </button>
-              )}
-            </div>
-          );
+          if (displayed.length === 0)
+            return (
+              <div className="text-center py-20 bg-white rounded-lg shadow-sm">
+                <p className="text-gray-400 text-base mb-3">
+                  {kw
+                    ? `Không tìm thấy kết quả cho "${searchKeyword}"`
+                    : "Chưa có khai báo nào"}
+                </p>
+                {!kw && (
+                  <button
+                    type="button"
+                    onClick={openNewForm}
+                    className="inline-flex items-center gap-2 bg-mainColor text-white px-5 py-2 rounded-lg hover:brightness-110 transition-colors text-sm font-semibold"
+                  >
+                    <Add sx={{ fontSize: 18 }} />
+                    Tạo khai báo đầu tiên
+                  </button>
+                )}
+              </div>
+            );
 
           return (
             <>
               <p className="text-sm text-gray-500 mb-4">
-                Tìm thấy <span className="font-semibold text-gray-800">{displayed.length}</span> khai báo
+                Tìm thấy{" "}
+                <span className="font-semibold text-gray-800">
+                  {displayed.length}
+                </span>{" "}
+                khai báo
               </p>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {displayed.map((item) => (

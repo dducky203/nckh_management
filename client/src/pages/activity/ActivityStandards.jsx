@@ -391,7 +391,6 @@ export default function ActivityStandards() {
               </div>
             )} */}
           </div>
-
         </div>
       </div>
 
@@ -424,14 +423,18 @@ export default function ActivityStandards() {
                     <span className="text-3xl font-black tracking-tight text-slate-600">
                       {round1(requiredHoursNum)}
                     </span>
-                    <span className="text-sm font-bold text-slate-400">giờ</span>
+                    <span className="text-sm font-bold text-slate-400">
+                      giờ
+                    </span>
                   </div>
                 ) : (
                   <div className="flex items-baseline gap-2">
                     <span className="text-5xl font-black tracking-tight text-mainColor">
                       {round1(totalHours)}
                     </span>
-                    <span className="text-sm font-bold text-slate-400">giờ</span>
+                    <span className="text-sm font-bold text-slate-400">
+                      giờ
+                    </span>
                   </div>
                 )}
 
