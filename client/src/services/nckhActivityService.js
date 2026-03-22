@@ -70,6 +70,12 @@ const nckhActivityService = {
   getDeclarationOptions: async () => {
     return await api.get("/nckh/activity-options");
   },
+
+  getStatistics: async (userId, academicYear) => {
+    return await api.get("/nckh/activities/statistics", {
+      params: { userId, academicYear },
+    });
+  },
 };
 
 export default nckhActivityService;

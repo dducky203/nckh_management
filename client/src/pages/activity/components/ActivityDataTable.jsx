@@ -11,7 +11,10 @@ function round1(x) {
   return Math.round(x * 10) / 10;
 }
 
-export default function ActivityDataTable({ criteria, values, calcHours }) {
+export default function ActivityDataTable({
+  criteria,
+  actualStats = [],
+}) {
   const [openIds, setOpenIds] = useState(() => criteria.map((g) => g.id));
 
   const toggle = (gid) =>
@@ -19,13 +22,43 @@ export default function ActivityDataTable({ criteria, values, calcHours }) {
       prev.includes(gid) ? prev.filter((x) => x !== gid) : [...prev, gid],
     );
 
+  // Create map of actual data by catalogCode (MUST be defined first)
+  const actualMap = useMemo(() => {
+    const map = {};
+    actualStats.forEach((stat) => {
+      map[stat.catalogCode] = stat;
+    });
+    return map;
+  }, [actualStats]);
+
+  // Calculate actual statistics summary
+  const actualSummary = useMemo(() => {
+    const uniqueCatalogCodes = new Set(actualStats.map((s) => s.catalogCode));
+    const totalActivities = actualStats.reduce(
+      (sum, s) => sum + (s.participationCount || 0),
+      0,
+    );
+    return {
+      groupCount: uniqueCatalogCodes.size,
+      activityCount: totalActivities,
+    };
+  }, [actualStats]);
+
   const groupTotals = useMemo(() => {
     const map = {};
     for (const g of criteria) {
-      map[g.id] = g.children.reduce((s, c) => s + calcHours(c), 0);
+      // Calculate total from actual data
+      let total = 0;
+      g.children.forEach((c) => {
+        const actual = actualMap[c.id];
+        if (actual) {
+          total += Number(actual.totalQuotaHours || 0);
+        }
+      });
+      map[g.id] = total;
     }
     return map;
-  }, [criteria, calcHours]);
+  }, [criteria, actualMap]);
 
   const totalRows = useMemo(
     () => criteria.reduce((s, g) => s + g.children.length, 0),
@@ -40,7 +73,14 @@ export default function ActivityDataTable({ criteria, values, calcHours }) {
             Dữ liệu hoạt động
           </h2>
           <p className="text-slate-500 text-xs mt-1">
-            {criteria.length} nhóm · {totalRows} hoạt động
+            {actualSummary.groupCount > 0 ? (
+              <>
+                {actualSummary.groupCount} nhóm · {actualSummary.activityCount}{" "}
+                hoạt động
+              </>
+            ) : (
+              "Chưa có dữ liệu thực tế"
+            )}
           </p>
         </div>
         <button
@@ -103,11 +143,18 @@ export default function ActivityDataTable({ criteria, values, calcHours }) {
                       </thead>
                       <tbody className="text-sm">
                         {g.children.map((c) => {
-                          const d = values[c.id] || {};
-                          const qty = Number(d.qty || 0);
-                          const participants = Number(d.participants || 1);
-                          const role = d.role || "main";
-                          const hours = calcHours(c);
+                          // Get actual data from API
+                          const actual = actualMap[c.id];
+                          const qty = actual ? Number(actual.totalQty || 0) : 0;
+                          const hours = actual
+                            ? Number(actual.totalQuotaHours || 0)
+                            : 0;
+                          const participants = actual
+                            ? Math.round(Number(actual.avgParticipantsN || 0))
+                            : 0;
+                          const participationCount = actual
+                            ? Number(actual.participationCount || 0)
+                            : 0;
                           const hasQty = qty > 0;
 
                           return (
@@ -122,7 +169,9 @@ export default function ActivityDataTable({ criteria, values, calcHours }) {
                                   {c.name}
                                 </div>
                                 <div className="text-[10px] text-slate-400 font-medium mt-0.5">
-                                  {c.unit} {c.isTeam && "• Đồng tác giả"}
+                                  {c.unit}{" "}
+                                  {participationCount > 0 &&
+                                    `• ${participationCount} hoạt động`}
                                 </div>
                               </td>
 
@@ -145,10 +194,8 @@ export default function ActivityDataTable({ criteria, values, calcHours }) {
                               </td>
 
                               <td className="py-3 text-center">
-                                {c.isTeam ? (
-                                  <div
-                                    className={`flex items-center justify-center ${!hasQty && "opacity-30 grayscale"}`}
-                                  >
+                                {participants > 0 ? (
+                                  <div className="flex items-center justify-center">
                                     <IconUserGroup />
                                     <span className="w-14 ml-1.5 text-center font-semibold text-slate-600">
                                       {participants}
@@ -160,17 +207,9 @@ export default function ActivityDataTable({ criteria, values, calcHours }) {
                               </td>
 
                               <td className="py-3 text-center">
-                                {c.isTeam ? (
-                                  <span
-                                    className={`text-xs font-semibold py-1.5 px-2 rounded-lg border bg-white transition-opacity ${!hasQty ? "opacity-30" : ""} ${
-                                      role === "main"
-                                        ? "text-blue-700 border-blue-100"
-                                        : "text-slate-500 border-slate-200"
-                                    }`}
-                                  >
-                                    {role === "main"
-                                      ? "Tác giả chính"
-                                      : "Thành viên"}
+                                {hasQty ? (
+                                  <span className="text-xs font-semibold py-1.5 px-2 rounded-lg border bg-white text-blue-700 border-blue-100">
+                                    Thực tế
                                   </span>
                                 ) : (
                                   <span className="text-slate-200">—</span>

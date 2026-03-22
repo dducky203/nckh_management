@@ -18,8 +18,6 @@ public class DinhMucController {
     @Autowired
     private  NckhTieuChiDinhMucService service;
 
-
-
     @PostMapping
     public NckhTieuChiDinhMucResponse create(@RequestBody NckhTieuChiDinhMucRequest request) {
         return service.create(request);

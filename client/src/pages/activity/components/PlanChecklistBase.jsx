@@ -45,15 +45,7 @@ function ProgressBar({ got, req }) {
   );
 }
 
-/**
- * Component dùng chung cho 6 phương án.
- * Props:
- *   planLabel  – string, ví dụ "PA0"
- *   result     – { checks, overallOk }
- */
 export default function PlanChecklistBase({ planLabel, result }) {
-  const passCount = result.checks.filter((c) => c.ok === true).length;
-  const totalCount = result.checks.length;
   const evaluableCount = result.checks.filter((c) => c.hasActual).length;
   const hasEvaluable = evaluableCount > 0;
 
@@ -67,15 +59,8 @@ export default function PlanChecklistBase({ planLabel, result }) {
           />
           <div>
             <h3 className="font-bold text-slate-700 text-sm">
-              Tiêu chí {planLabel}
+              Phương án {planLabel}
             </h3>
-            {totalCount > 0 && (
-              <p className="text-[11px] text-slate-400 font-medium mt-0.5">
-                {hasEvaluable
-                  ? `${passCount}/${evaluableCount} tiêu chí đạt`
-                  : `${totalCount} tiêu chí yêu cầu`}
-              </p>
-            )}
           </div>
         </div>
         {hasEvaluable ? (

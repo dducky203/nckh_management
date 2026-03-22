@@ -3,6 +3,7 @@ package com.example.server.controller.user;
 import com.example.server.DTO.nckh.CreateActivityRequest;
 import com.example.server.DTO.nckh.DashboardResponse;
 import com.example.server.DTO.nckh.UpsertContributorsRequest;
+import com.example.server.DTO.nckh.ActivityStatisticsResponse;
 import com.example.server.domain.nckh.NckhActivity;
 import com.example.server.domain.nckh.NckhActivityCatalog;
 import com.example.server.domain.nckh.NckhActivityContributor;
@@ -106,4 +107,12 @@ public class NckhActivityController {
     public DashboardResponse dashboard(@RequestParam Integer userId, @RequestParam Integer year) {
         return dashboardService.personal(userId, year);
     }
+
+    @GetMapping("/activities/statistics")
+    public List<ActivityStatisticsResponse> getStatistics(
+            @RequestParam Integer userId,
+            @RequestParam Integer academicYear) {
+        return activityService.getStatistics(userId, academicYear);
+    }
+
 }

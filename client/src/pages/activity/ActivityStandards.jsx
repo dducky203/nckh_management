@@ -10,6 +10,7 @@ import { useAuth } from "../../context/useAuth";
 import { useToast } from "../../context/ToastContext";
 import nckhPlanService from "../../services/nckhPlanService";
 import nckhTieuChiDinhMucService from "../../services/nckhTieuChiDinhMucService";
+import nckhActivityService from "../../services/nckhActivityService";
 import PlanPA0 from "./components/PlanPA0";
 import PlanPA1 from "./components/PlanPA1";
 import PlanPA2 from "./components/PlanPA2";
@@ -66,6 +67,8 @@ export default function ActivityStandards() {
   const [planSaving, setPlanSaving] = useState(false);
   const [planCriteria, setPlanCriteria] = useState([]);
   const [criteriaLoading, setCriteriaLoading] = useState(false);
+  const [actualStats, setActualStats] = useState([]);
+  const [statsLoading, setStatsLoading] = useState(false);
 
   useEffect(() => {
     if (!user?.id || !academicYear) return;
@@ -133,7 +136,34 @@ export default function ActivityStandards() {
     };
   }, [plan, title]);
 
-  console.log({ planCriteria });
+  // Fetch actual statistics
+  useEffect(() => {
+    if (!user?.id || !academicYear) return;
+
+    let cancelled = false;
+    (async () => {
+      setStatsLoading(true);
+      try {
+        const res = await nckhActivityService.getStatistics(
+          user.id,
+          academicYear,
+        );
+        if (cancelled) return;
+        setActualStats(res?.data ?? res ?? []);
+      } catch (e) {
+        if (cancelled) return;
+        toastRef.current?.error(e?.message || "Không thể tải dữ liệu thực tế");
+      } finally {
+        if (!cancelled) setStatsLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, academicYear]);
+
+  console.log({ planCriteria, actualStats });
 
   // --- Logic Helpers ---
   const calcHours = useCallback(
@@ -152,13 +182,6 @@ export default function ActivityStandards() {
     [values],
   );
 
-  const totalHours = useMemo(() => {
-    return planCriteria.reduce((sum, c) => {
-      const quota = Number(c.gioQuyDoiPerUnit ?? 0);
-      const qty = Number(values[c.tieuChiCode]?.qty || 0);
-      return sum + qty * quota;
-    }, 0);
-  }, [planCriteria, values]);
 
   const result = useMemo(() => {
     if (criteriaLoading || planCriteria.length === 0) {
@@ -169,17 +192,28 @@ export default function ActivityStandards() {
       (a, b) => Number(a.sortOrder ?? 0) - Number(b.sortOrder ?? 0),
     );
 
+    // Create map of actual data by tieuChiCode
+    const actualMap = {};
+    actualStats.forEach((stat) => {
+      actualMap[stat.catalogCode] = stat;
+    });
+
     const checks = sortedCriteria.map((c) => {
       const req = Number(c.dinhMucToiThieu ?? 0);
-      const got = null;
+      const actual = actualMap[c.tieuChiCode];
+      const got = actual ? Number(actual.totalQty ?? 0) : 0;
+      const hasActual = got > 0;
+      const ok = got >= req;
 
       return {
         label: c.tieuChiName,
         got,
         req,
         unit: c.donViTinh,
-        hasActual: false,
-        ok: null,
+        hasActual,
+        ok,
+        actualHours: actual ? Number(actual.totalQuotaHours ?? 0) : 0,
+        participationCount: actual ? Number(actual.participationCount ?? 0) : 0,
       };
     });
 
@@ -188,12 +222,22 @@ export default function ActivityStandards() {
       0,
     );
 
+    const actualHoursSum = checks.reduce(
+      (sum, check) => sum + Number(check.actualHours ?? 0),
+      0,
+    );
+
+    const overallOk = checks.every((check) => check.ok);
+
     return {
       checks,
-      overallOk: false,
+      overallOk,
       requiredHours: requiredHoursSum > 0 ? requiredHoursSum : null,
+      actualHours: actualHoursSum,
     };
-  }, [criteriaLoading, planCriteria]);
+  }, [criteriaLoading, planCriteria, actualStats]);
+
+  console.log({ result, actualHoursNum: result.actualHours });
 
   const tableCriteria = useMemo(() => {
     const children = [...planCriteria]
@@ -219,8 +263,9 @@ export default function ActivityStandards() {
 
   const requiredHoursNum =
     result.requiredHours == null ? null : Number(result.requiredHours || 0);
+  const actualHoursNum = Number(result.actualHours || 0);
   const diffHours =
-    requiredHoursNum == null ? null : round1(totalHours - requiredHoursNum);
+    requiredHoursNum == null ? null : round1(actualHoursNum - requiredHoursNum);
 
   const handleLockPlan = async () => {
     if (!canManagePlanAndData) return;
@@ -244,7 +289,7 @@ export default function ActivityStandards() {
   };
 
   const planSelectDisabled = !canManagePlanAndData || planLocked || planLoading;
-  const isApiLoading = planLoading || criteriaLoading;
+  const isApiLoading = planLoading || criteriaLoading || statsLoading;
 
   const PLAN_COMPONENTS = {
     0: PlanPA0,
@@ -417,7 +462,7 @@ export default function ActivityStandards() {
                 {requiredHoursNum !== null ? (
                   <div className="flex items-baseline gap-2 flex-wrap">
                     <span className="text-5xl font-black tracking-tight text-mainColor">
-                      {round1(totalHours)}
+                      {round1(actualHoursNum)}
                     </span>
                     <span className="text-lg font-black text-slate-400">/</span>
                     <span className="text-3xl font-black tracking-tight text-slate-600">
@@ -430,7 +475,7 @@ export default function ActivityStandards() {
                 ) : (
                   <div className="flex items-baseline gap-2">
                     <span className="text-5xl font-black tracking-tight text-mainColor">
-                      {round1(totalHours)}
+                      {round1(actualHoursNum)}
                     </span>
                     <span className="text-sm font-bold text-slate-400">
                       giờ
@@ -465,6 +510,7 @@ export default function ActivityStandards() {
               criteria={tableCriteria}
               values={values}
               calcHours={calcHours}
+              actualStats={actualStats}
             />
           </>
         )}
@@ -472,7 +518,7 @@ export default function ActivityStandards() {
 
       {/* 4. Sticky Footer Status */}
       <div
-        className={`fixed bottom-0 left-0 right-0 border-t bg-white/95 backdrop-blur-xl px-4 py-3 shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.1)] z-50 transition-transform duration-300 ${totalHours > 0 ? "translate-y-0" : "translate-y-full"}`}
+        className={`fixed bottom-0 left-0 right-0 border-t bg-white/95 backdrop-blur-xl px-4 py-3 shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.1)] z-50 transition-transform duration-300 ${actualHoursNum > 0 ? "translate-y-0" : "translate-y-full"}`}
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
@@ -482,13 +528,13 @@ export default function ActivityStandards() {
               </p>
               {/* Footer total color */}
               <p className="text-2xl font-black leading-none text-mainColor">
-                {round1(totalHours)}
+                {round1(actualHoursNum)}
               </p>
             </div>
             <div className="hidden md:block h-8 w-px bg-slate-200"></div>
             <div>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                Kết quả {plan}
+                Kết quả 
               </p>
               <div
                 className={`flex items-center gap-2 text-sm font-black ${result.overallOk ? "text-emerald-600" : "text-rose-600"}`}

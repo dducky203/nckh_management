@@ -18,9 +18,10 @@ import java.util.stream.Collectors;
 
 @Service
 public class NewsServiceImpl implements NewsService {
-    
+
     private NewsRepository newsRepository;
     private UserRepository userRepository;
+
 
     @Override
     public Map<String, Object> getNewsWithPagination(String search, int page, int size) {

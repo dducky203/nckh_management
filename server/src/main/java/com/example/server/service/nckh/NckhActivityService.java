@@ -2,17 +2,25 @@ package com.example.server.service.nckh;
 
 import com.example.server.DTO.nckh.CreateActivityRequest;
 import com.example.server.DTO.nckh.ContributorItem;
+import com.example.server.DTO.nckh.ActivityStatisticsResponse;
 import com.example.server.domain.nckh.NckhActivity;
 import com.example.server.domain.nckh.NckhActivityCatalog;
 import com.example.server.domain.nckh.NckhActivityContributor;
+import com.example.server.domain.nckh.NckhTieuChiDinhMuc;
+import com.example.server.domain.nckh.UserPlanYear;
+import com.example.server.domain.User;
 import com.example.server.repository.nckh.NckhActivityCatalogRepository;
 import com.example.server.repository.nckh.NckhActivityContributorRepository;
 import com.example.server.repository.nckh.NckhActivityRepository;
+import com.example.server.repository.nckh.NckhTieuChiDinhMucRepository;
+import com.example.server.repository.nckh.UserPlanYearRepository;
+import com.example.server.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -25,18 +33,27 @@ public class NckhActivityService {
     private final NckhActivityContributorRepository contribRepo;
     private final NckhComputeService computeService;
     private final NckhActivityTypeCodeResolver typeCodeResolver;
+    private final UserPlanYearRepository planYearRepo;
+    private final NckhTieuChiDinhMucRepository dinhMucRepo;
+    private final UserRepository userRepo;
 
     public NckhActivityService(
             NckhActivityRepository activityRepo,
             NckhActivityCatalogRepository catalogRepo,
             NckhActivityContributorRepository contribRepo,
             NckhComputeService computeService,
-            NckhActivityTypeCodeResolver typeCodeResolver) {
+            NckhActivityTypeCodeResolver typeCodeResolver,
+            UserPlanYearRepository planYearRepo,
+            NckhTieuChiDinhMucRepository dinhMucRepo,
+            UserRepository userRepo) {
         this.activityRepo = activityRepo;
         this.catalogRepo = catalogRepo;
         this.contribRepo = contribRepo;
         this.computeService = computeService;
         this.typeCodeResolver = typeCodeResolver;
+        this.planYearRepo = planYearRepo;
+        this.dinhMucRepo = dinhMucRepo;
+        this.userRepo = userRepo;
     }
 
     @Transactional
@@ -273,4 +290,34 @@ public class NckhActivityService {
             throw new IllegalStateException("status không hợp lệ: " + status);
         }
     }
+
+    public List<ActivityStatisticsResponse> getStatistics(Integer userId, Integer academicYear) {
+        // 1. Get user's plan
+        UserPlanYear userPlan = planYearRepo.findByUserIdAndAcademicYear(userId, academicYear)
+                .orElse(null);
+
+        if (userPlan == null) {
+            return new ArrayList<>();
+        }
+
+        // 2. Get user's title
+        User user = userRepo.findById(userId)
+                .orElse(null);
+
+        if (user == null || user.getIdTitle() == null || user.getIdTitle().getName() == null) {
+            return new ArrayList<>();
+        }
+
+        String chucDanh = user.getIdTitle().getName();
+        Integer phuongAn = userPlan.getPlanId();
+
+        // 3. Get statistics from repository
+        return activityRepo.getStatisticsByUserAndYear(
+                userId,
+                academicYear,
+                phuongAn,
+                chucDanh);
+    }
+
+
 }
