@@ -5,7 +5,7 @@ import java.time.LocalDate;
 public class CreateActivityRequest {
     public Integer academicYear;
     public Integer researchGroupId; // nullable
-    public String catalogCode; // optional: nếu có thì ưu tiên dùng trực tiếp
+    public String catalogCode; // bắt buộc: nhận trực tiếp tieuChiCode từ FE
     public String activityType; // SEMINAR, CONFERENCE, INTL_PAPER, VN_PAPER, PROCEEDING, REVIEW_PAPER, TECH_CONSULT, TECH_PROCEDURE, PROPOSAL
 
     // Các lựa chọn để map ra type_code (catalogCode)

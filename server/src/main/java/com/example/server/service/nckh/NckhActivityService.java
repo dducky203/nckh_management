@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,7 +32,6 @@ public class NckhActivityService {
     private final NckhActivityCatalogRepository catalogRepo;
     private final NckhActivityContributorRepository contribRepo;
     private final NckhComputeService computeService;
-    private final NckhActivityTypeCodeResolver typeCodeResolver;
     private final UserPlanYearRepository planYearRepo;
     private final NckhTieuChiDinhMucRepository dinhMucRepo;
     private final UserRepository userRepo;
@@ -42,7 +41,6 @@ public class NckhActivityService {
             NckhActivityCatalogRepository catalogRepo,
             NckhActivityContributorRepository contribRepo,
             NckhComputeService computeService,
-            NckhActivityTypeCodeResolver typeCodeResolver,
             UserPlanYearRepository planYearRepo,
             NckhTieuChiDinhMucRepository dinhMucRepo,
             UserRepository userRepo) {
@@ -50,7 +48,6 @@ public class NckhActivityService {
         this.catalogRepo = catalogRepo;
         this.contribRepo = contribRepo;
         this.computeService = computeService;
-        this.typeCodeResolver = typeCodeResolver;
         this.planYearRepo = planYearRepo;
         this.dinhMucRepo = dinhMucRepo;
         this.userRepo = userRepo;
@@ -58,7 +55,7 @@ public class NckhActivityService {
 
     @Transactional
     public NckhActivity create(Integer creatorUserId, CreateActivityRequest req) {
-        String catalogCode = typeCodeResolver.resolve(req);
+        String catalogCode = requireCatalogCode(req);
 
         NckhActivityCatalog cat = catalogRepo.findById(catalogCode)
                 .orElseThrow(() -> new IllegalStateException("catalog_code không tồn tại: " + catalogCode));
@@ -91,7 +88,49 @@ public class NckhActivityService {
     }
 
     public Map<String, Object> getDeclarationOptions() {
-        return typeCodeResolver.declarationOptions();
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("activityTypes", List.of(
+                "SEMINAR",
+                "CONFERENCE",
+                "INTL_PAPER",
+                "VN_PAPER",
+                "PROCEEDING",
+                "REVIEW_PAPER",
+                "TECH_CONSULT",
+                "TECH_PROCEDURE",
+                "PROPOSAL"));
+        result.put("conferenceRoles", List.of("ORG", "PRES"));
+        result.put("conferenceLevels", List.of("INTL", "NAT", "ACAD"));
+        result.put("intlPaperCategories", List.of("WOS", "SCOPUS", "ENG_ACAD", "OTHER", "CITATION"));
+        result.put("vnPaperCategories", List.of("ACADEMY", "OTHER"));
+        result.put("proceedingLevels", List.of("INTL", "NAT", "ACAD"));
+        result.put("proposalLevels", List.of("NAT", "MINISTRY"));
+
+        Map<String, String> generatedTypeCodes = new LinkedHashMap<>();
+        generatedTypeCodes.put("SEMINAR", "SEMINAR_TRINH_BAY");
+        generatedTypeCodes.put("CONFERENCE.ORG.INTL", "HT_THAM_GIA");
+        generatedTypeCodes.put("CONFERENCE.ORG.NAT", "HT_THAM_GIA");
+        generatedTypeCodes.put("CONFERENCE.ORG.ACAD", "HT_THAM_GIA");
+        generatedTypeCodes.put("CONFERENCE.PRES.INTL", "HT_THAM_LUAN");
+        generatedTypeCodes.put("CONFERENCE.PRES.NAT", "HT_THAM_LUAN");
+        generatedTypeCodes.put("CONFERENCE.PRES.ACAD", "HT_THAM_LUAN");
+        generatedTypeCodes.put("INTL_PAPER.WOS", "BB_WOS_SCOPUS");
+        generatedTypeCodes.put("INTL_PAPER.SCOPUS", "BB_SCOPUS");
+        generatedTypeCodes.put("INTL_PAPER.ENG_ACAD", "BB_TA_HOCVIEN");
+        generatedTypeCodes.put("INTL_PAPER.OTHER", "BB_WOS_SCOPUS");
+        generatedTypeCodes.put("INTL_PAPER.CITATION", "BB_WOS_SCOPUS");
+        generatedTypeCodes.put("VN_PAPER.ACADEMY", "BB_TV_HOCVIEN");
+        generatedTypeCodes.put("VN_PAPER.OTHER", "BB_TV_HOCVIEN");
+        generatedTypeCodes.put("PROCEEDING.INTL", "BTL_FULL_TEXT");
+        generatedTypeCodes.put("PROCEEDING.NAT", "BTL_FULL_TEXT");
+        generatedTypeCodes.put("PROCEEDING.ACAD", "BTL_FULL_TEXT");
+        generatedTypeCodes.put("REVIEW_PAPER", "TONG_QUAN");
+        generatedTypeCodes.put("TECH_CONSULT", "TU_VAN_BAN_TIN");
+        generatedTypeCodes.put("TECH_PROCEDURE", "TU_VAN_BAN_TIN");
+        generatedTypeCodes.put("PROPOSAL.NAT", "DE_XUAT_BO");
+        generatedTypeCodes.put("PROPOSAL.MINISTRY", "DE_XUAT_BO");
+        result.put("generatedTypeCodes", generatedTypeCodes);
+        return result;
     }
 
     @Transactional
@@ -176,7 +215,7 @@ public class NckhActivityService {
             throw new IllegalStateException("Không thể sửa activity đã submit/approved.");
         }
 
-        String catalogCode = typeCodeResolver.resolve(req);
+        String catalogCode = requireCatalogCode(req);
         NckhActivityCatalog cat = catalogRepo.findById(catalogCode)
                 .orElseThrow(() -> new IllegalStateException("catalog_code không tồn tại: " + catalogCode));
 
@@ -198,6 +237,14 @@ public class NckhActivityService {
         a.setApprovedByUserId(null);
         a.setApprovedAt(null);
         return activityRepo.save(a);
+    }
+
+    private String requireCatalogCode(CreateActivityRequest req) {
+        String catalogCode = req.catalogCode == null ? "" : req.catalogCode.trim();
+        if (catalogCode.isEmpty()) {
+            throw new IllegalStateException("catalogCode là bắt buộc");
+        }
+        return catalogCode;
     }
 
     @Transactional
@@ -259,7 +306,7 @@ public class NckhActivityService {
             String activityType,
             String status,
             Integer excludeUserId) {
-        List<String> codes = typeCodeResolver.resolveCatalogCodesByActivityType(activityType);
+        List<String> codes = resolveCatalogCodesByActivityType(activityType);
         NckhActivity.Status statusEnum = parseStatus(status);
 
         List<NckhActivity> result = new ArrayList<>();
@@ -289,6 +336,25 @@ public class NckhActivityService {
         } catch (IllegalArgumentException ex) {
             throw new IllegalStateException("status không hợp lệ: " + status);
         }
+    }
+
+    private List<String> resolveCatalogCodesByActivityType(String activityType) {
+        String type = activityType == null ? "" : activityType.trim().toUpperCase();
+        if (type.isEmpty()) {
+            return List.of();
+        }
+
+        return switch (type) {
+            case "SEMINAR" -> List.of("SEMINAR_TRINH_BAY", "SEMINAR_THAM_DU");
+            case "CONFERENCE" -> List.of("HT_THAM_GIA", "HT_THAM_LUAN", "HT_TC_HV", "HT_TC_QUOCGIA", "HT_TC_QUOCTE");
+            case "INTL_PAPER" -> List.of("BB_WOS_SCOPUS", "BB_SCOPUS", "BB_TA_HOCVIEN");
+            case "VN_PAPER" -> List.of("BB_TV_HOCVIEN");
+            case "PROCEEDING" -> List.of("BTL_FULL_TEXT");
+            case "REVIEW_PAPER" -> List.of("TONG_QUAN");
+            case "TECH_CONSULT", "TECH_PROCEDURE" -> List.of("TU_VAN_BAN_TIN");
+            case "PROPOSAL" -> List.of("DE_XUAT_BO");
+            default -> List.of();
+        };
     }
 
     public List<ActivityStatisticsResponse> getStatistics(Integer userId, Integer academicYear) {

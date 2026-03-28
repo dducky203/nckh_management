@@ -12,34 +12,27 @@ public class NckhCatalogInitConfig {
     @Bean
     ApplicationRunner nckhCatalogInitializer(NckhActivityCatalogRepository catalogRepository) {
         return args -> {
-            upsert(catalogRepository, "SEMINAR_PRESENT", "Seminar trình bày chuyên đề", "bài", 10d, "SEMINAR");
+            upsert(catalogRepository, "SEMINAR_TRINH_BAY", "Trình bày Seminar", "Lần/năm", 10d, "SEMINAR");
+            upsert(catalogRepository, "SEMINAR_THAM_DU", "Tham dự Seminar", "Lần/năm", 5d, "SEMINAR");
 
-            upsert(catalogRepository, "CONF_ORG_INTL", "Tổ chức hội thảo quốc tế", "lần", 100d, "CONFERENCE");
-            upsert(catalogRepository, "CONF_ORG_NAT", "Tổ chức hội thảo quốc gia", "lần", 60d, "CONFERENCE");
-            upsert(catalogRepository, "CONF_ORG_ACAD", "Tổ chức hội thảo học viện", "lần", 20d, "CONFERENCE");
-            upsert(catalogRepository, "CONF_PRES_INTL", "Trình bày tại hội thảo quốc tế", "bài", 50d, "CONFERENCE");
-            upsert(catalogRepository, "CONF_PRES_NAT", "Trình bày tại hội thảo quốc gia", "bài", 30d, "CONFERENCE");
-            upsert(catalogRepository, "CONF_PRES_ACAD", "Trình bày tại hội thảo học viện", "bài", 20d, "CONFERENCE");
+            upsert(catalogRepository, "HT_THAM_LUAN", "Bài tham luận trình bày tại hội thảo", "Bài/năm", 30d, "CONFERENCE");
+            upsert(catalogRepository, "HT_THAM_GIA", "Tham gia hội thảo", "Lần/năm", 10d, "CONFERENCE");
 
-            upsert(catalogRepository, "INTL_WOS", "Bài báo quốc tế WoS", "bài", 210d, "INTL_PAPER");
-            upsert(catalogRepository, "INTL_SCOPUS", "Bài báo quốc tế Scopus", "bài", 140d, "INTL_PAPER");
-            upsert(catalogRepository, "INTL_ENG_ACAD", "Bài báo tiếng Anh học viện", "bài", 70d, "INTL_PAPER");
-            upsert(catalogRepository, "INTL_OTHER", "Bài báo quốc tế khác", "bài", 60d, "INTL_PAPER");
-            upsert(catalogRepository, "INTL_CITATION", "Bài báo được trích dẫn", "trích dẫn", 1d, "INTL_PAPER");
+            upsert(catalogRepository, "BB_WOS_SCOPUS", "Bài báo quốc tế WoS/Scopus", "Bài/năm", 210d, "INTL_PAPER");
+            upsert(catalogRepository, "BB_SCOPUS", "Bài báo Scopus", "Bài/năm", 140d, "INTL_PAPER");
+            upsert(catalogRepository, "BB_TA_HOCVIEN", "Bài báo tiếng Anh Học viện", "Bài/năm", 70d, "INTL_PAPER");
+            upsert(catalogRepository, "BB_TV_HOCVIEN", "Bài báo tiếng Việt (Tạp chí Học viện)", "Bài/năm", 40d, "VN_PAPER");
 
-            upsert(catalogRepository, "VN_ACADEMY", "Bài báo tiếng Việt tạp chí học viện", "bài", 40d, "VN_PAPER");
-            upsert(catalogRepository, "VN_OTHER", "Bài báo tiếng Việt tạp chí khác", "bài", 20d, "VN_PAPER");
+            upsert(catalogRepository, "BTL_FULL_TEXT", "Bài tham luận hội thảo (full text)", "Bài/năm", 25d, "PROCEEDING");
+            upsert(catalogRepository, "TONG_QUAN", "Bài tổng quan lĩnh vực nghiên cứu", "Bài/năm", 10d, "REVIEW_PAPER");
 
-            upsert(catalogRepository, "PROC_INTL", "Bài tham luận kỷ yếu quốc tế (fulltext)", "bài", 25d, "PROCEEDING");
-            upsert(catalogRepository, "PROC_NAT", "Bài tham luận kỷ yếu quốc gia (fulltext)", "bài", 15d, "PROCEEDING");
-            upsert(catalogRepository, "PROC_ACAD", "Bài tham luận kỷ yếu học viện (fulltext)", "bài", 10d, "PROCEEDING");
+            upsert(catalogRepository, "TU_VAN_BAN_TIN", "Tư vấn/Hướng dẫn KT/Bản tin KH&CN", "SP/năm/người", 5d, "TECH_CONSULT");
+            upsert(catalogRepository, "DE_XUAT_BO", "Đề xuất nhiệm vụ cấp Bộ và tương đương", "Đề xuất/năm", 5d, "PROPOSAL");
 
-            upsert(catalogRepository, "REVIEW_PAPER", "Bài tổng quan lĩnh vực nghiên cứu", "bài", 10d, "REVIEW");
-            upsert(catalogRepository, "TECH_CONSULT", "Hoạt động tư vấn / hướng dẫn kỹ thuật", "sản phẩm", 5d, "TECH_CONSULT");
-            upsert(catalogRepository, "TECH_PROCEDURE", "Quy trình kỹ thuật / tiến bộ kỹ thuật", "sản phẩm", 10d, "TECH_PROCEDURE");
-
-            upsert(catalogRepository, "PROPOSAL_NAT", "Đề xuất được đưa vào danh mục tuyển chọn cấp quốc gia", "đề xuất", 10d, "PROPOSAL");
-            upsert(catalogRepository, "PROPOSAL_MINISTRY", "Đề xuất được đưa vào danh mục cấp bộ/tương đương", "đề xuất", 5d, "PROPOSAL");
+            upsert(catalogRepository, "DT_BO_CHUNHIEM", "Đề tài cấp Bộ và tương đương (chủ trì)", "NV/năm", 70d, "PROJECT");
+            upsert(catalogRepository, "HD_SVNCKH", "Hướng dẫn nhóm SV NCKH / Hợp đồng KH&CN", "NV/năm", 15d, "PROJECT");
+            upsert(catalogRepository, "HOI_DONG_TU_VAN", "Hội đồng tư vấn KH định hướng NC", "Hội đồng/năm", 20d, "SERVICE");
+            upsert(catalogRepository, "MOI_CHUYEN_GIA", "Tham dự Seminar/chuyên đề do chuyên gia", "Lần/năm", 15d, "SERVICE");
         };
     }
 

@@ -44,6 +44,34 @@ const PROPOSAL_LEVEL_LABELS = {
   MINISTRY: "Cấp Bộ/Tương đương",
 };
 
+const resolveCatalogCode = (data) => {
+  const activityType = String(data?.activityType || "").toUpperCase();
+
+  switch (activityType) {
+    case "SEMINAR":
+      return "SEMINAR_TRINH_BAY";
+    case "CONFERENCE":
+      return data?.conferenceRole === "ORG" ? "HT_THAM_GIA" : "HT_THAM_LUAN";
+    case "INTL_PAPER":
+      if (data?.intlPaperCategory === "ENG_ACAD") return "BB_TA_HOCVIEN";
+      if (data?.intlPaperCategory === "SCOPUS") return "BB_SCOPUS";
+      return "BB_WOS_SCOPUS";
+    case "VN_PAPER":
+      return "BB_TV_HOCVIEN";
+    case "PROCEEDING":
+      return "BTL_FULL_TEXT";
+    case "REVIEW_PAPER":
+      return "TONG_QUAN";
+    case "TECH_CONSULT":
+    case "TECH_PROCEDURE":
+      return "TU_VAN_BAN_TIN";
+    case "PROPOSAL":
+      return "DE_XUAT_BO";
+    default:
+      return "";
+  }
+};
+
 const getUserList = (raw) => {
   const source =
     raw?.data?.result ||
@@ -266,6 +294,9 @@ export default function DeclarationHeaderForm({
     if (!user?.id) return "Không xác định được người dùng";
     if (!form.title?.trim()) return "Vui lòng nhập tên hoạt động";
     if (!form.activityDate) return "Vui lòng chọn thời gian hoạt động";
+    if (!resolveCatalogCode(form)) {
+      return "Không xác định được tieuChiCode để lưu catalog_code";
+    }
     if (requiresProofFile && !proofFile) {
       return "Hoạt động này bắt buộc có file minh chứng";
     }
@@ -288,6 +319,7 @@ export default function DeclarationHeaderForm({
   const buildPayload = async () => {
     let proofFileUrl = "";
     let proofImageUrl = "";
+    const catalogCode = resolveCatalogCode(form);
 
     if (proofFile) {
       proofFileUrl = await uploadToCloudinary(proofFile, "nckh/proof-files");
@@ -299,6 +331,7 @@ export default function DeclarationHeaderForm({
 
     return {
       academicYear: Number(form.academicYear),
+      catalogCode,
       activityType: form.activityType,
       conferenceRole: form.conferenceRole,
       conferenceLevel: form.conferenceLevel,
