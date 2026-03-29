@@ -27,7 +27,9 @@ export default function ActivityTypeFields({ form, options, onFormChange }) {
           </select>
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-bold text-slate-500">Cấp độ hội thảo</span>
+          <span className="text-xs font-bold text-slate-500">
+            Cấp độ hội thảo
+          </span>
           <select
             value={form.conferenceLevel}
             onChange={(e) => onFormChange("conferenceLevel", e.target.value)}

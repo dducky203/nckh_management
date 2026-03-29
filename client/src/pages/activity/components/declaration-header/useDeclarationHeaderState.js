@@ -110,12 +110,7 @@ export default function useDeclarationHeaderState({
 
       if (userList.length === 0) {
         try {
-          const fallback = await userService.searchUsers(
-            '',
-            "OTHERS",
-            0,
-            200,
-          );
+          const fallback = await userService.searchUsers("", "OTHERS", 0, 200);
           userList = getUserList(fallback);
         } catch {
           userList = [];

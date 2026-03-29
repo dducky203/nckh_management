@@ -17,7 +17,9 @@ export default function ProofFileSection({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-bold text-slate-500">Hình minh chứng</span>
+        <span className="text-xs font-bold text-slate-500">
+          Hình minh chứng
+        </span>
         <input
           type="file"
           accept="image/*"

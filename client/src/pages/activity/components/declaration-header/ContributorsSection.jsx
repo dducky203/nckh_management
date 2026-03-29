@@ -31,7 +31,11 @@ export default function ContributorsSection({
       contributors.forEach((row, idx) => {
         const selected = contributorOptionMap.get(String(row.userId));
         next[idx] =
-          prev[idx] !== undefined ? prev[idx] : selected ? getDisplayName(selected) : "";
+          prev[idx] !== undefined
+            ? prev[idx]
+            : selected
+              ? getDisplayName(selected)
+              : "";
       });
       return next;
     });
@@ -55,7 +59,10 @@ export default function ContributorsSection({
 
   const pickUser = (index, selectedUser) => {
     onContributorChange(index, "userId", String(selectedUser.id));
-    setSearchTerms((prev) => ({ ...prev, [index]: getDisplayName(selectedUser) }));
+    setSearchTerms((prev) => ({
+      ...prev,
+      [index]: getDisplayName(selectedUser),
+    }));
     setOpenIndex(null);
   };
 
@@ -78,7 +85,9 @@ export default function ContributorsSection({
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-3">
       <div className="flex items-center justify-between mb-2">
-        <h4 className="text-xs font-extrabold text-slate-700">Người tham gia</h4>
+        <h4 className="text-xs font-extrabold text-slate-700">
+          Người tham gia
+        </h4>
         <button
           type="button"
           onClick={addContributor}
@@ -111,7 +120,9 @@ export default function ContributorsSection({
               {openIndex === idx && (
                 <div className="absolute z-20 mt-1 w-full rounded-lg border border-slate-200 bg-white shadow-lg max-h-52 overflow-auto">
                   {loadingUsers ? (
-                    <div className="px-3 py-2 text-xs text-slate-500">Đang tìm...</div>
+                    <div className="px-3 py-2 text-xs text-slate-500">
+                      Đang tìm...
+                    </div>
                   ) : getVisibleOptions(idx, row).length === 0 ? (
                     <div className="px-3 py-2 text-xs text-slate-500">
                       Không có người dùng phù hợp
