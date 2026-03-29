@@ -62,7 +62,7 @@ export default function ActivityStandards() {
   const [groupRole, setGroupRole] = useState("member");
   const [values] = useState({});
   const [planLocked, setPlanLocked] = useState(false);
-  const [, setPlanNotSet] = useState(false);
+  const [planNotSet, setPlanNotSet] = useState(false);
   const [planLoading, setPlanLoading] = useState(false);
   const [planSaving, setPlanSaving] = useState(false);
   const [planCriteria, setPlanCriteria] = useState([]);
@@ -93,9 +93,7 @@ export default function ActivityStandards() {
       } catch (e) {
         if (cancelled) return;
         setPlanNotSet(true);
-        toastRef.current?.error(
-          e?.message || "Không thể tải phương án năm học",
-        );
+        toastRef.current?.info("Bạn chưa chọn phương án nào cho năm học này.");
       } finally {
         if (!cancelled) setPlanLoading(false);
       }
@@ -182,7 +180,6 @@ export default function ActivityStandards() {
     [values],
   );
 
-
   const result = useMemo(() => {
     if (criteriaLoading || planCriteria.length === 0) {
       return { checks: [], overallOk: false, requiredHours: null };
@@ -237,8 +234,6 @@ export default function ActivityStandards() {
     };
   }, [criteriaLoading, planCriteria, actualStats]);
 
-  console.log({ result, actualHoursNum: result.actualHours });
-
   const tableCriteria = useMemo(() => {
     const children = [...planCriteria]
       .sort((a, b) => Number(a.sortOrder ?? 0) - Number(b.sortOrder ?? 0))
@@ -268,7 +263,7 @@ export default function ActivityStandards() {
     requiredHoursNum == null ? null : round1(actualHoursNum - requiredHoursNum);
 
   const handleLockPlan = async () => {
-    if (!canManagePlanAndData) return;
+    if (!canManagePlanAndData && !planNotSet) return;
     if (!user?.id) {
       toast.error("Không xác định được người dùng");
       return;
@@ -288,7 +283,8 @@ export default function ActivityStandards() {
     }
   };
 
-  const planSelectDisabled = !canManagePlanAndData || planLocked || planLoading;
+  const canSelectPlan = (canManagePlanAndData || planNotSet) && !planLocked;
+  const planSelectDisabled = !canSelectPlan || planLoading;
   const isApiLoading = planLoading || criteriaLoading || statsLoading;
 
   const PLAN_COMPONENTS = {
@@ -325,9 +321,14 @@ export default function ActivityStandards() {
               <div className="relative flex-grow md:flex-grow-0">
                 <label className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-slate-400 mb-1.5 ml-1">
                   Phương án
-                  {!canManagePlanAndData && (
+                  {/* {!canManagePlanAndData && !planNotSet && (
                     <span className="text-[10px] font-extrabold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">
                       Chỉ xem
+                    </span>
+                  )} */}
+                  {!canManagePlanAndData && planNotSet && !planLocked && (
+                    <span className="text-[10px] font-extrabold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                      Cần chọn
                     </span>
                   )}
                   {planLocked && (
@@ -339,7 +340,7 @@ export default function ActivityStandards() {
                 <select
                   value={plan}
                   onChange={(e) => {
-                    if (!canManagePlanAndData) return;
+                    if (!canSelectPlan) return;
                     setPlan(Number(e.target.value));
                   }}
                   disabled={planSelectDisabled}
@@ -393,7 +394,7 @@ export default function ActivityStandards() {
                 </div>
               )}
 
-              {canManagePlanAndData && !planLocked && (
+              {(canManagePlanAndData || planNotSet) && !planLocked && (
                 <div>
                   <button
                     type="button"
@@ -402,7 +403,7 @@ export default function ActivityStandards() {
                     className="h-[42px] px-5 rounded-xl text-xs font-extrabold border shadow-sm transition-all bg-mainColor text-white border-mainColor hover:brightness-110 hover:shadow-md"
                     title="Khóa phương án để áp dụng cho năm"
                   >
-                    {planSaving ? "Đang khóa..." : `Khóa PA${plan}`}
+                    {planSaving ? "Đang khóa..." : `Chốt PA${plan}`}
                   </button>
                 </div>
               )}
@@ -534,7 +535,7 @@ export default function ActivityStandards() {
             <div className="hidden md:block h-8 w-px bg-slate-200"></div>
             <div>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                Kết quả 
+                Kết quả
               </p>
               <div
                 className={`flex items-center gap-2 text-sm font-black ${result.overallOk ? "text-emerald-600" : "text-rose-600"}`}

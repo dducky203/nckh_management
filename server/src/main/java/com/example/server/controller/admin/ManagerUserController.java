@@ -34,29 +34,22 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/dashboard/manage-users")
 public class ManagerUserController {
-    @Autowired
-    TitleRepository titleRepository;
-    @Autowired
-    UserRepository userRepository;
-    @Autowired
-    ResumeRepository resumeRepository;
-    @Autowired
-    RoleRepository roleRepository;
-    @Autowired
-    EmailController emailController;
-    @Autowired
-    TypeOfCriterionRepository typeOfCriterionRepository;
 
-    @Autowired
-    GroupRepository groupRepository;
-    @Autowired
-    private UserMapper userMapper;
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private EmailService emailService;
-    @Autowired
-    private ExcelService excelService;
+    private final UserRepository userRepository;
+    private final EmailController emailController;
+    private final UserMapper userMapper;
+    private final UserService userService;
+    private final EmailService emailService;
+    private final ExcelService excelService;
+
+    public ManagerUserController(UserRepository userRepository, EmailController emailController, TypeOfCriterionRepository typeOfCriterionRepository, GroupRepository groupRepository, UserMapper userMapper, UserService userService, EmailService emailService, ExcelService excelService) {
+        this.userRepository = userRepository;
+        this.emailController = emailController;
+        this.userMapper = userMapper;
+        this.userService = userService;
+        this.emailService = emailService;
+        this.excelService = excelService;
+    }
 
     @GetMapping("/get-all-user")
     @ResponseBody

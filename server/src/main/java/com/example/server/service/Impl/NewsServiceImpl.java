@@ -19,8 +19,13 @@ import java.util.stream.Collectors;
 @Service
 public class NewsServiceImpl implements NewsService {
 
-    private NewsRepository newsRepository;
-    private UserRepository userRepository;
+    private final NewsRepository newsRepository;
+    private final UserRepository userRepository;
+
+    public NewsServiceImpl(NewsRepository newsRepository, UserRepository userRepository) {
+        this.newsRepository = newsRepository;
+        this.userRepository = userRepository;
+    }
 
 
     @Override

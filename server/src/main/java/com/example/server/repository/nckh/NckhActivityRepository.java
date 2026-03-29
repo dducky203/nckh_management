@@ -30,6 +30,7 @@ public interface NckhActivityRepository extends JpaRepository<NckhActivity, Long
             "AND a.academic_year = :academicYear " +
             "AND cat.phuong_an = :phuongAn " +
             "AND cat.chuc_danh = :chucDanh " +
+            "AND a.status = 'APPROVED' " +
             "GROUP BY a.catalog_code, cat.tieu_chi_name, cat.don_vi_tinh, cat.phuong_an, cat.chuc_danh " +
             "ORDER BY a.catalog_code",
             nativeQuery = true)

@@ -1,5 +1,6 @@
 package com.example.server.service;
 
+import com.example.server.DTO.SuccessResponseDTO;
 import com.example.server.DTO.users.UserDTO;
 import com.example.server.DTO.users.UserDetailsDTO;
 import com.example.server.DTO.users.UserRequest;
@@ -392,7 +393,7 @@ public class UserService implements UserDetailsService {
         response.put("totalPages", userPage.getTotalPages());
         response.put("currentPage", page);
 
-        return org.springframework.http.ResponseEntity.ok(
-                new com.example.server.DTO.SuccessResponseDTO<>(response, "Tìm kiếm người dùng thành công."));
+        return ResponseEntity.ok(
+                new SuccessResponseDTO<>(response, "Tìm kiếm người dùng thành công."));
     }
 }
