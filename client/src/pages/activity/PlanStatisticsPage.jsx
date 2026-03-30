@@ -13,6 +13,9 @@ import { useToast } from "../../context/ToastContext";
 import nckhPlanService from "../../services/nckhPlanService";
 import { PLAN_OPTIONS } from "../../utils/data.js";
 import { downloadFileFromResponse } from "../../utils/helpers";
+import Pagination from "../../components/common/Pagination";
+
+const ITEMS_PER_PAGE = 20;
 
 export default function PlanStatisticsPage() {
   const toast = useToast();
@@ -28,6 +31,7 @@ export default function PlanStatisticsPage() {
   });
   const [planStatsLoading, setPlanStatsLoading] = useState(false);
   const [exportingPlanStats, setExportingPlanStats] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
 
   useEffect(() => {
     toastRef.current = toast;
@@ -60,6 +64,10 @@ export default function PlanStatisticsPage() {
     return () => {
       cancelled = true;
     };
+  }, [reportYear]);
+
+  useEffect(() => {
+    setCurrentPage(0);
   }, [reportYear]);
 
   const planLabelById = useMemo(() => {
@@ -97,6 +105,81 @@ export default function PlanStatisticsPage() {
     () => pieData.reduce((sum, item) => sum + item.value, 0),
     [pieData],
   );
+
+  const totalItems = planStatsRows.length;
+  const totalPages = totalItems === 0 ? 0 : Math.ceil(totalItems / ITEMS_PER_PAGE);
+  const startIndex = currentPage * ITEMS_PER_PAGE;
+
+  const paginatedRows = useMemo(() => {
+    return planStatsRows.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [planStatsRows, startIndex]);
+
+  const endIndex = Math.min(startIndex + paginatedRows.length, totalItems);
+
+  useEffect(() => {
+    if (totalPages === 0) {
+      if (currentPage !== 0) setCurrentPage(0);
+      return;
+    }
+    if (currentPage > totalPages - 1) {
+      setCurrentPage(totalPages - 1);
+    }
+  }, [currentPage, totalPages]);
+
+  const goToPage = (page) => {
+    setCurrentPage(page - 1);
+   
+  };
+
+  const goToFirstPage = () => {
+    setCurrentPage(0);
+  
+  };
+
+  const goToLastPage = () => {
+    if (totalPages <= 0) return;
+    setCurrentPage(totalPages - 1);
+   
+  };
+
+  const goToPreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 0));
+   
+  };
+
+  const goToNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, Math.max(totalPages - 1, 0)));
+
+  };
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const delta = 2;
+    const displayCurrentPage = currentPage + 1;
+
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+      return pages;
+    }
+
+    pages.push(1);
+    let start = Math.max(2, displayCurrentPage - delta);
+    let end = Math.min(totalPages - 1, displayCurrentPage + delta);
+
+    if (displayCurrentPage <= delta + 2) {
+      end = Math.min(5, totalPages - 1);
+    }
+    if (displayCurrentPage >= totalPages - delta - 1) {
+      start = Math.max(totalPages - 4, 2);
+    }
+
+    if (start > 2) pages.push("...");
+    for (let i = start; i <= end; i++) pages.push(i);
+    if (end < totalPages - 1) pages.push("...");
+    pages.push(totalPages);
+
+    return pages;
+  };
 
   const handleExportPlanStatistics = async () => {
     try {
@@ -286,7 +369,7 @@ export default function PlanStatisticsPage() {
                     </td>
                   </tr>
                 ) : (
-                  planStatsRows.map((row) => (
+                  paginatedRows.map((row) => (
                     <tr key={row.userId} className="odd:bg-white even:bg-slate-50/50">
                       <td className="px-3 py-2 border-b border-slate-100 text-center">
                         {row.stt}
@@ -326,6 +409,27 @@ export default function PlanStatisticsPage() {
               </tbody>
             </table>
           </div>
+
+          {!planStatsLoading && totalItems > 0 && (
+            <div className="mt-3 w-full bg-white rounded-md justify-center sm:justify-end">
+                <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                itemsPerPage={ITEMS_PER_PAGE}
+                startIndex={startIndex}
+                endIndex={endIndex}
+                onPageChange={goToPage}
+                onFirstPage={goToFirstPage}
+                onLastPage={goToLastPage}
+                onPreviousPage={goToPreviousPage}
+                onNextPage={goToNextPage}
+                getPageNumbers={getPageNumbers}
+                itemName="cán bộ"
+                className="px-0"
+                />
+            </div>
+          )}
         </section>
       </div>
     </div>
