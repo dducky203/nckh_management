@@ -19,88 +19,21 @@ import { useAuth } from "../../../context/useAuth";
 import { useToast } from "../../../context/ToastContext";
 import nckhActivityService from "../../../services/nckhActivityService";
 import DeclarationHeaderForm from "./DeclarationHeaderForm";
+import {
+  TYPE_META,
+  STATUS_META,
+  STATUS_TABS,
+  canEdit,
+  resolveActivityType,
+  formatDateValue,
+  formatDateTimeValue,
+  parseDetailsJson,
+  prettifyKey,
+  prettifyDetailValue,
+} from "../../../constants/activityConstants";
+import userService from "../../../services/userService";
 
-// ─── Constants ───────────────────────────────────────────────────────────────
 
-const TYPE_META = {
-  SEMINAR: { label: "Seminar", color: "bg-blue-600 text-white" },
-  CONFERENCE: { label: "Hội thảo", color: "bg-green-600 text-white" },
-  INTL_PAPER: { label: "Bài báo Quốc tế", color: "bg-purple-600 text-white" },
-  VN_PAPER: { label: "Bài báo Tiếng Việt", color: "bg-orange-600 text-white" },
-  PROCEEDING: {
-    label: "Bài tham luận kỷ yếu",
-    color: "bg-indigo-600 text-white",
-  },
-  REVIEW_PAPER: {
-    label: "Bài tổng quan lĩnh vực",
-    color: "bg-teal-600 text-white",
-  },
-  TECH_CONSULT: { label: "Tư vấn kỹ thuật", color: "bg-amber-600 text-white" },
-  TECH_PROCEDURE: {
-    label: "Quy trình kỹ thuật",
-    color: "bg-cyan-600 text-white",
-  },
-  PROPOSAL: { label: "Đề xuất tuyển chọn", color: "bg-pink-600 text-white" },
-};
-
-const STATUS_META = {
-  DRAFT: { label: "Nháp", cls: "bg-gray-100 text-gray-700" },
-  SUBMITTED: { label: "Chờ duyệt", cls: "bg-yellow-100 text-yellow-800" },
-  APPROVED: { label: "Đã duyệt", cls: "bg-green-100 text-green-800" },
-  REJECTED: { label: "Từ chối", cls: "bg-red-100 text-red-800" },
-};
-
-const canEdit = (status) => status === "DRAFT" || status === "REJECTED";
-
-const STATUS_TABS = [
-  {
-    value: "ALL",
-    label: "Tất cả",
-    icon: null,
-    activeText: "text-mainColor",
-    activeBorder: "border-mainColor",
-    activeBg: "bg-blue-50",
-    badgeBg: "bg-mainColor",
-  },
-  {
-    value: "DRAFT",
-    label: "Nháp",
-    icon: null,
-    activeText: "text-gray-700",
-    activeBorder: "border-gray-500",
-    activeBg: "bg-gray-50",
-    badgeBg: "bg-gray-500",
-  },
-  {
-    value: "SUBMITTED",
-    label: "Chờ duyệt",
-    icon: null,
-    activeText: "text-yellow-700",
-    activeBorder: "border-yellow-500",
-    activeBg: "bg-yellow-50",
-    badgeBg: "bg-yellow-500",
-  },
-  {
-    value: "APPROVED",
-    label: "Đã duyệt",
-    icon: null,
-    activeText: "text-green-700",
-    activeBorder: "border-green-600",
-    activeBg: "bg-green-50",
-    badgeBg: "bg-green-600",
-  },
-  {
-    value: "REJECTED",
-    label: "Từ chối",
-    icon: null,
-    activeText: "text-red-600",
-    activeBorder: "border-red-500",
-    activeBg: "bg-red-50",
-    badgeBg: "bg-red-500",
-  },
-];
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function StatusBadge({ status }) {
   const s = STATUS_META[status] || {
@@ -117,7 +50,7 @@ function StatusBadge({ status }) {
 }
 
 function TypeBadge({ type }) {
-  const t = TYPE_META[type] || { label: type, color: "bg-gray-600 text-white" };
+  const t = TYPE_META[type] || { label: type || "Chưa phân loại", color: "bg-gray-600 text-white" };
   return (
     <span
       className={`inline-block text-xs font-medium px-3 py-1 rounded ${t.color}`}
@@ -129,6 +62,7 @@ function TypeBadge({ type }) {
 
 function ActivityCard({ item, onViewDetail, onEdit, onDelete }) {
   const editable = canEdit(item.status);
+  const resolvedType = resolveActivityType(item);
 
   return (
     <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all overflow-hidden group flex flex-col">
@@ -140,7 +74,7 @@ function ActivityCard({ item, onViewDetail, onEdit, onDelete }) {
       <div className="p-5 flex-1 flex flex-col">
         {/* Badges */}
         <div className="flex items-center gap-2 mb-3 flex-wrap">
-          <TypeBadge type={item.activityType} />
+          <TypeBadge type={resolvedType} />
           <StatusBadge status={item.status} />
         </div>
 
@@ -228,34 +162,114 @@ function DetailModal({
 }) {
   if (!item) return null;
 
+  const resolvedType = resolveActivityType(item);
+  const parsedDetails = parseDetailsJson(item.detailsJson);
+  const memberIds = String(item.memberUserIds || "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+  const hasProof = Boolean(item.proofFileUrl || item.proofImageUrl);
+
+  const summaryMetrics = [
+    {
+      label: "Năm học",
+      value: item.academicYear || "-",
+      icon: <CalendarToday sx={{ fontSize: 15 }} className="text-blue-500" />,
+    },
+    {
+      label: "Ngày hoạt động",
+      value: formatDateValue(item.activityDate),
+      icon: <CalendarToday sx={{ fontSize: 15 }} className="text-blue-500" />,
+    },
+    {
+      label: "Số lượng",
+      value:
+        item.qty == null
+          ? "-"
+          : Number(item.qty).toLocaleString("vi-VN", {
+              maximumFractionDigits: 2,
+            }),
+      icon: <Badge sx={{ fontSize: 15 }} className="text-indigo-500" />,
+    },
+    {
+      label: "Mã danh mục",
+      value: item.catalogCode || "-",
+      icon: <Article sx={{ fontSize: 15 }} className="text-violet-500" />,
+    },
+    {
+      label: "Định mức (snapshot)",
+      value:
+        item.quotaHoursSnapshot == null
+          ? "-"
+          : `${Number(item.quotaHoursSnapshot).toLocaleString("vi-VN", {
+              maximumFractionDigits: 2,
+            })} giờ`,
+      icon: <Badge sx={{ fontSize: 15 }} className="text-amber-500" />,
+    },
+    {
+      label: "Mã khai báo",
+      value: `#${item.id}`,
+      icon: <Badge sx={{ fontSize: 15 }} className="text-slate-500" />,
+    },
+  ];
+
+
+  const getUser = (id) =>  userService.getUserById(id).then(res => res?.data || res).catch(() => null);
+  
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-slate-900/55 backdrop-blur-[2px] flex items-center justify-center p-4 z-50">
+      <div className="bg-slate-50 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 sticky top-0 bg-white z-10">
-          <h2 className="text-lg font-bold text-gray-800">Chi tiết khai báo</h2>
+        <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-slate-200 sticky top-0 bg-gradient-to-r from-mainColor to-[#154c6e] z-10 text-white">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-white/70 mb-1">
+              Chi tiết khai báo
+            </p>
+            <h2 className="text-xl font-bold leading-snug">{item.title}</h2>
+            <p className="text-sm text-white/80 mt-1">
+              Theo dõi tình trạng, thông tin chuyên môn và minh chứng của khai
+              báo.
+            </p>
+          </div>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors"
           >
             <Close />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-5">
-          {/* Badges + Title */}
-          <div>
+        <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-slate-50">
+          {/* Badges + summary line */}
+          <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
             <div className="flex flex-wrap items-center gap-2 mb-3">
-              <TypeBadge type={item.activityType} />
+              <TypeBadge type={resolvedType} />
               <StatusBadge status={item.status} />
+              {canEdit(item.status) && (
+                <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
+                  Có thể chỉnh sửa
+                </span>
+              )}
             </div>
-            <h1 className="text-xl font-bold text-gray-900">{item.title}</h1>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {summaryMetrics.map((meta) => (
+                <InfoBlock
+                  key={meta.label}
+                  icon={meta.icon}
+                  label={meta.label}
+                  value={meta.value}
+                />
+              ))}
+            </div>
           </div>
 
-          {/* Info grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-100">
-            {item.academicYear && (
+          {/* Core information */}
+          <section className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+            <h3 className="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide">
+              Thông tin hoạt động
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <InfoBlock
                 icon={
                   <CalendarToday
@@ -264,10 +278,8 @@ function DetailModal({
                   />
                 }
                 label="Năm học"
-                value={item.academicYear}
+                value={item.academicYear || "-"}
               />
-            )}
-            {item.activityDate && (
               <InfoBlock
                 icon={
                   <CalendarToday
@@ -276,86 +288,124 @@ function DetailModal({
                   />
                 }
                 label="Ngày hoạt động"
-                value={item.activityDate}
+                value={formatDateValue(item.activityDate)}
               />
-            )}
-            {item.venue && (
               <InfoBlock
                 icon={
                   <LocationOn sx={{ fontSize: 16 }} className="text-red-500" />
                 }
                 label="Địa điểm / Đơn vị"
-                value={item.venue}
+                value={item.venue || "-"}
               />
-            )}
-            {item.publicationName && (
               <InfoBlock
                 icon={
                   <Article sx={{ fontSize: 16 }} className="text-purple-500" />
                 }
                 label="Tạp chí / Nơi công bố"
-                value={item.publicationName}
+                value={item.publicationName || "-"}
               />
-            )}
-            {item.identifierCode && (
               <InfoBlock
                 icon={
                   <Badge sx={{ fontSize: 16 }} className="text-amber-500" />
                 }
                 label="ISSN / DOI / ISBN"
-                value={item.identifierCode}
+                value={item.identifierCode || "-"}
               />
-            )}
-            {item.externalLink && (
+              <InfoBlock
+                icon={
+                  <Badge sx={{ fontSize: 16 }} className="text-slate-500" />
+                }
+                label="Người tạo"
+                value={
+                  item.createdByUserId ? `User #${item.createdByUserId}` : "-"
+                }
+              />
+              <InfoBlock
+                icon={
+                  <Badge sx={{ fontSize: 16 }} className="text-slate-500" />
+                }
+                label="Tác giả chính"
+                value={
+                  item.mainAuthorUserId ? `User #${item.mainAuthorUserId}` : "-"
+                }
+              />
+              <InfoBlock
+                icon={
+                  <CalendarToday
+                    sx={{ fontSize: 16 }}
+                    className="text-emerald-500"
+                  />
+                }
+                label="Thời gian duyệt"
+                value={formatDateTimeValue(item.approvedAt)}
+              />
+              <InfoBlock
+                icon={
+                  <Badge sx={{ fontSize: 16 }} className="text-emerald-500" />
+                }
+                label="Người duyệt"
+                value={
+                  item.approvedByUserId ? `User #${item.approvedByUserId}` : "-"
+                }
+              />
+
+            
+            </div>
+
+            <div className="mt-4 border-t border-slate-200 pt-4">
               <div className="flex gap-2 items-start">
                 <LinkIcon
                   sx={{ fontSize: 16 }}
                   className="text-green-500 mt-0.5 flex-shrink-0"
                 />
                 <div>
-                  <p className="text-[11px] font-bold text-gray-400 uppercase mb-0.5">
+                  <p className="text-[11px] font-bold text-slate-400 uppercase mb-0.5">
                     Link minh chứng
                   </p>
-                  <a
-                    href={item.externalLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-sm text-blue-600 underline break-all"
-                  >
-                    {item.externalLink}
-                  </a>
+                  {item.externalLink ? (
+                    <a
+                      href={item.externalLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm text-blue-600 underline break-all"
+                    >
+                      {item.externalLink}
+                    </a>
+                  ) : (
+                    <p className="text-sm text-slate-500">-</p>
+                  )}
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          </section>
 
           {/* Description */}
           {item.description && (
-            <div>
-              <h3 className="text-sm font-bold text-gray-700 border-l-4 border-mainColor pl-3 mb-2">
+            <section className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-700 border-l-4 border-mainColor pl-3 mb-2">
                 Mô tả
               </h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
                 {item.description}
               </p>
-            </div>
+            </section>
           )}
 
           {/* Proof files */}
-          {(item.proofFileUrl || item.proofImageUrl) && (
-            <div>
-              <h3 className="text-sm font-bold text-gray-700 border-l-4 border-mainColor pl-3 mb-2">
-                Minh chứng
-              </h3>
+          <section className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+            <h3 className="text-sm font-bold text-slate-700 border-l-4 border-mainColor pl-3 mb-3">
+              Minh chứng
+            </h3>
+            {hasProof ? (
               <div className="flex gap-3 flex-wrap">
                 {item.proofFileUrl && (
                   <a
                     href={item.proofFileUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-sm text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+                    className="inline-flex items-center gap-2 text-sm text-blue-700 border border-blue-200 bg-blue-50 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors"
                   >
-                    <Article sx={{ fontSize: 14 }} /> Tải file
+                    <Article sx={{ fontSize: 14 }} /> Tải file minh chứng
                   </a>
                 )}
                 {item.proofImageUrl && (
@@ -363,37 +413,120 @@ function DetailModal({
                     href={item.proofImageUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-sm text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+                    className="inline-flex items-center gap-2 text-sm text-blue-700 border border-blue-200 bg-blue-50 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors"
                   >
-                    Xem ảnh
+                    <Article sx={{ fontSize: 14 }} /> Xem ảnh minh chứng
                   </a>
                 )}
               </div>
+            ) : (
+              <p className="text-sm text-slate-500 italic">Chưa có minh chứng.</p>
+            )}
+          </section>
+
+          {/* System + expanded data */}
+          <section className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+            <h3 className="text-sm font-bold text-slate-700 border-l-4 border-mainColor pl-3 mb-3">
+              Dữ liệu khai báo mở rộng
+            </h3>
+
+            {(parsedDetails.entries.length > 0 || parsedDetails.raw) && (
+              <div className="space-y-3">
+                {parsedDetails.entries.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {parsedDetails.entries.map(([key, value]) => (
+                      <div
+                        key={String(key)}
+                        className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+                      >
+                        <p className="text-[11px] font-bold text-slate-400 uppercase mb-1">
+                          {prettifyKey(key)}
+                        </p>
+                        <p className="text-sm text-slate-700 break-words">
+                          {prettifyDetailValue(key, value)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                    <p className="text-xs font-semibold text-amber-700 mb-1">
+                      Chi tiết mở rộng không đúng JSON chuẩn
+                    </p>
+                    <p className="text-sm text-slate-700 break-words">
+                      {parsedDetails.raw}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!parsedDetails.entries.length && !parsedDetails.raw && (
+              <p className="text-sm text-slate-500 italic">
+                Không có dữ liệu mở rộng.
+              </p>
+            )}
+
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                <p className="text-[11px] font-bold text-slate-400 uppercase mb-1">
+                  Danh sách thành viên theo ID
+                </p>
+                {memberIds.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {memberIds.map((id) => (
+                      <span
+                        key={id}
+                        className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white border border-slate-300 text-slate-600"
+                      >
+                        User #{id}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-600">-</p>
+                )}
+              </div>
+
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                <p className="text-[11px] font-bold text-slate-400 uppercase mb-1">
+                  Trạng thái bản ghi
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusBadge status={item.status} />
+                  <span className="text-sm text-slate-600">
+                    Cập nhật gần nhất: {formatDateTimeValue(item.updatedAt)}
+                  </span>
+                </div>
+              </div>
             </div>
-          )}
+          </section>
 
           {/* Contributors */}
-          <div>
-            <h3 className="text-sm font-bold text-gray-700 border-l-4 border-mainColor pl-3 mb-2 flex items-center gap-2">
+          <section className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+            <h3 className="text-sm font-bold text-slate-700 border-l-4 border-mainColor pl-3 mb-3 flex items-center gap-2">
               <People sx={{ fontSize: 16 }} />
               Người tham gia
             </h3>
             {loadingContributors ? (
-              <p className="text-sm text-gray-400">Đang tải...</p>
+              <p className="text-sm text-slate-400">Đang tải...</p>
             ) : contributors.length === 0 ? (
-              <p className="text-sm text-gray-400 italic">Không có thông tin</p>
+              <p className="text-sm text-slate-400 italic">Không có thông tin</p>
             ) : (
               <div className="space-y-2">
                 {contributors.map((c, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-3 py-2"
+                    className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-3 py-2"
                   >
-                    <span className="text-sm text-gray-700">
-                      {c.userName || c.name || `User #${c.userId}`}
-                    </span>
+                    <div>
+                      <span className="text-sm text-slate-700 font-medium">
+                        {c.userName || c.name || `User #${c.userId}`}
+                      </span>
+                      
+                    </div>
                     <span
-                      className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                      className={`text-xs font-semibold px-2 py-1 rounded-md ${
                         c.role === "MAIN"
                           ? "bg-blue-100 text-blue-700"
                           : "bg-gray-100 text-gray-600"
@@ -405,18 +538,18 @@ function DetailModal({
                 ))}
               </div>
             )}
-          </div>
+          </section>
         </div>
 
         {/* Modal Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center sticky bottom-0">
-          <span className="text-xs text-gray-400 hidden sm:block">
-            ID: #{item.id}
+        <div className="px-6 py-4 border-t border-slate-200 bg-white flex justify-between items-center sticky bottom-0">
+          <span className="text-xs text-slate-500 hidden sm:block">
+            Mã khai báo: #{item.id}
           </span>
           <div className="flex gap-3 ml-auto">
             <button
               onClick={onClose}
-              className="px-5 py-2 rounded-lg text-gray-700 font-medium bg-white border border-gray-300 hover:bg-gray-100 transition-colors text-sm"
+              className="px-5 py-2 rounded-lg text-slate-700 font-medium bg-white border border-slate-300 hover:bg-slate-100 transition-colors text-sm"
             >
               Đóng
             </button>
@@ -441,13 +574,13 @@ function DetailModal({
 
 function InfoBlock({ icon, label, value }) {
   return (
-    <div className="flex gap-2 items-start">
+    <div className="flex gap-2 items-start rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
       <span className="mt-0.5 flex-shrink-0">{icon}</span>
       <div>
-        <p className="text-[11px] font-bold text-gray-400 uppercase mb-0.5">
+        <p className="text-[11px] font-bold text-slate-400 uppercase mb-0.5">
           {label}
         </p>
-        <p className="text-sm text-gray-700">{value}</p>
+        <p className="text-sm text-slate-700 break-words">{value || "-"}</p>
       </div>
     </div>
   );

@@ -1,28 +1,20 @@
 package com.example.server.service.nckh;
 
-import com.example.server.DTO.nckh.CreateActivityRequest;
-import com.example.server.DTO.nckh.ContributorItem;
 import com.example.server.DTO.nckh.ActivityStatisticsResponse;
+import com.example.server.DTO.nckh.ContributorItem;
+import com.example.server.DTO.nckh.CreateActivityRequest;
+import com.example.server.domain.User;
 import com.example.server.domain.nckh.NckhActivity;
 import com.example.server.domain.nckh.NckhActivityCatalog;
 import com.example.server.domain.nckh.NckhActivityContributor;
-import com.example.server.domain.nckh.NckhTieuChiDinhMuc;
 import com.example.server.domain.nckh.UserPlanYear;
-import com.example.server.domain.User;
-import com.example.server.repository.nckh.NckhActivityCatalogRepository;
-import com.example.server.repository.nckh.NckhActivityContributorRepository;
-import com.example.server.repository.nckh.NckhActivityRepository;
-import com.example.server.repository.nckh.NckhTieuChiDinhMucRepository;
-import com.example.server.repository.nckh.UserPlanYearRepository;
 import com.example.server.repository.UserRepository;
+import com.example.server.repository.nckh.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,7 +25,6 @@ public class NckhActivityService {
     private final NckhActivityContributorRepository contribRepo;
     private final NckhComputeService computeService;
     private final UserPlanYearRepository planYearRepo;
-    private final NckhTieuChiDinhMucRepository dinhMucRepo;
     private final UserRepository userRepo;
 
     public NckhActivityService(
@@ -49,7 +40,6 @@ public class NckhActivityService {
         this.contribRepo = contribRepo;
         this.computeService = computeService;
         this.planYearRepo = planYearRepo;
-        this.dinhMucRepo = dinhMucRepo;
         this.userRepo = userRepo;
     }
 
@@ -184,7 +174,32 @@ public class NckhActivityService {
     }
 
     public List<NckhActivityContributor> getContributors(Long activityId) {
-        return contribRepo.findByActivityId(activityId);
+        List<NckhActivityContributor> contributors = contribRepo.findByActivityId(activityId);
+        if (contributors.isEmpty()) {
+            return contributors;
+        }
+
+        List<Integer> userIds = contributors.stream()
+                .map(NckhActivityContributor::getUserId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        if (userIds.isEmpty()) {
+            return contributors;
+        }
+
+        Map<Integer, String> userNameById = userRepo.findAllById(userIds).stream()
+                .collect(Collectors.toMap(
+                        User::getId,
+                        u -> (u.getName() == null || u.getName().trim().isEmpty()) ? u.getUsername() : u.getName(),
+                        (left, right) -> left));
+
+        for (NckhActivityContributor contributor : contributors) {
+            contributor.setUserName(userNameById.get(contributor.getUserId()));
+        }
+
+        return contributors;
     }
 
     public List<NckhActivity> listMy(Integer userId, Integer year, String activityType, String status) {

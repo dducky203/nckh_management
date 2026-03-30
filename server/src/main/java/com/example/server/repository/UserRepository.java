@@ -1,6 +1,5 @@
 package com.example.server.repository;
 
-import com.example.server.domain.Title;
 import com.example.server.domain.User;
 import com.example.server.utils.SQL;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +19,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
         // Phân trang và sắp xếp
         @NotNull
-        Page<User> findAll(Pageable pageable);
+        Page<User> findAll(@NotNull Pageable pageable);
 
         // find by id
         @Query(value = SQL.FIND_USER_BY_ID, nativeQuery = true)
@@ -94,5 +93,11 @@ public interface UserRepository extends JpaRepository<User, Integer> {
                     @Param("keyword") String keyword,
                     @Param("mode") String mode,
                     Pageable pageable);
+
+    @Query("SELECT u FROM User u LEFT JOIN u.idTitle t WHERE " +
+            "(u.isDeleted = false OR u.isDeleted IS NULL) AND " +
+            "(t IS NULL OR t.name <> 'Sinh viên') " +
+            "ORDER BY u.name ASC, u.username ASC")
+    List<User> findUsersForPlanStatistics();
 
 }

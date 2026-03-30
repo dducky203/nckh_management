@@ -1,4 +1,7 @@
 // Application constants
+// Activity Declaration constants
+export * from "./activityConstants.js";
+
 export const API_BASE_URL = import.meta.env.VITE_API_URL;
 export const BASE_IMG_URL = `${API_BASE_URL}/file/`;
 export const JWT_EXPIRATION_DAYS =

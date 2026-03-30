@@ -14,6 +14,19 @@ const nckhPlanService = {
       { params: { userId } },
     );
   },
+
+  getPlanStatistics: async (year) => {
+    return await api.get("/nckh/plan/statistics", {
+      params: { year },
+    });
+  },
+
+  exportPlanStatisticsExcel: async (year) => {
+    return await api.get("/nckh/plan/statistics/export-excel", {
+      params: { year },
+      responseType: "blob",
+    });
+  },
 };
 
 export default nckhPlanService;

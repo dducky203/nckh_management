@@ -11,30 +11,11 @@ import { useAuth } from "../../context/useAuth";
 import { useToast } from "../../context/ToastContext";
 import nckhActivityService from "../../services/nckhActivityService";
 import userService from "../../services/userService";
-
-// ─── Constants ───────────────────────────────────────────────────────────────
-
-const TYPE_META = {
-  SEMINAR: { label: "Seminar", color: "bg-blue-600 text-white" },
-  CONFERENCE: { label: "Hội thảo", color: "bg-green-600 text-white" },
-  INTL_PAPER: { label: "Bài báo Quốc tế", color: "bg-purple-600 text-white" },
-  VN_PAPER: { label: "Bài báo Tiếng Việt", color: "bg-orange-600 text-white" },
-  PROCEEDING: {
-    label: "Bài tham luận kỷ yếu",
-    color: "bg-indigo-600 text-white",
-  },
-  REVIEW_PAPER: { label: "Bài tổng quan", color: "bg-teal-600 text-white" },
-  TECH_CONSULT: { label: "Tư vấn kỹ thuật", color: "bg-amber-600 text-white" },
-  TECH_PROCEDURE: {
-    label: "Quy trình kỹ thuật",
-    color: "bg-cyan-600 text-white",
-  },
-  PROPOSAL: { label: "Đề xuất tuyển chọn", color: "bg-pink-600 text-white" },
-};
-
-const ALL_TYPES = Object.keys(TYPE_META);
+import { TYPE_META } from "../../constants/activityConstants";
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
+
+const ALL_TYPES = Object.keys(TYPE_META);
 
 function TypeBadge({ type }) {
   const t = TYPE_META[type] || { label: type, color: "bg-gray-600 text-white" };

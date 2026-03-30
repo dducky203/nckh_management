@@ -17,6 +17,7 @@ import {
   KeyboardArrowDown,
   Login,
   Group,
+  KeyboardArrowRight,
 } from "@mui/icons-material";
 
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../constants";
@@ -35,8 +36,10 @@ const Header = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [showNckhAdminSubmenu, setShowNckhAdminSubmenu] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const userMenuRef = useRef(null);
 
   const navigation = [
     { name: "Trang chủ", href: "/", icon: Home },
@@ -49,9 +52,17 @@ const Header = () => {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setActiveDropdown(null);
+      const clickedInsideDesktopNav =
+        dropdownRef.current && dropdownRef.current.contains(event.target);
+      const clickedInsideUserMenu =
+        userMenuRef.current && userMenuRef.current.contains(event.target);
+
+      if (clickedInsideDesktopNav || clickedInsideUserMenu) {
+        return;
       }
+
+      setActiveDropdown(null);
+      setShowNckhAdminSubmenu(false);
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -65,13 +76,22 @@ const Header = () => {
   const userIsAdmin = isAdmin(user);
 
   const toggleDropdown = (dropdownName) => {
-    setActiveDropdown(activeDropdown === dropdownName ? null : dropdownName);
+    const nextDropdown = activeDropdown === dropdownName ? null : dropdownName;
+    setActiveDropdown(nextDropdown);
+    if (nextDropdown !== "user-menu") {
+      setShowNckhAdminSubmenu(false);
+    }
+  };
+
+  const closeUserMenu = () => {
+    setActiveDropdown(null);
+    setShowNckhAdminSubmenu(false);
   };
 
   const handleLogout = async () => {
     try {
       await logout(); // Gọi hàm logout từ AuthContext - sẽ xóa cookie
-      setActiveDropdown(null);
+      closeUserMenu();
       navigate("/login"); // Chuyển hướng về trang đăng nhập
       toast.success(SUCCESS_MESSAGES.LOGOUT);
     } catch (error) {
@@ -108,7 +128,7 @@ const Header = () => {
             {/* User Actions - Desktop Login Button with Purple Theme */}
             <div className="hidden  md:flex items-center">
               {user ? (
-                <div className="relative">
+                <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => toggleDropdown("user-menu")}
                     className="flex items-center space-x-2 text-white hover:text-blue-200 transition-colors px-2 py-1.5 rounded-md"
@@ -156,7 +176,7 @@ const Header = () => {
                       <Link
                         to="/profile"
                         className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                        onClick={() => setActiveDropdown(null)}
+                        onClick={closeUserMenu}
                       >
                         <AccountCircle className="w-4 h-4 mr-2 text-gray-400" />
                         <span>Hồ sơ</span>
@@ -166,7 +186,7 @@ const Header = () => {
                         <Link
                           to="/events/manage"
                           className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                          onClick={() => setActiveDropdown(null)}
+                          onClick={closeUserMenu}
                         >
                           <EventNote className="w-4 h-4 mr-2 text-gray-400" />
                           <span>Quản lý sự kiện</span>
@@ -177,7 +197,7 @@ const Header = () => {
                         <Link
                           to="/user/manager"
                           className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                          onClick={() => setActiveDropdown(null)}
+                          onClick={closeUserMenu}
                         >
                           <People className="w-4 h-4 mr-2 text-gray-400" />
                           <span>Quản lý nhân sự</span>
@@ -185,21 +205,58 @@ const Header = () => {
                       )}
 
                       {userIsAdmin && (
-                        <Link
-                          to="/activity/admin/approval"
-                          className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                          onClick={() => setActiveDropdown(null)}
+                        <div
+                          className="relative"
+                          onMouseEnter={() => setShowNckhAdminSubmenu(true)}
+                          onMouseLeave={() => setShowNckhAdminSubmenu(false)}
                         >
-                          <Science className="w-4 h-4 mr-2 text-gray-400" />
-                          <span>Duyệt khai báo NCKH</span>
-                        </Link>
+                          <button
+                            type="button"
+                            className="w-full flex items-center justify-between px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
+                            onClick={() =>
+                              setShowNckhAdminSubmenu((prev) => !prev)
+                            }
+                          >
+                            <span className="flex items-center">
+                              <Science className="w-4 h-4 mr-2 text-gray-400" />
+                              <span>Quản lý và thống kê</span>
+                            </span>
+                            <KeyboardArrowRight
+                              className={`w-4 h-4 transition-transform duration-200 ${
+                                showNckhAdminSubmenu ? "rotate-180" : ""
+                              }`}
+                              fontSize="small"
+                            />
+                          </button>
+
+                          {showNckhAdminSubmenu && (
+                            <div className="absolute left-full top-0 w-56 rounded-md border border-gray-100 bg-white py-1 shadow-lg z-50">
+                              <Link
+                                to="/activity/admin/approval"
+                                className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
+                                onClick={closeUserMenu}
+                              >
+                                <ChevronRight className="w-4 h-4 mr-1 text-gray-400" />
+                                <span>Duyệt khai báo</span>
+                              </Link>
+                              <Link
+                                to="/activity/admin/plan-statistics"
+                                className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
+                                onClick={closeUserMenu}
+                              >
+                                <ChevronRight className="w-4 h-4 mr-1 text-gray-400" />
+                                <span>Thống kê chọn phương án theo cán bộ</span>
+                              </Link>
+                            </div>
+                          )}
+                        </div>
                       )}
 
                       {userIsAdmin && (
                         <Link
                           to="/news/manager"
                           className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                          onClick={() => setActiveDropdown(null)}
+                          onClick={closeUserMenu}
                         >
                           <Article className="w-4 h-4 mr-2 text-gray-400" />
                           <span>Quản lí tin tức</span>
@@ -209,7 +266,7 @@ const Header = () => {
                       <Link
                         to="/activity/standards"
                         className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                        onClick={() => setActiveDropdown(null)}
+                        onClick={closeUserMenu}
                       >
                         <BarChart className="w-4 h-4 mr-2 text-gray-400" />
                         <span>Định mức hoạt động</span>
@@ -218,7 +275,7 @@ const Header = () => {
                       <Link
                         to="/research-groups/manager"
                         className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                        onClick={() => setActiveDropdown(null)}
+                        onClick={closeUserMenu}
                       >
                         <BarChart className="w-4 h-4 mr-2 text-gray-400" />
                         <span>Quản lý nhóm NCKH</span>
@@ -227,7 +284,7 @@ const Header = () => {
                       <Link
                         to="/research-groups/profile"
                         className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                        onClick={() => setActiveDropdown(null)}
+                        onClick={closeUserMenu}
                       >
                         <Group className="w-4 h-4 mr-2 text-gray-400" />
                         <span>Hồ sơ nhóm</span>
@@ -238,7 +295,7 @@ const Header = () => {
                       <button
                         onClick={() => {
                           openLogoutConfirmation();
-                          setActiveDropdown(null);
+                          closeUserMenu();
                         }}
                         className="flex items-center px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 w-full text-left"
                       >

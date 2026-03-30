@@ -38,6 +38,7 @@ import ResearchGroupsPublic from "./pages/ResearchGroup/ResearchGroupsPublic";
 import ResearchGroupProfile from "./pages/ResearchGroup/ResearchGroupProfile";
 import ActivityStandards from "./pages/activity/ActivityStandards";
 import NckhApprovalPage from "./pages/activity/NckhApprovalPage";
+import PlanStatisticsPage from "./pages/activity/PlanStatisticsPage";
 import SeminarDeclarationPage from "./pages/activity/declarations/SeminarDeclarationPage";
 import ConferenceDeclarationPage from "./pages/activity/declarations/ConferenceDeclarationPage";
 import InternationalPaperDeclarationPage from "./pages/activity/declarations/InternationalPaperDeclarationPage";
@@ -100,6 +101,14 @@ function App() {
                       element={
                         <ProtectedRoute requiredPower="admin">
                           <NckhApprovalPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/admin/plan-statistics"
+                      element={
+                        <ProtectedRoute requiredPower="admin">
+                          <PlanStatisticsPage />
                         </ProtectedRoute>
                       }
                     />

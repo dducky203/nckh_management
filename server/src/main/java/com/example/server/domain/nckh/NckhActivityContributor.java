@@ -1,12 +1,16 @@
 package com.example.server.domain.nckh;
 
+import com.example.server.domain.EntityBase;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
+@Getter
+@Setter
 @Table(name = "nckh_activity_contributor", uniqueConstraints = @UniqueConstraint(name = "uq_act_user", columnNames = {
         "activity_id", "user_id" }))
-public class NckhActivityContributor {
+public class NckhActivityContributor extends EntityBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,71 +38,11 @@ public class NckhActivityContributor {
     @Column(name = "note")
     private String note;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Transient
+    private String userName;
 
     public enum Role {
         MAIN, MEMBER
     }
 
-    // getters/setters
-    public Long getId() {
-        return id;
-    }
-
-    public Long getActivityId() {
-        return activityId;
-    }
-
-    public void setActivityId(Long activityId) {
-        this.activityId = activityId;
-    }
-
-    public Integer getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Integer userId) {
-        this.userId = userId;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public void setRole(Role role) {
-        this.role = role;
-    }
-
-    public Integer getParticipantsN() {
-        return participantsN;
-    }
-
-    public void setParticipantsN(Integer participantsN) {
-        this.participantsN = participantsN;
-    }
-
-    public Double getHoursShare() {
-        return hoursShare;
-    }
-
-    public void setHoursShare(Double hoursShare) {
-        this.hoursShare = hoursShare;
-    }
-
-    public Double getEquivQty() {
-        return equivQty;
-    }
-
-    public void setEquivQty(Double equivQty) {
-        this.equivQty = equivQty;
-    }
-
-    public String getNote() {
-        return note;
-    }
-
-    public void setNote(String note) {
-        this.note = note;
-    }
 }
