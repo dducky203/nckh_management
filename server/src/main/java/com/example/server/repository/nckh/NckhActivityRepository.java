@@ -20,7 +20,7 @@ public interface NckhActivityRepository extends JpaRepository<NckhActivity, Long
             "cat.tieu_chi_name AS catalogName, " +
             "cat.don_vi_tinh AS unit, " +
             "COUNT(DISTINCT a.id) AS participationCount, " +
-            "SUM(a.qty) AS totalQty, " +
+            "COALESCE(ROUND(COALESCE(SUM(b.hours_share), 0) / NULLIF(MAX(cat.gio_quy_doi_per_unit), 0), 2), 0) AS totalQty, " +
             "SUM(b.hours_share) AS totalQuotaHours, " +
             "AVG(b.participants_n) AS avgParticipantsN " +
             "FROM nckh_activity a " +

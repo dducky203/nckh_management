@@ -11,10 +11,7 @@ function round1(x) {
   return Math.round(x * 10) / 10;
 }
 
-export default function ActivityDataTable({
-  criteria,
-  actualStats = [],
-}) {
+export default function ActivityDataTable({ criteria, actualStats = [] }) {
   const [openIds, setOpenIds] = useState(() => criteria.map((g) => g.id));
 
   const toggle = (gid) =>
@@ -145,15 +142,15 @@ export default function ActivityDataTable({
                         {g.children.map((c) => {
                           // Get actual data from API
                           const actual = actualMap[c.id];
-                          const qty = actual ? Number(actual.totalQty || 0) : 0;
+                          const participationCount = actual
+                            ? Number(actual.participationCount || 0)
+                            : 0;
+                          const qty = participationCount;
                           const hours = actual
                             ? Number(actual.totalQuotaHours || 0)
                             : 0;
                           const participants = actual
                             ? Math.round(Number(actual.avgParticipantsN || 0))
-                            : 0;
-                          const participationCount = actual
-                            ? Number(actual.participationCount || 0)
                             : 0;
                           const hasQty = qty > 0;
 
