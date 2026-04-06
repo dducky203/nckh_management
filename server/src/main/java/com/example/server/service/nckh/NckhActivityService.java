@@ -7,6 +7,7 @@ import com.example.server.domain.User;
 import com.example.server.domain.nckh.NckhActivity;
 import com.example.server.domain.nckh.NckhActivityCatalog;
 import com.example.server.domain.nckh.NckhActivityContributor;
+import com.example.server.domain.nckh.NckhTieuChiDinhMuc;
 import com.example.server.domain.nckh.UserPlanYear;
 import com.example.server.repository.UserRepository;
 import com.example.server.repository.nckh.*;
@@ -22,6 +23,7 @@ public class NckhActivityService {
 
     private final NckhActivityRepository activityRepo;
     private final NckhActivityCatalogRepository catalogRepo;
+    private final NckhTieuChiDinhMucRepository dinhMucRepo;
     private final NckhActivityContributorRepository contribRepo;
     private final NckhComputeService computeService;
     private final UserPlanYearRepository planYearRepo;
@@ -37,6 +39,7 @@ public class NckhActivityService {
             UserRepository userRepo) {
         this.activityRepo = activityRepo;
         this.catalogRepo = catalogRepo;
+        this.dinhMucRepo = dinhMucRepo;
         this.contribRepo = contribRepo;
         this.computeService = computeService;
         this.planYearRepo = planYearRepo;
@@ -45,17 +48,15 @@ public class NckhActivityService {
 
     @Transactional
     public NckhActivity create(Integer creatorUserId, CreateActivityRequest req) {
-        String catalogCode = requireCatalogCode(req);
-
-        NckhActivityCatalog cat = catalogRepo.findById(catalogCode)
-                .orElseThrow(() -> new IllegalStateException("catalog_code không tồn tại: " + catalogCode));
+        String tieuChiCode = requireTieuChiCode(req);
+        NckhTieuChiDinhMuc dinhMuc = resolveDinhMuc(creatorUserId, tieuChiCode);
 
         NckhActivity a = new NckhActivity();
         a.setAcademicYear(req.academicYear);
         a.setResearchGroupId(req.researchGroupId);
-        a.setCatalogCode(catalogCode);
+        a.setCatalogCode(tieuChiCode);
         a.setQty(req.qty == null ? 1.0 : req.qty);
-        a.setQuotaHoursSnapshot(cat.getQuotaHours());
+        a.setQuotaHoursSnapshot(requireQuotaHoursSnapshot(dinhMuc, tieuChiCode));
         a.setTitle(req.title);
         a.setDescription(req.description);
         a.setPublicationName(req.publicationName);
@@ -230,15 +231,14 @@ public class NckhActivityService {
             throw new IllegalStateException("Không thể sửa activity đã submit/approved.");
         }
 
-        String catalogCode = requireCatalogCode(req);
-        NckhActivityCatalog cat = catalogRepo.findById(catalogCode)
-                .orElseThrow(() -> new IllegalStateException("catalog_code không tồn tại: " + catalogCode));
+        String tieuChiCode = requireTieuChiCode(req);
+        NckhTieuChiDinhMuc dinhMuc = resolveDinhMuc(userId, tieuChiCode);
 
         a.setAcademicYear(req.academicYear);
         a.setResearchGroupId(req.researchGroupId);
-        a.setCatalogCode(catalogCode);
+        a.setCatalogCode(tieuChiCode);
         a.setQty(req.qty == null ? 1.0 : req.qty);
-        a.setQuotaHoursSnapshot(cat.getQuotaHours());
+        a.setQuotaHoursSnapshot(requireQuotaHoursSnapshot(dinhMuc, tieuChiCode));
         a.setTitle(req.title);
         a.setDescription(req.description);
         a.setPublicationName(req.publicationName);
@@ -254,12 +254,41 @@ public class NckhActivityService {
         return activityRepo.save(a);
     }
 
-    private String requireCatalogCode(CreateActivityRequest req) {
-        String catalogCode = req.catalogCode == null ? "" : req.catalogCode.trim();
-        if (catalogCode.isEmpty()) {
-            throw new IllegalStateException("catalogCode là bắt buộc");
+    private String requireTieuChiCode(CreateActivityRequest req) {
+        String tieuChiCode = req.tieuChiCode == null ? "" : req.tieuChiCode.trim();
+        if (tieuChiCode.isEmpty()) {
+            tieuChiCode = req.catalogCode == null ? "" : req.catalogCode.trim();
         }
-        return catalogCode;
+        if (tieuChiCode.isEmpty()) {
+            throw new IllegalStateException("tieuChiCode là bắt buộc");
+        }
+        return tieuChiCode;
+    }
+
+    private NckhTieuChiDinhMuc resolveDinhMuc(Integer userId, String tieuChiCode) {
+        String chucDanh = userRepo.findById(userId)
+                .map(User::getIdTitle)
+                .map(title -> title == null ? null : title.getName())
+                .map(name -> name == null ? "" : name.trim())
+                .filter(name -> !name.isEmpty())
+                .orElse(null);
+
+        if (chucDanh != null) {
+            Optional<NckhTieuChiDinhMuc> byTitle = dinhMucRepo.findFirstByTieuChiCodeAndChucDanh(tieuChiCode, chucDanh);
+            if (byTitle.isPresent()) {
+                return byTitle.get();
+            }
+        }
+
+        return dinhMucRepo.findFirstByTieuChiCode(tieuChiCode)
+                .orElseThrow(() -> new IllegalStateException("tieu_chi_code không tồn tại: " + tieuChiCode));
+    }
+
+    private double requireQuotaHoursSnapshot(NckhTieuChiDinhMuc dinhMuc, String tieuChiCode) {
+        if (dinhMuc.getGioQuyDoiPerUnit() == null) {
+            throw new IllegalStateException("gio_quy_doi_per_unit đang trống cho tieu_chi_code: " + tieuChiCode);
+        }
+        return dinhMuc.getGioQuyDoiPerUnit().doubleValue();
     }
 
     @Transactional

@@ -36,6 +36,9 @@ public class NckhTieuChiDinhMuc {
     @Column(name = "tong_gio_toi_thieu", precision = 10, scale = 2)
     private BigDecimal tongGioToiThieu;
 
+    @Column(name = "year", length = 5)
+    private String year;
+
     @Column(name = "ghi_chu", length = 500)
     private String ghiChu;
 
