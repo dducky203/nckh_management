@@ -18,6 +18,7 @@ import {
   Login,
   Group,
   KeyboardArrowRight,
+  Settings,
 } from "@mui/icons-material";
 
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../constants";
@@ -181,88 +182,17 @@ const Header = () => {
                         <AccountCircle className="w-4 h-4 mr-2 text-gray-400" />
                         <span>Hồ sơ</span>
                       </Link>
-
                       {userIsAdmin && (
-                        <Link
-                          to="/events/manage"
-                          className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                          onClick={closeUserMenu}
-                        >
-                          <EventNote className="w-4 h-4 mr-2 text-gray-400" />
-                          <span>Quản lý sự kiện</span>
-                        </Link>
+                      <Link
+                        to="/activity/admin/config"
+                        className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
+                        onClick={closeUserMenu}
+                      >
+                        <Settings className="w-4 h-4 mr-2 text-gray-400" />
+                        <span>Cấu hình chức năng</span>
+                      </Link>
                       )}
-
-                      {userIsAdmin && (
-                        <Link
-                          to="/user/manager"
-                          className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                          onClick={closeUserMenu}
-                        >
-                          <People className="w-4 h-4 mr-2 text-gray-400" />
-                          <span>Quản lý nhân sự</span>
-                        </Link>
-                      )}
-
-                      {userIsAdmin && (
-                        <div
-                          className="relative"
-                          onMouseEnter={() => setShowNckhAdminSubmenu(true)}
-                          onMouseLeave={() => setShowNckhAdminSubmenu(false)}
-                        >
-                          <button
-                            type="button"
-                            className="w-full flex items-center justify-between px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                            onClick={() =>
-                              setShowNckhAdminSubmenu((prev) => !prev)
-                            }
-                          >
-                            <span className="flex items-center">
-                              <Science className="w-4 h-4 mr-2 text-gray-400" />
-                              <span>Quản lý và thống kê</span>
-                            </span>
-                            <KeyboardArrowRight
-                              className={`w-4 h-4 transition-transform duration-200 ${
-                                showNckhAdminSubmenu ? "rotate-180" : ""
-                              }`}
-                              fontSize="small"
-                            />
-                          </button>
-
-                          {showNckhAdminSubmenu && (
-                            <div className="absolute left-full top-0 w-56 rounded-md border border-gray-100 bg-white py-1 shadow-lg z-50">
-                              <Link
-                                to="/activity/admin/approval"
-                                className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                                onClick={closeUserMenu}
-                              >
-                                <ChevronRight className="w-4 h-4 mr-1 text-gray-400" />
-                                <span>Duyệt khai báo</span>
-                              </Link>
-                              <Link
-                                to="/activity/admin/plan-statistics"
-                                className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                                onClick={closeUserMenu}
-                              >
-                                <ChevronRight className="w-4 h-4 mr-1 text-gray-400" />
-                                <span>Thống kê chọn phương án theo cán bộ</span>
-                              </Link>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {userIsAdmin && (
-                        <Link
-                          to="/news/manager"
-                          className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                          onClick={closeUserMenu}
-                        >
-                          <Article className="w-4 h-4 mr-2 text-gray-400" />
-                          <span>Quản lí tin tức</span>
-                        </Link>
-                      )}
-
+                  
                       <Link
                         to="/activity/standards"
                         className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"

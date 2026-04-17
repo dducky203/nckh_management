@@ -15,9 +15,10 @@ public interface NckhTieuChiDinhMucRepository extends JpaRepository<NckhTieuChiD
     @Query(value = "SELECT * FROM nckh_tieu_chi_dinh_muc " +
             "WHERE phuong_an = :phuongAn " +
             "AND chuc_danh = :chucDanh " +
+            "AND year = :year " +
             "ORDER BY sort_order ASC",
             nativeQuery = true)
-    List<NckhTieuChiDinhMuc> findByPhuongAnAndChucDanh(Integer phuongAn, String chucDanh);
+    List<NckhTieuChiDinhMuc> findByPhuongAnAndChucDanh(Integer phuongAn, String chucDanh, String year);
 
         @Query(value = "SELECT * FROM nckh_tieu_chi_dinh_muc " +
             "WHERE tieu_chi_code = :tieuChiCode " +
@@ -35,4 +36,6 @@ public interface NckhTieuChiDinhMucRepository extends JpaRepository<NckhTieuChiD
             "LIMIT 1",
             nativeQuery = true)
         Optional<NckhTieuChiDinhMuc> findFirstByTieuChiCode(@Param("tieuChiCode") String tieuChiCode);
+
+    List<NckhTieuChiDinhMuc> findAllByYear(String year);
 }

@@ -12,7 +12,7 @@ public interface NckhTieuChiDinhMucService {
 
     NckhTieuChiDinhMucResponse getById(Long id);
 
-    List<NckhTieuChiDinhMucResponse> getAll(Integer phuongAn, String chucDanh);
+    List<NckhTieuChiDinhMucResponse> getAll(Integer phuongAn, String chucDanh , String year);
 
     void delete(Long id);
 }

@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 
 // Context Providers
@@ -39,6 +39,9 @@ import ResearchGroupProfile from "./pages/ResearchGroup/ResearchGroupProfile";
 import ActivityStandards from "./pages/activity/ActivityStandards";
 import NckhApprovalPage from "./pages/activity/NckhApprovalPage";
 import PlanStatisticsPage from "./pages/activity/PlanStatisticsPage";
+import ActivityAdminConfigPage from "./pages/activity/ActivityAdminConfigPage";
+import ActivityUserFeaturePage from "./pages/activity/ActivityUserFeaturePage";
+import ActivityYearQuotaConfigPage from "./pages/activity/ActivityYearQuotaConfigPage";
 import SeminarDeclarationPage from "./pages/activity/declarations/SeminarDeclarationPage";
 import ConferenceDeclarationPage from "./pages/activity/declarations/ConferenceDeclarationPage";
 import InternationalPaperDeclarationPage from "./pages/activity/declarations/InternationalPaperDeclarationPage";
@@ -89,10 +92,42 @@ function App() {
                       }
                     />
                     <Route
+                      path="/activity"
+                      element={
+                        <ProtectedRoute>
+                          <Navigate to="/activity/user" replace />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/user"
+                      element={
+                        <ProtectedRoute>
+                          <ActivityUserFeaturePage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
                       path="/activity/standards"
                       element={
                         <ProtectedRoute>
                           <ActivityStandards />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/admin"
+                      element={
+                        <ProtectedRoute requiredPower="admin">
+                          <Navigate to="/activity/admin/config" replace />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/admin/config"
+                      element={
+                        <ProtectedRoute requiredPower="admin">
+                          <ActivityAdminConfigPage />
                         </ProtectedRoute>
                       }
                     />
@@ -109,6 +144,14 @@ function App() {
                       element={
                         <ProtectedRoute requiredPower="admin">
                           <PlanStatisticsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/admin/year-quota"
+                      element={
+                        <ProtectedRoute requiredPower="admin">
+                          <ActivityYearQuotaConfigPage />
                         </ProtectedRoute>
                       }
                     />

@@ -7,6 +7,7 @@ import com.example.server.service.nckh.NckhTieuChiDinhMucService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Year;
 import java.util.List;
 
 
@@ -36,10 +37,12 @@ public class DinhMucController {
     @GetMapping
     public List<NckhTieuChiDinhMucResponse> getAll(
             @RequestParam(required = false) Integer phuongAn,
-            @RequestParam(required = false) String chucDanh
+            @RequestParam(required = false) String chucDanh,
+            @RequestParam(required = false) Integer year
 
     ) {
-        return service.getAll(phuongAn, chucDanh);
+        int currentYear =  year == null ? Year.now().getValue() : year;
+        return service.getAll(phuongAn, chucDanh, String.valueOf(currentYear) );
     }
 
     @DeleteMapping("/{id}")

@@ -49,40 +49,6 @@ const Profile = () => {
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
   const [showProfileConfirmModal, setShowProfileConfirmModal] = useState(false);
-  const [userResearchGroup, setUserResearchGroup] = useState("");
-
-  useEffect(() => {
-    if (!user) {
-      navigate("/login");
-    } else {
-      fetchUserResearchGroup();
-    }
-  }, [user, navigate]);
-
-  const fetchUserResearchGroup = async () => {
-    try {
-      const response = await researchGroupService.getMyGroups();
-      const groups = response.data || response;
-
-      if (groups && groups.length > 0) {
-        // Lấy nhóm đầu tiên (hoặc có thể lấy nhóm active)
-        const group = Array.isArray(groups) ? groups[0] : groups;
-        const groupName = group.groupName || group.name || "";
-        setUserResearchGroup(groupName);
-
-        // Cập nhật vào profileData
-        setProfileData((prev) => ({
-          ...prev,
-          researchGroup: groupName,
-        }));
-      }
-    } catch (error) {
-      console.error("Error fetching user research group:", error);
-      // Không hiển thị lỗi nếu không tìm thấy nhóm
-    }
-  };
-
-  console.log({ user });
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -382,38 +348,7 @@ const Profile = () => {
                         </div>
                       </div>
 
-                      <div>
-                        <label
-                          htmlFor="researchGroup"
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                          Nhóm Nghiên Cứu
-                        </label>
-                        <div className="flex items-center border border-gray-300 rounded-md overflow-hidden">
-                          <span className="px-3 py-2 border-r border-gray-300 bg-gray-100">
-                            <School className="w-5 h-5 text-gray-500" />
-                          </span>
-                          <input
-                            type="text"
-                            id="researchGroup"
-                            name="researchGroup"
-                            value={
-                              userResearchGroup || profileData.researchGroup
-                            }
-                            onChange={handleProfileChange}
-                            disabled={true}
-                            className="w-full py-2 px-3 border-0 outline-none disabled:bg-gray-50"
-                            placeholder="Chưa có nhóm nghiên cứu"
-                            readOnly
-                          />
-                        </div>
-                        {!userResearchGroup && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            Nhóm nghiên cứu sẽ tự động hiển thị khi bạn tham gia
-                            nhóm hoặc được phân công hướng dẫn
-                          </p>
-                        )}
-                      </div>
+      
 
                       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div>

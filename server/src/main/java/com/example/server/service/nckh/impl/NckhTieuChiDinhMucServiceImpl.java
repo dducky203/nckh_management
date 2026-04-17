@@ -50,11 +50,11 @@ public class NckhTieuChiDinhMucServiceImpl implements NckhTieuChiDinhMucService 
     }
 
     @Override
-    public List<NckhTieuChiDinhMucResponse> getAll(Integer phuongAn, String chucDanh) {
+    public List<NckhTieuChiDinhMucResponse> getAll(Integer phuongAn, String chucDanh, String year) {
         if (phuongAn == null || chucDanh == null) {
-            return mapper.toResponseList(repository.findAll());
+            return mapper.toResponseList(repository.findAllByYear(year));
         }
-        return mapper.toResponseList(repository.findByPhuongAnAndChucDanh(phuongAn, chucDanh));
+        return mapper.toResponseList(repository.findByPhuongAnAndChucDanh(phuongAn, chucDanh, year));
     }
 
     @Override
