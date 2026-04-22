@@ -24,8 +24,13 @@ export default function DeclarationHeaderForm({
     setSubmitting,
     form,
     onFormChange,
-    setProofFile,
-    setProofImage,
+    onExtraDetailChange,
+    proofFiles,
+    addProofFiles,
+    removeProofFile,
+    proofImages,
+    addProofImages,
+    removeProofImage,
     contributors,
     contributorOptions,
     onContributorChange,
@@ -121,12 +126,17 @@ export default function DeclarationHeaderForm({
             form={form}
             options={options}
             onFormChange={onFormChange}
+            onExtraDetailChange={onExtraDetailChange}
           />
 
           <ProofFileSection
             requiresProofFile={requiresProofFile}
-            setProofFile={setProofFile}
-            setProofImage={setProofImage}
+            proofFiles={proofFiles}
+            addProofFiles={addProofFiles}
+            removeProofFile={removeProofFile}
+            proofImages={proofImages}
+            addProofImages={addProofImages}
+            removeProofImage={removeProofImage}
           />
 
           <ContributorsSection

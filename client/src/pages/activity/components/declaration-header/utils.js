@@ -102,6 +102,7 @@ export const getInitialForm = (initialActivityType = "SEMINAR") => ({
   identifierCode: "",
   externalLink: "",
   detailsJson: "",
+  extraDetails: {},
 });
 
 export const getResettableFields = () => ({
@@ -113,5 +114,6 @@ export const getResettableFields = () => ({
   identifierCode: "",
   externalLink: "",
   detailsJson: "",
+  extraDetails: {},
   qty: 1,
 });

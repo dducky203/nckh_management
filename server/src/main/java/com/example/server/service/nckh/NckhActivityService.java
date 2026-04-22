@@ -14,12 +14,16 @@ import com.example.server.repository.nckh.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class NckhActivityService {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final NckhActivityRepository activityRepo;
     private final NckhActivityCatalogRepository catalogRepo;
@@ -64,8 +68,8 @@ public class NckhActivityService {
         a.setVenue(req.venue);
         a.setIdentifierCode(req.identifierCode);
         a.setExternalLink(req.externalLink);
-        a.setProofFileUrl(req.proofFileUrl);
-        a.setProofImageUrl(req.proofImageUrl);
+        a.setProofFileUrl(toJsonArray(req.proofFileUrls));
+        a.setProofImageUrl(toJsonArray(req.proofImageUrls));
         a.setDetailsJson(req.detailsJson);
         a.setMainAuthorUserId(creatorUserId);
         a.setMemberUserIds(null);
@@ -246,8 +250,8 @@ public class NckhActivityService {
         a.setVenue(req.venue);
         a.setIdentifierCode(req.identifierCode);
         a.setExternalLink(req.externalLink);
-        a.setProofFileUrl(req.proofFileUrl);
-        a.setProofImageUrl(req.proofImageUrl);
+        a.setProofFileUrl(toJsonArray(req.proofFileUrls));
+        a.setProofImageUrl(toJsonArray(req.proofImageUrls));
         a.setDetailsJson(req.detailsJson);
         a.setApprovedByUserId(null);
         a.setApprovedAt(null);
@@ -399,6 +403,27 @@ public class NckhActivityService {
             case "PROPOSAL" -> List.of("DE_XUAT_BO");
             default -> List.of();
         };
+    }
+
+    private String toJsonArray(List<String> urls) {
+        if (urls == null || urls.isEmpty()) return null;
+        try {
+            return OBJECT_MAPPER.writeValueAsString(urls);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static List<String> parseJsonArray(String json) {
+        if (json == null || json.isBlank()) return List.of();
+        try {
+            if (json.startsWith("[")) {
+                return OBJECT_MAPPER.readValue(json, new TypeReference<>() {});
+            }
+            return List.of(json);
+        } catch (Exception e) {
+            return List.of(json);
+        }
     }
 
     public List<ActivityStatisticsResponse> getStatistics(Integer userId, Integer academicYear) {

@@ -6,6 +6,8 @@ import com.example.server.domain.User;
 import com.example.server.domain.nckh.UserPlanYear;
 import com.example.server.repository.UserRepository;
 import com.example.server.repository.nckh.UserPlanYearRepository;
+import com.example.server.service.EmailService;
+import com.example.server.utils.PlanSelectionWindowUtil;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -17,10 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,6 +38,8 @@ public class UserPlanYearService {
     private UserPlanYearRepository repo;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private EmailService emailService;
 
     public UserPlanYear getPlanCurrent(Integer userId, Integer year) {
 
@@ -50,22 +51,115 @@ public class UserPlanYearService {
     }
 
     @Transactional
-    public UserPlanYear selectAndLock(Integer userId, Integer planId,  Integer year) {
-        if(year == null)  year = LocalDate.now().getYear();
+    public UserPlanYear selectAndLock(Integer userId, Integer planId, Integer year) {
+        if (year == null) year = LocalDate.now().getYear();
+
+        // Kiểm tra cửa sổ thời gian
+        if (PlanSelectionWindowUtil.isPastDeadline()) {
+            throw new IllegalStateException(
+                    "Đã hết thời hạn đăng ký phương án (02/01–16/01). " +
+                    "Hệ thống đã tự động xếp bạn vào Phương án 1 (PA1).");
+        }
+        if (!PlanSelectionWindowUtil.isOpen()) {
+            throw new IllegalStateException(
+                    "Chưa đến thời gian đăng ký phương án. " +
+                    "Thời gian đăng ký: 02/01–16/01 hàng năm.");
+        }
+
         if (repo.existsByUserIdAndAcademicYear(userId, year)) {
             throw new IllegalStateException("Bạn đã chọn phương án cho năm này và đã bị khóa.");
         }
 
+        LocalDateTime now = LocalDateTime.now();
         UserPlanYear row = new UserPlanYear();
         row.setUserId(userId);
         row.setAcademicYear(year);
         row.setPlanId(planId);
         row.setIsLocked(true);
-        row.setSelectedAt(LocalDateTime.now());
-        row.setLockedAt(LocalDateTime.now());
+        row.setSelectedAt(now);
+        row.setLockedAt(now);
         row.setLockedBy(userId);
 
-        return repo.save(row);
+        UserPlanYear saved = repo.save(row);
+
+        // Gửi email xác nhận (async, không block)
+        try {
+            User user = userRepository.findById(userId).orElse(null);
+            if (user != null && user.getIdResume() != null && user.getIdResume().getEmail() != null) {
+                emailService.sendPlanSelectionConfirmationEmail(
+                        user.getIdResume().getEmail(),
+                        user.getName(),
+                        planId,
+                        year,
+                        now,
+                        false
+                );
+            }
+        } catch (Exception ignored) {
+            // Lỗi gửi email không ảnh hưởng đến việc lưu dữ liệu
+        }
+
+        return saved;
+    }
+
+    /**
+     * Tự động gán PA1 cho tất cả users chưa chọn phương án trong năm.
+     * Được gọi bởi scheduler vào ngày 17/01.
+     */
+    @Transactional
+    public int autoAssignDefaultPlan(int year) {
+        List<User> allUsers = userRepository.findUsersWithoutPlanForYear( year);
+
+        int count = 0;
+        for (User user : allUsers) {
+
+            LocalDateTime now = LocalDateTime.now();
+            UserPlanYear row = new UserPlanYear();
+            row.setUserId(user.getId());
+            row.setAcademicYear(year);
+            row.setPlanId(PlanSelectionWindowUtil.DEFAULT_PLAN_ID);
+            row.setIsLocked(true);
+            row.setSelectedAt(now);
+            row.setLockedAt(now);
+            row.setLockedBy(31); // system
+            repo.save(row);
+            count++;
+
+            // Gửi email thông báo (async)
+            try {
+                if (user.getIdResume() != null && user.getIdResume().getEmail() != null) {
+                    emailService.sendPlanSelectionConfirmationEmail(
+                            user.getIdResume().getEmail(),
+                            user.getName(),
+                            PlanSelectionWindowUtil.DEFAULT_PLAN_ID,
+                            year,
+                            now,
+                            true
+                    );
+                }
+            } catch (Exception ignored) {}
+        }
+        return count;
+    }
+
+    /**
+     * Gửi email nhắc nhở tới tất cả users chưa chọn phương án trong năm.
+     */
+    public void sendReminderEmails(int year, boolean isLastDay) {
+        List<User> allUsers = userRepository.findUsersWithoutPlanForYear(year);
+        for (User user : allUsers) {
+            try {
+                if (user.getIdResume() != null && user.getIdResume().getEmail() != null) {
+                    emailService.sendPlanSelectionReminderEmail(
+                            user.getIdResume().getEmail(),
+                            user.getName(),
+                            year,
+                            isLastDay
+                    );
+                    Thread.sleep(2000);
+                }
+            } catch (Exception ignored) {}
+        }
     }
 
     @Transactional

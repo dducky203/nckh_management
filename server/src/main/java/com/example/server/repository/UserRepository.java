@@ -100,4 +100,12 @@ public interface UserRepository extends JpaRepository<User, Integer> {
             "ORDER BY u.name ASC, u.username ASC")
     List<User> findUsersForPlanStatistics();
 
+
+    @Query("SELECT u FROM User u LEFT JOIN u.idTitle t WHERE " +
+            "(u.isDeleted = false OR u.isDeleted IS NULL) AND " +
+            "(t IS NULL OR t.name <> 'Sinh viên') AND " +
+            "NOT EXISTS (SELECT 1 FROM UserPlanYear p WHERE p.userId = u.id AND p.academicYear = :year) " +
+            "ORDER BY u.name ASC, u.username ASC")
+    List<User> findUsersWithoutPlanForYear(@Param("year") Integer year);
+
 }

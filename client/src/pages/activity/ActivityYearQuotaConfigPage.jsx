@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import nckhTieuChiDinhMucService from "../../services/nckhTieuChiDinhMucService";
+import { downloadFileFromResponse } from "../../utils/helpers";
+import { useToast } from "../../context/ToastContext";
 
 function formatNumber(value) {
   if (value === null || value === undefined || value === "") return "-";
@@ -11,51 +13,50 @@ export default function ActivityYearQuotaConfigPage() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedYear, setSelectedYear] = useState("all");
+  const [yearInput, setYearInput] = useState("");
   const [selectedPlan, setSelectedPlan] = useState("all");
+  const [importing, setImporting] = useState(false);
+  const [downloadingTemplate, setDownloadingTemplate] = useState(false);
+  const fileInputRef = useRef(null);
+  const debounceRef = useRef(null);
+  const toast = useToast();
 
-  const getYearValue = (row) => String(row?.year ?? row?.namHoc ?? "").trim();
   const getPlanValue = (row) => String(row?.phuongAn ?? "").trim();
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchData = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const res = await nckhTieuChiDinhMucService.getAll(null, null);
-        const data = res?.data || (res?.length >= 0 ? res : []);
-
-        if (!cancelled) {
-          setRows(data);
-        }
-      } catch (e) {
-        if (!cancelled) {
-          setError(e?.message || "Không tải được dữ liệu định mức.");
-          setRows([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchData();
-
-    return () => {
-      cancelled = true;
-    };
+  const fetchData = useCallback(async (year) => {
+    setLoading(true);
+    setError("");
+    try {
+      const yearParam = year && String(year).trim() !== "" ? Number(year) : null;
+      const res = await nckhTieuChiDinhMucService.getAll(null, null, yearParam);
+      const data = Array.isArray(res) ? res : (res?.data ?? []);
+      setRows(data);
+    } catch (e) {
+      setError(e?.message || "Không tải được dữ liệu định mức.");
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const yearOptions = useMemo(() => {
-    const values = Array.from(
-      new Set(rows.map((row) => getYearValue(row)).filter(Boolean)),
-    );
+  // Load lần đầu với năm hiện tại
+  useEffect(() => {
+    const currentYear = String(new Date().getFullYear());
+    setYearInput(currentYear);
+    fetchData(currentYear);
+  }, [fetchData]);
 
-    return values.sort((a, b) => Number(b) - Number(a));
-  }, [rows]);
+  // Debounce gọi API khi người dùng nhập năm
+  const handleYearChange = (e) => {
+    const val = e.target.value;
+    setYearInput(val);
+    setSelectedPlan("all");
+
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      fetchData(val);
+    }, 600);
+  };
 
   const planOptions = useMemo(() => {
     const values = Array.from(
@@ -67,14 +68,10 @@ export default function ActivityYearQuotaConfigPage() {
 
   const filteredRows = useMemo(
     () =>
-      rows.filter((row) => {
-        const yearMatch =
-          selectedYear === "all" || getYearValue(row) === selectedYear;
-        const planMatch =
-          selectedPlan === "all" || getPlanValue(row) === selectedPlan;
-        return yearMatch && planMatch;
-      }),
-    [rows, selectedYear, selectedPlan],
+      selectedPlan === "all"
+        ? rows
+        : rows.filter((row) => getPlanValue(row) === selectedPlan),
+    [rows, selectedPlan],
   );
 
   const totalRows = useMemo(() => filteredRows.length, [filteredRows]);
@@ -83,35 +80,111 @@ export default function ActivityYearQuotaConfigPage() {
     [filteredRows],
   );
 
+  const handleDownloadTemplate = async () => {
+    try {
+      setDownloadingTemplate(true);
+      const params = {};
+      if (yearInput.trim() !== "") params.year = Number(yearInput);
+      if (selectedPlan !== "all") params.phuongAn = Number(selectedPlan);
+
+      const response = await nckhTieuChiDinhMucService.downloadImportTemplate(params);
+      downloadFileFromResponse(response, "template-dinh-muc.xlsx");
+      toast.success("Đã tải file mẫu. Chỉ nhập 2 cột Định mức và Giờ quy đổi, tổng giờ sẽ tự tính.");
+    } catch (e) {
+      toast.error(e?.message || "Không tải được file mẫu.");
+    } finally {
+      setDownloadingTemplate(false);
+    }
+  };
+
+  const handleImportExcel = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setImporting(true);
+      const response = await nckhTieuChiDinhMucService.importFromExcel(file);
+
+      const successCount = Number(response.headers?.["x-import-success"] ?? 0);
+      const errorCount = Number(response.headers?.["x-import-error"] ?? 0);
+
+      if (errorCount === 0) {
+        toast.success(`Import thành công ${successCount} dòng. Tổng giờ tối thiểu đã được tự tính.`);
+      } else {
+        toast.error(
+          `Import xong: ${successCount} thành công, ${errorCount} lỗi. Đang tải file kết quả để xem chi tiết...`,
+          7000,
+        );
+        // Tự động tải file Excel có ghi lỗi ở cột cuối
+        downloadFileFromResponse(response, "ket-qua-import-dinh-muc.xlsx");
+      }
+
+      await fetchData(yearInput);
+    } catch (e) {
+      toast.error(e?.message || "Không import được file Excel.");
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 pb-10">
       <div className="mx-auto max-w-7xl px-4 pt-8">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h1 className="text-xl font-extrabold text-slate-800">
-            Chỉnh sửa định mức theo năm
-          </h1>
-          <p className="mt-1 text-sm font-medium text-slate-500">
-            Bước 1: Đang gọi API getAll và hiển thị dữ liệu định mức.
-          </p>
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+            <div>
+              <h1 className="text-xl font-extrabold text-slate-800">
+                Chỉnh sửa định mức theo năm
+              </h1>
+              <p className="mt-1 text-sm font-medium text-slate-500">
+                Import Excel để cập nhật hàng loạt. Chỉ cần nhập <b>Định mức</b> và
+                <b> Giờ quy đổi</b>; <b>Tổng giờ tối thiểu</b> sẽ tự tính = Định mức × Giờ quy đổi.
+              </p>
+            </div>
 
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleDownloadTemplate}
+                disabled={downloadingTemplate || importing}
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {downloadingTemplate ? "Đang tải..." : "Tải file mẫu"}
+              </button>
+
+              <label
+                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-white shadow-sm transition cursor-pointer ${
+                  importing ? "bg-emerald-400 cursor-wait" : "bg-emerald-600 hover:bg-emerald-700"
+                }`}
+              >
+                {importing ? "Đang import..." : "Import Excel"}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleImportExcel}
+                  disabled={importing}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
 
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-1">
                 Lọc theo năm
               </label>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value)}
+              <input
+                type="number"
+                value={yearInput}
+                onChange={handleYearChange}
+                placeholder="Nhập năm (VD: 2025)..."
+                min={2000}
+                max={2099}
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none focus:border-mainColor"
-              >
-                <option value="all">Tất cả năm</option>
-                {yearOptions.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <div>
@@ -168,7 +241,7 @@ export default function ActivityYearQuotaConfigPage() {
                       <th className="py-3.5 px-4 text-right min-w-[140px]">Tổng giờ tối thiểu</th>
                     </tr>
                   </thead>
-                  
+
                   <tbody className="text-sm">
                     {filteredRows.map((row, index) => {
                       const hasHours = row.tongGioToiThieu > 0;
@@ -223,7 +296,7 @@ export default function ActivityYearQuotaConfigPage() {
                       );
                     })}
                   </tbody>
-                  
+
                   {totalMinHours > 0 && (
                     <tfoot>
                       <tr className="bg-slate-50 border-t-2 border-slate-200">

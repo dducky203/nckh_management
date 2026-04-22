@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Nhắc chọn phương án NCKH</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f8fafc;font-family:Arial,Helvetica,sans-serif;line-height:1.6;">
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+       style="background-color:#f8fafc;padding:20px 0;">
+    <tr>
+        <td align="center">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600"
+                   style="background-color:#ffffff;border-radius:8px;overflow:hidden;">
+
+                <!-- Header -->
+                <tr>
+                    <td align="center" style="background-color:#034657;padding:25px 15px;">
+                        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                            <tr>
+                                <td align="left" style="vertical-align:middle;width:80px;padding-right:60px;">
+                                    <img src="https://res.cloudinary.com/doslcoy82/image/upload/v1769254208/events/sizk2f3xdpgwqcv7gvtb.png"
+                                         alt="FITA Logo" width="70"
+                                         style="display:block;border-radius:8px;background-color:#ffffff;padding:6px;"/>
+                                </td>
+                                <td align="left" style="vertical-align:middle;text-align:left;">
+                                    <h1 style="margin:0 0 4px 0;color:#ffffff;font-size:22px;font-weight:600;">
+                                        Đăng ký phương án NCKH <span th:text="${year}"></span>
+                                    </h1>
+                                    <p style="margin:0;color:#d1e8ef;font-size:14px;">
+                                        Hệ thống Quản lý Nghiên cứu Khoa học – FITA VNUA
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- Body -->
+                <tr>
+                    <td style="padding:36px 30px;color:#2d3748;font-size:16px;">
+                        <p style="margin:0 0 18px 0;">
+                            Xin chào <strong th:text="${name}"></strong>,
+                        </p>
+                        <p style="margin:0 0 16px 0;" th:if="${isLastDay}">
+                            ⚠️ Hôm nay là <strong>ngày cuối cùng</strong> bạn có thể đăng ký phương án NCKH năm
+                            <strong th:text="${year}"></strong>.
+                        </p>
+                        <p style="margin:0 0 16px 0;" th:unless="${isLastDay}">
+                            Hệ thống thông báo rằng thời gian đăng ký phương án NCKH năm
+                            <strong th:text="${year}"></strong> đã bắt đầu.
+                        </p>
+                        <p style="margin:0 0 24px 0;">
+                            Bạn chưa đăng ký phương án. Vui lòng truy cập hệ thống và lựa chọn phương án
+                            phù hợp <strong>trước ngày 16/01/<span th:text="${year}"></span></strong>.
+                            Sau thời hạn này, hệ thống sẽ tự động xếp bạn vào <strong>Phương án 1 (PA1)</strong>.
+                        </p>
+
+                        <!-- CTA button -->
+                        <table role="presentation" cellpadding="0" cellspacing="0" align="center"
+                               style="margin:0 auto 28px;background-color:#e0f2fe;border:2px solid #0284c7;border-radius:8px;">
+                            <tr>
+                                <td align="center" style="padding:22px 30px;">
+                                    <a th:href="${selectUrl}" href="#"
+                                       style="display:inline-block;background-color:#034657;color:#ffffff;text-decoration:none;padding:13px 32px;border-radius:6px;font-weight:600;font-size:15px;">
+                                        Đăng ký phương án ngay
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Deadline warning -->
+                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%"
+                               style="background-color:#fff8e5;border-left:4px solid #f6ad55;padding:14px 16px;border-radius:4px;">
+                            <tr>
+                                <td style="color:#744210;font-size:14px;">
+                                    <p style="margin:0 0 6px;"><strong>📅 Thời hạn đăng ký:</strong></p>
+                                    <ul style="margin:0;padding-left:18px;">
+                                        <li>Mở đăng ký: <strong>02/01/<span th:text="${year}"></span></strong></li>
+                                        <li>Hạn cuối: <strong>16/01/<span th:text="${year}"></span></strong></li>
+                                        <li>Sau 16/01: hệ thống tự động chọn <strong>PA1</strong></li>
+                                    </ul>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td style="background-color:#f7fafc;border-top:1px solid #e2e8f0;padding:22px 30px;color:#718096;font-size:13px;">
+                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                            <tr>
+                                <td width="70" valign="top">
+                                    <img src="https://res.cloudinary.com/doslcoy82/image/upload/v1769254208/events/sizk2f3xdpgwqcv7gvtb.png"
+                                         alt="FITA Logo" width="60" style="display:block;opacity:0.8;"/>
+                                </td>
+                                <td valign="top" style="font-size:13px;">
+                                    <p style="margin:5px 0;font-weight:600;color:#2d3748;">Khoa Công nghệ Thông tin</p>
+                                    <p style="margin:3px 0;">Học viện Nông nghiệp Việt Nam</p>
+                                    <p style="margin:3px 0;">Email: cntt@vnua.edu.vn | ĐT: (024) 62617701</p>
+                                    <p style="margin:8px 0 0;font-size:11px;opacity:0.8;">© 2026 FITA VNUA – Hệ thống quản lý nghiên cứu khoa học</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

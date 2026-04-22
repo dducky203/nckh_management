@@ -1,6 +1,7 @@
 package com.example.server.DTO.nckh;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public class CreateActivityRequest {
     public Integer academicYear;
@@ -27,7 +28,7 @@ public class CreateActivityRequest {
     public String venue; // địa điểm/cơ quan/đơn vị thụ hưởng
     public String identifierCode; // ISSN/DOI/ISBN/số quyết định
     public String externalLink; // link bài báo/tài liệu tham khảo
-    public String proofFileUrl; // file minh chứng (pdf/doc...)
-    public String proofImageUrl; // hình minh chứng
+    public List<String> proofFileUrls;  // nhiều file minh chứng (pdf/doc...)
+    public List<String> proofImageUrls; // nhiều hình minh chứng
     public String detailsJson; // dữ liệu mở rộng theo chức năng, lưu JSON text
 }
