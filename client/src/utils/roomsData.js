@@ -52,8 +52,7 @@ export const getRoomOptions = () => {
 
 // Get room by ID
 export const getRoomById = (id) => {
-  const target = String(id);
-  return roomsData.find((room) => String(room.id) === target);
+  return roomsData.find((room) => room.id === id);
 };
 
 // Get room display name

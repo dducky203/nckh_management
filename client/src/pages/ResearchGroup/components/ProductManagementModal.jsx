@@ -20,7 +20,7 @@ const ProductManagementModal = ({ isOpen, onClose }) => {
   const update = (id, field, value) =>
     setValues((p) => ({
       ...p,
-      [id]: { ...p[id], [field]: Number(value) },
+      [id]: { ...p[id], [field]: value },
     }));
 
   /* ===== TÍNH GIỜ CHO ITEM ===== */

@@ -43,43 +43,8 @@ export const STATUS_TABS = [
     activeBorder: "border-mainColor",
     activeBg: "bg-blue-50",
     badgeBg: "bg-mainColor",
-  },
-  {
-    value: "DRAFT",
-    label: "Nháp",
-    icon: null,
-    activeText: "text-gray-700",
-    activeBorder: "border-gray-500",
-    activeBg: "bg-gray-50",
-    badgeBg: "bg-gray-500",
-  },
-  {
-    value: "SUBMITTED",
-    label: "Chờ duyệt",
-    icon: null,
-    activeText: "text-yellow-700",
-    activeBorder: "border-yellow-500",
-    activeBg: "bg-yellow-50",
-    badgeBg: "bg-yellow-500",
-  },
-  {
-    value: "APPROVED",
-    label: "Đã duyệt",
-    icon: null,
-    activeText: "text-green-700",
-    activeBorder: "border-green-600",
-    activeBg: "bg-green-50",
-    badgeBg: "bg-green-600",
-  },
-  {
-    value: "REJECTED",
-    label: "Từ chối",
-    icon: null,
-    activeText: "text-red-600",
-    activeBorder: "border-red-500",
-    activeBg: "bg-red-50",
-    badgeBg: "bg-red-500",
-  },
+  }
+
 ];
 
 // ─── Catalog Code to Activity Type Mapping ────────────────────────────
@@ -139,7 +104,7 @@ export const DETAIL_VALUE_LABELS = {
  * Resolve activity type from item (prefer explicit type, fallback to catalog code)
  */
 export function resolveActivityType(item) {
-  if (item?.activityType) return String(item.activityType).toUpperCase();
+  if (item?.activityType) return item.activityType.toUpperCase();
   if (!item?.catalogCode) return "";
   return TYPE_BY_CATALOG_CODE[item.catalogCode] || "";
 }
@@ -157,7 +122,7 @@ export function canEdit(status) {
 export function formatDateValue(value) {
   if (!value) return "-";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
+  if (isNaN(date.getTime())) return value;
   return date.toLocaleDateString("vi-VN");
 }
 
@@ -167,7 +132,7 @@ export function formatDateValue(value) {
 export function formatDateTimeValue(value) {
   if (!value) return "-";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
+  if (isNaN(date.getTime())) return value;
   return date.toLocaleString("vi-VN", {
     year: "numeric",
     month: "2-digit",
@@ -184,12 +149,12 @@ export function prettifyKey(rawKey) {
   if (!rawKey) return "Thông tin";
   if (DETAIL_KEY_LABELS[rawKey]) return DETAIL_KEY_LABELS[rawKey];
 
-  const normalized = String(rawKey)
+  const normalized = rawKey
     .replace(/([a-z])([A-Z])/g, "$1 $2")
     .replace(/[._-]+/g, " ")
     .trim();
 
-  if (!normalized) return String(rawKey);
+  if (!normalized) return rawKey;
   return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 }
 
@@ -200,16 +165,16 @@ export function prettifyKey(rawKey) {
 export function prettifyDetailValue(key, value) {
   if (value == null || value === "") return "-";
 
-  const mapped = DETAIL_VALUE_LABELS[key]?.[String(value).toUpperCase()];
+  const mapped = DETAIL_VALUE_LABELS[key]?.[value.toUpperCase?.() || value];
   if (mapped) return mapped;
 
   if (typeof value === "boolean") return value ? "Có" : "Không";
-  if (typeof value === "number") return Number(value).toLocaleString("vi-VN");
-  if (Array.isArray(value)) return value.join(", ") || "-";
+  if (typeof value === "number") return value.toLocaleString("vi-VN");
+  if (typeof value !== "object" || value === null) return value;
   if (typeof value === "object") {
     return JSON.stringify(value);
   }
-  return String(value);
+  return value;
 }
 
 /**
@@ -217,7 +182,7 @@ export function prettifyDetailValue(key, value) {
  * Returns: { entries: [[key, value], ...], raw: string, isJson: boolean }
  */
 export function parseDetailsJson(detailsJson) {
-  const raw = String(detailsJson || "").trim();
+  const raw = (detailsJson || "").trim();
   if (!raw) {
     return { entries: [], raw: "", isJson: false };
   }
@@ -225,12 +190,19 @@ export function parseDetailsJson(detailsJson) {
   try {
     const parsed = JSON.parse(raw);
 
-    if (Array.isArray(parsed)) {
-      return {
-        entries: parsed.map((value, index) => [String(index + 1), value]),
-        raw,
-        isJson: true,
-      };
+    if (typeof parsed !== "object" || parsed === null) {
+      return { entries: [["Giá trị", parsed]], raw, isJson: true };
+    }
+
+    if (typeof parsed === "object") {
+      if (Object.keys(parsed).length === 0 || typeof parsed.length === "number") {
+        return {
+          entries: parsed.map((value, index) => [index + 1, value]),
+          raw,
+          isJson: true,
+        };
+      }
+      return { entries: Object.entries(parsed), raw, isJson: true };
     }
 
     if (parsed && typeof parsed === "object") {

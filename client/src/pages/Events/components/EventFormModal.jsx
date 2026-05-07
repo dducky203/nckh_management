@@ -30,9 +30,9 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
       return null;
     }
     const [h, m] = timeStr.split(":");
-    const hh = Number(h);
-    const mm = Number(m);
-    if (Number.isNaN(hh) || Number.isNaN(mm)) return null;
+    const hh = h;
+    const mm = m;
+    if (isNaN(hh) || isNaN(mm)) return null;
     return hh * 60 + mm;
   };
 

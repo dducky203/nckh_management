@@ -1,5 +1,5 @@
 const normalize = (value) =>
-  String(value || "")
+  (value || "")
     .trim()
     .toUpperCase();
 
@@ -72,7 +72,7 @@ export const getUserList = (raw) => {
 
   return source
     .map((it) => ({
-      id: Number(it.id ?? it.userId),
+      id: it.id ?? it.userId,
       name: it.name || it.fullName || it.username || `User #${it.id}`,
       username: it.username || "",
     }))
@@ -81,7 +81,7 @@ export const getUserList = (raw) => {
 
 export const normalizeContributors = (contributors) =>
   contributors
-    .map((row) => ({ userId: Number(row.userId), role: row.role }))
+    .map((row) => ({ userId: row.userId, role: row.role }))
     .filter((row) => Number.isFinite(row.userId));
 
 export const getInitialForm = (initialActivityType = "SEMINAR") => ({

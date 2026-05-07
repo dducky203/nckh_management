@@ -49,7 +49,7 @@ export default function ActivityDataTable({ criteria, actualStats = [] }) {
       g.children.forEach((c) => {
         const actual = actualMap[c.id];
         if (actual) {
-          total += Number(actual.totalQuotaHours || 0);
+          total += actual.totalQuotaHours || 0;
         }
       });
       map[g.id] = total;
@@ -143,14 +143,14 @@ export default function ActivityDataTable({ criteria, actualStats = [] }) {
                           // Get actual data from API
                           const actual = actualMap[c.id];
                           const participationCount = actual
-                            ? Number(actual.participationCount || 0)
+                            ? actual.participationCount || 0
                             : 0;
                           const qty = participationCount;
                           const hours = actual
-                            ? Number(actual.totalQuotaHours || 0)
+                            ? actual.totalQuotaHours || 0
                             : 0;
                           const participants = actual
-                            ? Math.round(Number(actual.avgParticipantsN || 0))
+                            ? Math.round(actual.avgParticipantsN || 0)
                             : 0;
                           const hasQty = qty > 0;
 

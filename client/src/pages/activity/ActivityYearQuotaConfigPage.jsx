@@ -6,7 +6,7 @@ import { useToast } from "../../context/ToastContext";
 
 function formatNumber(value) {
   if (value === null || value === undefined || value === "") return "-";
-  return (+value).toLocaleString("vi-VN", { maximumFractionDigits: 2 });
+  return value.toLocaleString("vi-VN", { maximumFractionDigits: 2 });
 }
 
 export default function ActivityYearQuotaConfigPage() {
@@ -21,15 +21,15 @@ export default function ActivityYearQuotaConfigPage() {
   const debounceRef = useRef(null);
   const toast = useToast();
 
-  const getPlanValue = (row) => String(row?.phuongAn ?? "").trim();
+  const getPlanValue = (row) => (row?.phuongAn ?? "").trim();
 
   const fetchData = useCallback(async (year) => {
     setLoading(true);
     setError("");
     try {
-      const yearParam = year && String(year).trim() !== "" ? Number(year) : null;
+      const yearParam = year && year.trim?.() !== "" ? year : null;
       const res = await nckhTieuChiDinhMucService.getAll(null, null, yearParam);
-      const data = Array.isArray(res) ? res : (res?.data ?? []);
+      const data = res?.data ?? res ?? [];
       setRows(data);
     } catch (e) {
       setError(e?.message || "Không tải được dữ liệu định mức.");
@@ -41,7 +41,7 @@ export default function ActivityYearQuotaConfigPage() {
 
   // Load lần đầu với năm hiện tại
   useEffect(() => {
-    const currentYear = String(new Date().getFullYear());
+    const currentYear = new Date().getFullYear();
     setYearInput(currentYear);
     fetchData(currentYear);
   }, [fetchData]);
@@ -63,7 +63,7 @@ export default function ActivityYearQuotaConfigPage() {
       new Set(rows.map((row) => getPlanValue(row)).filter(Boolean)),
     );
 
-    return values.sort((a, b) => Number(a) - Number(b));
+    return values.sort((a, b) => a - b);
   }, [rows]);
 
   const filteredRows = useMemo(
@@ -84,8 +84,8 @@ export default function ActivityYearQuotaConfigPage() {
     try {
       setDownloadingTemplate(true);
       const params = {};
-      if (yearInput.trim() !== "") params.year = Number(yearInput);
-      if (selectedPlan !== "all") params.phuongAn = Number(selectedPlan);
+      if (yearInput.trim() !== "") params.year = yearInput;
+      if (selectedPlan !== "all") params.phuongAn = selectedPlan;
 
       const response = await nckhTieuChiDinhMucService.downloadImportTemplate(params);
       downloadFileFromResponse(response, "template-dinh-muc.xlsx");
@@ -105,8 +105,8 @@ export default function ActivityYearQuotaConfigPage() {
       setImporting(true);
       const response = await nckhTieuChiDinhMucService.importFromExcel(file);
 
-      const successCount = Number(response.headers?.["x-import-success"] ?? 0);
-      const errorCount = Number(response.headers?.["x-import-error"] ?? 0);
+      const successCount = response.headers?.["x-import-success"] ?? 0;
+      const errorCount = response.headers?.["x-import-error"] ?? 0;
 
       if (errorCount === 0) {
         toast.success(`Import thành công ${successCount} dòng. Tổng giờ tối thiểu đã được tự tính.`);

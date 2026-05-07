@@ -131,8 +131,8 @@ const CreateEvent = () => {
         return null;
       }
       const [h, m] = timeStr.split(":");
-      const hh = Number(h);
-      const mm = Number(m);
+      const hh = h;
+      const mm = m;
       if (Number.isNaN(hh) || Number.isNaN(mm)) return null;
       return hh * 60 + mm;
     };
@@ -452,7 +452,7 @@ const CreateEvent = () => {
                     {roomsLoading ? "Đang tải..." : "Chọn địa điểm tổ chức"}
                   </option>
                   {rooms.map((room) => (
-                    <option key={room.id} value={String(room.id)}>
+                    <option key={room.id} value={room.id}>
                       {room.displayName ||
                         room.roomName ||
                         "(Không có tên phòng)"}

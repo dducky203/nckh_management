@@ -11,11 +11,12 @@ export default function ContributorsSection({
   const [searchTerms, setSearchTerms] = useState({});
   const [openIndex, setOpenIndex] = useState(null);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [warningMsg, setWarningMsg] = useState("");
 
   const contributorOptionMap = useMemo(() => {
     const map = new Map();
     contributorOptions.forEach((item) => {
-      map.set(String(item.id), item);
+      map.set(item.id, item);
     });
     return map;
   }, [contributorOptions]);
@@ -29,7 +30,7 @@ export default function ContributorsSection({
     setSearchTerms((prev) => {
       const next = {};
       contributors.forEach((row, idx) => {
-        const selected = contributorOptionMap.get(String(row.userId));
+        const selected = contributorOptionMap.get(row.userId);
         next[idx] =
           prev[idx] !== undefined
             ? prev[idx]
@@ -58,7 +59,7 @@ export default function ContributorsSection({
   };
 
   const pickUser = (index, selectedUser) => {
-    onContributorChange(index, "userId", String(selectedUser.id));
+    onContributorChange(index, "userId", selectedUser.id);
     setSearchTerms((prev) => ({
       ...prev,
       [index]: getDisplayName(selectedUser),
@@ -67,10 +68,10 @@ export default function ContributorsSection({
   };
 
   const getVisibleOptions = (index, row) => {
-    const keyword = String(searchTerms[index] || "").trim();
+    const keyword = (searchTerms[index] || "").trim();
     if (!keyword) return contributorOptions;
 
-    const selected = contributorOptionMap.get(String(row.userId));
+    const selected = contributorOptionMap.get(row.userId);
     const selectedLabel = getDisplayName(selected);
     if (selectedLabel && keyword === selectedLabel) {
       return contributorOptions;
@@ -96,6 +97,12 @@ export default function ContributorsSection({
           + Thêm thành viên
         </button>
       </div>
+
+      {warningMsg && (
+        <div className="mb-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-700">
+          ⚠ {warningMsg}
+        </div>
+      )}
 
       <div className="space-y-2">
         {contributors.map((row, idx) => (
@@ -145,7 +152,18 @@ export default function ContributorsSection({
 
             <select
               value={row.role}
-              onChange={(e) => onContributorChange(idx, "role", e.target.value)}
+              onChange={(e) => {
+                const newRole = e.target.value;
+                if (newRole === "MAIN") {
+                  const hasMain = contributors.some((r, i) => i !== idx && r.role === "MAIN");
+                  if (hasMain) {
+                    setWarningMsg("Nhóm chỉ được có 1 tác giả chính. Vui lòng chuyển tác giả chính hiện tại thành thành viên trước.");
+                    return;
+                  }
+                }
+                setWarningMsg("");
+                onContributorChange(idx, "role", newRole);
+              }}
               className="md:col-span-3 h-9 rounded-lg border border-slate-200 px-3 text-sm"
             >
               <option value="MAIN">Tác giả chính</option>

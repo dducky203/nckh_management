@@ -140,8 +140,8 @@ export default function PlanChecklistBase({ planLabel, result }) {
             }
 
             /* --- Normal row --- */
-            const req = Number(c.req || 0);
-            const got = c.got == null ? null : Number(c.got || 0);
+            const req = c.req || 0;
+            const got = c.got == null ? null : c.got || 0;
             const hasActual = c.hasActual && got != null;
             const isPass = req === 0 || got >= req;
 

@@ -54,15 +54,15 @@ const EventCountdown = ({ targetDate, className = "" }) => {
           </>
         )}
         <span className="font-bold">
-          {String(timeLeft.hours).padStart(2, "0")}
+          {timeLeft.hours.toString().padStart(2, "0")}
         </span>
         <span>:</span>
         <span className="font-bold">
-          {String(timeLeft.minutes).padStart(2, "0")}
+          {timeLeft.minutes.toString().padStart(2, "0")}
         </span>
         <span>:</span>
         <span className="font-bold">
-          {String(timeLeft.seconds).padStart(2, "0")}
+          {timeLeft.seconds.toString().padStart(2, "0")}
         </span>
       </div>
     </div>

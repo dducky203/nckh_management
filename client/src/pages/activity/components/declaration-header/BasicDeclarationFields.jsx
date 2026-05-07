@@ -1,4 +1,4 @@
-import { TYPE_LABELS } from "./constants";
+import { TYPE_LABELS, getBasicFieldConfig } from "./constants";
 
 export default function BasicDeclarationFields({
   form,
@@ -6,6 +6,8 @@ export default function BasicDeclarationFields({
   lockActivityType,
   onFormChange,
 }) {
+  const cfg = getBasicFieldConfig(form.activityType);
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -46,7 +48,7 @@ export default function BasicDeclarationFields({
         </label>
 
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-bold text-slate-500">Số lượng</span>
+          <span className="text-xs font-bold text-slate-500">{cfg.qtyLabel}</span>
           <input
             type="number"
             min="1"
@@ -57,7 +59,7 @@ export default function BasicDeclarationFields({
         </label>
 
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-bold text-slate-500">Ngày hoạt động</span>
+          <span className="text-xs font-bold text-slate-500">{cfg.dateLabel}</span>
           <input
             type="date"
             value={form.activityDate}
@@ -68,25 +70,26 @@ export default function BasicDeclarationFields({
       </div>
 
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-bold text-slate-500">Tên hoạt động *</span>
+        <span className="text-xs font-bold text-slate-500">{cfg.titleLabel} *</span>
         <input
           value={form.title}
           onChange={(e) => onFormChange("title", e.target.value)}
           className="h-10 rounded-lg border border-slate-200 px-3 text-sm"
-          placeholder="Nhập tên bài / seminar / đề xuất..."
+          placeholder={cfg.titlePlaceholder}
         />
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-bold text-slate-500">Mô tả thêm</span>
+        <span className="text-xs font-bold text-slate-500">{cfg.descLabel}</span>
         <textarea
           value={form.description}
           onChange={(e) => onFormChange("description", e.target.value)}
           rows={2}
           className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-          placeholder="Thông tin bổ sung (không bắt buộc)"
+          placeholder={cfg.descPlaceholder}
         />
       </label>
     </>
   );
 }
+

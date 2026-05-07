@@ -52,9 +52,9 @@ export default function ActivityStandards() {
   }, [toast]);
 
   const canManagePlanAndData = useMemo(() => {
-    const roleStr = String(user?.role ?? "").toLowerCase();
+    const roleStr = (user?.role ?? "").toLowerCase();
     const isAdmin = roleStr === "admin" || user?.idRole === 1;
-    const isDeptHead = Number(user?.power) === 1;
+    const isDeptHead = user?.power === 1;
     return isAdmin || isDeptHead;
   }, [user]);
 
@@ -168,10 +168,10 @@ export default function ActivityStandards() {
   const calcHours = useCallback(
     (child) => {
       const d = values[child.id] || {};
-      const qty = Number(d.qty || 0);
+      const qty = +(d.qty || 0);
       const S = child.quota;
       if (!child.isTeam) return qty * S;
-      const participants = Math.max(1, Number(d.participants || 1));
+      const participants = Math.max(1, +(d.participants || 1));
       const role = d.role || "main";
       const mainShare = S / 3;
       const memberShare = (2 * S) / (3 * participants);
@@ -187,7 +187,7 @@ export default function ActivityStandards() {
     }
 
     const sortedCriteria = [...planCriteria].sort(
-      (a, b) => Number(a.sortOrder ?? 0) - Number(b.sortOrder ?? 0),
+      (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
     );
 
     // Create map of actual data by tieuChiCode
@@ -197,9 +197,9 @@ export default function ActivityStandards() {
     });
 
     const checks = sortedCriteria.map((c) => {
-      const req = Number(c.dinhMucToiThieu ?? 0);
+      const req = +(c.dinhMucToiThieu ?? 0);
       const actual = actualMap[c.tieuChiCode];
-      const got = actual ? Number(actual.totalQty ?? 0) : 0;
+      const got = actual ? +(actual.totalQty ?? 0) : 0;
       const hasActual = got > 0;
       const ok = got >= req;
 
@@ -210,18 +210,18 @@ export default function ActivityStandards() {
         unit: c.donViTinh,
         hasActual,
         ok,
-        actualHours: actual ? Number(actual.totalQuotaHours ?? 0) : 0,
-        participationCount: actual ? Number(actual.participationCount ?? 0) : 0,
+        actualHours: actual ? +(actual.totalQuotaHours ?? 0) : 0,
+        participationCount: actual ? +(actual.participationCount ?? 0) : 0,
       };
     });
 
     const requiredHoursSum = sortedCriteria.reduce(
-      (sum, c) => sum + Number(c.tongGioToiThieu ?? 0),
+      (sum, c) => sum + +(c.tongGioToiThieu ?? 0),
       0,
     );
 
     const actualHoursSum = checks.reduce(
-      (sum, check) => sum + Number(check.actualHours ?? 0),
+      (sum, check) => sum + +(check.actualHours ?? 0),
       0,
     );
 
@@ -237,12 +237,12 @@ export default function ActivityStandards() {
 
   const tableCriteria = useMemo(() => {
     const children = [...planCriteria]
-      .sort((a, b) => Number(a.sortOrder ?? 0) - Number(b.sortOrder ?? 0))
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
       .map((c) => ({
         id: c.tieuChiCode,
         name: c.tieuChiName,
         unit: c.donViTinh || "",
-        quota: Number(c.gioQuyDoiPerUnit ?? 0),
+        quota: +(c.gioQuyDoiPerUnit ?? 0),
         isTeam: false,
       }));
 
@@ -258,8 +258,8 @@ export default function ActivityStandards() {
   }, [planCriteria, plan]);
 
   const requiredHoursNum =
-    result.requiredHours == null ? null : Number(result.requiredHours || 0);
-  const actualHoursNum = Number(result.actualHours || 0);
+    result.requiredHours == null ? null : result.requiredHours || 0;
+  const actualHoursNum = result.actualHours || 0;
   const diffHours =
     requiredHoursNum == null ? null : round1(actualHoursNum - requiredHoursNum);
 
@@ -274,7 +274,7 @@ export default function ActivityStandards() {
       setPlanSaving(true);
       const res = await nckhPlanService.selectAndLock(user.id, plan);
       const saved = res?.data ?? res;
-      setPlanLocked(Boolean(saved?.isLocked ?? true));
+      setPlanLocked(!!(saved?.isLocked ?? true));
       setPlanNotSet(false);
       toast.success(`Đã khóa phương án ${plan} cho năm nay`);
     } catch (e) {
@@ -342,14 +342,13 @@ export default function ActivityStandards() {
                   value={plan}
                   onChange={(e) => {
                     if (!canSelectPlan) return;
-                    setPlan(Number(e.target.value));
+                    setPlan(e.target.value);
                   }}
                   disabled={planSelectDisabled}
                   className={`w-full md:w-60 transition-colors text-sm font-bold py-2.5 pl-3 pr-8 rounded-xl appearance-none outline-none border shadow-sm focus:border-mainColor focus:bg-white
-                    ${
-                      planSelectDisabled
-                        ? "bg-slate-100 text-slate-500 border-slate-200 cursor-not-allowed"
-                        : "bg-white hover:bg-slate-50 text-slate-800 border-slate-200 cursor-pointer"
+                    ${planSelectDisabled
+                      ? "bg-slate-100 text-slate-500 border-slate-200 cursor-not-allowed"
+                      : "bg-white hover:bg-slate-50 text-slate-800 border-slate-200 cursor-pointer"
                     }`}
                 >
                   {PLAN_OPTIONS.map((p) => (

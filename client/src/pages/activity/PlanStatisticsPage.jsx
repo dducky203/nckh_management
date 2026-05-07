@@ -50,8 +50,8 @@ export default function PlanStatisticsPage() {
         setPlanStatsRows(payload.rows ?? []);
         setPlanStatsCounts(payload.planCounts ?? {});
         setPlanStatsMeta({
-          totalUsers: Number(payload.totalUsers ?? 0),
-          selectedUsers: Number(payload.selectedUsers ?? 0),
+          totalUsers: payload.totalUsers ?? 0,
+          selectedUsers: payload.selectedUsers ?? 0,
         });
       } catch (e) {
         if (cancelled) return;
@@ -77,7 +77,7 @@ export default function PlanStatisticsPage() {
     }, {});
   }, []);
 
-  const totalUsers = Number(planStatsMeta.totalUsers || 0);
+  const totalUsers = planStatsMeta.totalUsers || 0;
   const pieColors = [
     "#3B82F6",
     "#10B981",
@@ -89,7 +89,7 @@ export default function PlanStatisticsPage() {
 
   const pieData = useMemo(() => {
     return PLAN_OPTIONS.map((opt, idx) => {
-      const value = Number(planStatsCounts?.[opt.id] ?? 0);
+      const value = planStatsCounts?.[opt.id] ?? 0;
       return {
         id: opt.id,
         name: `PA${opt.id}`,
@@ -216,7 +216,7 @@ export default function PlanStatisticsPage() {
                 type="number"
                 value={reportYear}
                 onChange={(e) =>
-                  setReportYear(Number(e.target.value || academicYear))
+                  setReportYear(e.target.value || academicYear)
                 }
                 className="w-28 py-2 px-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mainColor text-sm"
                 placeholder="Năm"
@@ -259,7 +259,7 @@ export default function PlanStatisticsPage() {
                   PA{opt.id}
                 </p>
                 <p className="text-xl font-black text-mainColor">
-                  {Number(planStatsCounts?.[opt.id] ?? 0)}
+                  {planStatsCounts?.[opt.id] ?? 0}
                 </p>
               </div>
             ))}

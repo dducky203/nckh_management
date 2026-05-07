@@ -132,7 +132,7 @@ export default function NckhApprovalPage() {
       } catch {
         source = [];
       }
-      if (!Array.isArray(source) || source.length === 0) {
+      if (!source || source.length === 0) {
         try {
           const res2 = await userService.getAllUsers({ page: 0, size: 500 });
           source =
@@ -148,11 +148,12 @@ export default function NckhApprovalPage() {
         }
       }
       const map = {};
-      if (Array.isArray(source)) {
+      if (source && typeof source === "object" && typeof source.length === "number") {
         source.forEach((it) => {
-          const id = Number(it.id ?? it.userId);
-          if (!Number.isFinite(id)) return;
+          const id = it.id ?? it.userId;
+          if (!id || isNaN(id)) return;
           map[id] = it.name || it.fullName || it.username || `User #${id}`;
+        });
         });
       }
       setUserNameById(map);
@@ -183,7 +184,7 @@ export default function NckhApprovalPage() {
     loadPending();
   }, [selectedYear, typeFilter]);
 
-  const getName = (id) => userNameById[Number(id)] || `User #${id}`;
+  const getName = (id) => userNameById[id] || `User #${id}`;
 
   const handleApprove = async (item) => {
     setProcessingId(item.id);
@@ -255,7 +256,7 @@ export default function NckhApprovalPage() {
               type="number"
               value={selectedYear}
               onChange={(e) =>
-                setSelectedYear(Number(e.target.value || currentYear))
+                setSelectedYear(e.target.value || currentYear)
               }
               className="h-9 w-28 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:border-mainColor"
             />

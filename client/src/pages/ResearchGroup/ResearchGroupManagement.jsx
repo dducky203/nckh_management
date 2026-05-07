@@ -88,7 +88,7 @@ const ResearchGroupManagement = () => {
         // Call my-groups API endpoint
         const response = await researchGroupService.getMyGroups();
         const responseData = response.data || response;
-        const myGroups = Array.isArray(responseData) ? responseData : [];
+        const myGroups = responseData || [];
         setGroups(myGroups);
         // No pagination for my-groups
         updatePaginationData({

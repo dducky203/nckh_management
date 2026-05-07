@@ -31,7 +31,7 @@ import {
   prettifyKey,
   prettifyDetailValue,
 } from "../../../constants/activityConstants";
-import userService from "../../../services/userService";
+
 
 
 
@@ -63,78 +63,78 @@ function TypeBadge({ type }) {
 function ActivityCard({ item, onViewDetail, onEdit, onDelete }) {
   const editable = canEdit(item.status);
   const resolvedType = resolveActivityType(item);
+  const typeMeta = TYPE_META[resolvedType] || TYPE_META[item.activityType] || { label: "Khác", color: "bg-gray-600 text-white" };
+  const bgColor = typeMeta.color?.split(" ")[0] || "bg-gray-400";
 
   return (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all overflow-hidden group flex flex-col">
-      {/* Color bar top */}
-      <div
-        className={`h-1.5 w-full ${TYPE_META[item.activityType]?.color?.split(" ")[0] || "bg-gray-400"}`}
-      />
+    <div className="bg-white rounded-xl border border-slate-200 hover:border-mainColor/40 hover:shadow-lg transition-all duration-300 overflow-hidden group flex flex-col">
+      {/* Header with type color */}
+      <div className={`${bgColor} px-5 py-3 flex items-center justify-between`}>
+        <span className="text-xs font-bold text-white/90 uppercase tracking-wider">
+          {typeMeta.label}
+        </span>
+        <StatusBadge status={item.status} />
+      </div>
 
       <div className="p-5 flex-1 flex flex-col">
-        {/* Badges */}
-        <div className="flex items-center gap-2 mb-3 flex-wrap">
-          <TypeBadge type={resolvedType} />
-          <StatusBadge status={item.status} />
-        </div>
-
         {/* Title */}
         <h3
           title={item.title}
-          className="text-base font-bold text-gray-800 mb-3 line-clamp-2 group-hover:text-mainColor transition-colors flex-1"
+          className="text-[15px] font-bold text-slate-800 mb-3 line-clamp-2 group-hover:text-mainColor transition-colors leading-snug"
         >
           {item.title}
         </h3>
 
-        {/* Meta */}
-        <div className="space-y-1.5 text-sm text-gray-500 mb-4">
+        {/* Meta info */}
+        <div className="space-y-2 text-[13px] text-slate-500 mb-4 flex-1">
           {item.activityDate && (
             <div className="flex items-center gap-2">
-              <CalendarToday
-                sx={{ fontSize: 15 }}
-                className="text-gray-400 flex-shrink-0"
-              />
-              <span>{item.activityDate}</span>
+              <CalendarToday sx={{ fontSize: 14 }} className="text-blue-400 flex-shrink-0" />
+              <span>{formatDateValue(item.activityDate)}</span>
             </div>
           )}
           {item.venue && (
             <div className="flex items-center gap-2">
-              <LocationOn
-                sx={{ fontSize: 15 }}
-                className="text-gray-400 flex-shrink-0"
-              />
+              <LocationOn sx={{ fontSize: 14 }} className="text-red-400 flex-shrink-0" />
               <span className="line-clamp-1">{item.venue}</span>
             </div>
           )}
           {item.publicationName && (
             <div className="flex items-center gap-2">
-              <Article
-                sx={{ fontSize: 15 }}
-                className="text-gray-400 flex-shrink-0"
-              />
+              <Article sx={{ fontSize: 14 }} className="text-purple-400 flex-shrink-0" />
               <span className="line-clamp-1">{item.publicationName}</span>
             </div>
           )}
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-2 mt-auto">
+        {/* Quota hours chip */}
+        {item.quotaHoursSnapshot != null && (
+          <div className="mb-4">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
+              <Badge sx={{ fontSize: 13 }} />
+              {item.quotaHoursSnapshot} giờ NCKH
+            </span>
+          </div>
+        )}
+
+        {/* Divider */}
+        <div className="border-t border-slate-100 pt-3 flex gap-2 mt-auto">
           {editable && (
             <>
               <button
                 type="button"
                 onClick={() => onEdit(item)}
-                className="flex items-center gap-1 px-3 py-1.5 text-gray-600 border border-gray-200 rounded-md hover:text-mainColor hover:border-mainColor transition-colors text-sm"
+                className="flex items-center gap-1 px-3 py-1.5 text-slate-500 border border-slate-200 rounded-lg hover:text-mainColor hover:border-mainColor/50 transition-colors text-xs font-medium"
               >
-                <Edit sx={{ fontSize: 14 }} />
+                <Edit sx={{ fontSize: 13 }} />
                 Sửa
               </button>
               <button
                 type="button"
                 onClick={() => onDelete(item)}
-                className="flex items-center gap-1 px-3 py-1.5 text-red-600 border border-red-200 rounded-md hover:bg-red-50 transition-colors text-sm"
+                className="flex items-center gap-1 px-3 py-1.5 text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors text-xs font-medium"
               >
-                <Delete sx={{ fontSize: 14 }} />
+                <Delete sx={{ fontSize: 13 }} />
                 Xóa
               </button>
             </>
@@ -142,10 +142,10 @@ function ActivityCard({ item, onViewDetail, onEdit, onDelete }) {
           <button
             type="button"
             onClick={() => onViewDetail(item)}
-            className="flex items-center gap-1 ml-auto px-3 py-1.5 border border-gray-200 rounded-md hover:bg-mainColor hover:text-white hover:border-mainColor transition-all text-sm font-medium text-gray-700"
+            className="flex items-center gap-1 ml-auto px-3.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-mainColor hover:text-white hover:border-mainColor transition-all text-xs font-semibold text-slate-600"
           >
             Chi tiết
-            <ArrowForward sx={{ fontSize: 14 }} />
+            <ArrowForward sx={{ fontSize: 13 }} />
           </button>
         </div>
       </div>
@@ -164,58 +164,12 @@ function DetailModal({
 
   const resolvedType = resolveActivityType(item);
   const parsedDetails = parseDetailsJson(item.detailsJson);
-  const memberIds = String(item.memberUserIds || "")
+  const memberIds = (item.memberUserIds || "")
     .split(",")
     .map((id) => id.trim())
-    .filter(Boolean);
-  const hasProof = Boolean(item.proofFileUrl || item.proofImageUrl);
+    .filter((id) => id);
+  const hasProof = !!(item.proofFileUrl || item.proofImageUrl);
 
-  const summaryMetrics = [
-    {
-      label: "Năm học",
-      value: item.academicYear || "-",
-      icon: <CalendarToday sx={{ fontSize: 15 }} className="text-blue-500" />,
-    },
-    {
-      label: "Ngày hoạt động",
-      value: formatDateValue(item.activityDate),
-      icon: <CalendarToday sx={{ fontSize: 15 }} className="text-blue-500" />,
-    },
-    {
-      label: "Số lượng",
-      value:
-        item.qty == null
-          ? "-"
-          : Number(item.qty).toLocaleString("vi-VN", {
-              maximumFractionDigits: 2,
-            }),
-      icon: <Badge sx={{ fontSize: 15 }} className="text-indigo-500" />,
-    },
-    {
-      label: "Mã danh mục",
-      value: item.catalogCode || "-",
-      icon: <Article sx={{ fontSize: 15 }} className="text-violet-500" />,
-    },
-    {
-      label: "Định mức (snapshot)",
-      value:
-        item.quotaHoursSnapshot == null
-          ? "-"
-          : `${Number(item.quotaHoursSnapshot).toLocaleString("vi-VN", {
-              maximumFractionDigits: 2,
-            })} giờ`,
-      icon: <Badge sx={{ fontSize: 15 }} className="text-amber-500" />,
-    },
-    {
-      label: "Mã khai báo",
-      value: `#${item.id}`,
-      icon: <Badge sx={{ fontSize: 15 }} className="text-slate-500" />,
-    },
-  ];
-
-
-  const getUser = (id) =>  userService.getUserById(id).then(res => res?.data || res).catch(() => null);
-  
   return (
     <div className="fixed inset-0 bg-slate-900/55 backdrop-blur-[2px] flex items-center justify-center p-4 z-50">
       <div className="bg-slate-50 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200">
@@ -241,9 +195,9 @@ function DetailModal({
 
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-slate-50">
-          {/* Badges + summary line */}
+          {/* Quick overview chips */}
           <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-            <div className="flex flex-wrap items-center gap-2 mb-3">
+            <div className="flex flex-wrap items-center gap-2 mb-4">
               <TypeBadge type={resolvedType} />
               <StatusBadge status={item.status} />
               {canEdit(item.status) && (
@@ -251,22 +205,32 @@ function DetailModal({
                   Có thể chỉnh sửa
                 </span>
               )}
+              <span className="ml-auto text-xs text-slate-400 font-medium">Mã: #{item.id}</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {summaryMetrics.map((meta) => (
-                <InfoBlock
-                  key={meta.label}
-                  icon={meta.icon}
-                  label={meta.label}
-                  value={meta.value}
-                />
-              ))}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="text-center p-2.5 rounded-lg bg-blue-50/70 border border-blue-100">
+                <p className="text-[10px] font-bold text-blue-400 uppercase mb-1">Năm học</p>
+                <p className="text-sm font-bold text-blue-700">{item.academicYear || "-"}</p>
+              </div>
+              <div className="text-center p-2.5 rounded-lg bg-indigo-50/70 border border-indigo-100">
+                <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Số lượng</p>
+                <p className="text-sm font-bold text-indigo-700">{item.qty == null ? "-" : item.qty}</p>
+              </div>
+              <div className="text-center p-2.5 rounded-lg bg-amber-50/70 border border-amber-100">
+                <p className="text-[10px] font-bold text-amber-400 uppercase mb-1">Định mức</p>
+                <p className="text-sm font-bold text-amber-700">{item.quotaHoursSnapshot == null ? "-" : `${item.quotaHoursSnapshot} giờ`}</p>
+              </div>
+              <div className="text-center p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Mã danh mục</p>
+                <p className="text-sm font-bold text-slate-700">{item.catalogCode || "-"}</p>
+              </div>
             </div>
           </div>
 
           {/* Core information */}
-          <section className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-            <h3 className="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide">
+          <section className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+            <h3 className="text-sm font-bold text-slate-700 border-l-4 border-mainColor pl-3 mb-4 flex items-center gap-2">
+              <Article sx={{ fontSize: 16 }} className="text-mainColor" />
               Thông tin hoạt động
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -349,7 +313,7 @@ function DetailModal({
                 }
               />
 
-            
+
             </div>
 
             <div className="mt-4 border-t border-slate-200 pt-4">
@@ -392,8 +356,9 @@ function DetailModal({
           )}
 
           {/* Proof files */}
-          <section className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-            <h3 className="text-sm font-bold text-slate-700 border-l-4 border-mainColor pl-3 mb-3">
+          <section className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+            <h3 className="text-sm font-bold text-slate-700 border-l-4 border-mainColor pl-3 mb-4 flex items-center gap-2">
+              <LinkIcon sx={{ fontSize: 16 }} className="text-mainColor" />
               Minh chứng
             </h3>
             {hasProof ? (
@@ -425,8 +390,9 @@ function DetailModal({
           </section>
 
           {/* System + expanded data */}
-          <section className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-            <h3 className="text-sm font-bold text-slate-700 border-l-4 border-mainColor pl-3 mb-3">
+          <section className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+            <h3 className="text-sm font-bold text-slate-700 border-l-4 border-mainColor pl-3 mb-4 flex items-center gap-2">
+              <Badge sx={{ fontSize: 16 }} className="text-mainColor" />
               Dữ liệu khai báo mở rộng
             </h3>
 
@@ -436,7 +402,7 @@ function DetailModal({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {parsedDetails.entries.map(([key, value]) => (
                       <div
-                        key={String(key)}
+                        key={key}
                         className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                       >
                         <p className="text-[11px] font-bold text-slate-400 uppercase mb-1">
@@ -503,39 +469,48 @@ function DetailModal({
           </section>
 
           {/* Contributors */}
-          <section className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-            <h3 className="text-sm font-bold text-slate-700 border-l-4 border-mainColor pl-3 mb-3 flex items-center gap-2">
-              <People sx={{ fontSize: 16 }} />
+          <section className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+            <h3 className="text-sm font-bold text-slate-700 border-l-4 border-mainColor pl-3 mb-4 flex items-center gap-2">
+              <People sx={{ fontSize: 16 }} className="text-mainColor" />
               Người tham gia
             </h3>
             {loadingContributors ? (
-              <p className="text-sm text-slate-400">Đang tải...</p>
+              <div className="flex items-center gap-2 py-4">
+                <div className="w-5 h-5 border-2 border-mainColor border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm text-slate-400">Đang tải...</p>
+              </div>
             ) : contributors.length === 0 ? (
-              <p className="text-sm text-slate-400 italic">Không có thông tin</p>
+              <p className="text-sm text-slate-400 italic py-2">Không có thông tin người tham gia.</p>
             ) : (
               <div className="space-y-2">
-                {contributors.map((c, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-3 py-2"
-                  >
-                    <div>
-                      <span className="text-sm text-slate-700 font-medium">
-                        {c.userName || c.name || `User #${c.userId}`}
+                {contributors.map((c, i) => {
+                  const displayName = c.userName || c.name || `User #${c.userId}`;
+                  const initials = displayName.split(" ").slice(-2).map(w => w[0]?.toUpperCase()).join("");
+                  const isMain = c.role === "MAIN";
+                  return (
+                    <div
+                      key={i}
+                      className={`flex items-center gap-3 rounded-lg px-3 py-2.5 border transition-colors ${isMain ? "bg-blue-50/50 border-blue-200" : "bg-slate-50 border-slate-200"
+                        }`}
+                    >
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isMain ? "bg-mainColor text-white" : "bg-slate-200 text-slate-600"
+                        }`}>
+                        {initials}
+                      </div>
+                      <span className="text-sm text-slate-700 font-medium flex-1">
+                        {displayName}
                       </span>
-                      
-                    </div>
-                    <span
-                      className={`text-xs font-semibold px-2 py-1 rounded-md ${
-                        c.role === "MAIN"
+                      <span
+                        className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${isMain
                           ? "bg-blue-100 text-blue-700"
                           : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      {c.role === "MAIN" ? "Tác giả chính" : "Thành viên"}
-                    </span>
-                  </div>
-                ))}
+                          }`}
+                      >
+                        {isMain ? "Tác giả chính" : "Thành viên"}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </section>
@@ -574,13 +549,15 @@ function DetailModal({
 
 function InfoBlock({ icon, label, value }) {
   return (
-    <div className="flex gap-2 items-start rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-      <span className="mt-0.5 flex-shrink-0">{icon}</span>
-      <div>
-        <p className="text-[11px] font-bold text-slate-400 uppercase mb-0.5">
+    <div className="flex gap-2.5 items-start rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-3.5 py-2.5 transition-colors">
+      <span className="mt-0.5 flex-shrink-0 w-7 h-7 rounded-md bg-slate-100 flex items-center justify-center">
+        {icon}
+      </span>
+      <div className="min-w-0">
+        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">
           {label}
         </p>
-        <p className="text-sm text-slate-700 break-words">{value || "-"}</p>
+        <p className="text-sm font-medium text-slate-700 break-words leading-snug">{value || "-"}</p>
       </div>
     </div>
   );
@@ -754,31 +731,6 @@ export default function DeclarationScreen({
       {/* Filters: Tabs + Search */}
       <section className="max-w-6xl mx-auto px-4 py-6">
         <div className="bg-white rounded-lg shadow-sm mb-6">
-          {/* Status Tabs — giống EventTabs */}
-          <div className="flex border-b overflow-x-auto">
-            {STATUS_TABS.map((tab) => (
-              <button
-                key={tab.value}
-                onClick={() => setStatusFilter(tab.value)}
-                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors
-                  ${
-                    statusFilter === tab.value
-                      ? `${tab.activeText} border-b-2 ${tab.activeBorder} ${tab.activeBg}`
-                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-                  }`}
-              >
-                {tab.icon}
-                {tab.label}
-                {statusFilter === tab.value && myItems.length > 0 && (
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-md text-white ${tab.badgeBg}`}
-                  >
-                    {myItems.length}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
 
           {/* Search + Year — giống EventFilters */}
           <div className="p-4 bg-gray-50 flex flex-col md:flex-row gap-3">
@@ -801,7 +753,7 @@ export default function DeclarationScreen({
                 type="number"
                 value={selectedYear}
                 onChange={(e) =>
-                  setSelectedYear(Number(e.target.value || currentYear))
+                  setSelectedYear(e.target.value || currentYear)
                 }
                 className="w-28 py-2 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor text-sm"
                 placeholder="Năm"

@@ -34,7 +34,7 @@ export default function useDeclarationHeaderState({
   const [proofImages, setProofImages] = useState([]);
   const [form, setForm] = useState(getInitialForm(initialActivityType));
   const [contributors, setContributors] = useState([
-    { userId: user?.id ? String(user.id) : "", role: "MAIN" },
+    { userId: user?.id ?? "", role: "MAIN" },
   ]);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function useDeclarationHeaderState({
     let extraDetails = {};
     try {
       const parsed = JSON.parse(initialData.detailsJson || "null");
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      if (parsed && typeof parsed === "object") {
         extraDetails = parsed;
       }
     } catch {
@@ -50,8 +50,8 @@ export default function useDeclarationHeaderState({
     }
     setForm((prev) => ({
       ...prev,
-      academicYear: Number(initialData.academicYear || prev.academicYear),
-      qty: Number(initialData.qty || 1),
+      academicYear: initialData.academicYear || prev.academicYear,
+      qty: initialData.qty || 1,
       title: initialData.title || "",
       description: initialData.description || "",
       publicationName: initialData.publicationName || "",
@@ -68,7 +68,7 @@ export default function useDeclarationHeaderState({
     if (!initialContributors || initialContributors.length === 0) return;
     setContributors(
       initialContributors.map((it) => ({
-        userId: String(it.userId),
+        userId: it.userId,
         role: it.role || "MEMBER",
       })),
     );
@@ -142,7 +142,7 @@ export default function useDeclarationHeaderState({
     const currentUserOption = user?.id
       ? [
           {
-            id: Number(user.id),
+            id: user.id,
             name: user.name || user.username || `User #${user.id}`,
             username: user.username || "",
           },
@@ -228,7 +228,12 @@ export default function useDeclarationHeaderState({
     }
 
     if (!normalizedContributors.some((row) => row.role === "MAIN")) {
-      return "Cần có ít nhất 1 tác giả chính (MAIN)";
+      return "Cần có đúng 1 tác giả chính (MAIN)";
+    }
+
+    const mainCount = normalizedContributors.filter((row) => row.role === "MAIN").length;
+    if (mainCount > 1) {
+      return "Chỉ được phép có 1 tác giả chính (MAIN) trong nhóm";
     }
 
     return null;
@@ -252,7 +257,7 @@ export default function useDeclarationHeaderState({
     ]);
 
     return {
-      academicYear: Number(form.academicYear),
+      academicYear: form.academicYear,
       catalogCode,
       activityType: form.activityType,
       conferenceRole: form.conferenceRole,
@@ -261,7 +266,7 @@ export default function useDeclarationHeaderState({
       vnPaperCategory: form.vnPaperCategory,
       proceedingLevel: form.proceedingLevel,
       proposalLevel: form.proposalLevel,
-      qty: Number(form.qty || 1),
+      qty: form.qty || 1,
       title: form.title.trim(),
       description: form.description?.trim() || null,
       publicationName: form.publicationName?.trim() || null,
@@ -283,7 +288,7 @@ export default function useDeclarationHeaderState({
     setProofFiles([]);
     setProofImages([]);
     setContributors([
-      { userId: user?.id ? String(user.id) : "", role: "MAIN" },
+      { userId: user?.id ?? "", role: "MAIN" },
     ]);
   };
 

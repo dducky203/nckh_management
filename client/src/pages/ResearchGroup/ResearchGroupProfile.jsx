@@ -74,9 +74,9 @@ const ResearchGroupProfile = () => {
     console.log("DOCUMENT RESPONSE:", response);
 
     const data = response?.data || response || [];
-    setDocuments(Array.isArray(data) ? data : []);
+    setDocuments(data || []);
 
-    if (!Array.isArray(data)) {
+    if (!data || typeof data !== "object" || typeof data.length !== "number") {
       console.error("Documents is not array:", response);
       toast.error("Dữ liệu văn bản không hợp lệ");
       return;

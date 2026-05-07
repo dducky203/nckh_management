@@ -117,7 +117,7 @@ const MemberManagementModal = ({
       const users = responseData?.users || [];
       const totalPages = responseData?.totalPages ?? 0;
 
-      if (!Array.isArray(users)) {
+      if (!users || typeof users !== "object" || typeof users.length !== "number") {
         console.error("Invalid response format:", response);
         toast.error("Định dạng dữ liệu không hợp lệ");
         return;
