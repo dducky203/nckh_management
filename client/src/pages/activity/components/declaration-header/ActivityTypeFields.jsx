@@ -6,6 +6,29 @@ import {
   VN_CATEGORY_LABELS,
 } from "./constants";
 
+const TASK_LEVEL_LABELS = {
+  QG: "Cấp Quốc gia",
+  BO: "Cấp Bộ / Tương đương",
+  HV: "Cấp Học viện",
+};
+
+const TASK_ROLE_LABELS = {
+  CHU_NHIEM: "Chủ nhiệm",
+  THU_KY: "Thư ký",
+  THAM_GIA: "Tham gia",
+  HD_SV: "Hướng dẫn SV NCKH",
+};
+
+const OTHER_ACTIVITY_TYPE_LABELS = {
+  CHUONG_SACH: "Chương sách (ISBN)",
+  GIAO_TRINH: "Giáo trình",
+  SACH_CHUYEN_KHAO: "Sách chuyên khảo",
+  SACH_THAM_KHAO: "Sách tham khảo",
+  HOP_DONG_KHCN: "Hợp đồng KH&CN",
+  DE_AN_HV: "Đề án Học viện",
+  BAI_QUANG_BA: "Bài quảng bá KH&CN",
+};
+
 /* ─── Reusable field primitives ─── */
 function Field({ label, required, children, colSpan }) {
   return (
@@ -412,6 +435,252 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
         </Field>
 
         <Field label="Link đề xuất / Tài liệu" colSpan={2}>
+          <UrlInput value={form.externalLink} onChange={(v) => onFormChange("externalLink", v)} />
+        </Field>
+      </div>
+    );
+  }
+
+  /* ── APPROVED_TASK ── */
+  if (form.activityType === "APPROVED_TASK") {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <SectionTitle>Thông tin Nhiệm vụ KH&CN được phê duyệt</SectionTitle>
+
+        <Field label="Cấp nhiệm vụ" required>
+          <SelectInput
+            value={form.taskLevel}
+            onChange={(v) => onFormChange("taskLevel", v)}
+            options={Object.entries(TASK_LEVEL_LABELS)}
+          />
+        </Field>
+
+        <Field label="Vai trò" required>
+          <SelectInput
+            value={form.taskRole}
+            onChange={(v) => onFormChange("taskRole", v)}
+            options={Object.entries(TASK_ROLE_LABELS)}
+          />
+        </Field>
+
+        <Field label="Tên đề tài / Nhiệm vụ" colSpan={2}>
+          <TextInput
+            value={form.publicationName}
+            onChange={(v) => onFormChange("publicationName", v)}
+            placeholder="Tên đầy đủ đề tài / nhiệm vụ nghiên cứu"
+          />
+        </Field>
+
+        <Field label="Cơ quan chủ quản / Chủ trì">
+          <TextInput
+            value={form.venue}
+            onChange={(v) => onFormChange("venue", v)}
+            placeholder="VD: Bộ KH&CN, Bộ NN&PTNT..."
+          />
+        </Field>
+
+        <Field label="Mã số đề tài / Số hợp đồng">
+          <TextInput
+            value={form.identifierCode}
+            onChange={(v) => onFormChange("identifierCode", v)}
+            placeholder="Mã số đề tài theo quyết định"
+          />
+        </Field>
+
+        <Field label="Kinh phí (triệu đồng)">
+          <NumberInput
+            value={ex.budget}
+            onChange={(v) => onEx("budget", v)}
+            placeholder="Ví dụ: 500"
+            min={0}
+          />
+        </Field>
+
+        <Field label="Thời gian thực hiện">
+          <TextInput
+            value={ex.duration}
+            onChange={(v) => onEx("duration", v)}
+            placeholder="VD: 2 năm (2025–2027)"
+          />
+        </Field>
+
+        <Field label="Link quyết định / Tài liệu" colSpan={2}>
+          <UrlInput value={form.externalLink} onChange={(v) => onFormChange("externalLink", v)} />
+        </Field>
+      </div>
+    );
+  }
+
+  /* ── COUNCIL ── */
+  if (form.activityType === "COUNCIL") {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <SectionTitle>Thông tin Hội đồng tư vấn khoa học</SectionTitle>
+
+        <Field label="Loại hội đồng">
+          <SelectInput
+            value={ex.councilType || ""}
+            onChange={(v) => onEx("councilType", v)}
+            options={[
+              ["", "— Chọn loại hội đồng —"],
+              ["TUYEN_CHON", "Tuyển chọn đề tài"],
+              ["NGHIEM_THU", "Nghiệm thu đề tài"],
+              ["TU_VAN", "Tư vấn định hướng"],
+              ["OTHER", "Khác"],
+            ]}
+          />
+        </Field>
+
+        <Field label="Cấp hội đồng">
+          <SelectInput
+            value={ex.councilLevel || ""}
+            onChange={(v) => onEx("councilLevel", v)}
+            options={[
+              ["", "— Chọn cấp —"],
+              ["INTL", "Quốc tế"],
+              ["NAT", "Quốc gia"],
+              ["MINISTRY", "Cấp Bộ"],
+              ["HV", "Học viện"],
+            ]}
+          />
+        </Field>
+
+        <Field label="Đơn vị tổ chức" colSpan={2}>
+          <TextInput
+            value={form.venue}
+            onChange={(v) => onFormChange("venue", v)}
+            placeholder="VD: Bộ KH&CN, Học viện Nông nghiệp..."
+          />
+        </Field>
+
+        <Field label="Số quyết định thành lập HĐ">
+          <TextInput
+            value={form.identifierCode}
+            onChange={(v) => onFormChange("identifierCode", v)}
+            placeholder="Số QĐ..."
+          />
+        </Field>
+
+        <Field label="Số đề tài được tư vấn">
+          <NumberInput
+            value={ex.taskCount}
+            onChange={(v) => onEx("taskCount", v)}
+            placeholder="Số đề tài"
+            min={1}
+          />
+        </Field>
+
+        <Field label="Link tài liệu" colSpan={2}>
+          <UrlInput value={form.externalLink} onChange={(v) => onFormChange("externalLink", v)} />
+        </Field>
+      </div>
+    );
+  }
+
+  /* ── EXPERT_INVITE ── */
+  if (form.activityType === "EXPERT_INVITE") {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <SectionTitle>Thông tin Mời chuyên gia Seminar / Chuyên đề</SectionTitle>
+
+        <Field label="Họ tên chuyên gia" colSpan={2}>
+          <TextInput
+            value={ex.expertName}
+            onChange={(v) => onEx("expertName", v)}
+            placeholder="Họ và tên chuyên gia được mời"
+          />
+        </Field>
+
+        <Field label="Đơn vị / Tổ chức chuyên gia">
+          <TextInput
+            value={ex.expertOrg}
+            onChange={(v) => onEx("expertOrg", v)}
+            placeholder="Trường ĐH, Viện NC, Doanh nghiệp..."
+          />
+        </Field>
+
+        <Field label="Quốc gia">
+          <TextInput
+            value={ex.expertCountry}
+            onChange={(v) => onEx("expertCountry", v)}
+            placeholder="VD: Việt Nam, Nhật Bản, Hoa Kỳ..."
+          />
+        </Field>
+
+        <Field label="Nơi tổ chức">
+          <TextInput
+            value={form.venue}
+            onChange={(v) => onFormChange("venue", v)}
+            placeholder="Địa điểm / Phòng học"
+          />
+        </Field>
+
+        <Field label="Số lượng người tham dự">
+          <NumberInput
+            value={ex.attendeeCount}
+            onChange={(v) => onEx("attendeeCount", v)}
+            placeholder="Số người"
+            min={1}
+          />
+        </Field>
+
+        <Field label="Link tài liệu / Slide" colSpan={2}>
+          <UrlInput value={form.externalLink} onChange={(v) => onFormChange("externalLink", v)} />
+        </Field>
+      </div>
+    );
+  }
+
+  /* ── OTHER_ACTIVITY ── */
+  if (form.activityType === "OTHER_ACTIVITY") {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <SectionTitle>Thông tin Hoạt động KH&CN khác</SectionTitle>
+
+        <Field label="Loại sản phẩm / hoạt động" required colSpan={2}>
+          <SelectInput
+            value={form.otherActivityType}
+            onChange={(v) => onFormChange("otherActivityType", v)}
+            options={Object.entries(OTHER_ACTIVITY_TYPE_LABELS)}
+          />
+        </Field>
+
+        <Field label="Nhà xuất bản / Đơn vị phát hành">
+          <TextInput
+            value={form.publicationName}
+            onChange={(v) => onFormChange("publicationName", v)}
+            placeholder="Tên nhà xuất bản / đơn vị"
+          />
+        </Field>
+
+        <Field label="ISBN / Mã số / Số hợp đồng">
+          <TextInput
+            value={form.identifierCode}
+            onChange={(v) => onFormChange("identifierCode", v)}
+            placeholder="ISBN / Số hợp đồng / Mã định danh"
+          />
+        </Field>
+
+        {form.otherActivityType === "HOP_DONG_KHCN" && (
+          <Field label="Giá trị hợp đồng (triệu đồng)">
+            <NumberInput
+              value={ex.contractValue}
+              onChange={(v) => onEx("contractValue", v)}
+              placeholder="Giá trị (triệu đồng)"
+              min={0}
+            />
+          </Field>
+        )}
+
+        <Field label="Đơn vị chủ trì / Đặt hàng">
+          <TextInput
+            value={form.venue}
+            onChange={(v) => onFormChange("venue", v)}
+            placeholder="Đơn vị tổ chức / đặt hàng"
+          />
+        </Field>
+
+        <Field label="Link tài liệu / Sản phẩm" colSpan={2}>
           <UrlInput value={form.externalLink} onChange={(v) => onFormChange("externalLink", v)} />
         </Field>
       </div>

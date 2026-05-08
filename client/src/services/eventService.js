@@ -93,6 +93,13 @@ const eventService = {
     });
   },
 
+  // Lấy danh sách đăng ký của sự kiện (chỉ creator/admin)
+  getEventRegistrations: async (eventId, userId) => {
+    return await api.get(`/events/${eventId}/registrations`, {
+      params: { userId },
+    });
+  },
+
   // Lấy danh sách loại sự kiện
   getEventTypes: async () => {
     return await api.get("/events/get-types");

@@ -25,6 +25,8 @@ const EventDetailModal = ({
   event,
   onRegister,
   isRegistered = false,
+  registrations = [],
+  registrationsLoading = false,
 }) => {
   if (!isOpen || !event) return null;
 
@@ -176,6 +178,52 @@ const EventDetailModal = ({
               }}
             />
           </div>
+
+          {(registrationsLoading || registrations.length > 0) && (
+            <div className="mt-8 space-y-3">
+              <h3 className="text-lg font-bold text-gray-800 border-l-4 border-mainColor pl-3">
+                Danh sách đăng ký
+              </h3>
+              {registrationsLoading ? (
+                <p className="text-sm text-gray-500">Đang tải danh sách...</p>
+              ) : (
+                <div className="overflow-x-auto rounded-lg border border-gray-200">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-gray-50 text-gray-600">
+                      <tr>
+                        <th className="px-4 py-2 text-left font-semibold">Họ tên</th>
+                        <th className="px-4 py-2 text-left font-semibold">Email</th>
+                        <th className="px-4 py-2 text-left font-semibold">SĐT</th>
+                        <th className="px-4 py-2 text-left font-semibold">Đơn vị</th>
+                        <th className="px-4 py-2 text-left font-semibold">Ghi chú</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {registrations.map((item) => (
+                        <tr key={item.id} className="border-t">
+                          <td className="px-4 py-2 text-gray-800">
+                            {item.fullName || "-"}
+                          </td>
+                          <td className="px-4 py-2 text-gray-600">
+                            {item.email || "-"}
+                          </td>
+                          <td className="px-4 py-2 text-gray-600">
+                            {item.phone || "-"}
+                          </td>
+                          <td className="px-4 py-2 text-gray-600">
+                            {item.organization || "-"}
+                          </td>
+                          <td className="px-4 py-2 text-gray-600">
+                            {item.note || "-"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center sticky bottom-0 z-10">

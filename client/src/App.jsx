@@ -51,6 +51,10 @@ import ReviewPaperDeclarationPage from "./pages/activity/declarations/ReviewPape
 import TechConsultDeclarationPage from "./pages/activity/declarations/TechConsultDeclarationPage";
 import TechProcedureDeclarationPage from "./pages/activity/declarations/TechProcedureDeclarationPage";
 import ProposalDeclarationPage from "./pages/activity/declarations/ProposalDeclarationPage";
+import ApprovedTaskDeclarationPage from "./pages/activity/declarations/ApprovedTaskDeclarationPage";
+import CouncilDeclarationPage from "./pages/activity/declarations/CouncilDeclarationPage";
+import ExpertInviteDeclarationPage from "./pages/activity/declarations/ExpertInviteDeclarationPage";
+import OtherActivityDeclarationPage from "./pages/activity/declarations/OtherActivityDeclarationPage";
 
 function App() {
   // Load rooms data when app starts
@@ -86,7 +90,7 @@ function App() {
                     <Route
                       path="/events/create"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requiredPower="admin">
                           <CreateEvent />
                         </ProtectedRoute>
                       }
@@ -224,6 +228,38 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <ProposalDeclarationPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/declarations/approved-task"
+                      element={
+                        <ProtectedRoute>
+                          <ApprovedTaskDeclarationPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/declarations/council"
+                      element={
+                        <ProtectedRoute>
+                          <CouncilDeclarationPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/declarations/expert-invite"
+                      element={
+                        <ProtectedRoute>
+                          <ExpertInviteDeclarationPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/declarations/other-activity"
+                      element={
+                        <ProtectedRoute>
+                          <OtherActivityDeclarationPage />
                         </ProtectedRoute>
                       }
                     />

@@ -8,6 +8,10 @@ export const TYPE_LABELS = {
   TECH_CONSULT: "Tư vấn / Hướng dẫn kỹ thuật",
   TECH_PROCEDURE: "Quy trình / Tiến bộ kỹ thuật",
   PROPOSAL: "Đề xuất vào danh mục tuyển chọn",
+  APPROVED_TASK: "Nhiệm vụ KH&CN được phê duyệt",
+  COUNCIL: "Tổ chức Hội đồng tư vấn KH",
+  EXPERT_INVITE: "Mời chuyên gia Seminar/Chuyên đề",
+  OTHER_ACTIVITY: "Hoạt động KH&CN khác",
 };
 
 export const CONFERENCE_ROLE_LABELS = {
@@ -117,11 +121,43 @@ export const BASIC_FIELD_CONFIG = {
   },
   PROPOSAL: {
     titleLabel: "Tên đề xuất",
-    titlePlaceholder: "VD: Đề xuất nghiên cứu giống lúa chịu mặn cho ĐBSCL",
+    titlePlaceholder: "VĐ: Đề xuất nghiên cứu giống lúa chịu mặn cho ĐBSCL",
     descLabel: "Mô tả tóm tắt đề xuất",
     descPlaceholder: "Mô tả mục tiêu và nội dung chính của đề xuất",
     qtyLabel: "Số đề xuất",
     dateLabel: "Ngày nộp đề xuất",
+  },
+  APPROVED_TASK: {
+    titleLabel: "Tên nhiệm vụ / đề tài",
+    titlePlaceholder: "VĐ: Nghiên cứu phát triển giống lúa chịu mặn cấp quốc gia",
+    descLabel: "Mô tả nội dung nhiệm vụ",
+    descPlaceholder: "Mục tiêu, nội dung và sản phẩm chính của đề tài",
+    qtyLabel: "Số đề tài",
+    dateLabel: "Ngày ký hợp đồng / Quyết định",
+  },
+  COUNCIL: {
+    titleLabel: "Tên hội đồng tư vấn",
+    titlePlaceholder: "VĐ: Hội đồng tư vấn tuyển chọn đề tài cấp Bộ 2025",
+    descLabel: "Mô tả nội dung hội đồng",
+    descPlaceholder: "Nội dung thẩm định, số đề tài...",
+    qtyLabel: "Số hội đồng",
+    dateLabel: "Ngày tổ chức hội đồng",
+  },
+  EXPERT_INVITE: {
+    titleLabel: "Tên chuyên đề / Seminar",
+    titlePlaceholder: "VĐ: Seminar về ứng dụng AI trong Nông nghiệp",
+    descLabel: "Mô tả nội dung chuyên đề",
+    descPlaceholder: "Tóm tắt nội dung và giá trị khoa học",
+    qtyLabel: "Số lần mời",
+    dateLabel: "Ngày tổ chức seminar",
+  },
+  OTHER_ACTIVITY: {
+    titleLabel: "Tên sản phẩm / hoạt động",
+    titlePlaceholder: "VĐ: Giáo trình Học máy và Khai phá dữ liệu",
+    descLabel: "Mô tả sản phẩm / hoạt động",
+    descPlaceholder: "Nội dung, phạm vi và ý nghĩa khoa học",
+    qtyLabel: "Số sản phẩm",
+    dateLabel: "Ngày xuất bản / Nghiệm thu",
   },
 };
 

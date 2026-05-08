@@ -33,6 +33,14 @@ const resolveFromGeneratedCodes = (data, generatedTypeCodes = {}) => {
   const proposalKey = `${activityType}.${normalize(data?.proposalLevel)}`;
   if (typeCodeMap[proposalKey]) return typeCodeMap[proposalKey];
 
+  // APPROVED_TASK: LEVEL.ROLE
+  const approvedTaskKey = `${activityType}.${normalize(data?.taskLevel)}.${normalize(data?.taskRole)}`;
+  if (typeCodeMap[approvedTaskKey]) return typeCodeMap[approvedTaskKey];
+
+  // OTHER_ACTIVITY: TYPE
+  const otherActivityKey = `${activityType}.${normalize(data?.otherActivityType)}`;
+  if (typeCodeMap[otherActivityKey]) return typeCodeMap[otherActivityKey];
+
   return "";
 };
 
@@ -62,6 +70,32 @@ export const resolveCatalogCode = (data, generatedTypeCodes = {}) => {
       return "TU_VAN_BAN_TIN";
     case "PROPOSAL":
       return "DE_XUAT_BO";
+    case "COUNCIL":
+      return "HOI_DONG_TV";
+    case "EXPERT_INVITE":
+      return "MOI_CHUYEN_GIA";
+    case "APPROVED_TASK": {
+      const level = normalize(data?.taskLevel);
+      const role = normalize(data?.taskRole);
+      if (role === "HD_SV") return "HD_SVNCKH";
+      if (level === "QG") {
+        if (role === "THU_KY") return "NHIEM_VU_QG_TK";
+        if (role === "THAM_GIA") return "NHIEM_VU_QG_TG";
+        return "NHIEM_VU_QG_CHU";
+      }
+      if (level === "BO") {
+        if (role === "THU_KY") return "NHIEM_VU_BO_TK";
+        if (role === "THAM_GIA") return "NHIEM_VU_BO_TG";
+        return "NHIEM_VU_BO_CHU";
+      }
+      if (level === "HV") {
+        if (role === "THAM_GIA") return "NHIEM_VU_HV_TG";
+        return "NHIEM_VU_HV_CHU";
+      }
+      return "NHIEM_VU_QG_CHU";
+    }
+    case "OTHER_ACTIVITY":
+      return data?.otherActivityType || "CHUONG_SACH";
     default:
       return "";
   }
@@ -93,6 +127,9 @@ export const getInitialForm = (initialActivityType = "SEMINAR") => ({
   vnPaperCategory: "ACADEMY",
   proceedingLevel: "INTL",
   proposalLevel: "NAT",
+  taskLevel: "QG",
+  taskRole: "CHU_NHIEM",
+  otherActivityType: "CHUONG_SACH",
   qty: 1,
   title: "",
   description: "",

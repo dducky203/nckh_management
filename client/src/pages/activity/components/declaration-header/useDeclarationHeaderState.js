@@ -11,6 +11,14 @@ import {
   resolveCatalogCode,
 } from "./utils";
 
+const getTodayString = () => {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 export default function useDeclarationHeaderState({
   user,
   toast,
@@ -215,6 +223,9 @@ export default function useDeclarationHeaderState({
     if (!user?.id) return "Không xác định được người dùng";
     if (!form.title?.trim()) return "Vui lòng nhập tên hoạt động";
     if (!form.activityDate) return "Vui lòng chọn thời gian hoạt động";
+    if (form.activityDate >= getTodayString()) {
+      return "Ngày xuất bản/ nghiệm thu phải là ngày trong quá khứ";
+    }
     if (!resolvedCatalogCode) {
       return "Không xác định được tieuChiCode để lưu catalog_code";
     }

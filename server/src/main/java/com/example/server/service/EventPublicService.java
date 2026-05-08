@@ -1,5 +1,6 @@
 package com.example.server.service;
 
+import com.example.server.DTO.event.EventGuestDTO;
 import com.example.server.DTO.event.EventPublicDTO;
 import com.example.server.DTO.event.EventRegistrationDTO;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,8 @@ public interface EventPublicService {
     boolean isUserRegistered(Integer eventId, Integer userId);
 
     String unregisterEvent(Integer eventId, Integer userId);
+
+    List<EventGuestDTO> getEventRegistrations(Integer eventId, Integer userId);
 
     EventPublicDTO createEvent(EventPublicDTO eventData);
 

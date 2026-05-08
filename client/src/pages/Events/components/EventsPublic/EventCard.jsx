@@ -2,6 +2,7 @@ import {
   AccessTime,
   LocationOn,
   Person,
+  CheckCircle,
   ArrowForward,
 } from "@mui/icons-material";
 import Button from "../../../../components/common/Button";
@@ -60,7 +61,7 @@ const getEventTypeColor = (type, activeTab) => {
   }
 };
 
-const EventCard = ({ event, activeTab, onViewDetail, onRegister }) => {
+const EventCard = ({ event, activeTab, onViewDetail, onRegister, isRegistered }) => {
   console.log(event);
 
   return (
@@ -134,9 +135,21 @@ const EventCard = ({ event, activeTab, onViewDetail, onRegister }) => {
             <Button
               onClick={(e) => onRegister(event, e)}
               size="sm"
-              className="flex-1 bg-green-600 text-white hover:bg-green-700 border-green-600"
+              disabled={isRegistered}
+              className={
+                isRegistered
+                  ? "flex-1 bg-gray-200 text-gray-500 border-gray-200 cursor-not-allowed"
+                  : "flex-1 bg-green-600 text-white hover:bg-green-700 border-green-600"
+              }
             >
-              Đăng ký
+              {isRegistered ? (
+                <span className="flex items-center gap-1">
+                  <CheckCircle fontSize="small" />
+                  Đã đăng ký
+                </span>
+              ) : (
+                "Đăng ký"
+              )}
             </Button>
           )}
           <Button

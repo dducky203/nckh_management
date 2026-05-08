@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -64,6 +65,7 @@ public class NckhActivityService {
         a.setTitle(req.title);
         a.setDescription(req.description);
         a.setPublicationName(req.publicationName);
+        validateActivityDate(req.activityDate);
         a.setActivityDate(req.activityDate);
         a.setVenue(req.venue);
         a.setIdentifierCode(req.identifierCode);
@@ -93,13 +95,22 @@ public class NckhActivityService {
                 "REVIEW_PAPER",
                 "TECH_CONSULT",
                 "TECH_PROCEDURE",
-                "PROPOSAL"));
+                "PROPOSAL",
+                "APPROVED_TASK",
+                "COUNCIL",
+                "EXPERT_INVITE",
+                "OTHER_ACTIVITY"));
         result.put("conferenceRoles", List.of("ORG", "PRES"));
         result.put("conferenceLevels", List.of("INTL", "NAT", "ACAD"));
         result.put("intlPaperCategories", List.of("WOS", "SCOPUS", "ENG_ACAD", "OTHER", "CITATION"));
         result.put("vnPaperCategories", List.of("ACADEMY", "OTHER"));
         result.put("proceedingLevels", List.of("INTL", "NAT", "ACAD"));
         result.put("proposalLevels", List.of("NAT", "MINISTRY"));
+        // APPROVED_TASK sub-options
+        result.put("taskLevels", List.of("QG", "BO", "HV"));
+        result.put("taskRoles", List.of("CHU_NHIEM", "THU_KY", "THAM_GIA", "HD_SV"));
+        // OTHER_ACTIVITY sub-options
+        result.put("otherActivityTypes", List.of("CHUONG_SACH", "GIAO_TRINH", "SACH_CHUYEN_KHAO", "SACH_THAM_KHAO", "HOP_DONG_KHCN", "DE_AN_HV", "BAI_QUANG_BA"));
 
         Map<String, String> generatedTypeCodes = new LinkedHashMap<>();
         generatedTypeCodes.put("SEMINAR", "SEMINAR_TRINH_BAY");
@@ -124,6 +135,29 @@ public class NckhActivityService {
         generatedTypeCodes.put("TECH_PROCEDURE", "TU_VAN_BAN_TIN");
         generatedTypeCodes.put("PROPOSAL.NAT", "DE_XUAT_BO");
         generatedTypeCodes.put("PROPOSAL.MINISTRY", "DE_XUAT_BO");
+        // APPROVED_TASK: LEVEL.ROLE
+        generatedTypeCodes.put("APPROVED_TASK.QG.CHU_NHIEM", "NHIEM_VU_QG_CHU");
+        generatedTypeCodes.put("APPROVED_TASK.QG.THU_KY", "NHIEM_VU_QG_TK");
+        generatedTypeCodes.put("APPROVED_TASK.QG.THAM_GIA", "NHIEM_VU_QG_TG");
+        generatedTypeCodes.put("APPROVED_TASK.BO.CHU_NHIEM", "NHIEM_VU_BO_CHU");
+        generatedTypeCodes.put("APPROVED_TASK.BO.THU_KY", "NHIEM_VU_BO_TK");
+        generatedTypeCodes.put("APPROVED_TASK.BO.THAM_GIA", "NHIEM_VU_BO_TG");
+        generatedTypeCodes.put("APPROVED_TASK.HV.CHU_NHIEM", "NHIEM_VU_HV_CHU");
+        generatedTypeCodes.put("APPROVED_TASK.HV.THAM_GIA", "NHIEM_VU_HV_TG");
+        generatedTypeCodes.put("APPROVED_TASK.HV.HD_SV", "HD_SVNCKH");
+        generatedTypeCodes.put("APPROVED_TASK.QG.HD_SV", "HD_SVNCKH");
+        generatedTypeCodes.put("APPROVED_TASK.BO.HD_SV", "HD_SVNCKH");
+        // COUNCIL, EXPERT_INVITE: direct
+        generatedTypeCodes.put("COUNCIL", "HOI_DONG_TV");
+        generatedTypeCodes.put("EXPERT_INVITE", "MOI_CHUYEN_GIA");
+        // OTHER_ACTIVITY: direct sub-type key
+        generatedTypeCodes.put("OTHER_ACTIVITY.CHUONG_SACH", "CHUONG_SACH");
+        generatedTypeCodes.put("OTHER_ACTIVITY.GIAO_TRINH", "GIAO_TRINH");
+        generatedTypeCodes.put("OTHER_ACTIVITY.SACH_CHUYEN_KHAO", "SACH_CHUYEN_KHAO");
+        generatedTypeCodes.put("OTHER_ACTIVITY.SACH_THAM_KHAO", "SACH_THAM_KHAO");
+        generatedTypeCodes.put("OTHER_ACTIVITY.HOP_DONG_KHCN", "HOP_DONG_KHCN");
+        generatedTypeCodes.put("OTHER_ACTIVITY.DE_AN_HV", "DE_AN_HV");
+        generatedTypeCodes.put("OTHER_ACTIVITY.BAI_QUANG_BA", "BAI_QUANG_BA");
         result.put("generatedTypeCodes", generatedTypeCodes);
         return result;
     }
@@ -246,6 +280,7 @@ public class NckhActivityService {
         a.setTitle(req.title);
         a.setDescription(req.description);
         a.setPublicationName(req.publicationName);
+        validateActivityDate(req.activityDate);
         a.setActivityDate(req.activityDate);
         a.setVenue(req.venue);
         a.setIdentifierCode(req.identifierCode);
@@ -293,6 +328,16 @@ public class NckhActivityService {
             throw new IllegalStateException("gio_quy_doi_per_unit đang trống cho tieu_chi_code: " + tieuChiCode);
         }
         return dinhMuc.getGioQuyDoiPerUnit().doubleValue();
+    }
+
+    private void validateActivityDate(LocalDate activityDate) {
+        if (activityDate == null) {
+            return;
+        }
+        LocalDate today = LocalDate.now();
+        if (!activityDate.isBefore(today)) {
+            throw new IllegalStateException("Ngày xuất bản/ nghiệm thu phải là ngày trong quá khứ.");
+        }
     }
 
     @Transactional
@@ -401,6 +446,15 @@ public class NckhActivityService {
             case "REVIEW_PAPER" -> List.of("TONG_QUAN");
             case "TECH_CONSULT", "TECH_PROCEDURE" -> List.of("TU_VAN_BAN_TIN");
             case "PROPOSAL" -> List.of("DE_XUAT_BO");
+            case "APPROVED_TASK" -> List.of(
+                    "NHIEM_VU_QG_CHU", "NHIEM_VU_QG_TK", "NHIEM_VU_QG_TG",
+                    "NHIEM_VU_BO_CHU", "NHIEM_VU_BO_TK", "NHIEM_VU_BO_TG",
+                    "NHIEM_VU_HV_CHU", "NHIEM_VU_HV_TG", "HD_SVNCKH");
+            case "COUNCIL" -> List.of("HOI_DONG_TV");
+            case "EXPERT_INVITE" -> List.of("MOI_CHUYEN_GIA");
+            case "OTHER_ACTIVITY" -> List.of(
+                    "CHUONG_SACH", "GIAO_TRINH", "SACH_CHUYEN_KHAO",
+                    "SACH_THAM_KHAO", "HOP_DONG_KHCN", "DE_AN_HV", "BAI_QUANG_BA");
             default -> List.of();
         };
     }

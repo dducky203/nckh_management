@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
@@ -18,6 +18,7 @@ import { useEvents } from "./hooks/useEvents";
 import { useEventFilters } from "./hooks/useEventFilters";
 import { getTabConfig } from "./utils/eventHelpers";
 import eventService from "../../services/eventService";
+import { isAdmin } from "../../utils/permissions";
 
 const EventsPublic = () => {
   const { user } = useContext(AuthContext);
@@ -29,6 +30,9 @@ const EventsPublic = () => {
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [eventToRegister, setEventToRegister] = useState(null);
   const [isRegistered, setIsRegistered] = useState(false);
+  const [registeredMap, setRegisteredMap] = useState({});
+  const [registrations, setRegistrations] = useState([]);
+  const [registrationsLoading, setRegistrationsLoading] = useState(false);
   const navigate = useNavigate();
 
   // Custom hooks - backend pagination
@@ -47,6 +51,45 @@ const EventsPublic = () => {
     setFilterType,
     filteredEvents,
   } = useEventFilters(events);
+
+  useEffect(() => {
+    if (!user || filteredEvents.length === 0) {
+      setRegisteredMap({});
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadRegistrationStatuses = async () => {
+      try {
+        const results = await Promise.all(
+          filteredEvents.map((event) =>
+            eventService
+              .checkRegistration(event.id, user.id)
+              .then((res) => ({
+                id: event.id,
+                isRegistered: res?.data ?? false,
+              }))
+              .catch(() => ({ id: event.id, isRegistered: false }))
+          )
+        );
+
+        if (cancelled) return;
+        const nextMap = results.reduce((acc, item) => {
+          acc[item.id] = item.isRegistered;
+          return acc;
+        }, {});
+        setRegisteredMap(nextMap);
+      } catch {
+        if (!cancelled) setRegisteredMap({});
+      }
+    };
+
+    loadRegistrationStatuses();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, filteredEvents]);
 
   // Pagination handlers
   const handlePageChange = (page) => {
@@ -131,11 +174,29 @@ const EventsPublic = () => {
 
       // Backend trả về {data: {data: eventDTO, message: ...}}
       const eventData = eventResponse.data?.data || eventResponse.data;
-      const isUserRegistered = registrationResponse.data?.data || false;
+      const isUserRegistered = registrationResponse?.data ?? false;
 
       setSelectedEvent(eventData);
       setIsRegistered(isUserRegistered);
       setDetailModalOpen(true);
+
+      if (isAdmin(user) || eventData?.creator === user.id) {
+        setRegistrationsLoading(true);
+        try {
+          const regResponse = await eventService.getEventRegistrations(
+            event.id,
+            user.id,
+          );
+          setRegistrations(regResponse.data?.data || regResponse.data || []);
+        } catch (regError) {
+          console.error("Error loading registrations:", regError);
+          setRegistrations([]);
+        } finally {
+          setRegistrationsLoading(false);
+        }
+      } else {
+        setRegistrations([]);
+      }
     } catch (error) {
       console.error("Error fetching event details:", error);
       toast.error(ERROR_MESSAGES.LOAD_EVENT_ERROR);
@@ -178,6 +239,10 @@ const EventsPublic = () => {
       setRegisterModalOpen(false);
       setEventToRegister(null);
       setIsRegistered(true); // Update registration status
+      setRegisteredMap((prev) => ({
+        ...prev,
+        [eventToRegister.id]: true,
+      }));
       refetchEvents(); // Refresh events list
     } catch (error) {
       const message =
@@ -250,6 +315,7 @@ const EventsPublic = () => {
                       user={user}
                       onViewDetail={handleViewDetail}
                       onRegister={handleRegister}
+                      isRegistered={registeredMap[event.id]}
                     />
                   ))}
                 </div>
@@ -294,10 +360,13 @@ const EventsPublic = () => {
             setDetailModalOpen(false);
             setSelectedEvent(null);
             setIsRegistered(false);
+            setRegistrations([]);
           }}
           event={selectedEvent}
           onRegister={handleRegister}
           isRegistered={isRegistered}
+          registrations={registrations}
+          registrationsLoading={registrationsLoading}
         />
       )}
 

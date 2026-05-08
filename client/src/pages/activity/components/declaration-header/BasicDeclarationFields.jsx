@@ -1,5 +1,12 @@
 import { TYPE_LABELS, getBasicFieldConfig } from "./constants";
 
+const formatDateInput = (value) => {
+  const yyyy = value.getFullYear();
+  const mm = String(value.getMonth() + 1).padStart(2, "0");
+  const dd = String(value.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 export default function BasicDeclarationFields({
   form,
   options,
@@ -7,6 +14,11 @@ export default function BasicDeclarationFields({
   onFormChange,
 }) {
   const cfg = getBasicFieldConfig(form.activityType);
+  const maxActivityDate = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return formatDateInput(d);
+  })();
 
   return (
     <>
@@ -64,6 +76,7 @@ export default function BasicDeclarationFields({
             type="date"
             value={form.activityDate}
             onChange={(e) => onFormChange("activityDate", e.target.value)}
+            max={maxActivityDate}
             className="h-10 rounded-lg border border-slate-200 px-3 text-sm"
           />
         </label>

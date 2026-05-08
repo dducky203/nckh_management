@@ -1,10 +1,12 @@
 package com.example.server.service.Impl;
 
+import com.example.server.DTO.event.EventGuestDTO;
 import com.example.server.DTO.event.EventPublicDTO;
 import com.example.server.DTO.event.EventRegistrationDTO;
 import com.example.server.domain.*;
 import com.example.server.repository.*;
 import com.example.server.service.EventPublicService;
+import com.example.server.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -145,6 +147,33 @@ public class EventPublicServiceImpl implements EventPublicService {
         guestRepository.deleteAll(guests);
         return "Hủy đăng ký thành công";
     }
+
+    @Override
+    public List<EventGuestDTO> getEventRegistrations(Integer eventId, Integer userId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sự kiện"));
+
+        User requester = userRepository.findById(userId).orElse(null);
+        if (requester == null) {
+            throw new RuntimeException("Không xác định được người dùng");
+        }
+
+        boolean isCreator = event.getCreator() != null && event.getCreator().equals(userId);
+        if (!SecurityUtils.isAdmin(requester) && !isCreator) {
+            throw new RuntimeException("Bạn không có quyền xem danh sách đăng ký");
+        }
+
+        return guestRepository.findByEventId(eventId).stream()
+                .map(guest -> new EventGuestDTO(
+                        guest.getId(),
+                        guest.getUser() != null ? guest.getUser().getId() : null,
+                        guest.getFullName(),
+                        guest.getEmail(),
+                        guest.getPhone(),
+                        guest.getOrganization(),
+                        guest.getNote()))
+                .collect(Collectors.toList());
+    }
       
 
     @Override
@@ -173,6 +202,14 @@ public class EventPublicServiceImpl implements EventPublicService {
 
     @Override
     public EventPublicDTO createEvent(EventPublicDTO eventData) {
+        User creator = null;
+        if (eventData.getCreator() != null) {
+            creator = userRepository.findById(eventData.getCreator()).orElse(null);
+        }
+        if (!SecurityUtils.isAdmin(creator)) {
+            throw new RuntimeException("Chỉ admin mới được tạo sự kiện.");
+        }
+
         Event event = new Event();
         event.setEventName(eventData.getEventName());
         event.setDateOfEvent(eventData.getDateOfEvent());
@@ -316,6 +353,7 @@ public class EventPublicServiceImpl implements EventPublicService {
         dto.setCreatedAt(event.getCreatedAt());
         dto.setUpdatedAt(event.getUpdatedAt());
         dto.setBannerImg(event.getBannerImg());
+        dto.setCreator(event.getCreator());
         dto.setType(event.getTypeId().getName());
 
         // Get room info
@@ -394,6 +432,7 @@ public class EventPublicServiceImpl implements EventPublicService {
         dto.setCreatedAt(event.getCreatedAt());
         dto.setUpdatedAt(event.getUpdatedAt());
         dto.setBannerImg(event.getBannerImg());
+        dto.setCreator(event.getCreator());
 
         // Get room info
         String location = "VNUA"; // default

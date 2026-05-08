@@ -1,9 +1,4 @@
-/**
- * Activity Declaration Constants & Helpers
- * Centralized metadata for activity types, statuses, and related utilities
- */
 
-// ─── Activity Types Metadata ───────────────────────────────────────────
 export const TYPE_META = {
   SEMINAR: { label: "Seminar", color: "bg-blue-600 text-white" },
   CONFERENCE: { label: "Hội thảo", color: "bg-green-600 text-white" },
@@ -23,6 +18,10 @@ export const TYPE_META = {
     color: "bg-cyan-600 text-white",
   },
   PROPOSAL: { label: "Đề xuất tuyển chọn", color: "bg-pink-600 text-white" },
+  APPROVED_TASK: { label: "Nhiệm vụ KH&CN", color: "bg-rose-700 text-white" },
+  COUNCIL: { label: "Hội đồng tư vấn KH", color: "bg-violet-600 text-white" },
+  EXPERT_INVITE: { label: "Mời chuyên gia", color: "bg-sky-600 text-white" },
+  OTHER_ACTIVITY: { label: "Hoạt động KH&CN khác", color: "bg-slate-600 text-white" },
 };
 
 // ─── Status Metadata ──────────────────────────────────────────────────
@@ -64,6 +63,24 @@ export const TYPE_BY_CATALOG_CODE = {
   TONG_QUAN: "REVIEW_PAPER",
   TU_VAN_BAN_TIN: "TECH_CONSULT",
   DE_XUAT_BO: "PROPOSAL",
+  NHIEM_VU_QG_CHU: "APPROVED_TASK",
+  NHIEM_VU_QG_TK: "APPROVED_TASK",
+  NHIEM_VU_QG_TG: "APPROVED_TASK",
+  NHIEM_VU_BO_CHU: "APPROVED_TASK",
+  NHIEM_VU_BO_TK: "APPROVED_TASK",
+  NHIEM_VU_BO_TG: "APPROVED_TASK",
+  NHIEM_VU_HV_CHU: "APPROVED_TASK",
+  NHIEM_VU_HV_TG: "APPROVED_TASK",
+  HD_SVNCKH: "APPROVED_TASK",
+  HOI_DONG_TV: "COUNCIL",
+  MOI_CHUYEN_GIA: "EXPERT_INVITE",
+  CHUONG_SACH: "OTHER_ACTIVITY",
+  GIAO_TRINH: "OTHER_ACTIVITY",
+  SACH_CHUYEN_KHAO: "OTHER_ACTIVITY",
+  SACH_THAM_KHAO: "OTHER_ACTIVITY",
+  HOP_DONG_KHCN: "OTHER_ACTIVITY",
+  DE_AN_HV: "OTHER_ACTIVITY",
+  BAI_QUANG_BA: "OTHER_ACTIVITY",
 };
 
 // ─── Detail Field Label Mapping ────────────────────────────────────────

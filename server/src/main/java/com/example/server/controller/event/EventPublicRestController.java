@@ -157,6 +157,23 @@ public class EventPublicRestController {
         }
     }
 
+    @GetMapping("/{eventId}/registrations")
+    public ResponseEntity<?> getEventRegistrations(
+            @PathVariable Integer eventId,
+            @RequestParam Integer userId) {
+        try {
+            return ResponseEntity.ok(new SuccessResponseDTO<>(
+                    eventPublicService.getEventRegistrations(eventId, userId),
+                    "Lấy danh sách đăng ký thành công"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Có lỗi xảy ra: " + e.getMessage());
+        }
+    }
+
     @PostMapping("/create")
     public ResponseEntity<?> createEvent(
             @RequestParam(value = "banner", required = false) MultipartFile bannerFile,

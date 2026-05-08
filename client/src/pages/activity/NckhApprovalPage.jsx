@@ -154,7 +154,6 @@ export default function NckhApprovalPage() {
           if (!id || isNaN(id)) return;
           map[id] = it.name || it.fullName || it.username || `User #${id}`;
         });
-        });
       }
       setUserNameById(map);
     } catch {

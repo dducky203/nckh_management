@@ -56,6 +56,26 @@ export const RESEARCH_CATEGORIES = [
     name: "Khai báo Đề xuất tuyển chọn",
     path: "/activity/declarations/proposal",
   },
+  {
+    id: 10,
+    name: "Khai báo Nhiệm vụ KH&CN được phê duyệt",
+    path: "/activity/declarations/approved-task",
+  },
+  {
+    id: 11,
+    name: "Khai báo Hội đồng tư vấn KH",
+    path: "/activity/declarations/council",
+  },
+  {
+    id: 12,
+    name: "Khai báo Mời chuyên gia",
+    path: "/activity/declarations/expert-invite",
+  },
+  {
+    id: 13,
+    name: "Khai báo Hoạt động KH&CN khác",
+    path: "/activity/declarations/other-activity",
+  },
 ];
 
 export const EVENT_CATEGORIES = [
