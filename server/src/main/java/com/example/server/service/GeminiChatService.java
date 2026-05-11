@@ -1,22 +1,20 @@
 package com.example.server.service;
 
-import com.example.server.DTO.ChatResponse;
-import com.example.server.utils.Constants;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import okhttp3.*;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.time.Duration;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import com.example.server.DTO.ChatResponse;
+import com.example.server.utils.Constants;
+import com.google.gson.*;
+
+import okhttp3.*;
 
 @Service
 public class GeminiChatService {

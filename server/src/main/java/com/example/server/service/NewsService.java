@@ -1,8 +1,9 @@
 package com.example.server.service;
 
+import java.util.Map;
+
 import com.example.server.DTO.news.CreateNewsRequest;
 import com.example.server.DTO.news.NewsDTO;
-import java.util.Map;
 
 public interface NewsService {
     Map<String, Object> getNewsWithPagination(String search, int page, int size);

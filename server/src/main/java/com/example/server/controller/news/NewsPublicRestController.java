@@ -1,14 +1,15 @@
 package com.example.server.controller.news;
 
-import com.example.server.DTO.SuccessResponseDTO;
-import com.example.server.DTO.news.NewsDTO;
-import com.example.server.service.NewsService;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import com.example.server.DTO.SuccessResponseDTO;
+import com.example.server.DTO.news.NewsDTO;
+import com.example.server.service.NewsService;
 
 @RestController
 @RequestMapping("/public/news")

@@ -37,7 +37,7 @@ const Footer = () => {
 
       <div className="w-full md:w-3/4 mx-auto py-6 px-4 md:px-0 flex flex-col md:flex-row items-center justify-between gap-4">
         {/* Thông tin liên hệ */}
-        <div className="text-sm ">
+        <div className="text-sm">
           <h1 className="font-bold mb-2 text-center md:text-left">
             KHOA CÔNG NGHỆ THÔNG TIN - HỌC VIỆN NÔNG NGHIỆP VIỆT
             NAM

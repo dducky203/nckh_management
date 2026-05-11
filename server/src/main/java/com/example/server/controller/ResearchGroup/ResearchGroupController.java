@@ -1,39 +1,28 @@
 package com.example.server.controller.ResearchGroup;
 
-import com.example.server.DTO.request.CreateResearchGroupDocumentRequest;
-import com.example.server.DTO.request.CreateResearchGroupRequest;
-import com.example.server.DTO.request.UpdateResearchGroupRequest;
-import com.example.server.DTO.response.ResearchGroupDocumentDTO;
-import com.example.server.DTO.response.ResearchGroupDTO;
+import java.io.IOException;
+import java.nio.file.NoSuchFileException;
+import java.util.*;
+
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.data.domain.*;
+import org.springframework.http.*;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.example.server.DTO.SuccessResponseDTO;
+import com.example.server.DTO.request.*;
+import com.example.server.DTO.response.ResearchGroupDTO;
+import com.example.server.DTO.response.ResearchGroupDocumentDTO;
 import com.example.server.domain.ResearchGroupMember;
 import com.example.server.exception.ExcelValidationException;
 import com.example.server.repository.ResearchGroupMemberRepository;
 import com.example.server.service.ResearchGroupService;
 import com.example.server.utils.SecurityUtils;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-
-import java.nio.file.NoSuchFileException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/research-groups")

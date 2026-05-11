@@ -1,13 +1,13 @@
 export const isAdmin = (user) => {
   if (!user) return false;
-  
+
   if (user.role === "admin") return true;
-  
+
   const adminTitles = ["Thư ký", "Trưởng khoa", "Phó khoa"];
   if (user.title && adminTitles.includes(user.title)) {
     return true;
   }
-  
+
   return false;
 };
 

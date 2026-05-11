@@ -1,21 +1,16 @@
 package com.example.server.controller.nckh;
 
-import com.example.server.DTO.nckh.NckhTieuChiDinhMucImportResult;
-import com.example.server.DTO.nckh.NckhTieuChiDinhMucRequest;
-import com.example.server.DTO.nckh.NckhTieuChiDinhMucResponse;
+import java.time.Year;
+import java.util.List;
 
-import com.example.server.service.nckh.NckhTieuChiDinhMucService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.Year;
-import java.util.List;
+import com.example.server.DTO.nckh.*;
+import com.example.server.service.nckh.NckhTieuChiDinhMucService;
 
 
 

@@ -1,9 +1,10 @@
 package com.example.server.utils;
 
-import com.example.server.domain.User;
-import com.example.server.helpers.CustomUserDetails;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+
+import com.example.server.domain.User;
+import com.example.server.helpers.CustomUserDetails;
 
 public class SecurityUtils {
 

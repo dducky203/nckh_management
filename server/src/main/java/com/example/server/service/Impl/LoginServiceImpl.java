@@ -1,13 +1,14 @@
 package com.example.server.service.Impl;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.example.server.domain.User;
 import com.example.server.repository.UserRepository;
 import com.example.server.service.LoginService;
 import com.example.server.service.SHA_256_password;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class LoginServiceImpl implements LoginService {

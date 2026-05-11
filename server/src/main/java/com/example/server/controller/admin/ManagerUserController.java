@@ -1,35 +1,28 @@
 package com.example.server.controller.admin;
 
-import com.example.server.DTO.SuccessResponseDTO;
-import com.example.server.DTO.users.UserDetailsDTO;
-import com.example.server.DTO.users.UserRequest;
-import com.example.server.controller.user.EmailController;
-import com.example.server.domain.*;
-import com.example.server.mapper.UserMapper;
-import com.example.server.repository.*;
-import com.example.server.service.EmailService;
-import com.example.server.service.ExcelService;
-import com.example.server.service.UserService;
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
-
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.data.domain.*;
+import org.springframework.http.*;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
+
+import com.example.server.DTO.SuccessResponseDTO;
+import com.example.server.DTO.users.UserDetailsDTO;
+import com.example.server.DTO.users.UserRequest;
+import com.example.server.controller.user.EmailController;
+import com.example.server.domain.User;
+import com.example.server.mapper.UserMapper;
+import com.example.server.repository.*;
+import com.example.server.service.*;
+
+import jakarta.validation.Valid;
 
 @Controller
 @RequestMapping("/dashboard/manage-users")

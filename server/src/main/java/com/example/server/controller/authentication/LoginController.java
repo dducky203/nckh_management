@@ -1,5 +1,14 @@
 package com.example.server.controller.authentication;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
 import com.example.server.DTO.SuccessResponseDTO;
 import com.example.server.DTO.login.LoginRequestDTO;
 import com.example.server.DTO.login.LoginResponseDTO;
@@ -8,19 +17,9 @@ import com.example.server.domain.User;
 import com.example.server.exception.LoginFailedException;
 import com.example.server.mapper.UserMapper;
 import com.example.server.repository.UserRepository;
-import com.example.server.service.JwtService;
-import com.example.server.service.LoginService;
-import com.example.server.service.NcmService;
-import com.example.server.service.SHA_256_password;
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import com.example.server.service.*;
 
-import java.util.HashMap;
-import java.util.Map;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/auth")

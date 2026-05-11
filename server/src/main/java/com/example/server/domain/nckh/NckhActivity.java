@@ -1,8 +1,9 @@
 package com.example.server.domain.nckh;
 
-import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "nckh_activity")

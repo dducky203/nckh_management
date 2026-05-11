@@ -1,14 +1,15 @@
 package com.example.server.controller.admin;
 
-import com.example.server.domain.Room;
-import com.example.server.repository.RoomRepository;
+import java.util.List;
+import java.util.Objects;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Objects;
+import com.example.server.domain.Room;
+import com.example.server.repository.RoomRepository;
 
 @Controller
 @RequestMapping("/ad/managerRoom")

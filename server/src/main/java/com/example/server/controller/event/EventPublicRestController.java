@@ -1,24 +1,21 @@
 package com.example.server.controller.event;
 
-import com.example.server.DTO.SuccessResponseDTO;
-import com.example.server.DTO.event.EventPublicDTO;
-import com.example.server.DTO.event.EventRegistrationDTO;
-import com.example.server.DTO.typeOfCriteria.TypeOfCriteriaDto;
-import com.example.server.service.CloudinaryService;
-import com.example.server.service.EventPublicService;
-import com.example.server.service.TypeOfCriterionService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.example.server.DTO.SuccessResponseDTO;
+import com.example.server.DTO.event.EventPublicDTO;
+import com.example.server.DTO.event.EventRegistrationDTO;
+import com.example.server.DTO.typeOfCriteria.TypeOfCriteriaDto;
+import com.example.server.service.*;
 
 @RestController
 @RequestMapping("/events")

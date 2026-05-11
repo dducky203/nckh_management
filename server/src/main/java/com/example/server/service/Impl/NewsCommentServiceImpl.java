@@ -1,20 +1,16 @@
 package com.example.server.service.Impl;
 
-import com.example.server.DTO.news.CreateCommentRequest;
-import com.example.server.DTO.news.NewsCommentDTO;
-import com.example.server.domain.News;
-import com.example.server.domain.NewsComment;
-import com.example.server.domain.User;
-import com.example.server.repository.NewsCommentRepository;
-import com.example.server.repository.NewsRepository;
-import com.example.server.repository.UserRepository;
-import com.example.server.service.NewsCommentService;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.example.server.DTO.news.CreateCommentRequest;
+import com.example.server.DTO.news.NewsCommentDTO;
+import com.example.server.domain.*;
+import com.example.server.repository.*;
+import com.example.server.service.NewsCommentService;
 
 @Service
 public class NewsCommentServiceImpl implements NewsCommentService {

@@ -1,16 +1,17 @@
 package com.example.server.controller.news;
 
-import com.example.server.DTO.SuccessResponseDTO;
-import com.example.server.DTO.news.CreateCommentRequest;
-import com.example.server.DTO.news.NewsCommentDTO;
-import com.example.server.service.NewsCommentService;
-import com.example.server.utils.SecurityUtils;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import com.example.server.DTO.SuccessResponseDTO;
+import com.example.server.DTO.news.CreateCommentRequest;
+import com.example.server.DTO.news.NewsCommentDTO;
+import com.example.server.service.NewsCommentService;
+import com.example.server.utils.SecurityUtils;
 
 @RestController
 @RequestMapping("/public/news")

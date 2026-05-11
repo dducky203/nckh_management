@@ -1,12 +1,11 @@
 package com.example.server.service;
 
-import com.example.server.DTO.event.EventGuestDTO;
-import com.example.server.DTO.event.EventPublicDTO;
-import com.example.server.DTO.event.EventRegistrationDTO;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.stereotype.Service;
+
+import com.example.server.DTO.event.*;
 
 @Service
 public interface EventPublicService {

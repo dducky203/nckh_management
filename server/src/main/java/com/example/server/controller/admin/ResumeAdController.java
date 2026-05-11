@@ -1,22 +1,18 @@
 package com.example.server.controller.admin;
 
-import com.example.server.domain.Admin;
-import com.example.server.domain.Resume;
-import com.example.server.domain.User;
-import com.example.server.repository.AdminRepository;
-import com.example.server.repository.ResumeRepository;
-import com.example.server.service.SHA_256_password;
-import jakarta.servlet.http.HttpSession;
-import org.checkerframework.checker.units.qual.C;
+import java.util.Objects;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.util.Date;
-import java.util.Objects;
-import java.util.Optional;
+import com.example.server.domain.Admin;
+import com.example.server.repository.AdminRepository;
+import com.example.server.repository.ResumeRepository;
+import com.example.server.service.SHA_256_password;
+
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 @RequestMapping("/ad/resume")

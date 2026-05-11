@@ -1,5 +1,11 @@
 package com.example.server.service.Impl;
 
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
 import com.example.server.DTO.news.CreateNewsRequest;
 import com.example.server.DTO.news.NewsDTO;
 import com.example.server.domain.News;
@@ -7,14 +13,6 @@ import com.example.server.domain.User;
 import com.example.server.repository.NewsRepository;
 import com.example.server.repository.UserRepository;
 import com.example.server.service.NewsService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class NewsServiceImpl implements NewsService {

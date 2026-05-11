@@ -1,6 +1,8 @@
 package com.example.server.service;
 
-import jakarta.mail.internet.MimeMessage;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
@@ -11,8 +13,7 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import jakarta.mail.internet.MimeMessage;
 
 @Service
 public class EmailService {
