@@ -479,7 +479,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                 String username = getStingValue(row, COL_MA_CAN_BO);
                 
                 // Dừng khi gặp dòng trống (mã cán bộ trống)
-                if (username == null || username.trim().isEmpty()) {
+                if (username == null || username.isBlank()) {
                     break;
                 }
 
@@ -501,12 +501,12 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                         continue;
                     }
 
-                    if (donVi == null || donVi.trim().isEmpty()) {
+                    if (donVi == null || donVi.isBlank()) {
                         donVi = member.getIdResume().getAddress();
                     }
 
                     // Validate nhiệm vụ
-                    if (nhiemVu == null || nhiemVu.trim().isEmpty()) {
+                    if (nhiemVu == null || nhiemVu.isBlank()) {
                         nhiemVu = ROLE_THANH_VIEN;
                     } else {
                         nhiemVu = nhiemVu.trim();

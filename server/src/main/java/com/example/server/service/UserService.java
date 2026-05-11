@@ -340,7 +340,7 @@ public class UserService implements UserDetailsService {
         }
 
         // Check phone (if provided)
-        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+        if (request.getPhone() != null && !request.getPhone().isBlank()) {
             if (isPhoneExists(request.getPhone())) {
                 throw new ErrorException("Số điện thoại đã tồn tại", HttpStatus.BAD_REQUEST);
             }
@@ -355,7 +355,7 @@ public class UserService implements UserDetailsService {
         }
 
         // Check phone (if provided and excluding current user)
-        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+        if (request.getPhone() != null && !request.getPhone().isBlank()) {
             if (isPhoneExistsForOtherUser(request.getPhone(), userId)) {
                 throw new ErrorException("Số điện thoại đã tồn tại", HttpStatus.BAD_REQUEST);
             }

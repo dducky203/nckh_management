@@ -125,7 +125,7 @@ public class LoginController {
 
         try {
             // 1. Validate input
-            if (email == null || email.trim().isEmpty()) {
+            if (email == null || email.isBlank()) {
                 response.put("success", false);
                 response.put("message", "Email không được để trống");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
@@ -180,13 +180,13 @@ public class LoginController {
 
         try {
             // 1. Validate input
-            if (token == null || token.trim().isEmpty()) {
+            if (token == null || token.isBlank()) {
                 response.put("success", false);
                 response.put("message", "Token không được cung cấp");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
 
-            if (newPassword == null || newPassword.trim().isEmpty()) {
+            if (newPassword == null || newPassword.isBlank()) {
                 response.put("success", false);
                 response.put("message", "Mật khẩu mới không được để trống");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
@@ -208,7 +208,7 @@ public class LoginController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
 
-            if (username == null || username.trim().isEmpty()) {
+            if (username == null || username.isBlank()) {
                 response.put("success", false);
                 response.put("message", "Token không chứa thông tin người dùng hợp lệ");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);

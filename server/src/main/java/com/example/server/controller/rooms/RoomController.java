@@ -1,15 +1,14 @@
 package com.example.server.controller.rooms;
 
-import com.example.server.domain.Room;
-import com.example.server.repository.RoomRepository;
+import java.util.*;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.stream.Collectors;
+import com.example.server.domain.Room;
+import com.example.server.repository.RoomRepository;
 
 @RestController
 @RequestMapping("/api/rooms")
@@ -43,11 +42,11 @@ public class RoomController {
     private String buildDisplayName(Room room) {
         StringBuilder displayName = new StringBuilder();
         
-        if (room.getRoomName() != null && !room.getRoomName().trim().isEmpty()) {
+        if (room.getRoomName() != null && !room.getRoomName().isBlank()) {
             displayName.append(room.getRoomName());
         }
         
-        if (room.getAddress() != null && !room.getAddress().trim().isEmpty()) {
+        if (room.getAddress() != null && !room.getAddress().isBlank()) {
             if (displayName.length() > 0) {
                 displayName.append(" - ");
             }

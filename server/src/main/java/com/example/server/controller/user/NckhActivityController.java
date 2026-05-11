@@ -5,7 +5,6 @@ import com.example.server.DTO.nckh.DashboardResponse;
 import com.example.server.DTO.nckh.UpsertContributorsRequest;
 import com.example.server.DTO.nckh.ActivityStatisticsResponse;
 import com.example.server.domain.nckh.NckhActivity;
-import com.example.server.domain.nckh.NckhActivityCatalog;
 import com.example.server.domain.nckh.NckhActivityContributor;
 import com.example.server.service.nckh.NckhActivityService;
 import com.example.server.service.nckh.NckhDashboardService;
@@ -45,10 +44,6 @@ public class NckhActivityController {
         activityService.delete(id, userId);
     }
 
-    @GetMapping("/activity-catalog")
-    public List<NckhActivityCatalog> activeCatalog() {
-        return activityService.getActiveCatalog();
-    }
 
     @GetMapping("/activity-options")
     public Map<String, Object> declarationOptions() {

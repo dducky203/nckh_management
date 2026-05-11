@@ -76,7 +76,7 @@ public class EventPublicServiceImpl implements EventPublicService {
                     .collect(Collectors.toList());
         }
 
-        if (searchTerm != null && !searchTerm.trim().isEmpty()) {
+        if (searchTerm != null && !searchTerm.isBlank()) {
             String searchLower = searchTerm.toLowerCase();
             events = events.stream()
                     .filter(e -> (e.getEventName() != null && e.getEventName().toLowerCase().contains(searchLower)) ||

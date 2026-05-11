@@ -87,7 +87,7 @@ public class ManagerUserController {
             }
 
             // Gọi repository method phù hợp
-            if (search != null && !search.trim().isEmpty()) {
+            if (search != null && !search.isBlank()) {
                 userPage = userRepository.findWithFilters(search.trim(), power, inActive, isDeleted, pageable);
             } else {
                 userPage = userRepository.findWithFilters(null, power, inActive, isDeleted, pageable);

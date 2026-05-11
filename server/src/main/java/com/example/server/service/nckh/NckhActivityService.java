@@ -1,25 +1,22 @@
 package com.example.server.service.nckh;
 
-import com.example.server.DTO.nckh.ActivityStatisticsResponse;
-import com.example.server.DTO.nckh.ContributorItem;
-import com.example.server.DTO.nckh.CreateActivityRequest;
-import com.example.server.domain.User;
-import com.example.server.domain.nckh.NckhActivity;
-import com.example.server.domain.nckh.NckhActivityCatalog;
-import com.example.server.domain.nckh.NckhActivityContributor;
-import com.example.server.domain.nckh.NckhTieuChiDinhMuc;
-import com.example.server.domain.nckh.UserPlanYear;
-import com.example.server.repository.UserRepository;
-import com.example.server.repository.nckh.*;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import com.cloudinary.utils.StringUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.example.server.DTO.nckh.*;
+import com.example.server.domain.Title;
+import com.example.server.domain.User;
+import com.example.server.domain.nckh.*;
+import com.example.server.repository.UserRepository;
+import com.example.server.repository.nckh.*;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class NckhActivityService {
@@ -27,7 +24,6 @@ public class NckhActivityService {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final NckhActivityRepository activityRepo;
-    private final NckhActivityCatalogRepository catalogRepo;
     private final NckhTieuChiDinhMucRepository dinhMucRepo;
     private final NckhActivityContributorRepository contribRepo;
     private final NckhComputeService computeService;
@@ -36,14 +32,12 @@ public class NckhActivityService {
 
     public NckhActivityService(
             NckhActivityRepository activityRepo,
-            NckhActivityCatalogRepository catalogRepo,
             NckhActivityContributorRepository contribRepo,
             NckhComputeService computeService,
             UserPlanYearRepository planYearRepo,
             NckhTieuChiDinhMucRepository dinhMucRepo,
             UserRepository userRepo) {
         this.activityRepo = activityRepo;
-        this.catalogRepo = catalogRepo;
         this.dinhMucRepo = dinhMucRepo;
         this.contribRepo = contribRepo;
         this.computeService = computeService;
@@ -57,22 +51,7 @@ public class NckhActivityService {
         NckhTieuChiDinhMuc dinhMuc = resolveDinhMuc(creatorUserId, tieuChiCode);
 
         NckhActivity a = new NckhActivity();
-        a.setAcademicYear(req.academicYear);
-        a.setResearchGroupId(req.researchGroupId);
-        a.setCatalogCode(tieuChiCode);
-        a.setQty(req.qty == null ? 1.0 : req.qty);
-        a.setQuotaHoursSnapshot(requireQuotaHoursSnapshot(dinhMuc, tieuChiCode));
-        a.setTitle(req.title);
-        a.setDescription(req.description);
-        a.setPublicationName(req.publicationName);
-        validateActivityDate(req.activityDate);
-        a.setActivityDate(req.activityDate);
-        a.setVenue(req.venue);
-        a.setIdentifierCode(req.identifierCode);
-        a.setExternalLink(req.externalLink);
-        a.setProofFileUrl(toJsonArray(req.proofFileUrls));
-        a.setProofImageUrl(toJsonArray(req.proofImageUrls));
-        a.setDetailsJson(req.detailsJson);
+        createActivity(req, a, tieuChiCode, dinhMuc);
         a.setMainAuthorUserId(creatorUserId);
         a.setMemberUserIds(null);
         a.setStatus(NckhActivity.Status.DRAFT);
@@ -80,9 +59,6 @@ public class NckhActivityService {
         return activityRepo.save(a);
     }
 
-    public List<NckhActivityCatalog> getActiveCatalog() {
-        return catalogRepo.findByIsActiveTrueOrderByMetricKeyAscCatalogCodeAsc();
-    }
 
     public Map<String, Object> getDeclarationOptions() {
         Map<String, Object> result = new LinkedHashMap<>();
@@ -231,7 +207,7 @@ public class NckhActivityService {
         Map<Integer, String> userNameById = userRepo.findAllById(userIds).stream()
                 .collect(Collectors.toMap(
                         User::getId,
-                        u -> (u.getName() == null || u.getName().trim().isEmpty()) ? u.getUsername() : u.getName(),
+                        u -> (StringUtils.isBlank(u.getName())) ? u.getUsername() : u.getName(),
                         (left, right) -> left));
 
         for (NckhActivityContributor contributor : contributors) {
@@ -243,17 +219,17 @@ public class NckhActivityService {
 
     public List<NckhActivity> listMy(Integer userId, Integer year, String activityType, String status) {
         List<NckhActivity> base = activityRepo.findByCreatedByUserIdAndAcademicYear(userId, year);
-        return filterActivities(base, activityType, status, null);
+        return filterActivities(base, activityType, status);
     }
 
     public List<NckhActivity> listPublic(Integer year, String activityType) {
         List<NckhActivity> base = activityRepo.findByAcademicYear(year);
-        return filterActivities(base, activityType, NckhActivity.Status.APPROVED.name(), null);
+        return filterActivities(base, activityType, NckhActivity.Status.APPROVED.name());
     }
 
     public List<NckhActivity> listPending(Integer year, String activityType) {
         List<NckhActivity> base = activityRepo.findByAcademicYear(year);
-        return filterActivities(base, activityType, NckhActivity.Status.SUBMITTED.name(), null);
+        return filterActivities(base, activityType, NckhActivity.Status.SUBMITTED.name());
     }
 
     @Transactional
@@ -272,6 +248,13 @@ public class NckhActivityService {
         String tieuChiCode = requireTieuChiCode(req);
         NckhTieuChiDinhMuc dinhMuc = resolveDinhMuc(userId, tieuChiCode);
 
+        createActivity(req, a, tieuChiCode, dinhMuc);
+        a.setApprovedByUserId(null);
+        a.setApprovedAt(null);
+        return activityRepo.save(a);
+    }
+
+    private void createActivity(CreateActivityRequest req, NckhActivity a, String tieuChiCode, NckhTieuChiDinhMuc dinhMuc) {
         a.setAcademicYear(req.academicYear);
         a.setResearchGroupId(req.researchGroupId);
         a.setCatalogCode(tieuChiCode);
@@ -288,9 +271,6 @@ public class NckhActivityService {
         a.setProofFileUrl(toJsonArray(req.proofFileUrls));
         a.setProofImageUrl(toJsonArray(req.proofImageUrls));
         a.setDetailsJson(req.detailsJson);
-        a.setApprovedByUserId(null);
-        a.setApprovedAt(null);
-        return activityRepo.save(a);
     }
 
     private String requireTieuChiCode(CreateActivityRequest req) {
@@ -307,8 +287,8 @@ public class NckhActivityService {
     private NckhTieuChiDinhMuc resolveDinhMuc(Integer userId, String tieuChiCode) {
         String chucDanh = userRepo.findById(userId)
                 .map(User::getIdTitle)
-                .map(title -> title == null ? null : title.getName())
-                .map(name -> name == null ? "" : name.trim())
+                .map(Title::getName)
+                .map(String::trim)
                 .filter(name -> !name.isEmpty())
                 .orElse(null);
 
@@ -397,8 +377,7 @@ public class NckhActivityService {
     private List<NckhActivity> filterActivities(
             List<NckhActivity> source,
             String activityType,
-            String status,
-            Integer excludeUserId) {
+            String status) {
         List<String> codes = resolveCatalogCodesByActivityType(activityType);
         NckhActivity.Status statusEnum = parseStatus(status);
 
@@ -410,9 +389,6 @@ public class NckhActivityService {
             if (statusEnum != null && item.getStatus() != statusEnum) {
                 continue;
             }
-            if (excludeUserId != null && excludeUserId.equals(item.getCreatedByUserId())) {
-                continue;
-            }
             result.add(item);
         }
 
@@ -421,7 +397,7 @@ public class NckhActivityService {
     }
 
     private NckhActivity.Status parseStatus(String status) {
-        if (status == null || status.trim().isEmpty()) {
+        if (status == null || status.isBlank()) {
             return null;
         }
         try {

@@ -34,7 +34,7 @@ public class NewsServiceImpl implements NewsService {
                 .collect(Collectors.toList());
 
         // Filter theo search term
-        if (search != null && !search.trim().isEmpty()) {
+        if (search != null && !search.isBlank()) {
             String searchLower = search.toLowerCase();
             allNews = allNews.stream()
                     .filter(news -> (news.getTitle() != null && news.getTitle().toLowerCase().contains(searchLower)) ||
