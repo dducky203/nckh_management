@@ -30,6 +30,14 @@ const quickCards = [
     tone: "from-indigo-500 to-blue-500",
     cta: "Xem nhóm NCKH",
   },
+  {
+    title: "Định mức nhóm NCKH",
+    description: "Tính giờ quy đổi theo tiêu chí nhóm NCM / Xuất sắc / Tinh hoa.",
+    to: "/activity/group-quota",
+    icon: GroupIcon,
+    tone: "from-violet-500 to-purple-600",
+    cta: "Mở định mức nhóm",
+  },
 ];
 
 export default function ActivityUserFeaturePage() {

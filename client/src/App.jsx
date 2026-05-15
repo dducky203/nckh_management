@@ -55,6 +55,7 @@ import ApprovedTaskDeclarationPage from "./pages/activity/declarations/ApprovedT
 import CouncilDeclarationPage from "./pages/activity/declarations/CouncilDeclarationPage";
 import ExpertInviteDeclarationPage from "./pages/activity/declarations/ExpertInviteDeclarationPage";
 import OtherActivityDeclarationPage from "./pages/activity/declarations/OtherActivityDeclarationPage";
+import GroupQuotaPage from "./pages/activity/GroupQuotaPage";
 
 function App() {
   // Load rooms data when app starts
@@ -116,6 +117,14 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <ActivityStandards />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/group-quota"
+                      element={
+                        <ProtectedRoute>
+                          <GroupQuotaPage />
                         </ProtectedRoute>
                       }
                     />

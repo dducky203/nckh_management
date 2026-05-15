@@ -9,6 +9,7 @@ import EventNoteIcon from "@mui/icons-material/EventNote";
 import ArticleIcon from "@mui/icons-material/Article";
 import GroupIcon from "@mui/icons-material/Group";
 import HubIcon from "@mui/icons-material/Hub";
+import SmartToyIcon from "@mui/icons-material/SmartToy";
 
 const adminCards = [
   {
@@ -91,6 +92,15 @@ const adminCards = [
     icon: GroupIcon,
     tone: "from-blue-500 to-indigo-500",
     cta: "Đi tới quản lý nhóm",
+  },
+  {
+    title: "Phân tích Chatbot (AI)",
+    description:
+      "Dùng AI phân tích lịch sử chat để tìm ra các khó khăn của người dùng.",
+    to: "/admin/chat-analysis",
+    icon: SmartToyIcon,
+    tone: "from-purple-500 to-indigo-600",
+    cta: "Mở phân tích AI",
   },
 ];
 

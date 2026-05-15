@@ -39,4 +39,30 @@ public interface NckhActivityRepository extends JpaRepository<NckhActivity, Long
             @Param("academicYear") Integer academicYear,
             @Param("phuongAn") Integer phuongAn,
             @Param("chucDanh") String chucDanh);
+
+    /**
+     * Tổng hợp hoạt động APPROVED của toàn bộ thành viên trong nhóm (theo list userId).
+     * Dùng để tính định mức nhóm chia đều cho từng cá nhân.
+     */
+    @Query(value = "SELECT " +
+            "a.catalog_code AS catalogCode, " +
+            "MAX(cat.tieu_chi_name) AS catalogName, " +
+            "MAX(cat.don_vi_tinh) AS unit, " +
+            "COUNT(DISTINCT a.id) AS participationCount, " +
+            "COALESCE(ROUND(COALESCE(SUM(b.hours_share), 0) / NULLIF(MAX(cat.gio_quy_doi_per_unit), 0), 2), 0) AS totalQty, " +
+            "SUM(b.hours_share) AS totalQuotaHours, " +
+            "AVG(b.participants_n) AS avgParticipantsN " +
+            "FROM nckh_activity a " +
+            "INNER JOIN nckh_activity_contributor b ON a.id = b.activity_id " +
+            "INNER JOIN nckh_tieu_chi_dinh_muc cat ON a.catalog_code = cat.tieu_chi_code " +
+            "WHERE b.user_id IN (:userIds) " +
+            "AND a.academic_year = :academicYear " +
+            "AND a.status = 'APPROVED' " +
+            "GROUP BY a.catalog_code " +
+            "ORDER BY a.catalog_code",
+            nativeQuery = true)
+    List<ActivityStatisticsResponse> getGroupStatsByYear(
+            @Param("userIds") List<Integer> userIds,
+            @Param("academicYear") Integer academicYear);
 }
+

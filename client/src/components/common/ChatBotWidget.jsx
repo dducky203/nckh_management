@@ -12,6 +12,7 @@ import {
   ExpandLess,
   ExpandMore,
 } from "@mui/icons-material";
+import ReactMarkdown from "react-markdown";
 import logo from "../../assets/logo_fita.png";
 import chatbotService from "../../services/chatbotService";
 
@@ -183,14 +184,11 @@ const ChatBotWidget = () => {
                       : "bg-gradient-to-r from-mainColor to-blue-600 text-white"
                   }`}
                 >
-                  <div
-                    className="whitespace-pre-line leading-relaxed"
-                    dangerouslySetInnerHTML={{
-                      __html: message.text
-                        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-                        .replace(/\n/g, "<br />"),
-                    }}
-                  />
+                  <div className="prose prose-sm max-w-none text-xs leading-relaxed break-words">
+                    <ReactMarkdown>
+                      {message.text}
+                    </ReactMarkdown>
+                  </div>
                   <div className="text-[10px] opacity-60 mt-1.5">
                     {message.timestamp}
                   </div>

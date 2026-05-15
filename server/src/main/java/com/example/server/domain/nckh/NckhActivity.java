@@ -17,7 +17,7 @@ public class NckhActivity {
     private Integer academicYear;
 
     @Column(name = "research_group_id")
-    private Integer researchGroupId; // int(11) theo DB bạn
+    private Integer researchGroupId;
 
     @Column(name = "catalog_code", nullable = false, length = 50)
     private String catalogCode;

@@ -8,13 +8,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
+import com.example.server.domain.ChatHistory;
+import com.example.server.domain.User;
+import com.example.server.repository.ChatHistoryRepository;
+import com.example.server.repository.UserRepository;
+import com.example.server.utils.SecurityUtils;
 import com.example.server.DTO.ChatResponse;
 import com.example.server.utils.Constants;
 import com.google.gson.*;
-
 import okhttp3.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 @Service
 public class GeminiChatService {
@@ -40,6 +45,12 @@ public class GeminiChatService {
             .protocols(List.of(Protocol.HTTP_1_1))
             .build();
     private final Gson gson = new Gson();
+
+    @Autowired
+    private ChatHistoryRepository chatHistoryRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     private final Map<String, JsonArray> conversationHistory = new ConcurrentHashMap<>();
 
@@ -81,7 +92,7 @@ public class GeminiChatService {
 
             JsonObject generationConfig = new JsonObject();
             generationConfig.addProperty("temperature", 0.7);
-            generationConfig.addProperty("maxOutputTokens", 2048);
+            generationConfig.addProperty("maxOutputTokens", 8192); // Tăng giới hạn token để tránh cắt chữ
             requestBody.add("generationConfig", generationConfig);
 
             String url = endpoint + model + ":generateContent?key=" + apiKey;
@@ -124,6 +135,20 @@ public class GeminiChatService {
                             }
                             conversationHistory.put(conversationId, newHistory);
                         }
+
+                        // Lưu vào Database
+                        Integer currentUserId = SecurityUtils.getCurrentUserId();
+                        User user = null;
+                        if (currentUserId != null) {
+                            user = userRepository.findById(currentUserId).orElse(null);
+                        }
+                        ChatHistory chatHistory = ChatHistory.builder()
+                                .user(user)
+                                .conversationId(conversationId)
+                                .userMessage(userMessage)
+                                .botResponse(aiResponse)
+                                .build();
+                        chatHistoryRepository.save(chatHistory);
 
                         return ChatResponse.builder()
                                 .response(aiResponse)
@@ -191,5 +216,67 @@ public class GeminiChatService {
 
     public void clearConversation(String conversationId) {
         conversationHistory.remove(conversationId);
+        try {
+            chatHistoryRepository.deleteByConversationId(conversationId);
+        } catch (Exception e) {
+            logger.error("Error deleting conversation history from DB: {}", e.getMessage());
+        }
     }
-}
+
+    public String analyzeUserHistory(String historyText) {
+        try {
+            JsonObject userContent = new JsonObject();
+            JsonArray userParts = new JsonArray();
+            JsonObject userText = new JsonObject();
+            userText.addProperty("text", 
+                "Hãy đóng vai là một chuyên gia phân tích hành vi người dùng (UX Researcher) và quản trị hệ thống. Dưới đây là danh sách các câu hỏi mà một User đã gửi cho Chatbot của hệ thống Quản lý Nghiên cứu khoa học. " +
+                "Nhiệm vụ của bạn là đọc và phân tích kỹ các câu hỏi này để rút ra kết luận: Người dùng này đang quan tâm đến chức năng nào? Họ đang gặp khó khăn, vướng mắc hay có sự nhầm lẫn gì khi sử dụng hệ thống? " +
+                "BẮT BUỘC trả về duy nhất 1 object JSON hợp lệ có 2 key sau (không kèm markdown block):\n" +
+                "{\n" +
+                "  \"identifiedProblems\": \"Mô tả vấn đề đang gặp phải...\",\n" +
+                "  \"suggestedSolutions\": \"Mô tả đề xuất giải pháp...\"\n" +
+                "}\n\n" +
+                "Lịch sử chat:\n" + historyText
+            );
+            userParts.add(userText);
+            userContent.add("parts", userParts);
+            userContent.addProperty("role", "user");
+
+            JsonArray contents = new JsonArray();
+            contents.add(userContent);
+
+            JsonObject requestBody = new JsonObject();
+            requestBody.add("contents", contents);
+
+            JsonObject generationConfig = new JsonObject();
+            generationConfig.addProperty("temperature", 0.5);
+            generationConfig.addProperty("maxOutputTokens", 4096);
+            requestBody.add("generationConfig", generationConfig);
+
+            String url = endpoint + model + ":generateContent?key=" + apiKey;
+
+            RequestBody body = RequestBody.create(
+                    requestBody.toString(),
+                    MediaType.parse("application/json")
+            );
+
+            Request request = new Request.Builder()
+                    .url(url)
+                    .post(body)
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                if (response.isSuccessful()) {
+                    assert response.body() != null;
+                    String responseBody = response.body().string();
+                    JsonObject jsonResponse = gson.fromJson(responseBody, JsonObject.class);
+                    return extractResponse(jsonResponse);
+                }
+                return "Không thể phân tích: " + response.code();
+            }
+        } catch (Exception e) {
+            logger.error("Error analyzing user history: {}", e.getMessage(), e);
+            return "Lỗi trong quá trình phân tích: " + e.getMessage();
+        }
+    }
+}

@@ -12,4 +12,5 @@ public class NckhTieuChiDinhMucRequest {
     public BigDecimal gioQuyDoiPerUnit;
     public String ghiChu;
     public Integer sortOrder;
+    public String year;
 }

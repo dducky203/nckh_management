@@ -307,6 +307,11 @@ public class NckhTieuChiDinhMucServiceImpl implements NckhTieuChiDinhMucService 
         entity.setTongGioToiThieu(calcTongGioToiThieu(request.dinhMucToiThieu, request.gioQuyDoiPerUnit));
         entity.setGhiChu(request.ghiChu);
         entity.setSortOrder(request.sortOrder == null ? 0 : request.sortOrder);
+        if (request.year != null && !request.year.isBlank()) {
+            entity.setYear(request.year);
+        } else if (entity.getYear() == null) {
+            entity.setYear(String.valueOf(java.time.Year.now().getValue()));
+        }
     }
 
     private void validateEntity(NckhTieuChiDinhMuc entity) {
@@ -335,10 +340,27 @@ public class NckhTieuChiDinhMucServiceImpl implements NckhTieuChiDinhMucService 
         if (chucDanh == null || chucDanh.isBlank()) {
             return null;
         }
+        String normalized = chucDanh.trim().toUpperCase()
+                .replace("/", "_")
+                .replace(" ", "_")
+                .replace("-", "_");
+        // Chuẩn hoá các biến thể phổ biến
+        if (normalized.contains("GS") || normalized.contains("PGS")) {
+            return NckhTieuChiDinhMuc.ChucDanh.GS_PGS;
+        }
+        if (normalized.equals("TS") || normalized.contains("TIEN_SI") || normalized.contains("TIẾN_SĨ")) {
+            return NckhTieuChiDinhMuc.ChucDanh.TS;
+        }
+        if (normalized.equals("THS") || normalized.contains("THAC_SI") || normalized.contains("THẠC_SĨ")) {
+            return NckhTieuChiDinhMuc.ChucDanh.THS;
+        }
+        if (normalized.contains("KS") || normalized.contains("CN") || normalized.contains("KY_SU") || normalized.contains("CU_NHAN")) {
+            return NckhTieuChiDinhMuc.ChucDanh.KS_CN;
+        }
         try {
-            return NckhTieuChiDinhMuc.ChucDanh.valueOf(chucDanh.trim().toUpperCase());
+            return NckhTieuChiDinhMuc.ChucDanh.valueOf(normalized);
         } catch (IllegalArgumentException ex) {
-            throw new IllegalStateException("chuc_danh không hợp lệ. Cho phép: GS_PGS, TS, THS, KS_CN");
+            throw new IllegalStateException("chuc_danh không hợp lệ: '" + chucDanh + "'. Cho phép: GS_PGS (GS/PGS), TS, THS (ThS), KS_CN (KS/CN)");
         }
     }
 
