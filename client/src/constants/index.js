@@ -2,6 +2,11 @@
 // Activity Declaration constants
 export * from "./activityConstants.js";
 
+/** Đồng bộ với `Constants.CHAT_ASSISTANT_DISPLAY_NAME` (server). */
+export const CHAT_ASSISTANT_DISPLAY_NAME = "Trợ lí NCKH";
+/** Đồng bộ với `Constants.CHAT_ASSISTANT_ROLE` (server). */
+export const CHAT_ASSISTANT_ROLE = "assistant";
+
 export const API_BASE_URL = import.meta.env.VITE_API_URL;
 export const BASE_IMG_URL = `${API_BASE_URL}/file/`;
 export const JWT_EXPIRATION_DAYS =

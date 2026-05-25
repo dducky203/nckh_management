@@ -33,6 +33,7 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false);
+  const [roleOptions, setRoleOptions] = useState([]);
 
   const normalizeInActiveValue = (value) => {
     if (value === true || value === 1 || value === "1") return 1;
@@ -67,36 +68,58 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
   };
 
   useEffect(() => {
-    if (user) {
-      setFormData({
-        id: user.id,
-        username: user.username,
-        name: user.name,
-        email: user.email,
-        phone: user.phone || "",
-        birthday: formatDateForInput(user.birthday),
-        address: user.address || "",
-        power: user.power,
-        idRole: roleStringToInt(user.role),
-        idTitle: titleStringToInt(user.title),
-        inActive: normalizeInActiveValue(user.inActive),
-      });
-    } else {
-      setFormData({
-        username: "",
-        name: "",
-        email: "",
-        phone: "",
-        birthday: "",
-        address: "",
-        power: 4,
-        idRole: 2,
-        idTitle: 5,
-        inActive: 0,
-      });
-    }
+    if (!isOpen) return;
 
-    setErrors({});
+    let cancelled = false;
+    (async () => {
+      let roles = [];
+      try {
+        const res = await userService.getRoles();
+        roles = Array.isArray(res?.data) ? res.data : [];
+      } catch {
+        roles = [];
+      }
+      if (cancelled) return;
+      setRoleOptions(roles);
+
+      const defaultUserId =
+        roles.find((rr) => (rr.name || "").toLowerCase() === "user")?.id ?? 2;
+
+      if (user) {
+        setFormData({
+          id: user.id,
+          username: user.username,
+          name: user.name,
+          email: user.email,
+          phone: user.phone || "",
+          birthday: formatDateForInput(user.birthday),
+          address: user.address || "",
+          power: user.power,
+          idRole: roleStringToInt(user.role, roles),
+          idTitle: titleStringToInt(user.title),
+          inActive: normalizeInActiveValue(user.inActive),
+        });
+      } else {
+        setFormData({
+          username: "",
+          name: "",
+          email: "",
+          phone: "",
+          birthday: "",
+          address: "",
+          power: 4,
+          idRole: defaultUserId,
+          idTitle: 5,
+          inActive: 0,
+        });
+      }
+
+      setErrors({});
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [user, isOpen]);
 
   const handleResetPasswordClick = () => {
@@ -139,7 +162,13 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
     }
 
     try {
-      const success = await onSave(formData);
+      // Transform idRole/idTitle sang format object mà backend UserRequest mong đợi
+      const payload = {
+        ...formData,
+        idRole: { id: formData.idRole },
+        idTitle: { id: formData.idTitle },
+      };
+      const success = await onSave(payload);
       if (success) {
         onClose();
       }
@@ -367,8 +396,19 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
                 className="w-full font-bold px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
                 required
               >
-                <option value={1}>ROLE ADMIN</option>
-                <option value={2}>ROLE USER</option>
+                {roleOptions.length > 0 ? (
+                  roleOptions.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {(r.notes && r.notes.trim()) || r.name}
+                    </option>
+                  ))
+                ) : (
+                  <>
+                    <option value={1}>Quản trị (admin)</option>
+                    <option value={2}>Người dùng (user)</option>
+                    <option value={3}>Trợ lí NCKH (assistant)</option>
+                  </>
+                )}
               </select>
             </div>
 

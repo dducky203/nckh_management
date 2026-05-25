@@ -53,7 +53,9 @@ const UserTable = ({
   const isIndeterminate =
     selectedUsers.length > 0 && selectedUsers.length < users.length;
 
-  const getRoleLabel = (power) => {
+  const getRoleLabel = (power, systemRole) => {
+    const r = (systemRole ?? "").toString().trim().toLowerCase();
+    if (r === "assistant") return "Trợ lí NCKH";
     const roles = {
       1: "Trưởng khoa",
       2: "Phó khoa",
@@ -63,7 +65,9 @@ const UserTable = ({
     return roles[power] || "Không xác định";
   };
 
-  const getRoleBadgeColor = (power) => {
+  const getRoleBadgeColor = (power, systemRole) => {
+    const r = (systemRole ?? "").toString().trim().toLowerCase();
+    if (r === "assistant") return "bg-sky-100 text-sky-800";
     const colors = {
       1: "bg-red-100 text-red-800",
       2: "bg-orange-100 text-orange-800",
@@ -277,10 +281,11 @@ const UserTable = ({
                     <td className="px-6 py-3">
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded ${getRoleBadgeColor(
-                          user.power
+                          user.power,
+                          user.role
                         )}`}
                       >
-                        {getRoleLabel(user.power)}
+                        {getRoleLabel(user.power, user.role)}
                       </span>
                     </td>
 

@@ -4,6 +4,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.example.server.domain.Role;
 import com.example.server.domain.User;
 import com.example.server.repository.RoleRepository;
 import com.example.server.repository.UserRepository;
@@ -18,6 +19,7 @@ public class ApplicationInitConfig {
     @Bean
     ApplicationRunner applicationRunner(UserRepository userRepository, RoleRepository roleRepository){
         return  args -> {
+            ensureAssistantRole(roleRepository);
             // Tạo admin mặc định nếu chưa tồn tại
             if (userRepository.findByUsername("admin") == null) {
                 User userAdmin = new User();
@@ -34,5 +36,17 @@ public class ApplicationInitConfig {
                 log.info("Admin user already exists, skipping creation.");
             }
         };
+    }
+
+    /** Role hệ thống: assistant — quyền cao hơn user, chỉ sau admin (tên hiển thị: Trợ lí NCKH). */
+    private void ensureAssistantRole(RoleRepository roleRepository) {
+        if (roleRepository.findFirstByNameIgnoreCase("assistant").isPresent()) {
+            return;
+        }
+        Role assistant = new Role();
+        assistant.setName("assistant");
+        assistant.setNotes("Trợ lí NCKH");
+        roleRepository.save(assistant);
+        log.info("Seeded role 'assistant' (Trợ lí NCKH).");
     }
 }

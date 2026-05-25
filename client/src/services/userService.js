@@ -90,6 +90,11 @@ const userService = {
     });
   },
 
+  /** Danh sách role hệ thống (admin, user, assistant, …) cho form quản lý user. */
+  getRoles: async () => {
+    return await api.get("/dashboard/manage-users/roles");
+  },
+
   // Tìm kiếm users theo username hoặc email
   searchUsers: async (keyword,type = 'ALL', page = 0, size = 10) => {
     return await api.get("/users/search", {

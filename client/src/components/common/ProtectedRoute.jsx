@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import { Navigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
-import { isAdmin } from "../../utils/permissions";
+import { hasNckhStaffAccess, isStrictAdminPortalUser } from "../../utils/permissions";
 
 const ProtectedRoute = ({ children, requiredPower = null }) => {
   const { user, isInitializing } = useContext(AuthContext);
@@ -18,7 +18,11 @@ const ProtectedRoute = ({ children, requiredPower = null }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredPower === "admin" && !isAdmin(user)) {
+  if (requiredPower === "admin" && !isStrictAdminPortalUser(user)) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  if (requiredPower === "nckhStaff" && !hasNckhStaffAccess(user)) {
     return <Navigate to="/unauthorized" replace />;
   }
 

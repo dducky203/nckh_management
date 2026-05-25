@@ -11,7 +11,9 @@ const SearchModal = ({ isOpen, onClose, users, onSelectUser }) => {
       user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getRoleLabel = (power) => {
+  const getRoleLabel = (power, systemRole) => {
+    const r = (systemRole ?? "").toString().trim().toLowerCase();
+    if (r === "assistant") return "Trợ lí NCKH";
     const roles = {
       1: "Trưởng khoa",
       2: "Phó khoa",
@@ -82,7 +84,7 @@ const SearchModal = ({ isOpen, onClose, users, onSelectUser }) => {
                           {user.name}
                         </span>
                         <span className="px-2 py-0.5 text-xs font-medium rounded-md bg-blue-100 text-blue-800 flex-shrink-0">
-                          {getRoleLabel(user.power)}
+                          {getRoleLabel(user.power, user.role)}
                         </span>
                       </div>
                       <p className="text-xs text-gray-600 truncate">

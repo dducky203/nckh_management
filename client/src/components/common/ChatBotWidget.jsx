@@ -1,27 +1,58 @@
-import { useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import {
   Send,
-  SmartToy,
   Person,
   Close,
   Refresh,
-  Event,
-  MenuBook,
-  Groups,
-  Newspaper,
+  RocketLaunch,
+  ManageSearch,
+  Inventory2,
+  RuleFolder,
+  SupportAgent,
   ExpandLess,
   ExpandMore,
 } from "@mui/icons-material";
 import ReactMarkdown from "react-markdown";
 import logo from "../../assets/logo_fita.png";
 import chatbotService from "../../services/chatbotService";
+import { CHAT_ASSISTANT_DISPLAY_NAME, CHAT_ASSISTANT_ROLE } from "../../constants";
+
+const INITIAL_MESSAGE =
+  `Xin chào! Tôi là **${CHAT_ASSISTANT_DISPLAY_NAME}** (vai trò: \`${CHAT_ASSISTANT_ROLE}\`) — trợ lý NCKH trên hệ thống này.\n\nTôi ưu tiên trả lời các nội dung trong hệ thống như:\n- Định mức theo năm, quét AI, import Excel\n- Khai báo hoạt động NCKH\n- Nhóm nghiên cứu và định mức nhóm\n- Quy trình duyệt, phân quyền, thao tác theo menu\n\nBạn có thể chọn gợi ý nhanh bên dưới hoặc đặt câu hỏi trực tiếp.`;
+
+const QUICK_ACTIONS = [
+  {
+    icon: Inventory2,
+    label: "Định mức theo năm",
+    question:
+      "Hướng dẫn thao tác trang chỉnh sửa định mức theo năm, import Excel và quét AI.",
+  },
+  {
+    icon: RuleFolder,
+    label: "Khai báo NCKH",
+    question:
+      "Hướng dẫn khai báo hoạt động NCKH và cách nộp để admin duyệt.",
+  },
+  {
+    icon: ManageSearch,
+    label: "Nhóm nghiên cứu",
+    question:
+      "Cách xem định mức nhóm NCM/Xuất sắc/Tinh hoa và tính định mức cá nhân.",
+  },
+  {
+    icon: SupportAgent,
+    label: "Phân quyền",
+    question:
+      "Giải thích các quyền Trưởng khoa, Phó khoa, Cán bộ khoa, Sinh viên trong hệ thống.",
+  },
+];
 
 const ChatBotWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
       id: 1,
-      text: "Xin chào! Tôi là trợ lý AI của hệ thống NCKH. Tôi có thể giúp bạn:\n\n• Hướng dẫn sử dụng hệ thống\n• Giải thích các chức năng\n• Tạo sự kiện, nhóm nghiên cứu\n• Quản lý hoạt động NCKH\n\nHãy hỏi tôi bất cứ điều gì bạn muốn biết!",
+      text: INITIAL_MESSAGE,
       isBot: true,
       timestamp: new Date().toLocaleTimeString(),
     },
@@ -39,6 +70,23 @@ const ChatBotWidget = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const canSend = useMemo(
+    () => inputText.trim().length > 0 && !isTyping,
+    [inputText, isTyping]
+  );
+
+  const addBotMessage = (text) => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now() + Math.random(),
+        text,
+        isBot: true,
+        timestamp: new Date().toLocaleTimeString(),
+      },
+    ]);
+  };
 
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
@@ -76,20 +124,16 @@ const ChatBotWidget = () => {
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
       console.error("Chatbot request failed:", error);
-      const errorMessage = {
-        id: Date.now() + 1,
-        text: "Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại sau.",
-        isBot: true,
-        timestamp: new Date().toLocaleTimeString(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      addBotMessage(
+        "Hiện tại tôi chưa phản hồi được từ server. Bạn thử lại sau vài giây hoặc kiểm tra kết nối."
+      );
     } finally {
       setIsTyping(false);
     }
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey && !isTyping) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -111,7 +155,7 @@ const ChatBotWidget = () => {
     setMessages([
       {
         id: 1,
-        text: "Xin chào! Tôi là trợ lý AI của hệ thống NCKH. Hãy hỏi tôi bất cứ điều gì!",
+        text: INITIAL_MESSAGE,
         isBot: true,
         timestamp: new Date().toLocaleTimeString(),
       },
@@ -122,22 +166,22 @@ const ChatBotWidget = () => {
     <div className="fixed bottom-20 right-3 sm:right-6 z-50">
       {/* Chat Window */}
       {isOpen && (
-        <div className="mb-4 w-80 sm:w-96 h-[480px] max-h-[70vh] bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col animate-in slide-in-from-bottom-5 duration-300 overflow-hidden">
+        <div className="mb-4 w-[22rem] sm:w-[25rem] h-[560px] max-h-[78vh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col animate-in slide-in-from-bottom-5 duration-300 overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-mainColor to-blue-600 text-white p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 ">
+              <div className="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center">
                 <img
-                  className="w-full h-full object-contain"
+                  className="w-7 h-7 object-contain"
                   src={logo}
                   alt="logo"
                 />
               </div>
               <div>
-                <h3 className="font-semibold text-sm">Trợ lý NCKH</h3>
-                <div className="flex items-center gap-1 text-xs opacity-90">
-                  <div className="w-2 h-2 bg-green-400 rounded-md"></div>
-                  <span>Đang hoạt động</span>
+                <h3 className="font-semibold text-sm">{CHAT_ASSISTANT_DISPLAY_NAME}</h3>
+                <div className="flex items-center gap-1 text-xs opacity-90 font-medium">
+                  <div className="w-2 h-2 bg-emerald-300 rounded-full" />
+                  <span>Online</span>
                 </div>
               </div>
             </div>
@@ -159,7 +203,7 @@ const ChatBotWidget = () => {
           </div>
 
           {/* Chat Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/30 backdrop-blur-sm">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/40">
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -168,7 +212,7 @@ const ChatBotWidget = () => {
                 }`}
               >
                 {message.isBot && (
-                  <div className="flex-shrink-0 p-1 bg-gradient-to-br from-mainColor to-blue-600 text-white rounded w-7 h-7 flex items-center justify-center shadow-sm">
+                  <div className="flex-shrink-0 p-1 bg-gradient-to-br from-mainColor to-blue-600 text-white rounded-lg w-7 h-7 flex items-center justify-center shadow-sm">
                     <img
                       className="w-full h-full object-contain"
                       src={logo}
@@ -178,16 +222,14 @@ const ChatBotWidget = () => {
                 )}
 
                 <div
-                  className={`max-w-[260px] px-3 py-2.5 rounded-2xl text-xs shadow-sm ${
+                  className={`max-w-[290px] px-3 py-2.5 rounded-2xl text-xs shadow-sm ${
                     message.isBot
-                      ? "bg-white text-gray-800 border border-gray-100"
+                      ? "bg-white text-slate-800 border border-slate-200"
                       : "bg-gradient-to-r from-mainColor to-blue-600 text-white"
                   }`}
                 >
                   <div className="prose prose-sm max-w-none text-xs leading-relaxed break-words">
-                    <ReactMarkdown>
-                      {message.text}
-                    </ReactMarkdown>
+                    <ReactMarkdown>{message.text}</ReactMarkdown>
                   </div>
                   <div className="text-[10px] opacity-60 mt-1.5">
                     {message.timestamp}
@@ -195,7 +237,7 @@ const ChatBotWidget = () => {
                 </div>
 
                 {!message.isBot && (
-                  <div className="flex-shrink-0 p-1 bg-gray-400 text-white rounded w-7 h-7 flex items-center justify-center">
+                  <div className="flex-shrink-0 p-1 bg-slate-400 text-white rounded-lg w-7 h-7 flex items-center justify-center">
                     <Person className="w-3.5 h-3.5" />
                   </div>
                 )}
@@ -204,10 +246,10 @@ const ChatBotWidget = () => {
 
             {isTyping && (
               <div className="flex gap-2">
-                <div className="flex-shrink-0 p-1.5 bg-gradient-to-br from-mainColor to-blue-600 text-white rounded-xl w-7 h-7 flex items-center justify-center">
-                  <SmartToy className="w-3.5 h-3.5" />
+                <div className="flex-shrink-0 p-1.5 bg-gradient-to-br from-mainColor to-blue-600 text-white rounded-lg w-7 h-7 flex items-center justify-center">
+                  <img className="w-full h-full object-contain" src={logo} alt="logo" />
                 </div>
-                <div className="bg-white border border-gray-100 px-3 py-2.5 rounded-2xl shadow-sm">
+                <div className="bg-white border border-slate-200 px-3 py-2.5 rounded-2xl shadow-sm">
                   <div className="flex gap-1">
                     <div className="w-1.5 h-1.5 bg-mainColor rounded-md animate-bounce"></div>
                     <div
@@ -231,10 +273,10 @@ const ChatBotWidget = () => {
             <button
               type="button"
               onClick={() => setShowQuickActions((prev) => !prev)}
-              className="w-full px-4 py-2 flex items-center justify-between text-[11px] font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="w-full px-4 py-2 flex items-center justify-between text-[11px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
               aria-expanded={showQuickActions}
             >
-              <span>Gợi ý nhanh</span>
+              <span>Gợi ý theo chức năng hệ thống</span>
               {showQuickActions ? (
                 <ExpandLess className="w-4 h-4" />
               ) : (
@@ -245,65 +287,47 @@ const ChatBotWidget = () => {
             {showQuickActions && (
               <div className="px-4 pb-3">
                 <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() =>
-                      setInputText("Hướng dẫn tạo sự kiện mới như thế nào?")
-                    }
-                    className="px-2 py-1.5 text-[10px] bg-gray-50 text-gray-700 rounded-lg border border-gray-200 hover:bg-mainColor/10 hover:border-mainColor/30 hover:text-mainColor transition-all duration-200 font-medium flex items-center justify-center gap-1"
-                  >
-                    <Event fontSize="small" />
-                    <span>Tạo sự kiện</span>
-                  </button>
-                  <button
-                    onClick={() =>
-                      setInputText("Các chức năng chính của hệ thống là gì?")
-                    }
-                    className="px-2 py-1.5 text-[10px] bg-gray-50 text-gray-700 rounded-lg border border-gray-200 hover:bg-mainColor/10 hover:border-mainColor/30 hover:text-mainColor transition-all duration-200 font-medium flex items-center justify-center gap-1"
-                  >
-                    <MenuBook fontSize="small" />
-                    <span>Chức năng</span>
-                  </button>
-                  <button
-                    onClick={() =>
-                      setInputText("Làm thế nào để tạo nhóm nghiên cứu?")
-                    }
-                    className="px-2 py-1.5 text-[10px] bg-gray-50 text-gray-700 rounded-lg border border-gray-200 hover:bg-mainColor/10 hover:border-mainColor/30 hover:text-mainColor transition-all duration-200 font-medium flex items-center justify-center gap-1"
-                  >
-                    <Groups fontSize="small" />
-                    <span>Nhóm NC</span>
-                  </button>
-                  <button
-                    onClick={() => setInputText("Xem tin tức mới nhất")}
-                    className="px-2 py-1.5 text-[10px] bg-gray-50 text-gray-700 rounded-lg border border-gray-200 hover:bg-mainColor/10 hover:border-mainColor/30 hover:text-mainColor transition-all duration-200 font-medium flex items-center justify-center gap-1"
-                  >
-                    <Newspaper fontSize="small" />
-                    <span>Tin tức</span>
-                  </button>
+                  {QUICK_ACTIONS.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.label}
+                        onClick={() => setInputText(item.question)}
+                        className="px-2 py-1.5 text-[10px] bg-slate-50 text-slate-700 rounded-lg border border-slate-200 hover:bg-mainColor/10 hover:border-mainColor/30 hover:text-mainColor transition-all duration-200 font-semibold flex items-center justify-center gap-1"
+                      >
+                        <Icon fontSize="small" />
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
           </div>
 
           {/* Input Area */}
-          <div className="p-4 bg-white border-t border-gray-100">
+          <div className="p-4 bg-white border-t border-slate-100">
             <div className="flex gap-2 items-end">
               <textarea
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Nhập câu hỏi của bạn..."
-                rows="1"
-                className="flex-1 px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-mainColor/50 focus:border-mainColor resize-none bg-gray-50 placeholder-gray-500"
-                style={{ minHeight: "32px", maxHeight: "80px" }}
+                onKeyDown={handleKeyDown}
+                placeholder="Nhập câu hỏi về hệ thống NCKH..."
+                rows={1}
+                className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-mainColor/30 focus:border-mainColor resize-none bg-slate-50 placeholder-slate-400"
+                style={{ minHeight: "36px", maxHeight: "96px" }}
               />
               <button
                 onClick={handleSendMessage}
-                disabled={!inputText.trim() || isTyping}
-                className="flex items-center px-3 py-2 bg-gradient-to-r from-mainColor to-blue-600 text-white rounded-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
+                disabled={!canSend}
+                className="flex items-center px-3 py-2 bg-gradient-to-r from-mainColor to-blue-600 text-white rounded-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
-                <Send fontSize="sm" />
+                <Send fontSize="small" />
               </button>
             </div>
+            <p className="mt-2 text-[10px] text-slate-400">
+              Enter để gửi, Shift + Enter để xuống dòng.
+            </p>
           </div>
         </div>
       )}
@@ -311,30 +335,26 @@ const ChatBotWidget = () => {
       {/* Floating Chat Button - Only show when chat is closed */}
       {!isOpen && (
         <button
-          title="Chatbot"
+          title={CHAT_ASSISTANT_DISPLAY_NAME}
           onClick={toggleChat}
-          className=" group relative border-2 border-mainColor   p-2 bg-gray-100  rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-110 animate-pulse"
+          className="group relative border-2 border-mainColor p-2.5 bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
         >
-          <img
-            src="https://freesvg.org/img/1538298822.png"
-            className="w-8 h-8 transition-transform duration-200 group-hover:scale-110"
-            alt=""
-          />
+          <RocketLaunch className="w-7 h-7 text-mainColor transition-transform duration-200 group-hover:scale-110" />
         </button>
       )}
 
       {/* Notification Badge */}
       {!isOpen && (
-        <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-md flex items-center justify-center animate-bounce shadow-lg">
-          <span className="font-bold">1</span>
+        <div className="absolute -top-1 -right-1 w-5 h-5 bg-mainColor text-white text-[10px] rounded-full flex items-center justify-center shadow-lg">
+          <span className="font-bold">AI</span>
         </div>
       )}
 
       {/* Tooltip */}
       {!isOpen && (
-        <div className="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-          Cần hỗ trợ? Chat với tôi!
-          <div className="absolute top-1/2 left-full transform -translate-y-1/2 border-l-4 border-l-gray-900 border-y-4 border-y-transparent"></div>
+        <div className="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 bg-slate-900 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+          Hỗ trợ nhanh theo chức năng hệ thống
+          <div className="absolute top-1/2 left-full transform -translate-y-1/2 border-l-4 border-l-slate-900 border-y-4 border-y-transparent"></div>
         </div>
       )}
     </div>

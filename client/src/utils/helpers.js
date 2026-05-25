@@ -1,20 +1,26 @@
-export const roleStringToInt = (roleString) => {
+export const roleStringToInt = (roleString, roleList = null) => {
   if (typeof roleString === "number") {
     return roleString;
   }
 
-  const converted = (() => {
-    switch (roleString?.toLowerCase()) {
-      case "admin":
-        return 1;
-      case "user":
-        return 2;
-      default:
-        return 2;
-    }
-  })();
+  const r = (roleString ?? "").toString().trim().toLowerCase();
+  if (roleList?.length) {
+    const found = roleList.find(
+      (x) => (x.name ?? "").toString().trim().toLowerCase() === r
+    );
+    if (found != null) return found.id;
+  }
 
-  return converted;
+  switch (r) {
+    case "admin":
+      return 1;
+    case "user":
+      return 2;
+    case "assistant":
+      return 3;
+    default:
+      return 2;
+  }
 };
 export const titleStringToInt = (titleString) => {
   if (typeof titleString === "number") {

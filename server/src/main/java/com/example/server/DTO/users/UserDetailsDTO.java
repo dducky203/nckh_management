@@ -13,6 +13,8 @@ public class UserDetailsDTO {
     private String name;
     private String email;
     private String role;
+    /** ID bản ghi trong bảng `role` (admin / user / assistant …). */
+    private Integer idRole;
     private Integer power;
     private String title;
     private Boolean inActive;

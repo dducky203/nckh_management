@@ -17,6 +17,7 @@ public interface UserMapper {
     @Mapping(source = "idResume.address", target = "address")
     @Mapping(source = "idResume.birthday", target = "birthday")
     @Mapping(source = "idRole.name", target = "role")
+    @Mapping(source = "idRole.id", target = "idRole")
     @Mapping(source = "idTitle.name", target = "title")
     UserDetailsDTO toUserDetailDTO(User user);
 
@@ -25,6 +26,7 @@ public interface UserMapper {
     @Mapping(source = "idResume.address", target = "address")
     @Mapping(source = "idResume.birthday", target = "birthday")
     @Mapping(source = "idRole.name", target = "role")
+    @Mapping(source = "idRole.id", target = "idRole")
     @Mapping(source = "idTitle.name", target = "title")
     List<UserDetailsDTO> toUserDetailDTO(List<User> users);
 

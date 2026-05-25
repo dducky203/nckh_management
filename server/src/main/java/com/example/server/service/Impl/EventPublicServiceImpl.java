@@ -206,8 +206,8 @@ public class EventPublicServiceImpl implements EventPublicService {
         if (eventData.getCreator() != null) {
             creator = userRepository.findById(eventData.getCreator()).orElse(null);
         }
-        if (!SecurityUtils.isAdmin(creator)) {
-            throw new RuntimeException("Chỉ admin mới được tạo sự kiện.");
+        if (!SecurityUtils.hasNckhStaffAccess(creator)) {
+            throw new RuntimeException("Chỉ cán bộ được phân quyền (quản trị hoặc Trợ lí NCKH) mới được tạo sự kiện.");
         }
 
         Event event = new Event();

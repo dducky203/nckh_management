@@ -52,6 +52,9 @@ public class GeminiChatService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private SystemKnowledgeService systemKnowledgeService;
+
     private final Map<String, JsonArray> conversationHistory = new ConcurrentHashMap<>();
 
     public ChatResponse chat(String userMessage, String conversationId) {
@@ -87,6 +90,18 @@ public class GeminiChatService {
             userContent.addProperty("role", "user");
             history.add(userContent);
 
+            Optional<String> localAnswer = systemKnowledgeService.answer(userMessage);
+            if (localAnswer.isPresent()) {
+                String responseText = localAnswer.get();
+                appendModelResponse(history, responseText);
+                saveChatHistory(conversationId, userMessage, responseText);
+                return ChatResponse.builder()
+                        .response(responseText)
+                        .conversationId(conversationId)
+                        .timestamp(System.currentTimeMillis())
+                        .build();
+            }
+
             JsonObject requestBody = new JsonObject();
             requestBody.add("contents", history);
 
@@ -119,36 +134,8 @@ public class GeminiChatService {
 
                         String aiResponse = extractResponse(jsonResponse);
 
-                        JsonObject aiContent = new JsonObject();
-                        JsonArray aiParts = new JsonArray();
-                        JsonObject aiText = new JsonObject();
-                        aiText.addProperty("text", aiResponse);
-                        aiParts.add(aiText);
-                        aiContent.add("parts", aiParts);
-                        aiContent.addProperty("role", "model");
-                        history.add(aiContent);
-
-                        if (history.size() > 20) {
-                            JsonArray newHistory = new JsonArray();
-                            for (int i = history.size() - 20; i < history.size(); i++) {
-                                newHistory.add(history.get(i));
-                            }
-                            conversationHistory.put(conversationId, newHistory);
-                        }
-
-                        // Lưu vào Database
-                        Integer currentUserId = SecurityUtils.getCurrentUserId();
-                        User user = null;
-                        if (currentUserId != null) {
-                            user = userRepository.findById(currentUserId).orElse(null);
-                        }
-                        ChatHistory chatHistory = ChatHistory.builder()
-                                .user(user)
-                                .conversationId(conversationId)
-                                .userMessage(userMessage)
-                                .botResponse(aiResponse)
-                                .build();
-                        chatHistoryRepository.save(chatHistory);
+                        appendModelResponse(history, aiResponse);
+                        saveChatHistory(conversationId, userMessage, aiResponse);
 
                         return ChatResponse.builder()
                                 .response(aiResponse)
@@ -229,7 +216,9 @@ public class GeminiChatService {
             JsonArray userParts = new JsonArray();
             JsonObject userText = new JsonObject();
             userText.addProperty("text", 
-                "Hãy đóng vai là một chuyên gia phân tích hành vi người dùng (UX Researcher) và quản trị hệ thống. Dưới đây là danh sách các câu hỏi mà một User đã gửi cho Chatbot của hệ thống Quản lý Nghiên cứu khoa học. " +
+                "Hãy đóng vai là một chuyên gia phân tích hành vi người dùng (UX Researcher) và quản trị hệ thống. Dưới đây là danh sách các câu hỏi mà một User đã gửi cho "
+                        + Constants.CHAT_ASSISTANT_DISPLAY_NAME
+                        + " (vai trò: " + Constants.CHAT_ASSISTANT_ROLE + ") của hệ thống Quản lý Nghiên cứu khoa học. " +
                 "Nhiệm vụ của bạn là đọc và phân tích kỹ các câu hỏi này để rút ra kết luận: Người dùng này đang quan tâm đến chức năng nào? Họ đang gặp khó khăn, vướng mắc hay có sự nhầm lẫn gì khi sử dụng hệ thống? " +
                 "BẮT BUỘC trả về duy nhất 1 object JSON hợp lệ có 2 key sau (không kèm markdown block):\n" +
                 "{\n" +
@@ -279,4 +268,34 @@ public class GeminiChatService {
             return "Lỗi trong quá trình phân tích: " + e.getMessage();
         }
     }
-}
+
+    private void appendModelResponse(JsonArray history, String responseText) {
+        JsonObject aiContent = new JsonObject();
+        JsonArray aiParts = new JsonArray();
+        JsonObject aiText = new JsonObject();
+        aiText.addProperty("text", responseText);
+        aiParts.add(aiText);
+        aiContent.add("parts", aiParts);
+        aiContent.addProperty("role", "model");
+        history.add(aiContent);
+
+        while (history.size() > 20) {
+            history.remove(0);
+        }
+    }
+
+    private void saveChatHistory(String conversationId, String userMessage, String botResponse) {
+        Integer currentUserId = SecurityUtils.getCurrentUserId();
+        User user = null;
+        if (currentUserId != null) {
+            user = userRepository.findById(currentUserId).orElse(null);
+        }
+        ChatHistory chatHistory = ChatHistory.builder()
+                .user(user)
+                .conversationId(conversationId)
+                .userMessage(userMessage)
+                .botResponse(botResponse)
+                .build();
+        chatHistoryRepository.save(chatHistory);
+    }
+}

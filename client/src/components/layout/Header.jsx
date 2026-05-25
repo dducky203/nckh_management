@@ -15,14 +15,16 @@ import {
   Group,
   Settings,
   Email,
-  EventNote
+  EventNote,
+  AdminPanelSettings,
+  SupervisorAccount,
 } from "@mui/icons-material";
 
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../constants";
 import { AuthContext } from "../../context/AuthContext";
 import { logout } from "../../utils/cookieUtils";
 import { useToast } from "../../context/ToastContext";
-import { isAdmin } from "../../utils/permissions";
+import { hasNckhStaffAccess, isAssistantRole, normalizeRoleName } from "../../utils/permissions";
 import Modal from "../common/Modal";
 import logoFita from "../../assets/logo_fita.png";
 import noAvatarImg from "../../assets/no-avatar-user.png";
@@ -67,7 +69,8 @@ const Header = () => {
   }, []);
 
   const { user } = useContext(AuthContext);
-  const userIsAdmin = isAdmin(user);
+  const userNckhStaff = hasNckhStaffAccess(user);
+  const userIsAssistant = isAssistantRole(user);
 
   const toggleDropdown = (dropdownName) => {
     const nextDropdown = activeDropdown === dropdownName ? null : dropdownName;
@@ -127,7 +130,11 @@ const Header = () => {
                         src={user?.avatar || noAvatarImg}
                         alt={user.name}
                         className={`${
-                          user.role === "admin" ? "border-green-400" : "border-[#ef9d1d]"
+                          normalizeRoleName(user.role) === "admin"
+                            ? "border-green-400"
+                            : normalizeRoleName(user.role) === "assistant"
+                              ? "border-sky-400"
+                              : "border-[#ef9d1d]"
                         } w-8 h-8 md:w-10 md:h-10 p-[2px] border-2 rounded-full`}
                       />
                       <div className="hidden lg:flex items-center">
@@ -150,9 +157,22 @@ const Header = () => {
                       }`}
                     >
                       <div className="py-2 px-4 border-b border-gray-100">
-                        <p className="font-medium text-gray-800 text-sm">
-                          {user.name}
-                        </p>
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-gray-800 text-sm">
+                            {user.name}
+                          </p>
+                          {userIsAssistant ? (
+                            <span className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-sky-100 text-sky-700 border border-sky-200">
+                              <SupervisorAccount style={{ fontSize: 11 }} />
+                              Trợ lí NCKH
+                            </span>
+                          ) : normalizeRoleName(user.role) === "admin" ? (
+                            <span className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-green-100 text-green-700 border border-green-200">
+                              <AdminPanelSettings style={{ fontSize: 11 }} />
+                              Admin
+                            </span>
+                          ) : null}
+                        </div>
                         <p className="text-xs text-gray-500">{user.email}</p>
                       </div>
 
@@ -165,15 +185,33 @@ const Header = () => {
                           <AccountCircle className="w-4 h-4 mr-2 text-gray-400" />
                           <span>Hồ sơ</span>
                         </Link>
-                        {userIsAdmin && (
-                          <Link
-                            to="/activity/admin/config"
-                            className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                            onClick={closeUserMenu}
-                          >
-                            <Settings className="w-4 h-4 mr-2 text-gray-400" />
-                            <span>Cấu hình chức năng</span>
-                          </Link>
+                        {userNckhStaff && (
+                          <>
+                            <Link
+                              to="/activity/admin/config"
+                              className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
+                              onClick={closeUserMenu}
+                            >
+                              <Settings className="w-4 h-4 mr-2 text-gray-400" />
+                              <span>Cấu hình NCKH</span>
+                            </Link>
+                            <Link
+                              to="/news/manager"
+                              className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
+                              onClick={closeUserMenu}
+                            >
+                              <Newspaper className="w-4 h-4 mr-2 text-gray-400" />
+                              <span>Quản lý tin tức</span>
+                            </Link>
+                            <Link
+                              to="/events/manage"
+                              className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
+                              onClick={closeUserMenu}
+                            >
+                              <EventNote className="w-4 h-4 mr-2 text-gray-400" />
+                              <span>Quản lý sự kiện</span>
+                            </Link>
+                          </>
                         )}
                         <Link
                           to="/activity/standards"
@@ -500,15 +538,33 @@ const Header = () => {
                   <AccountCircle className="w-4 h-4 mr-2" />
                   Hồ sơ
                 </Link>
-                {userIsAdmin && (
-                  <Link
-                    to="/activity/admin/config"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-mainColor"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Settings className="w-4 h-4 mr-2" />
-                    Cấu hình chức năng
-                  </Link>
+                {userNckhStaff && (
+                  <>
+                    <Link
+                      to="/activity/admin/config"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-mainColor"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      Cấu hình NCKH
+                    </Link>
+                    <Link
+                      to="/news/manager"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-mainColor"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <Newspaper className="w-4 h-4 mr-2" />
+                      Quản lý tin tức
+                    </Link>
+                    <Link
+                      to="/events/manage"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-mainColor"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <EventNote className="w-4 h-4 mr-2" />
+                      Quản lý sự kiện
+                    </Link>
+                  </>
                 )}
                 <button
                   onClick={() => {

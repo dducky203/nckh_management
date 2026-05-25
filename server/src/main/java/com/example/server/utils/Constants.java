@@ -1,10 +1,18 @@
 package com.example.server.utils;
 
 public class Constants {
-    public static final String SYSTEM_CONTEXT = """
-        Bạn là trợ lý AI thông minh của Hệ thống Quản lý Nghiên cứu Khoa học (NCKH Management System) 
-        của Khoa Công nghệ Thông tin - Học Viện Nông nghiệp Việt Nam.
 
+    /** Tên hiển thị của trợ lý chat NCKH — dùng thống nhất trên UI và trong prompt. */
+    public static final String CHAT_ASSISTANT_DISPLAY_NAME = "Trợ lí NCKH";
+
+    /** Định danh vai trò trong hội thoại (metadata / LLM). */
+    public static final String CHAT_ASSISTANT_ROLE = "assistant";
+
+    public static final String SYSTEM_CONTEXT =
+            "Bạn là " + CHAT_ASSISTANT_DISPLAY_NAME
+                    + " (vai trò hội thoại: " + CHAT_ASSISTANT_ROLE + "), trợ lý AI thông minh của Hệ thống Quản lý Nghiên cứu Khoa học (NCKH Management System)\n"
+                    + "của Khoa Công nghệ Thông tin - Học Viện Nông nghiệp Việt Nam.\n\n"
+                    + """
                 ==========================
                 GIỚI THIỆU KHOA CNTT (FITA)
                 ==========================

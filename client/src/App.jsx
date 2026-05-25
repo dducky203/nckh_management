@@ -91,7 +91,7 @@ function App() {
                     <Route
                       path="/events/create"
                       element={
-                        <ProtectedRoute requiredPower="admin">
+                        <ProtectedRoute requiredPower="nckhStaff">
                           <CreateEvent />
                         </ProtectedRoute>
                       }
@@ -131,7 +131,7 @@ function App() {
                     <Route
                       path="/activity/admin"
                       element={
-                        <ProtectedRoute requiredPower="admin">
+                        <ProtectedRoute requiredPower="nckhStaff">
                           <Navigate to="/activity/admin/config" replace />
                         </ProtectedRoute>
                       }
@@ -139,7 +139,7 @@ function App() {
                     <Route
                       path="/activity/admin/config"
                       element={
-                        <ProtectedRoute requiredPower="admin">
+                        <ProtectedRoute requiredPower="nckhStaff">
                           <ActivityAdminConfigPage />
                         </ProtectedRoute>
                       }
@@ -147,7 +147,7 @@ function App() {
                     <Route
                       path="/activity/admin/approval"
                       element={
-                        <ProtectedRoute requiredPower="admin">
+                        <ProtectedRoute requiredPower="nckhStaff">
                           <NckhApprovalPage />
                         </ProtectedRoute>
                       }
@@ -155,7 +155,7 @@ function App() {
                     <Route
                       path="/activity/admin/plan-statistics"
                       element={
-                        <ProtectedRoute requiredPower="admin">
+                        <ProtectedRoute requiredPower="nckhStaff">
                           <PlanStatisticsPage />
                         </ProtectedRoute>
                       }
@@ -163,7 +163,7 @@ function App() {
                     <Route
                       path="/activity/admin/year-quota"
                       element={
-                        <ProtectedRoute requiredPower="admin">
+                        <ProtectedRoute requiredPower="nckhStaff">
                           <ActivityYearQuotaConfigPage />
                         </ProtectedRoute>
                       }
@@ -314,7 +314,7 @@ function App() {
                     <Route
                       path="/events/manage"
                       element={
-                        <ProtectedRoute requiredPower="admin">
+                        <ProtectedRoute requiredPower="nckhStaff">
                           <EventDashboard />
                         </ProtectedRoute>
                       }
@@ -373,7 +373,7 @@ function App() {
                     <Route
                       path="/news/manager"
                       element={
-                        <ProtectedRoute requiredPower="admin">
+                        <ProtectedRoute requiredPower="nckhStaff">
                           <NewsManager />
                         </ProtectedRoute>
                       }

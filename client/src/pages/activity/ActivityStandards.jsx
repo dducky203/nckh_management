@@ -58,7 +58,8 @@ export default function ActivityStandards() {
     const roleStr = (user?.role ?? "").toLowerCase();
     const isAdmin = roleStr === "admin" || user?.idRole === 1;
     const isDeptHead = user?.power === 1;
-    return isAdmin || isDeptHead;
+    const isAssistant = roleStr === "assistant";
+    return isAdmin || isDeptHead || isAssistant;
   }, [user]);
 
   const title = user?.title ?? "";

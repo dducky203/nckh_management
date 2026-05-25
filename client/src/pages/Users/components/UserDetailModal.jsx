@@ -34,7 +34,9 @@ const UserDetailModal = ({ isOpen, onClose, user, onForceDelete }) => {
     onClose();
   };
 
-  const getRoleLabel = (power) => {
+  const getRoleLabel = (power, systemRole) => {
+    const r = (systemRole ?? "").toString().trim().toLowerCase();
+    if (r === "assistant") return "Trợ lí NCKH";
     const roles = {
       1: "Trưởng khoa",
       2: "Phó khoa",
@@ -42,6 +44,18 @@ const UserDetailModal = ({ isOpen, onClose, user, onForceDelete }) => {
       4: "Sinh viên",
     };
     return roles[power] || "Không xác định";
+  };
+
+  const getRoleBadgeColor = (power, systemRole) => {
+    const r = (systemRole ?? "").toString().trim().toLowerCase();
+    if (r === "assistant") return "bg-sky-100 text-sky-800";
+    const colors = {
+      1: "bg-red-100 text-red-800",
+      2: "bg-orange-100 text-orange-800",
+      3: "bg-blue-100 text-blue-800",
+      4: "bg-green-100 text-green-800",
+    };
+    return colors[power] || "bg-gray-100 text-gray-800";
   };
 
   const getStatusBadge = (user) => {
@@ -101,8 +115,8 @@ const UserDetailModal = ({ isOpen, onClose, user, onForceDelete }) => {
               </h4>
               <div className="flex items-center gap-2 mt-1">
                 {getStatusBadge(user)}
-                <span className="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800">
-                  {getRoleLabel(user.power)}
+                <span className={`px-2 py-1 text-xs font-medium rounded ${getRoleBadgeColor(user.power, user.role)}`}>
+                  {getRoleLabel(user.power, user.role)}
                 </span>
               </div>
             </div>
@@ -175,7 +189,10 @@ const UserDetailModal = ({ isOpen, onClose, user, onForceDelete }) => {
               <div className="border-l-4 border-blue-500 bg-blue-50 rounded-lg flex items-center gap-2 p-3 border ">
                 <Badge className="text-blue-600 w-4 h-4" />
                 <span className="text-xs font-medium text-blue-800">
-                  Cấp độ quyền hạn: Level {user.idRole} ({user.role})
+                  Role hệ thống (id {user.idRole ?? "—"}):{" "}
+                  {user.role === "assistant" || user.role === "ASSISTANT"
+                    ? "Trợ lí NCKH"
+                    : user.role}
                 </span>
               </div>
 

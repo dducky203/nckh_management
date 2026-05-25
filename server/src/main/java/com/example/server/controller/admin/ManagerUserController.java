@@ -18,6 +18,7 @@ import com.example.server.DTO.users.UserDetailsDTO;
 import com.example.server.DTO.users.UserRequest;
 import com.example.server.controller.user.EmailController;
 import com.example.server.domain.User;
+import com.example.server.domain.Role;
 import com.example.server.mapper.UserMapper;
 import com.example.server.repository.*;
 import com.example.server.service.*;
@@ -29,19 +30,28 @@ import jakarta.validation.Valid;
 public class ManagerUserController {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final EmailController emailController;
     private final UserMapper userMapper;
     private final UserService userService;
     private final EmailService emailService;
     private final ExcelService excelService;
 
-    public ManagerUserController(UserRepository userRepository, EmailController emailController, TypeOfCriterionRepository typeOfCriterionRepository, GroupRepository groupRepository, UserMapper userMapper, UserService userService, EmailService emailService, ExcelService excelService) {
+    public ManagerUserController(UserRepository userRepository, RoleRepository roleRepository, EmailController emailController, TypeOfCriterionRepository typeOfCriterionRepository, GroupRepository groupRepository, UserMapper userMapper, UserService userService, EmailService emailService, ExcelService excelService) {
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.emailController = emailController;
         this.userMapper = userMapper;
         this.userService = userService;
         this.emailService = emailService;
         this.excelService = excelService;
+    }
+
+    @GetMapping("/roles")
+    @ResponseBody
+    public ResponseEntity<?> getRoles() {
+        List<Role> roles = roleRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
+        return ResponseEntity.ok(new SuccessResponseDTO<>(roles, "Danh sách role"));
     }
 
     @GetMapping("/get-all-user")

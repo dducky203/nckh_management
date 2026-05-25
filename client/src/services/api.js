@@ -14,7 +14,7 @@ const api = axios.create({
   timeout: 50 * 10000,
 });
 
-// Request interceptor
+
 api.interceptors.request.use(
   (config) => {
     const token = getAuthToken();
@@ -26,20 +26,15 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor -  Xử lý lỗi chuẩn
 api.interceptors.response.use(
   (response) => {
-    // ✅ Nếu response type là blob, trả về toàn bộ response
     if (response.config.responseType === 'blob') {
       return response;
     }
-    // Còn lại thì unwrap data như bình thường
     return response.data;
   },
   (error) => {
-    // Xử lý lỗi 401 - Unauthorized
     if (error.response?.status === 401) {
-      // Chỉ xóa cookie và redirect nếu KHÔNG phải là request login
       if (!error.config.url?.includes("/auth/login")) {
         removeAuthToken();
         removeUserInfo();

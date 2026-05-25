@@ -29,27 +29,50 @@ public class SecurityUtils {
     /**
      * Kiểm tra xem user có quyền admin không
      * Admin bao gồm:
-     * - Role = "ADMIN"
+     * - Role = admin (bất kể hoa/thường), hoặc
      * - Title = "Thư ký", "Trưởng khoa", "Phó khoa"
+     * Role {@code assistant} chỉ được coi là đủ quyền khi đồng thời có một trong các chức danh trên.
      */
     public static boolean isAdmin(User user) {
         if (user == null) {
             return false;
         }
 
-        // Kiểm tra role
-        if (user.getIdRole() != null && "ADMIN".equalsIgnoreCase(user.getIdRole().getName())) {
-            return true;
+        if (user.getIdRole() != null && user.getIdRole().getName() != null) {
+            String roleName = user.getIdRole().getName().trim();
+            if ("admin".equalsIgnoreCase(roleName)) {
+                return true;
+            }
         }
 
-        // Kiểm tra title
         if (user.getIdTitle() != null && user.getIdTitle().getName() != null) {
             String titleName = user.getIdTitle().getName().trim();
-            return "Thư ký".equalsIgnoreCase(titleName) 
-                || "Trưởng khoa".equalsIgnoreCase(titleName) 
+            return "Thư ký".equalsIgnoreCase(titleName)
+                || "Trưởng khoa".equalsIgnoreCase(titleName)
                 || "Phó khoa".equalsIgnoreCase(titleName);
         }
 
         return false;
+    }
+
+    /** Role hệ thống Trợ lí NCKH: quyền nghiệp vụ cao hơn user, chỉ sau admin. */
+    public static boolean isAssistant(User user) {
+        if (user == null || user.getIdRole() == null || user.getIdRole().getName() == null) {
+            return false;
+        }
+        return "assistant".equalsIgnoreCase(user.getIdRole().getName().trim());
+    }
+
+    /** Được thao tác các chức năng vận hành NCKH (duyệt, định mức năm, …): admin/lãnh đạo hoặc Trợ lí NCKH. */
+    public static boolean hasNckhStaffAccess(User user) {
+        return isAdmin(user) || isAssistant(user);
+    }
+
+    /**
+     * Quản trị “hẹp”: user đủ quyền admin theo {@link #isAdmin} nhưng không phải chỉ role assistant.
+     * Dùng để chặn Trợ lí NCKH khỏi các màn chỉ dành cho quản trị viên (vd. quản lý user toàn hệ thống).
+     */
+    public static boolean isStrictAdminPortalUser(User user) {
+        return isAdmin(user) && !isAssistant(user);
     }
 }
