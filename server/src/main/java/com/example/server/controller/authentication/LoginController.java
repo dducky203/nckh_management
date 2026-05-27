@@ -13,6 +13,7 @@ import com.example.server.DTO.SuccessResponseDTO;
 import com.example.server.DTO.login.LoginRequestDTO;
 import com.example.server.DTO.login.LoginResponseDTO;
 import com.example.server.DTO.users.UserDetailsDTO;
+import com.example.server.controller.admin.ManagerUserController;
 import com.example.server.domain.User;
 import com.example.server.exception.LoginFailedException;
 import com.example.server.mapper.UserMapper;
@@ -33,18 +34,10 @@ public class LoginController {
     private UserMapper userMapper;
 
     @Autowired
-    private NcmService ncmService;
-
-    @Autowired
     private JwtService jwtService;
-    @Autowired
-    private com.example.server.repository.ResumeRepository resumeRepository;
 
     @Autowired
-    private com.example.server.controller.admin.ManagerUserController managerUserController;
-
-    @Autowired
-    private com.example.server.service.UserService userService;
+    private ManagerUserController managerUserController;
 
     @Autowired
     private UserRepository userRepository;
@@ -154,11 +147,11 @@ public class LoginController {
                 managerUserController.sendPasswordForgotEmail(
                         user.getName(),
                         user.getIdResume().getEmail(),
-                        resetToken
-                );
+                        resetToken);
 
                 response.put("success", true);
-                response.put("message", "Link đặt lại mật khẩu đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư!");
+                response.put("message",
+                        "Link đặt lại mật khẩu đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư!");
                 return ResponseEntity.ok(response);
             } else {
                 response.put("success", false);
@@ -239,7 +232,6 @@ public class LoginController {
             // 6. Hash và lưu mật khẩu mới
             user.setPassword(SHA_256_password.GM_SHA_password(newPassword));
             userRepository.save(user);
-
 
             response.put("success", true);
             response.put("message", "Mật khẩu đã được đặt lại thành công! Bạn có thể đăng nhập với mật khẩu mới.");

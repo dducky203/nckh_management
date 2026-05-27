@@ -9,15 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.Optional;
 
 public interface ResumeRepository extends JpaRepository<Resume, Integer> {
-    // find by idUSer for resume
-    @Query(value = SQL.FIND_BY_IDUSER, nativeQuery = true)
-    Resume findByIdUser(Integer idUser);
-
     Resume findResumeById(Integer id);
-
-    // find by idAdmin for resume
-    @Query("SELECT r FROM Resume r WHERE r.id = ?1")
-    Resume findByIdAdmin(Admin idAdmin);
 
     // Check if email exists
     boolean existsByEmail(String email);

@@ -1,11 +1,12 @@
 package com.example.server.mapper;
 
-import com.example.server.DTO.nckh.NckhTieuChiDinhMucResponse;
-import com.example.server.domain.nckh.NckhTieuChiDinhMuc;
+import java.util.List;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-import java.util.List;
+import com.example.server.DTO.nckh.NckhTieuChiDinhMucResponse;
+import com.example.server.domain.nckh.NckhTieuChiDinhMuc;
 
 @Mapper(componentModel = "spring")
 public interface NckhTieuChiDinhMucMapper {

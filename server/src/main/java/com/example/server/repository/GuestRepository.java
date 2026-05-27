@@ -17,16 +17,8 @@ public interface GuestRepository extends JpaRepository<Guest, Integer> {
     @Query(value = SQL.GUEST_BY_EVENT_ID,nativeQuery = true)
     List<Guest> findByEventId(Integer eventId);
 
-
-
-    Guest findByEventAndUser(Event event, User user);
     
     boolean existsByUserId(Integer userId);
 
     Guest findByUserIdAndEventId(Integer userId, Integer eventId);
-
-    boolean existsByUserIdAndEventId(Integer userId, Integer eventId);
-
-
-    List<Guest> findByUserId(Integer userId);
 }

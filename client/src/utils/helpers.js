@@ -47,6 +47,11 @@ export const titleStringToInt = (titleString) => {
   return converted;
 };
 
+export const formatNumber = (value) => {
+  if (value === null || value === undefined || value === "") return "-";
+  return value.toLocaleString("vi-VN", { maximumFractionDigits: 2 });
+}
+
 export const downloadFileFromResponse = (
   response,
   fileName = "download.xlsx",

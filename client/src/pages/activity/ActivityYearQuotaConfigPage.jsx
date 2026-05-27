@@ -1,19 +1,16 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Add } from "@mui/icons-material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
-import nckhTieuChiDinhMucService from "../../services/nckhTieuChiDinhMucService";
-import { downloadFileFromResponse } from "../../utils/helpers";
 import { useToast } from "../../context/ToastContext";
+import nckhTieuChiDinhMucService from "../../services/nckhTieuChiDinhMucService";
+import { downloadFileFromResponse, formatNumber } from "../../utils/helpers";
 
-function formatNumber(value) {
-  if (value === null || value === undefined || value === "") return "-";
-  return value.toLocaleString("vi-VN", { maximumFractionDigits: 2 });
-}
 
-// ─── AI Upload Modal ──────────────────────────────────────────────────────────
+
 function AiUploadModal({ onClose, onScan, scanning }) {
   const [files, setFiles] = useState([]);
   const fileInputRef = useRef(null);
@@ -106,7 +103,14 @@ function AiUploadModal({ onClose, onScan, scanning }) {
             disabled={files.length === 0 || scanning}
             className="inline-flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-violet-600 rounded-lg shadow-sm hover:brightness-110 transition disabled:opacity-60"
           >
-            {scanning ? "Đang xử lý AI..." : `Quét ${files.length} file`}
+            {scanning ? (
+              <>
+                <LoadingSpinner size="sm" />
+                Đang xử lý AI...
+              </>
+            ) : (
+              `Quét ${files.length} file`
+            )}
           </button>
         </div>
       </div>
@@ -114,7 +118,7 @@ function AiUploadModal({ onClose, onScan, scanning }) {
   );
 }
 
-// ─── AI Preview Modal ───────────────────────────────────────────────────────
+
 function AiPreviewModal({ rows: initialRows, onConfirm, onClose, saving }) {
   const [rows, setRows] = useState(() =>
     initialRows.map((r, i) => ({ ...r, _key: i }))
@@ -128,11 +132,42 @@ function AiPreviewModal({ rows: initialRows, onConfirm, onClose, saving }) {
 
   const remove = (idx) => setRows((prev) => prev.filter((_, i) => i !== idx));
 
+  const createEmptyRow = (prev) => {
+    const nextKey = Date.now();
+    const defaultYear = (initialRows && initialRows.length > 0 && initialRows[0].year)
+      ? initialRows[0].year
+      : String(new Date().getFullYear());
+    return {
+      phuongAn: null,
+      tieuChiCode: "",
+      tieuChiName: "",
+      chucDanh: null,
+      donViTinh: "",
+      dinhMucToiThieu: null,
+      gioQuyDoiPerUnit: null,
+      year: defaultYear,
+      sortOrder: (prev ? prev.length + 1 : 1),
+      _key: nextKey,
+    };
+  };
+
+  const addEmptyRow = () => {
+    setRows((prev) => [...prev, createEmptyRow(prev)]);
+  };
+
+  const insertRowAfter = (idx) => {
+    setRows((prev) => {
+      const before = prev.slice(0, idx + 1);
+      const after = prev.slice(idx + 1);
+      return [...before, createEmptyRow(prev), ...after];
+    });
+  };
+
   const CHUC_DANH = [
     { value: "GS_PGS", label: "GS/PGS" },
-    { value: "TS",     label: "TS" },
-    { value: "THS",    label: "ThS" },
-    { value: "KS_CN",  label: "KS/CN" },
+    { value: "TS", label: "TS" },
+    { value: "THS", label: "ThS" },
+    { value: "KS_CN", label: "KS/CN" },
   ];
 
   return (
@@ -162,11 +197,11 @@ function AiPreviewModal({ rows: initialRows, onConfirm, onClose, saving }) {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
+        <div className="overflow-x-auto max-h-[60vh] overflow-y-auto show-scrollbar">
           <table className="w-full text-xs">
             <thead className="sticky top-0 bg-slate-50 border-b border-slate-200">
               <tr>
-                {["Năm", "PA", "Mã code", "Tên tiêu chí", "Chức danh", "ĐV tính", "Định mức", "Giờ quy đổi", ""].map(
+                {["Năm", "PA", "Tên tiêu chí", "Chức danh", "ĐV tính", "Định mức", "Giờ quy đổi", ""].map(
                   (h) => (
                     <th
                       key={h}
@@ -194,13 +229,6 @@ function AiPreviewModal({ rows: initialRows, onConfirm, onClose, saving }) {
                       value={r.phuongAn ?? ""}
                       onChange={(e) => update(idx, "phuongAn", e.target.value ? +e.target.value : null)}
                       className="w-12 border border-slate-200 rounded px-1.5 py-1 text-center focus:border-mainColor focus:outline-none"
-                    />
-                  </td>
-                  <td className="px-2 py-1.5">
-                    <input
-                      value={r.tieuChiCode ?? ""}
-                      onChange={(e) => update(idx, "tieuChiCode", e.target.value)}
-                      className="w-40 border border-slate-200 rounded px-1.5 py-1 font-mono focus:border-mainColor focus:outline-none"
                     />
                   </td>
                   <td className="px-2 py-1.5">
@@ -247,13 +275,19 @@ function AiPreviewModal({ rows: initialRows, onConfirm, onClose, saving }) {
                       className="w-20 border border-slate-200 rounded px-1.5 py-1 text-right focus:border-mainColor focus:outline-none"
                     />
                   </td>
-                  <td className="px-2 py-1.5">
-                    <button
+                  <td className="px-0.5 py-2 cursor-pointer flex items-center justify-end gap-2">
+                    <Add
+                      onClick={() => insertRowAfter(idx)}
+                      title="Thêm dòng sau"
+                      className="opacity-0 group-hover:opacity-100 hover:bg-slate-300 p-1 text-slate-500 hover:text-slate-700 rounded hover:bg-slate-50 transition"
+                    />
+
+                    <CloseIcon
                       onClick={() => remove(idx)}
-                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-50 text-rose-400 transition"
-                    >
-                      <CloseIcon sx={{ fontSize: 14 }} />
-                    </button>
+                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-200 text-rose-400 transition"
+                      sx={{ fontSize: 24 }}
+                    />
+
                   </td>
                 </tr>
               ))}
@@ -305,6 +339,7 @@ export default function ActivityYearQuotaConfigPage() {
   const [selectedPlan, setSelectedPlan] = useState("all");
   const [importing, setImporting] = useState(false);
   const [downloadingTemplate, setDownloadingTemplate] = useState(false);
+
 
   // AI scan states
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -487,9 +522,8 @@ export default function ActivityYearQuotaConfigPage() {
 
               {/* Import Excel */}
               <label
-                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-white shadow-sm transition cursor-pointer ${
-                  importing ? "bg-emerald-400 cursor-wait" : "bg-emerald-600 hover:bg-emerald-700"
-                }`}
+                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-white shadow-sm transition cursor-pointer ${importing ? "bg-emerald-400 cursor-wait" : "bg-emerald-600 hover:bg-emerald-700"
+                  }`}
               >
                 {importing ? "Đang import..." : "Import Excel"}
                 <input
@@ -502,7 +536,6 @@ export default function ActivityYearQuotaConfigPage() {
                 />
               </label>
 
-              {/* ✨ Quét bằng AI */}
               <button
                 type="button"
                 onClick={() => setShowUploadModal(true)}
@@ -576,7 +609,6 @@ export default function ActivityYearQuotaConfigPage() {
                       <th className="py-3.5 px-4 w-14 text-center">STT</th>
                       <th className="py-3.5 px-4 min-w-[90px]">Năm</th>
                       <th className="py-3.5 px-4 min-w-[120px]">Phương án</th>
-                      <th className="py-3.5 px-4 min-w-[160px] font-mono">Mã code</th>
                       <th className="py-3.5 px-4 min-w-[250px] whitespace-normal">Tên tiêu chí</th>
                       <th className="py-3.5 px-4 min-w-[120px]">Chức danh</th>
                       <th className="py-3.5 px-4 min-w-[100px]">Đơn vị</th>
@@ -591,9 +623,8 @@ export default function ActivityYearQuotaConfigPage() {
                       return (
                         <tr
                           key={`${row.id || row.tieuChiCode || "item"}-${index}`}
-                          className={`group/row transition-colors duration-200 border-b border-slate-100 last:border-0 ${
-                            hasHours ? "bg-slate-50" : "hover:bg-slate-50"
-                          }`}
+                          className={`group/row transition-colors duration-200 border-b border-slate-100 last:border-0 ${hasHours ? "bg-slate-50" : "hover:bg-slate-50"
+                            }`}
                         >
                           <td className="py-3 px-4 text-center align-middle font-medium text-slate-500">
                             {index + 1}
@@ -602,15 +633,6 @@ export default function ActivityYearQuotaConfigPage() {
                             {row.year || row.namHoc || "-"}
                           </td>
                           <td className="py-3 px-4 text-slate-700">{row.phuongAn ?? "-"}</td>
-                          <td className="py-3 px-4">
-                            {row.tieuChiCode ? (
-                              <span className="font-mono text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
-                                {row.tieuChiCode}
-                              </span>
-                            ) : (
-                              <span className="text-slate-300">—</span>
-                            )}
-                          </td>
                           <td className="py-3 px-4 whitespace-normal min-w-[250px]">
                             <div className="font-semibold text-slate-800">
                               {row.tieuChiName || "-"}
@@ -630,9 +652,8 @@ export default function ActivityYearQuotaConfigPage() {
                           </td>
                           <td className="py-3 px-4 text-right">
                             <span
-                              className={`font-black text-lg transition-colors ${
-                                hasHours ? "text-mainColor" : "text-slate-300"
-                              }`}
+                              className={`font-black text-lg transition-colors ${hasHours ? "text-mainColor" : "text-slate-300"
+                                }`}
                             >
                               {hasHours ? formatNumber(row.tongGioToiThieu) : "0"}
                             </span>
@@ -641,24 +662,6 @@ export default function ActivityYearQuotaConfigPage() {
                       );
                     })}
                   </tbody>
-                  {totalMinHours > 0 && (
-                    <tfoot>
-                      <tr className="bg-slate-50 border-t-2 border-slate-200">
-                        <td
-                          colSpan={9}
-                          className="py-3.5 px-4 text-sm font-bold text-slate-600 uppercase tracking-wide text-right"
-                        >
-                          Tổng tất cả
-                        </td>
-                        <td className="py-3.5 px-4 text-right">
-                          <span className="font-black text-lg text-mainColor">
-                            {formatNumber(totalMinHours)}
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-medium ml-1.5">giờ</span>
-                        </td>
-                      </tr>
-                    </tfoot>
-                  )}
                 </table>
               </div>
             </div>

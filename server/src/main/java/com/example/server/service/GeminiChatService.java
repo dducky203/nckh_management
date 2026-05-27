@@ -1,7 +1,5 @@
 package com.example.server.service;
 
-import java.io.IOException;
-import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -16,8 +14,11 @@ import com.example.server.repository.UserRepository;
 import com.example.server.utils.SecurityUtils;
 import com.example.server.DTO.ChatResponse;
 import com.example.server.utils.Constants;
-import com.google.gson.*;
-import okhttp3.*;
+
+import com.google.genai.Client;
+import com.google.genai.types.*;
+
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,8 +26,7 @@ import org.springframework.stereotype.Service;
 public class GeminiChatService {
 
     private static final Logger logger = LoggerFactory.getLogger(GeminiChatService.class);
-    private static final int MAX_RETRIES = 3;
-    private static final long INITIAL_WAIT_MS = 2000;
+    private static final int MAX_HISTORY_TURNS = 20;
 
     @Value("${gemini.api.key}")
     private String apiKey;
@@ -34,17 +34,7 @@ public class GeminiChatService {
     @Value("${gemini.api.model}")
     private String model;
 
-    @Value("${gemini.api.endpoint}")
-    private String endpoint;
-
-    private final OkHttpClient client = new OkHttpClient.Builder()
-            .connectTimeout(Duration.ofSeconds(20))
-            .writeTimeout(Duration.ofSeconds(60))
-            .readTimeout(Duration.ofSeconds(90))
-            .callTimeout(Duration.ofSeconds(120))
-            .protocols(List.of(Protocol.HTTP_1_1))
-            .build();
-    private final Gson gson = new Gson();
+    private Client geminiClient;
 
     @Autowired
     private ChatHistoryRepository chatHistoryRepository;
@@ -55,7 +45,21 @@ public class GeminiChatService {
     @Autowired
     private SystemKnowledgeService systemKnowledgeService;
 
-    private final Map<String, JsonArray> conversationHistory = new ConcurrentHashMap<>();
+    private final Map<String, List<Content>> conversationHistory = new ConcurrentHashMap<>();
+
+    @PostConstruct
+    private void init() {
+        geminiClient = Client.builder()
+                .apiKey(apiKey)
+                .httpOptions(HttpOptions.builder()
+                        .timeout(90_000)
+                        .retryOptions(HttpRetryOptions.builder()
+                                .attempts(3)
+                                .httpStatusCodes(429, 503)
+                                .build())
+                        .build())
+                .build();
+    }
 
     public ChatResponse chat(String userMessage, String conversationId) {
         try {
@@ -65,30 +69,14 @@ public class GeminiChatService {
                 conversationId = UUID.randomUUID().toString();
             }
 
-            JsonArray history = conversationHistory.computeIfAbsent(
-                    conversationId,
-                    k -> new JsonArray()
-            );
+            List<Content> history = conversationHistory.computeIfAbsent(
+                    conversationId, k -> new ArrayList<>());
 
             if (history.isEmpty()) {
-                JsonObject systemContent = new JsonObject();
-                JsonArray systemParts = new JsonArray();
-                JsonObject systemText = new JsonObject();
-                systemText.addProperty("text", Constants.SYSTEM_CONTEXT);
-                systemParts.add(systemText);
-                systemContent.add("parts", systemParts);
-                systemContent.addProperty("role", "user");
-                history.add(systemContent);
+                history.add(Content.fromParts(Part.fromText(Constants.SYSTEM_CONTEXT)));
             }
 
-            JsonObject userContent = new JsonObject();
-            JsonArray userParts = new JsonArray();
-            JsonObject userText = new JsonObject();
-            userText.addProperty("text", userMessage);
-            userParts.add(userText);
-            userContent.add("parts", userParts);
-            userContent.addProperty("role", "user");
-            history.add(userContent);
+            history.add(Content.fromParts(Part.fromText(userMessage)));
 
             Optional<String> localAnswer = systemKnowledgeService.answer(userMessage);
             if (localAnswer.isPresent()) {
@@ -102,103 +90,32 @@ public class GeminiChatService {
                         .build();
             }
 
-            JsonObject requestBody = new JsonObject();
-            requestBody.add("contents", history);
-
-            JsonObject generationConfig = new JsonObject();
-            generationConfig.addProperty("temperature", 0.7);
-            generationConfig.addProperty("maxOutputTokens", 8192); // Tăng giới hạn token để tránh cắt chữ
-            requestBody.add("generationConfig", generationConfig);
-
-            String url = endpoint + model + ":generateContent?key=" + apiKey;
-
-            RequestBody body = RequestBody.create(
-                    requestBody.toString(),
-                    MediaType.parse("application/json")
-            );
-
-            Request request = new Request.Builder()
-                    .url(url)
-                    .post(body)
+            GenerateContentConfig config = GenerateContentConfig.builder()
+                    .temperature(0.7f)
+                    .maxOutputTokens(8192)
                     .build();
 
-            int retryCount = 0;
-            long currentWaitTime = INITIAL_WAIT_MS;
+            GenerateContentResponse response = geminiClient.models.generateContent(
+                    model, history, config);
 
-            while (true) {
-                try (Response response = client.newCall(request).execute()) {
-                    if (response.isSuccessful()) {
-                        assert response.body() != null;
-                        String responseBody = response.body().string();
-                        JsonObject jsonResponse = gson.fromJson(responseBody, JsonObject.class);
-
-                        String aiResponse = extractResponse(jsonResponse);
-
-                        appendModelResponse(history, aiResponse);
-                        saveChatHistory(conversationId, userMessage, aiResponse);
-
-                        return ChatResponse.builder()
-                                .response(aiResponse)
-                                .conversationId(conversationId)
-                                .timestamp(System.currentTimeMillis())
-                                .build();
-                    }
-
-                    if ((response.code() == 503 || response.code() == 429) && retryCount < MAX_RETRIES) {
-                        logger.warn("Gemini overloaded (Status {}). Retrying {}/{}...", response.code(), retryCount + 1, MAX_RETRIES);
-
-                        try {
-                            Thread.sleep(currentWaitTime);
-                        } catch (InterruptedException ie) {
-                            Thread.currentThread().interrupt();
-                            throw new IOException("Interrupted during retry wait", ie);
-                        }
-
-                        currentWaitTime *= 2;
-                        retryCount++;
-                        continue;
-                    }
-
-                    String errorBody = response.body() != null ? response.body().string() : "No error body";
-                    logger.error("Gemini API error: {}", errorBody);
-                    throw new IOException("Unexpected response: " + response.code() + " - " + errorBody);
-                }
+            String aiResponse = response.text();
+            if (aiResponse == null || aiResponse.isBlank()) {
+                aiResponse = "Xin lỗi, tôi không thể xử lý câu hỏi của bạn lúc này.";
             }
+
+            appendModelResponse(history, aiResponse);
+            saveChatHistory(conversationId, userMessage, aiResponse);
+
+            return ChatResponse.builder()
+                    .response(aiResponse)
+                    .conversationId(conversationId)
+                    .timestamp(System.currentTimeMillis())
+                    .build();
 
         } catch (Exception e) {
             logger.error("Error in chat method: {}", e.getMessage(), e);
             throw new RuntimeException("Lỗi khi gọi Gemini API: " + e.getMessage(), e);
         }
-    }
-
-    private String extractResponse(JsonObject jsonResponse) {
-        try {
-            JsonArray candidates = jsonResponse.getAsJsonArray("candidates");
-            if (candidates != null && !candidates.isEmpty()) {
-                JsonObject candidate = candidates.get(0).getAsJsonObject();
-
-                JsonObject content = candidate.getAsJsonObject("content");
-                if (content == null) return "";
-
-                JsonArray parts = content.getAsJsonArray("parts");
-                if (parts == null || parts.isEmpty()) return "";
-
-                StringBuilder combined = new StringBuilder();
-                for (int i = 0; i < parts.size(); i++) {
-                    JsonObject part = parts.get(i).getAsJsonObject();
-                    if (part == null || !part.has("text") || part.get("text").isJsonNull()) continue;
-                    combined.append(part.get("text").getAsString());
-                }
-
-                String result = combined.toString().trim();
-                if (!result.isEmpty()) {
-                    return result;
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Error extracting response from JSON: {}", e.getMessage(), e);
-        }
-        return "Xin lỗi, tôi không thể xử lý câu hỏi của bạn lúc này.";
     }
 
     public void clearConversation(String conversationId) {
@@ -212,74 +129,51 @@ public class GeminiChatService {
 
     public String analyzeUserHistory(String historyText) {
         try {
-            JsonObject userContent = new JsonObject();
-            JsonArray userParts = new JsonArray();
-            JsonObject userText = new JsonObject();
-            userText.addProperty("text", 
-                "Hãy đóng vai là một chuyên gia phân tích hành vi người dùng (UX Researcher) và quản trị hệ thống. Dưới đây là danh sách các câu hỏi mà một User đã gửi cho "
-                        + Constants.CHAT_ASSISTANT_DISPLAY_NAME
-                        + " (vai trò: " + Constants.CHAT_ASSISTANT_ROLE + ") của hệ thống Quản lý Nghiên cứu khoa học. " +
-                "Nhiệm vụ của bạn là đọc và phân tích kỹ các câu hỏi này để rút ra kết luận: Người dùng này đang quan tâm đến chức năng nào? Họ đang gặp khó khăn, vướng mắc hay có sự nhầm lẫn gì khi sử dụng hệ thống? " +
-                "BẮT BUỘC trả về duy nhất 1 object JSON hợp lệ có 2 key sau (không kèm markdown block):\n" +
-                "{\n" +
-                "  \"identifiedProblems\": \"Mô tả vấn đề đang gặp phải...\",\n" +
-                "  \"suggestedSolutions\": \"Mô tả đề xuất giải pháp...\"\n" +
-                "}\n\n" +
-                "Lịch sử chat:\n" + historyText
-            );
-            userParts.add(userText);
-            userContent.add("parts", userParts);
-            userContent.addProperty("role", "user");
+            String prompt = "Hãy đóng vai là một chuyên gia phân tích hành vi người dùng (UX Researcher) và quản trị hệ thống. "
+                    + "Dưới đây là danh sách các câu hỏi mà một User đã gửi cho "
+                    + Constants.CHAT_ASSISTANT_DISPLAY_NAME
+                    + " (vai trò: " + Constants.CHAT_ASSISTANT_ROLE + ") của hệ thống Quản lý Nghiên cứu khoa học. "
+                    + "Nhiệm vụ của bạn là đọc và phân tích kỹ các câu hỏi này để rút ra kết luận: "
+                    + "Người dùng này đang quan tâm đến chức năng nào? Họ đang gặp khó khăn, vướng mắc hay có sự nhầm lẫn gì khi sử dụng hệ thống?\n\n"
+                    + "Lịch sử chat:\n" + historyText;
 
-            JsonArray contents = new JsonArray();
-            contents.add(userContent);
-
-            JsonObject requestBody = new JsonObject();
-            requestBody.add("contents", contents);
-
-            JsonObject generationConfig = new JsonObject();
-            generationConfig.addProperty("temperature", 0.5);
-            generationConfig.addProperty("maxOutputTokens", 4096);
-            requestBody.add("generationConfig", generationConfig);
-
-            String url = endpoint + model + ":generateContent?key=" + apiKey;
-
-            RequestBody body = RequestBody.create(
-                    requestBody.toString(),
-                    MediaType.parse("application/json")
-            );
-
-            Request request = new Request.Builder()
-                    .url(url)
-                    .post(body)
+            Schema schema = Schema.builder()
+                    .type(Type.Known.OBJECT)
+                    .properties(Map.of(
+                            "identifiedProblems", Schema.builder().type(Type.Known.STRING)
+                                    .description("Mô tả vấn đề đang gặp phải").build(),
+                            "suggestedSolutions", Schema.builder().type(Type.Known.STRING)
+                                    .description("Mô tả đề xuất giải pháp").build()))
+                    .required(List.of("identifiedProblems", "suggestedSolutions"))
                     .build();
 
-            try (Response response = client.newCall(request).execute()) {
-                if (response.isSuccessful()) {
-                    assert response.body() != null;
-                    String responseBody = response.body().string();
-                    JsonObject jsonResponse = gson.fromJson(responseBody, JsonObject.class);
-                    return extractResponse(jsonResponse);
-                }
-                return "Không thể phân tích: " + response.code();
-            }
+            GenerateContentConfig config = GenerateContentConfig.builder()
+                    .temperature(0.5f)
+                    .maxOutputTokens(4096)
+                    .responseMimeType("application/json")
+                    .responseSchema(schema)
+                    .build();
+
+            GenerateContentResponse response = geminiClient.models.generateContent(
+                    model, prompt, config);
+
+            String text = response.text();
+            return (text != null && !text.isBlank()) ? text : "Không thể phân tích lịch sử.";
+
         } catch (Exception e) {
             logger.error("Error analyzing user history: {}", e.getMessage(), e);
             return "Lỗi trong quá trình phân tích: " + e.getMessage();
         }
     }
 
-    private void appendModelResponse(JsonArray history, String responseText) {
-        JsonObject aiContent = new JsonObject();
-        JsonArray aiParts = new JsonArray();
-        JsonObject aiText = new JsonObject();
-        aiText.addProperty("text", responseText);
-        aiParts.add(aiText);
-        aiContent.add("parts", aiParts);
-        aiContent.addProperty("role", "model");
-        history.add(aiContent);
+    private void appendModelResponse(List<Content> history, String responseText) {
+        Content modelContent = Content.builder()
+                .role("model")
+                .parts(Part.fromText(responseText))
+                .build();
+        history.add(modelContent);
 
-        while (history.size() > 20) {
+        while (history.size() > MAX_HISTORY_TURNS) {
             history.remove(0);
         }
     }

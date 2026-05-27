@@ -8,7 +8,5 @@ import java.util.List;
 
 @Repository
 public interface ChatHistoryRepository extends JpaRepository<ChatHistory, Integer> {
-    List<ChatHistory> findByUserIdOrderByTimestampAsc(Integer userId);
-    List<ChatHistory> findByConversationIdOrderByTimestampAsc(String conversationId);
     void deleteByConversationId(String conversationId);
 }

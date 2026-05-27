@@ -211,17 +211,11 @@ public class UserService implements UserDetailsService {
         return userRepository.save(entity);
     }
 
-    public void deleteAllInBatch() {
-        userRepository.deleteAllInBatch();
-    }
 
     public <S extends User> Page<S> findAll(Example<S> example, Pageable pageable) {
         return userRepository.findAll(example, pageable);
     }
 
-    public void deleteAllById(Iterable<? extends Integer> integers) {
-        userRepository.deleteAllById(integers);
-    }
 
     public Page<User> findAll(Pageable pageable) {
         return userRepository.findAll(pageable);
@@ -240,17 +234,7 @@ public class UserService implements UserDetailsService {
         return userRepository.count(example);
     }
 
-    public void deleteAll(Iterable<? extends User> entities) {
-        userRepository.deleteAll(entities);
-    }
 
-    public void deleteById(Integer integer) {
-        userRepository.deleteById(integer);
-    }
-
-    public void deleteAllInBatch(Iterable<User> entities) {
-        userRepository.deleteAllInBatch(entities);
-    }
 
     public long count() {
         return userRepository.count();
@@ -260,32 +244,13 @@ public class UserService implements UserDetailsService {
         userRepository.delete(entity);
     }
 
-    public void deleteAllByIdInBatch(Iterable<Integer> integers) {
-        userRepository.deleteAllByIdInBatch(integers);
-    }
-
-    public <S extends User> List<S> saveAll(Iterable<S> entities) {
-        return userRepository.saveAll(entities);
-    }
-
     public <S extends User> List<S> findAll(Example<S> example, Sort sort) {
         return userRepository.findAll(example, sort);
     }
 
-    public <S extends User> Optional<S> findOne(Example<S> example) {
-        return userRepository.findOne(example);
-    }
-
-    public <S extends User> List<S> saveAllAndFlush(Iterable<S> entities) {
-        return userRepository.saveAllAndFlush(entities);
-    }
 
     public List<User> findAll() {
         return userRepository.findAll();
-    }
-
-    public List<User> findAllById(Iterable<Integer> integers) {
-        return userRepository.findAllById(integers);
     }
 
     @Deprecated

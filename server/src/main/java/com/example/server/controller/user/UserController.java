@@ -8,8 +8,6 @@ import com.example.server.exception.ErrorException;
 import com.example.server.mapper.UserMapper;
 import com.example.server.repository.*;
 import com.example.server.service.CloudinaryService;
-import com.example.server.service.ExcelService;
-import com.example.server.service.ResumeService;
 import com.example.server.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,22 +23,7 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private ResumeService resumeService;
-    @Autowired
-    private ResumeRepository resumeRepository;
-    @Autowired
-    NcmRepository NcmRepository;
-    @Autowired
-    private NcmRepository ncmRepository;
-    @Autowired
-    TypeOfCriterionRepository typeOfCriterionRepository;
-
-    @Autowired
-    private GroupRepository groupRepository;
-    @Autowired
     private UserMapper userMapper;
-    @Autowired
-    private ExcelService excelService;
     @Autowired
     private CloudinaryService cloudinaryService;
 

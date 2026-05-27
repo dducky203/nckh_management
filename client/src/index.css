@@ -11,6 +11,25 @@
   }
 }
 
+/* Utility to explicitly show scrollbars for specific containers
+   Overrides the global rule above via higher specificity. */
+.show-scrollbar {
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.show-scrollbar::-webkit-scrollbar {
+  display: block;
+  width: 8px;
+}
+.show-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 9999px;
+}
+.show-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .clip-green {
   clip-path: polygon(0 0, 100% 0, 96% 100%, 0 100%);
 }

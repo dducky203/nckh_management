@@ -1,10 +1,11 @@
 package com.example.server.mapper;
 
-import com.example.server.DTO.typeOfCriteria.TypeOfCriteriaDto;
-import com.example.server.domain.TypeOfCriterion;
+import java.util.List;
+
 import org.mapstruct.Mapper;
 
-import java.util.List;
+import com.example.server.DTO.typeOfCriteria.TypeOfCriteriaDto;
+import com.example.server.domain.TypeOfCriterion;
 
 @Mapper(componentModel = "spring")
 public interface TypeOfCriteriaMapper {

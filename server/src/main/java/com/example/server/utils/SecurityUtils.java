@@ -14,16 +14,12 @@ public class SecurityUtils {
 
         // 2. Kiểm tra xem có dữ liệu không
         if (authentication != null && authentication.isAuthenticated() 
-            && authentication.getPrincipal() instanceof CustomUserDetails) {
+            && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
 
-            // 3. Ép kiểu về CustomUserDetails
-            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-
-            // 4. Lấy ID từ entity User bên trong
             return userDetails.getId();
         }
 
-        return null; // Trả về null nếu chưa đăng nhập hoặc lỗi
+        return null;
     }
 
     /**

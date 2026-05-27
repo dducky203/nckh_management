@@ -13,10 +13,6 @@ public interface LikeNewsRepository extends JpaRepository<LikeNews, Integer> {
     Optional<LikeNews> findByIdUserAndIdNews(Integer idUser, Integer idNews);
     Integer countByIdNews(Integer idNews);
 
-    boolean existsByIdUserAndIdNews(Integer idUser, Integer idNews);
-
-//    List<LikeNews> findAllByIdNews(Integer newsId);
-
     List<LikeNews> findByIdNews(Integer newsId);
 }
 

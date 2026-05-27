@@ -1,12 +1,14 @@
 package com.example.server.mapper;
 
 
+import java.util.List;
+
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+
 import com.example.server.DTO.users.UserDetailsDTO;
 import com.example.server.DTO.users.UserRequest;
 import com.example.server.domain.User;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {

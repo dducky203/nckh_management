@@ -1,14 +1,16 @@
 package com.example.server.controller;
 
-import com.example.server.DTO.ChatResponse;
-import com.example.server.DTO.request.ChatRequest;
-import com.example.server.service.GeminiChatService;
-import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import com.example.server.DTO.ChatResponse;
+import com.example.server.DTO.request.ChatRequest;
+import com.example.server.service.GeminiChatService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/public/chatbot")

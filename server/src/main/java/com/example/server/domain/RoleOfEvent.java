@@ -25,8 +25,6 @@ public class RoleOfEvent extends EntityBase implements Serializable {
     @Column(name = "norm")
     private Float norm;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_operating_standard_2")
-    private OperatingStandards2 operatingStandards2;
+   
 
 }
