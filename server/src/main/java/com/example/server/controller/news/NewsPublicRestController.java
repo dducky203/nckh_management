@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.example.server.DTO.SuccessResponseDTO;
+import com.example.server.DTO.response.SuccessResponseDTO;
 import com.example.server.DTO.news.NewsDTO;
 import com.example.server.service.NewsService;
 

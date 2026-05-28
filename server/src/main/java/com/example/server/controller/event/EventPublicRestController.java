@@ -11,7 +11,7 @@ import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.server.DTO.SuccessResponseDTO;
+import com.example.server.DTO.response.SuccessResponseDTO;
 import com.example.server.DTO.event.EventPublicDTO;
 import com.example.server.DTO.event.EventRegistrationDTO;
 import com.example.server.DTO.typeOfCriteria.TypeOfCriteriaDto;

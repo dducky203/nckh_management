@@ -1,14 +1,20 @@
 package com.example.server.domain.nckh;
 
+import com.example.server.domain.EntityBase;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Entity
-@Data
+@Getter
+@Setter
 @Table(name = "nckh_tieu_chi_dinh_muc")
-public class NckhTieuChiDinhMuc {
+public class NckhTieuChiDinhMuc extends EntityBase{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

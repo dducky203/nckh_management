@@ -1,6 +1,6 @@
 package com.example.server.controller.user;
 
-import com.example.server.DTO.SuccessResponseDTO;
+import com.example.server.DTO.response.SuccessResponseDTO;
 import com.example.server.DTO.users.ChangePasswordRequest;
 import com.example.server.DTO.users.UserDetailsDTO;
 import com.example.server.domain.User;

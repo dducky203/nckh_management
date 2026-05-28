@@ -3,15 +3,16 @@ package com.example.server.controller.authentication;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import com.example.server.DTO.SuccessResponseDTO;
 import com.example.server.DTO.login.LoginRequestDTO;
 import com.example.server.DTO.login.LoginResponseDTO;
+import com.example.server.DTO.response.ErrorResponseDTO;
+import com.example.server.DTO.response.SuccessResponseDTO;
 import com.example.server.DTO.users.UserDetailsDTO;
 import com.example.server.controller.admin.ManagerUserController;
 import com.example.server.domain.User;
@@ -27,20 +28,23 @@ import jakarta.validation.Valid;
 @CrossOrigin(origins = "*") // Enable CORS for React frontend
 public class LoginController {
 
-    @Autowired
-    private LoginService loginService;
+    private final LoginService loginService;
 
-    @Autowired
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
 
-    @Autowired
-    private JwtService jwtService;
+    private final JwtService jwtService;
 
-    @Autowired
-    private ManagerUserController managerUserController;
+    private final ManagerUserController managerUserController;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+
+    public LoginController(LoginService loginService, UserMapper userMapper, JwtService jwtService, ManagerUserController managerUserController, UserRepository userRepository) {
+        this.loginService = loginService;
+        this.userMapper = userMapper;
+        this.jwtService = jwtService;
+        this.managerUserController = managerUserController;
+        this.userRepository = userRepository;
+    }
 
     @PostMapping(value = "/login")
     public ResponseEntity<?> login(
@@ -69,7 +73,7 @@ public class LoginController {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             SecurityContextHolder.clearContext();
 
-            return ResponseEntity.ok(new SuccessResponseDTO("Đăng xuất thành công !"));
+            return ResponseEntity.ok(new SuccessResponseDTO<>("Đăng xuất thành công !"));
         } else {
             response.put("success", false);
             response.put("message", "Không tìm thấy token hợp lệ");
@@ -78,14 +82,12 @@ public class LoginController {
     }
 
     @PostMapping("/validate-token")
-    public ResponseEntity<Map<String, Object>> validateToken(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> validateToken(@RequestBody Map<String, String> request) {
         String token = request.get("token");
         Map<String, Object> response = new HashMap<>();
 
         if (token == null || token.isEmpty()) {
-            response.put("success", false);
-            response.put("message", "Token không được cung cấp");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("Token không được cung cấp"));
         }
 
         try {
@@ -101,34 +103,23 @@ public class LoginController {
                 return ResponseEntity.ok(response);
             }
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Token không hợp lệ: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body((new ErrorResponseDTO("Token không hợp lệ: " + e.getMessage())));
         }
-
-        response.put("success", false);
-        response.put("message", "Token không hợp lệ hoặc hết hạn");
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body((new ErrorResponseDTO("Token không hợp lệ hoặc hết hạn")));
     }
 
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> body) {
         String email = body.get("email");
-        Map<String, Object> response = new HashMap<>();
-
         try {
             // 1. Validate input
             if (email == null || email.isBlank()) {
-                response.put("success", false);
-                response.put("message", "Email không được để trống");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body((new ErrorResponseDTO("Email không được để trống")));
             }
 
             // 2. Validate email format
             if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-                response.put("success", false);
-                response.put("message", "Email không hợp lệ");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body((new ErrorResponseDTO("Email không hợp lệ")));
             }
 
             // 3. Tìm user theo email
@@ -149,19 +140,12 @@ public class LoginController {
                         user.getIdResume().getEmail(),
                         resetToken);
 
-                response.put("success", true);
-                response.put("message",
-                        "Link đặt lại mật khẩu đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư!");
-                return ResponseEntity.ok(response);
+                return ResponseEntity.ok(new SuccessResponseDTO<>("Link đặt lại mật khẩu đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư!"));
             } else {
-                response.put("success", false);
-                response.put("message", "Email không tồn tại trong hệ thống");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body((new ErrorResponseDTO("Email không tồn tại trong hệ thống")));
             }
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Có lỗi xảy ra khi xử lý yêu cầu: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponseDTO("Có lỗi xảy ra khi xử lý yêu cầu: " + e.getMessage()));
         }
     }
 
@@ -169,26 +153,20 @@ public class LoginController {
     public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body) {
         String token = body.get("token");
         String newPassword = body.get("newPassword");
-        Map<String, Object> response = new HashMap<>();
+
 
         try {
             // 1. Validate input
-            if (token == null || token.isBlank()) {
-                response.put("success", false);
-                response.put("message", "Token không được cung cấp");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            if (StringUtils.isBlank(token)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body((new ErrorResponseDTO("Token không được cung cấp")));
             }
 
-            if (newPassword == null || newPassword.isBlank()) {
-                response.put("success", false);
-                response.put("message", "Mật khẩu mới không được để trống");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            if (StringUtils.isBlank(newPassword)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body((new ErrorResponseDTO("Mật khẩu mới không được để trống")));
             }
 
             if (newPassword.length() < 6) {
-                response.put("success", false);
-                response.put("message", "Mật khẩu mới phải có ít nhất 6 ký tự");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponseDTO("Mật khẩu mới phải có ít nhất 6 ký tự"));
             }
 
             // 2. Validate và extract thông tin từ token
@@ -196,51 +174,36 @@ public class LoginController {
             try {
                 username = jwtService.extractUsername(token);
             } catch (Exception e) {
-                response.put("success", false);
-                response.put("message", "Token không hợp lệ");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("Token không hợp lệ"));
             }
 
             if (username == null || username.isBlank()) {
-                response.put("success", false);
-                response.put("message", "Token không chứa thông tin người dùng hợp lệ");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("Token không chứa thông tin người dùng hợp lệ"));
             }
 
             // 3. Kiểm tra token hết hạn
             if (jwtService.isTokenExpired(token)) {
-                response.put("success", false);
-                response.put("message", "Token đã hết hạn. Vui lòng yêu cầu đặt lại mật khẩu mới");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("Token đã hết hạn. Vui lòng yêu cầu đặt lại mật khẩu mới"));
             }
 
             // 4. Tìm user trong database
             User user = userRepository.findByUsername(username);
             if (user == null) {
-                response.put("success", false);
-                response.put("message", "Người dùng không tồn tại");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponseDTO("Người dùng không tồn tại"));
             }
 
             // 5. Kiểm tra user có bị vô hiệu hóa không
             if (user.getInActive() && user.getIsDeleted()) {
-                response.put("success", false);
-                response.put("message", "Tài khoản đã bị vô hiệu hóa");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ErrorResponseDTO("Tài khoản đã bị vô hiệu hóa"));
             }
 
             // 6. Hash và lưu mật khẩu mới
             user.setPassword(SHA_256_password.GM_SHA_password(newPassword));
             userRepository.save(user);
-
-            response.put("success", true);
-            response.put("message", "Mật khẩu đã được đặt lại thành công! Bạn có thể đăng nhập với mật khẩu mới.");
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(new SuccessResponseDTO<>("Mật khẩu đã được đặt lại thành công! Bạn có thể đăng nhập với mật khẩu mới."));
 
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Có lỗi xảy ra khi đặt lại mật khẩu: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponseDTO("Có lỗi xảy ra khi đặt lại mật khẩu: " + e.getMessage()));
         }
     }
 }

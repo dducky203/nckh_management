@@ -9,7 +9,7 @@ import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.server.DTO.SuccessResponseDTO;
+import com.example.server.DTO.response.SuccessResponseDTO;
 import com.example.server.DTO.nckh.*;
 import com.example.server.service.DinhMucAiScanService;
 import com.example.server.service.nckh.NckhTieuChiDinhMucService;

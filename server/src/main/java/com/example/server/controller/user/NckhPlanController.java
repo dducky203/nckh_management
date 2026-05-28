@@ -1,6 +1,6 @@
 package com.example.server.controller.user;
 
-import com.example.server.DTO.SuccessResponseDTO;
+import com.example.server.DTO.response.SuccessResponseDTO;
 import com.example.server.DTO.nckh.PlanSelectionStatisticsResponse;
 import com.example.server.DTO.nckh.PlanSelectionWindowResponse;
 import com.example.server.DTO.nckh.SelectPlanRequest;

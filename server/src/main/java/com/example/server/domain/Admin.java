@@ -4,14 +4,11 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.Serializable;
-import java.time.Instant;
-
 @Getter
 @Setter
 @Entity
 @Table(name = "admin")
-public class Admin extends EntityBase implements Serializable {
+public class Admin extends EntityBase  {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)

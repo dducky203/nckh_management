@@ -5,7 +5,7 @@ import java.util.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.example.server.DTO.SuccessResponseDTO;
+import com.example.server.DTO.response.SuccessResponseDTO;
 import com.example.server.DTO.nckh.ActivityStatisticsResponse;
 import com.example.server.domain.ResearchGroup;
 import com.example.server.domain.ResearchGroupMember;

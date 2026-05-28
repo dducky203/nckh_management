@@ -54,43 +54,44 @@ public class DinhMucAiScanService {
     // ═══════════════════════════════════════════════════════════════
 
     private static final String PA_PROMPT = """
-Trích xuất TOÀN BỘ dòng dữ liệu từ bảng phương án NCKH trong ảnh/PDF. Trả về JSON array.
-NĂM: year = "%s".
+            Trích xuất TOÀN BỘ dòng dữ liệu từ bảng phương án NCKH trong ảnh/PDF. Trả về JSON array.
+            NĂM: year = "%s".
 
-QUY TẮC:
-- Mỗi dòng trong bảng → 1 object JSON.
-- Tạo dòng RIÊNG cho từng chức danh (GS/PGS, TS, ThS, KS/CN) nếu giá trị khác nhau.
-- Cột "Định mức" trong bảng này = dinhMucToiThieu.
-- gioQuyDoiPerUnit = null (bảng PA không có giờ quy đổi).
-- BỎ QUA: dòng tổng, ghi chú, tiêu đề cột, dòng trống.
-- Số thập phân dùng dấu CHẤM.
-- Trích xuất ĐẦY ĐỦ, KHÔNG bỏ sót.
-""";
+            QUY TẮC:
+            - Mỗi dòng trong bảng → 1 object JSON.
+            - Tạo dòng RIÊNG cho từng chức danh (GS/PGS, TS, ThS, KS/CN) nếu giá trị khác nhau.
+            - Cột "Định mức" trong bảng này = dinhMucToiThieu.
+            - gioQuyDoiPerUnit = null (bảng PA không có giờ quy đổi).
+            - BỎ QUA: dòng tổng, ghi chú, tiêu đề cột, dòng trống.
+            - Số thập phân dùng dấu CHẤM.
+            - Trích xuất ĐẦY ĐỦ, KHÔNG bỏ sót.
+            """;
 
     private static final String PL2_PROMPT = """
-Trích xuất TOÀN BỘ dòng dữ liệu từ bảng Phụ lục 2 (Quy đổi giờ NCKH) trong ảnh/PDF. Trả về JSON array.
-NĂM: year = "%s".
+            Trích xuất TOÀN BỘ dòng dữ liệu từ bảng Phụ lục 2 (Quy đổi giờ NCKH) trong ảnh/PDF. Trả về JSON array.
+            NĂM: year = "%s".
 
-QUY TẮC:
-- Mỗi dòng tiêu chí → 1 object JSON. CHỈ 1 dòng mỗi tiêu chí.
-- Cột "Định mức" trong bảng này = gioQuyDoiPerUnit (giờ quy đổi / đơn vị).
-- phuongAn = null, chucDanh = null, dinhMucToiThieu = null.
-- BỎ QUA: dòng "Trừ giờ", dòng tổng, ghi chú, tiêu đề cột, dòng trống.
-- Số thập phân dùng dấu CHẤM.
-- Trích xuất ĐẦY ĐỦ, KHÔNG bỏ sót.
-""";
+            QUY TẮC:
+            - Mỗi dòng tiêu chí → 1 object JSON. CHỈ 1 dòng mỗi tiêu chí.
+            - Cột "Định mức" trong bảng này = gioQuyDoiPerUnit (giờ quy đổi / đơn vị).
+            - phuongAn = null, chucDanh = null, dinhMucToiThieu = null.
+            - BỎ QUA: dòng "Trừ giờ", dòng tổng, ghi chú, tiêu đề cột, dòng trống.
+            - Số thập phân dùng dấu CHẤM.
+            - NẾU Ô CÓ CHỨA KHOẢNG SỐ (Ví dụ: "50-120"), CHỈ LẤY SỐ NHỎ NHẤT (Ví dụ: 50).
+            - Trích xuất ĐẦY ĐỦ, KHÔNG bỏ sót.
+            """;
 
     private static final String GENERIC_PROMPT = """
-Trích xuất TOÀN BỘ dòng dữ liệu từ bảng định mức NCKH trong ảnh/PDF. Trả về JSON array.
-NĂM: year = "%s".
+            Trích xuất TOÀN BỘ dòng dữ liệu từ bảng định mức NCKH trong ảnh/PDF. Trả về JSON array.
+            NĂM: year = "%s".
 
-Xác định loại bảng:
-- Bảng Phương án (1-6): có cột chức danh → dinhMucToiThieu = cột "Định mức", gioQuyDoiPerUnit = null.
-- Phụ lục 2: không có chức danh → gioQuyDoiPerUnit = cột "Định mức", dinhMucToiThieu = null.
+            Xác định loại bảng:
+            - Bảng Phương án (1-6): có cột chức danh → dinhMucToiThieu = cột "Định mức", gioQuyDoiPerUnit = null.
+            - Phụ lục 2: không có chức danh → gioQuyDoiPerUnit = cột "Định mức", dinhMucToiThieu = null.
 
-BỎ QUA: dòng tổng, ghi chú, tiêu đề cột, dòng trống, dòng "Trừ giờ".
-Số thập phân dùng dấu CHẤM. Trích xuất ĐẦY ĐỦ, KHÔNG bỏ sót.
-""";
+            BỎ QUA: dòng tổng, ghi chú, tiêu đề cột, dòng trống, dòng "Trừ giờ".
+            Số thập phân dùng dấu CHẤM. Trích xuất ĐẦY ĐỦ, KHÔNG bỏ sót.
+            """;
 
     private static final Schema RESPONSE_SCHEMA = Schema.builder()
             .type(Type.Known.ARRAY)
@@ -117,7 +118,6 @@ Số thập phân dùng dấu CHẤM. Trích xuất ĐẦY ĐỦ, KHÔNG bỏ s�
                     .required(List.of("tieuChiName", "year"))
                     .build())
             .build();
-
 
     private static final LinkedHashMap<String, String> TIEU_CHI_CODE_MAP = new LinkedHashMap<>();
     static {
@@ -199,11 +199,6 @@ Số thập phân dùng dấu CHẤM. Trích xuất ĐẦY ĐỦ, KHÔNG bỏ s�
         TIEU_CHI_CODE_MAP.put("de an hoc vien", "DE_AN_HV");
         TIEU_CHI_CODE_MAP.put("bai quang ba", "BAI_QUANG_BA");
     }
-
-    // ═══════════════════════════════════════════════════════════════
-    //  LOGIC CHÍNH: scan → PL2-driven merge → gán code
-    // ═══════════════════════════════════════════════════════════════
-
     public List<NckhTieuChiDinhMucRequest> scanFiles(List<MultipartFile> files, String year) {
         String effectiveYear = (year != null && !year.isBlank())
                 ? year
@@ -214,7 +209,8 @@ Số thập phân dùng dấu CHẤM. Trích xuất ĐẦY ĐỦ, KHÔNG bỏ s�
 
         for (MultipartFile file : files) {
             try {
-                if (file.isEmpty()) continue;
+                if (file.isEmpty())
+                    continue;
                 FileHint hint = detectFileHint(file.getOriginalFilename());
                 List<NckhTieuChiDinhMucRequest> fileResults = processSingleFile(file, effectiveYear, hint);
 
@@ -251,13 +247,6 @@ Số thập phân dùng dấu CHẤM. Trích xuất ĐẦY ĐỦ, KHÔNG bỏ s�
         return result;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    //  PL2-DRIVEN MERGE: PL2 là master, PA bổ sung dinhMucToiThieu
-    //
-    //  PL2 "WoS" (210 giờ) + PA "WoS/Scopus" (GS=0.6, TS=0.4)
-    //  → BB_WOS, GS_PGS, đm=0.6, giờ=210
-    //  → BB_WOS, TS,     đm=0.4, giờ=210
-    // ═══════════════════════════════════════════════════════════════
 
     private List<NckhTieuChiDinhMucRequest> mergePl2Driven(
             List<NckhTieuChiDinhMucRequest> paRows,
@@ -279,14 +268,14 @@ Số thập phân dùng dấu CHẤM. Trích xuất ĐẦY ĐỦ, KHÔNG bỏ s�
             if (bestPaGroup != null && !bestPaGroup.isEmpty()) {
                 for (NckhTieuChiDinhMucRequest pa : bestPaGroup) {
                     NckhTieuChiDinhMucRequest merged = new NckhTieuChiDinhMucRequest();
-                    merged.tieuChiName     = pl2.tieuChiName;
+                    merged.tieuChiName = pl2.tieuChiName;
                     merged.gioQuyDoiPerUnit = pl2.gioQuyDoiPerUnit;
-                    merged.donViTinh       = pl2.donViTinh;
-                    merged.sortOrder       = pl2.sortOrder;
-                    merged.phuongAn        = pa.phuongAn;
-                    merged.chucDanh        = pa.chucDanh;
+                    merged.donViTinh = pl2.donViTinh;
+                    merged.sortOrder = pl2.sortOrder;
+                    merged.phuongAn = pa.phuongAn;
+                    merged.chucDanh = pa.chucDanh;
                     merged.dinhMucToiThieu = pa.dinhMucToiThieu;
-                    merged.year            = pa.year != null ? pa.year : pl2.year;
+                    merged.year = pa.year != null ? pa.year : pl2.year;
                     result.add(merged);
                 }
                 matched++;
@@ -313,7 +302,8 @@ Số thập phân dùng dấu CHẤM. Trích xuất ĐẦY ĐỦ, KHÔNG bỏ s�
             Set<String> paWords = significantWords(paKey);
             int score = 0;
             for (String w : pl2Words) {
-                if (paWords.contains(w)) score++;
+                if (paWords.contains(w))
+                    score++;
             }
             if (score > bestScore) {
                 bestScore = score;
@@ -321,15 +311,15 @@ Số thập phân dùng dấu CHẤM. Trích xuất ĐẦY ĐỦ, KHÔNG bỏ s�
             }
         }
 
-        if (bestScore < 2) return null;
+        if (bestScore < 2)
+            return null;
         logger.debug("PL2 '{}' matched PA '{}' (score={})", pl2Key, bestKey, bestScore);
         return paGroups.get(bestKey);
     }
 
     private static final Set<String> STOP_WORDS = Set.of(
             "cac", "cua", "va", "cho", "voi", "trong",
-            "la", "co", "duoc", "den", "hoac", "mot", "nam"
-    );
+            "la", "co", "duoc", "den", "hoac", "mot", "nam");
 
     private Set<String> significantWords(String normalizedText) {
         Set<String> words = new HashSet<>(Arrays.asList(normalizedText.split(" ")));
@@ -339,11 +329,12 @@ Số thập phân dùng dấu CHẤM. Trích xuất ĐẦY ĐỦ, KHÔNG bỏ s�
     }
 
     // ═══════════════════════════════════════════════════════════════
-    //  NORMALIZE + CODE ASSIGNMENT
+    // NORMALIZE + CODE ASSIGNMENT
     // ═══════════════════════════════════════════════════════════════
 
     private String normalizeForMatch(String text) {
-        if (text == null) return "";
+        if (text == null)
+            return "";
         String nfd = Normalizer.normalize(text.trim().toLowerCase(), Normalizer.Form.NFD);
         String noDiacritics = DIACRITICS_PATTERN.matcher(nfd).replaceAll("");
         return noDiacritics
@@ -357,7 +348,8 @@ Số thập phân dùng dấu CHẤM. Trích xuất ĐẦY ĐỦ, KHÔNG bỏ s�
 
     private void assignTieuChiCodes(List<NckhTieuChiDinhMucRequest> rows) {
         for (NckhTieuChiDinhMucRequest r : rows) {
-            if (r.tieuChiName == null) continue;
+            if (r.tieuChiName == null)
+                continue;
             String normalized = normalizeForMatch(r.tieuChiName);
             String code = lookupTieuChiCode(normalized);
             if (code != null) {
@@ -386,7 +378,7 @@ Số thập phân dùng dấu CHẤM. Trích xuất ĐẦY ĐỦ, KHÔNG bỏ s�
     }
 
     // ═══════════════════════════════════════════════════════════════
-    //  XỬ LÝ TỪNG FILE
+    // XỬ LÝ TỪNG FILE
     // ═══════════════════════════════════════════════════════════════
 
     private List<NckhTieuChiDinhMucRequest> processSingleFile(MultipartFile file, String year, FileHint hint) {
@@ -450,11 +442,14 @@ Số thập phân dùng dấu CHẤM. Trích xuất ĐẦY ĐỦ, KHÔNG bỏ s�
     }
 
     // ═══════════════════════════════════════════════════════════════
-    //  FILE HINT: nhận dạng loại bảng từ tên file
+    // FILE HINT: nhận dạng loại bảng từ tên file
     // ═══════════════════════════════════════════════════════════════
 
     private static class FileHint {
-        enum DocType { PHUONG_AN, PHU_LUC_2, UNKNOWN }
+        enum DocType {
+            PHUONG_AN, PHU_LUC_2, UNKNOWN
+        }
+
         DocType type = DocType.UNKNOWN;
         Integer phuongAn;
         String hintText;
@@ -467,7 +462,8 @@ Số thập phân dùng dấu CHẤM. Trích xuất ĐẦY ĐỦ, KHÔNG bỏ s�
 
     private FileHint detectFileHint(String fileName) {
         FileHint hint = new FileHint();
-        if (fileName == null || fileName.isBlank()) return hint;
+        if (fileName == null || fileName.isBlank())
+            return hint;
 
         String lower = fileName.toLowerCase().replaceAll("\\s+", "");
 
@@ -507,23 +503,30 @@ Số thập phân dùng dấu CHẤM. Trích xuất ĐẦY ĐỦ, KHÔNG bỏ s�
     }
 
     // ═══════════════════════════════════════════════════════════════
-    //  PARSE + VALIDATE
+    // PARSE + VALIDATE
     // ═══════════════════════════════════════════════════════════════
 
     private String resolveMimeType(MultipartFile file) {
         String name = (file.getOriginalFilename() != null)
-                ? file.getOriginalFilename().toLowerCase() : "";
-        if (name.endsWith(".pdf"))  return "application/pdf";
-        if (name.endsWith(".png"))  return "image/png";
-        if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg";
-        if (name.endsWith(".webp")) return "image/webp";
-        if (name.endsWith(".heic")) return "image/heic";
+                ? file.getOriginalFilename().toLowerCase()
+                : "";
+        if (name.endsWith(".pdf"))
+            return "application/pdf";
+        if (name.endsWith(".png"))
+            return "image/png";
+        if (name.endsWith(".jpg") || name.endsWith(".jpeg"))
+            return "image/jpeg";
+        if (name.endsWith(".webp"))
+            return "image/webp";
+        if (name.endsWith(".heic"))
+            return "image/heic";
         String ct = file.getContentType();
         return ct != null ? ct : "image/jpeg";
     }
 
     private List<NckhTieuChiDinhMucRequest> parseRows(String aiText, String fallbackYear) {
-        if (aiText == null || aiText.isBlank()) return List.of();
+        if (aiText == null || aiText.isBlank())
+            return List.of();
 
         try {
             com.google.gson.JsonArray arr = com.google.gson.JsonParser
@@ -534,17 +537,19 @@ Số thập phân dùng dấu CHẤM. Trích xuất ĐẦY ĐỦ, KHÔNG bỏ s�
                 com.google.gson.JsonObject obj = arr.get(i).getAsJsonObject();
                 NckhTieuChiDinhMucRequest req = new NckhTieuChiDinhMucRequest();
 
-                req.phuongAn         = getInt(obj, "phuongAn");
-                req.tieuChiName      = getString(obj, "tieuChiName");
-                req.chucDanh         = normalizeChucDanh(getString(obj, "chucDanh"));
-                req.donViTinh        = getString(obj, "donViTinh");
-                req.dinhMucToiThieu  = getPositiveBigDecimal(obj, "dinhMucToiThieu");
+                req.phuongAn = getInt(obj, "phuongAn");
+                req.tieuChiName = getString(obj, "tieuChiName");
+                req.chucDanh = normalizeChucDanh(getString(obj, "chucDanh"));
+                req.donViTinh = getString(obj, "donViTinh");
+                req.dinhMucToiThieu = getPositiveBigDecimal(obj, "dinhMucToiThieu");
                 req.gioQuyDoiPerUnit = getPositiveBigDecimal(obj, "gioQuyDoiPerUnit");
-                req.sortOrder        = getInt(obj, "sortOrder");
-                req.year             = getString(obj, "year");
+                req.sortOrder = getInt(obj, "sortOrder");
+                req.year = getString(obj, "year");
 
-                if (req.year == null || req.year.isBlank()) req.year = fallbackYear;
-                if (!isValidRow(req, i + 1)) continue;
+                if (req.year == null || req.year.isBlank())
+                    req.year = fallbackYear;
+                if (!isValidRow(req, i + 1))
+                    continue;
 
                 result.add(req);
             }
@@ -582,12 +587,17 @@ Số thập phân dùng dấu CHẤM. Trích xuất ĐẦY ĐỦ, KHÔNG bỏ s�
     }
 
     private String normalizeChucDanh(String raw) {
-        if (raw == null || raw.isBlank()) return null;
+        if (raw == null || raw.isBlank())
+            return null;
         String upper = raw.trim().toUpperCase().replace(" ", "_").replace("/", "_");
-        if (VALID_CHUC_DANH.contains(upper)) return upper;
-        if (upper.contains("GS") || upper.contains("PGS")) return "GS_PGS";
-        if (upper.contains("TIEN SI") || upper.equals("TS")) return "TS";
-        if (upper.contains("THAC SI") || upper.equals("THS")) return "THS";
+        if (VALID_CHUC_DANH.contains(upper))
+            return upper;
+        if (upper.contains("GS") || upper.contains("PGS"))
+            return "GS_PGS";
+        if (upper.contains("TIEN SI") || upper.equals("TS"))
+            return "TS";
+        if (upper.contains("THAC SI") || upper.equals("THS"))
+            return "THS";
         if (upper.contains("KY SU") || upper.contains("CU NHAN") || upper.contains("KS") || upper.contains("CN"))
             return "KS_CN";
         logger.warn("Cannot normalize chucDanh: '{}'", raw);
@@ -595,20 +605,29 @@ Số thập phân dùng dấu CHẤM. Trích xuất ĐẦY ĐỦ, KHÔNG bỏ s�
     }
 
     private String getString(com.google.gson.JsonObject obj, String key) {
-        if (!obj.has(key) || obj.get(key).isJsonNull()) return null;
+        if (!obj.has(key) || obj.get(key).isJsonNull())
+            return null;
         return obj.get(key).getAsString();
     }
 
     private Integer getInt(com.google.gson.JsonObject obj, String key) {
-        if (!obj.has(key) || obj.get(key).isJsonNull()) return null;
-        try { return obj.get(key).getAsInt(); } catch (Exception e) { return null; }
+        if (!obj.has(key) || obj.get(key).isJsonNull())
+            return null;
+        try {
+            return obj.get(key).getAsInt();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private BigDecimal getPositiveBigDecimal(com.google.gson.JsonObject obj, String key) {
-        if (!obj.has(key) || obj.get(key).isJsonNull()) return null;
+        if (!obj.has(key) || obj.get(key).isJsonNull())
+            return null;
         try {
             BigDecimal val = obj.get(key).getAsBigDecimal();
             return val.compareTo(BigDecimal.ZERO) >= 0 ? val : null;
-        } catch (Exception e) { return null; }
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

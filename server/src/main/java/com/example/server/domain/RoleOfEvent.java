@@ -4,13 +4,11 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.Serializable;
-
 @Getter
 @Setter
 @Entity
 @Table(name = "role_of_event")
-public class RoleOfEvent extends EntityBase implements Serializable {
+public class RoleOfEvent extends EntityBase  {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
@@ -25,6 +23,6 @@ public class RoleOfEvent extends EntityBase implements Serializable {
     @Column(name = "norm")
     private Float norm;
 
-   
+
 
 }
