@@ -1,190 +1,178 @@
-import { useState, useEffect, useContext } from "react";
 import {
   Add,
+  Calculate,
   Delete,
-  Edit,
-  Download,
   Description,
+  Download,
+  Edit,
+  Groups,
+  Topic,
 } from "@mui/icons-material";
-import { AuthContext } from "../../context/AuthContext";
-import { useToast } from "../../context/ToastContext";
-import { SUCCESS_MESSAGES, ERROR_MESSAGES, getImageUrl } from "../../constants";
+import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import Button from "../../components/common/Button";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import Modal from "../../components/common/Modal";
+import { isQuotaGroup } from "../../components/groupQuota/utils";
+import {
+  ERROR_MESSAGES,
+  formatDateTime,
+  getImageUrl,
+  getResearchGroupStatus,
+  SUCCESS_MESSAGES,
+} from "../../constants";
+import { useToast } from "../../context/ToastContext";
 import researchGroupService from "../../services/researchGroupService";
-import api from "../../services/api";
+import DocumentFormModal from "./components/DocumentFormModal";
+import ResearchGroupProfileHeader from "./components/ResearchGroupProfileHeader";
 
-const DOCUMENT_TYPES = [
-  "Thông báo",
-  "Hồ Sơ Thanh Toán",
-  "Quyết Định",
-  "Công Văn",
-];
+function unwrapList(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.data?.data)) return payload.data.data;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.results)) return payload.results;
+  return [];
+}
 
 const ResearchGroupProfile = () => {
-  const { user } = useContext(AuthContext);
   const toast = useToast();
+  const [myGroups, setMyGroups] = useState([]);
+  const [currentGroup, setCurrentGroup] = useState(null);
   const [documents, setDocuments] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [groupsLoading, setGroupsLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [formData, setFormData] = useState({
     documentName: "",
     documentType: "",
+    description: "",
     file: null,
   });
 
-  const [currentGroup, setCurrentGroup] = useState(null);
-
-  useEffect(() => {
-    fetchMyGroups();
-  }, []);
-
-  useEffect(() => {
-    if (currentGroup) {
-      fetchDocuments();
-    }
-  }, [currentGroup]);
-
-  const fetchMyGroups = async () => {
+  const fetchMyGroups = useCallback(async () => {
     try {
+      setGroupsLoading(true);
       const response = await researchGroupService.getMyGroups();
-      const groups = response.data || [];
-      // Lấy nhóm đầu tiên hoặc nhóm hiện tại (tùy logic của bạn)
+      const groups = unwrapList(response);
+      setMyGroups(groups);
       if (groups.length > 0) {
-        setCurrentGroup(groups[0]);
+        setCurrentGroup((prev) => {
+          if (prev && groups.some((g) => g.id === prev.id)) return prev;
+          return groups[0];
+        });
       } else {
-        toast.error("Bạn chưa tham gia nhóm nghiên cứu nào");
+        setCurrentGroup(null);
       }
     } catch (error) {
       console.error("Error fetching groups:", error);
       toast.error(error.message || ERROR_MESSAGES.LOAD_DATA_ERROR);
+    } finally {
+      setGroupsLoading(false);
     }
-  };
+  }, [toast]);
 
-  const fetchDocuments = async () => {
-  if (!currentGroup) return;
-
-  try {
-    setLoading(true);
-
-    const response = await researchGroupService.getDocuments(currentGroup.id);
-
-    console.log("DOCUMENT RESPONSE:", response);
-
-    const data = response?.data || response || [];
-    setDocuments(data || []);
-
-    if (!data || typeof data !== "object" || typeof data.length !== "number") {
-      console.error("Documents is not array:", response);
-      toast.error("Dữ liệu văn bản không hợp lệ");
-      return;
+  const fetchDocuments = useCallback(async () => {
+    if (!currentGroup?.id) return;
+    try {
+      setLoading(true);
+      const response = await researchGroupService.getDocuments(currentGroup.id);
+      setDocuments(unwrapList(response));
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+      toast.error(error.message || ERROR_MESSAGES.LOAD_DATA_ERROR);
+    } finally {
+      setLoading(false);
     }
+  }, [currentGroup?.id, toast]);
 
-    setDocuments(data);
-  } catch (error) {
-    console.error("Error fetching documents:", error);
-    toast.error(error.message || ERROR_MESSAGES.LOAD_DATA_ERROR);
-  } finally {
-    setLoading(false);
-  }
-};
+  useEffect(() => {
+    fetchMyGroups();
+  }, [fetchMyGroups]);
 
+  useEffect(() => {
+    if (currentGroup?.id) fetchDocuments();
+    else setDocuments([]);
+  }, [currentGroup?.id, fetchDocuments]);
 
-  const handleAddDocument = () => {
-    setSelectedDocument(null);
+  const resetForm = () => {
     setFormData({
       documentName: "",
       documentType: "",
+      description: "",
       file: null,
     });
+  };
+
+  const handleAddDocument = () => {
+    setSelectedDocument(null);
+    resetForm();
     setFormModalOpen(true);
   };
 
   const handleEditDocument = (doc) => {
     setSelectedDocument(doc);
     setFormData({
-      documentName: doc.documentName || doc.name,
-      documentType: doc.documentType || doc.type,
+      documentName: doc.documentName || doc.name || "",
+      documentType: doc.documentType || doc.type || "",
+      description: doc.description || "",
       file: null,
     });
     setFormModalOpen(true);
   };
 
-  const handleDeleteDocument = (doc) => {
-    setSelectedDocument(doc);
-    setDeleteModalOpen(true);
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData((prev) => ({ ...prev, file }));
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!formData.documentName || !formData.documentType) {
-      toast.error("Vui lòng điền đầy đủ thông tin");
+    if (!formData.documentName?.trim() || !formData.documentType) {
+      toast.error("Vui lòng điền đầy đủ thông tin bắt buộc");
       return;
     }
-
     if (!selectedDocument && !formData.file) {
       toast.error("Vui lòng chọn file");
       return;
     }
+    if (!currentGroup?.id) {
+      toast.error("Vui lòng chọn nhóm nghiên cứu");
+      return;
+    }
 
     try {
-      const submitData = new FormData();
-      submitData.append("documentName", formData.documentName);
-      submitData.append("documentType", formData.documentType);
-      if (formData.file) {
-        submitData.append("file", formData.file);
-      }
-
-      if (!currentGroup) {
-        toast.error("Vui lòng chọn nhóm nghiên cứu");
-        return;
-      }
-
+      setSaving(true);
       if (selectedDocument) {
         await researchGroupService.updateDocument(
           currentGroup.id,
           selectedDocument.id,
-          formData.documentName,
+          formData.documentName.trim(),
           formData.documentType,
-          formData.description || null,
+          formData.description?.trim() || null,
           formData.file || null
         );
         toast.success(SUCCESS_MESSAGES.UPDATE_SUCCESS);
       } else {
         await researchGroupService.createDocument(
           currentGroup.id,
-          formData.documentName,
+          formData.documentName.trim(),
           formData.documentType,
-          formData.description || null,
+          formData.description?.trim() || null,
           formData.file
         );
         toast.success("Thêm văn bản thành công");
       }
-
       setFormModalOpen(false);
       fetchDocuments();
     } catch (error) {
       console.error("Error saving document:", error);
-      toast.error(error.message || "Có lỗi xảy ra");
+      toast.error(error.message || ERROR_MESSAGES.SERVER_ERROR);
+    } finally {
+      setSaving(false);
     }
   };
 
   const confirmDelete = async () => {
-    if (!currentGroup) {
-      toast.error("Vui lòng chọn nhóm nghiên cứu");
-      return;
-    }
-
+    if (!currentGroup?.id || !selectedDocument?.id) return;
     try {
       await researchGroupService.deleteDocument(currentGroup.id, selectedDocument.id);
       toast.success(SUCCESS_MESSAGES.DELETE_SUCCESS);
@@ -192,146 +180,216 @@ const ResearchGroupProfile = () => {
       setSelectedDocument(null);
       fetchDocuments();
     } catch (error) {
-      console.error("Error deleting document:", error);
       toast.error(error.message || "Không thể xóa văn bản");
     }
   };
 
-  const handleDownload = (document) => {
-    // Tải file về
-    const fileUrl = document.fileUrl || document.url;
-    if (fileUrl) {
-      window.open(getImageUrl(fileUrl), "_blank");
+  const handleDownload = (doc) => {
+    const fileUrl = doc.fileUrl || doc.url;
+    if (!fileUrl) {
+      toast.error("Không có liên kết tải file");
+      return;
     }
+    window.open(getImageUrl(fileUrl), "_blank", "noopener,noreferrer");
   };
+
+  if (groupsLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   if (!currentGroup) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
-        <div className="text-center">
-          <Description className="mx-auto text-gray-300 mb-4" sx={{ fontSize: 64 }} />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+      <div className="min-h-screen bg-slate-50 font-sans">
+        <ResearchGroupProfileHeader />
+        <div className="max-w-6xl mx-auto px-4 py-16 text-center">
+          <Description className="mx-auto text-slate-200 mb-4" sx={{ fontSize: 56 }} />
+          <h3 className="text-lg font-bold text-slate-700 mb-2">
             Bạn chưa tham gia nhóm nghiên cứu nào
           </h3>
-          <p className="text-gray-500">
-            Vui lòng tham gia một nhóm nghiên cứu để xem hồ sơ
+          <p className="text-sm text-slate-500 mb-6 max-w-md mx-auto">
+            Tham gia hoặc đăng ký nhóm để quản lý hồ sơ văn bản tại đây.
           </p>
+          <Link to="/research-groups">
+            <Button variant="primary">Xem danh sách nhóm</Button>
+          </Link>
         </div>
       </div>
     );
   }
 
+  const status = getResearchGroupStatus(currentGroup.status);
+  const memberCount = currentGroup.members?.length ?? 0;
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-            <Description className="text-blue-600" />
-            Hồ sơ nhóm: {currentGroup.groupName}
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Quản lý các văn bản và tài liệu của nhóm nghiên cứu
-          </p>
-        </div>
+    <div className="min-h-screen bg-slate-50 pb-16 font-sans">
+      <ResearchGroupProfileHeader groupName={currentGroup.groupName} />
 
-        {/* Action Bar */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6 flex justify-between items-center">
-          <div className="text-sm text-gray-600">
-            Tổng số văn bản: <span className="font-semibold">{documents.length}</span>
+      <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
+        {/* Thông tin nhóm */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            <div className="space-y-3 min-w-0 flex-1">
+              {myGroups.length > 1 && (
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase">Chọn nhóm</label>
+                  <select
+                    value={currentGroup.id}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const g = myGroups.find((x) => x.id == val);
+                      if (g) setCurrentGroup(g);
+                    }}
+                    className="mt-1 block w-full max-w-md border border-slate-200 rounded-lg py-2 px-3 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-mainColor/30 focus:border-mainColor"
+                  >
+                    {myGroups.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.groupName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${status.cls}`}
+                >
+                  {status.label}
+                </span>
+                {currentGroup.groupType && (
+                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-mainColor/10 text-mainColor border border-mainColor/20">
+                    {currentGroup.groupType}
+                  </span>
+                )}
+                {memberCount > 0 && (
+                  <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
+                    <Groups sx={{ fontSize: 14 }} />
+                    {memberCount} thành viên
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-start gap-2 text-sm text-slate-600">
+                <Topic sx={{ fontSize: 18 }} className="text-mainColor shrink-0 mt-0.5" />
+                <span>{currentGroup.topicName || "—"}</span>
+              </div>
+
+              {isQuotaGroup(currentGroup) && currentGroup.status === "APPROVED" && (
+                <Link
+                  to="/activity/group-quota"
+                  className="inline-flex items-center gap-2 rounded-xl bg-mainColor px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-mainColor/90 transition"
+                >
+                  <Calculate sx={{ fontSize: 16 }} />
+                  Định mức nhóm NCKH
+                </Link>
+              )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+              <div className="text-right text-xs text-slate-400">
+                <span className="block font-bold text-slate-500 uppercase mb-1">Văn bản</span>
+                <span className="text-2xl font-black text-mainColor">{documents.length}</span>
+              </div>
+              <Button variant="primary" onClick={handleAddDocument} className="flex items-center gap-1">
+                <Add fontSize="small" />
+                Thêm văn bản
+              </Button>
+            </div>
           </div>
-          <button
-            onClick={handleAddDocument}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Add />
-            Thêm văn bản
-          </button>
         </div>
 
-        {/* Documents Table */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        {/* Bảng văn bản */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <LoadingSpinner />
+            <div className="flex justify-center py-16">
+              <LoadingSpinner size="md" />
             </div>
           ) : documents.length === 0 ? (
-            <div className="text-center py-12">
-              <Description className="mx-auto text-gray-300 mb-4" sx={{ fontSize: 64 }} />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Chưa có văn bản nào
-              </h3>
-              <p className="text-gray-500 mb-4">
-                Hãy thêm văn bản đầu tiên cho nhóm nghiên cứu
+            <div className="text-center py-16 px-4">
+              <Description className="mx-auto text-slate-200 mb-4" sx={{ fontSize: 48 }} />
+              <h3 className="text-base font-bold text-slate-700 mb-1">Chưa có văn bản</h3>
+              <p className="text-sm text-slate-500 mb-6">
+                Tải lên quyết định, công văn, hồ sơ thanh toán...
               </p>
-              <button
-                onClick={handleAddDocument}
-                className="inline-flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Add />
-                Thêm văn bản
-              </button>
+              <Button variant="primary" onClick={handleAddDocument}>
+                <Add fontSize="small" className="mr-1" />
+                Thêm văn bản đầu tiên
+              </Button>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      STT
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-100">
+                    <th className="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase w-12">
+                      #
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase">
                       Tên văn bản
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">
-                      Loại văn bản
+                    <th className="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase">
+                      Loại
                     </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Link download
+                    <th className="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase hidden md:table-cell">
+                      Ngày tạo
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="text-center px-4 py-3 text-xs font-bold text-slate-500 uppercase w-28">
+                      Tệp
+                    </th>
+                    <th className="text-right px-4 py-3 text-xs font-bold text-slate-500 uppercase w-24">
                       Thao tác
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-slate-50">
                   {documents.map((doc, index) => (
-                    <tr key={doc.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {index + 1}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
+                    <tr key={doc.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="px-4 py-3 text-slate-400 font-medium">{index + 1}</td>
+                      <td className="px-4 py-3 font-medium text-slate-800">
                         {doc.documentName || doc.name}
                       </td>
-                      <td className="px-6 py-4 min-w-[150px]">
-                        <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 whitespace-nowrap">
+                      <td className="px-4 py-3">
+                        <span className="inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-mainColor/10 text-mainColor border border-mainColor/15">
                           {doc.documentType || doc.type}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <td className="px-4 py-3 text-slate-500 text-xs hidden md:table-cell">
+                        {doc.createdAt ? formatDateTime(doc.createdAt) : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-center">
                         <button
+                          type="button"
                           onClick={() => handleDownload(doc)}
-                          className="text-orange-600 hover:text-orange-800 transition-colors"
-                          title="Tải xuống"
+                          className="inline-flex items-center justify-center p-2 rounded-lg text-mainColor hover:bg-mainColor/10 transition"
+                          title="Mở / tải file"
                         >
-                          <Download />
+                          <Download sx={{ fontSize: 20 }} />
                         </button>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1">
                           <button
+                            type="button"
                             onClick={() => handleEditDocument(doc)}
-                            className="text-blue-600 hover:text-blue-800 transition-colors"
-                            title="Chỉnh sửa"
+                            className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-mainColor"
+                            title="Sửa"
                           >
-                            <Edit fontSize="small" />
+                            <Edit sx={{ fontSize: 18 }} />
                           </button>
                           <button
-                            onClick={() => handleDeleteDocument(doc)}
-                            className="text-red-600 hover:text-red-800 transition-colors"
+                            type="button"
+                            onClick={() => {
+                              setSelectedDocument(doc);
+                              setDeleteModalOpen(true);
+                            }}
+                            className="p-2 rounded-lg text-slate-500 hover:bg-rose-50 hover:text-rose-600"
                             title="Xóa"
                           >
-                            <Delete fontSize="small" />
+                            <Delete sx={{ fontSize: 18 }} />
                           </button>
                         </div>
                       </td>
@@ -344,107 +402,16 @@ const ResearchGroupProfile = () => {
         </div>
       </div>
 
-      {/* Add/Edit Document Modal */}
-      {formModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-xl font-bold text-gray-900">
-                {selectedDocument ? "Chỉnh sửa văn bản" : "Thêm văn bản mới"}
-              </h2>
-              <button
-                onClick={() => setFormModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ×
-              </button>
-            </div>
+      <DocumentFormModal
+        isOpen={formModalOpen}
+        onClose={() => setFormModalOpen(false)}
+        onSubmit={handleSubmit}
+        formData={formData}
+        setFormData={setFormData}
+        selectedDocument={selectedDocument}
+        saving={saving}
+      />
 
-            <form onSubmit={handleSubmit} className="p-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tên văn bản <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.documentName}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        documentName: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Nhập tên văn bản"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Loại văn bản <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={formData.documentType}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        documentType: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  >
-                    <option value="">Chọn loại văn bản</option>
-                    {DOCUMENT_TYPES.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    File {!selectedDocument && <span className="text-red-500">*</span>}
-                  </label>
-                  <input
-                    type="file"
-                    onChange={handleFileChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    accept="*/*"
-                    required={!selectedDocument}
-                  />
-                  {selectedDocument && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Để trống nếu không muốn thay đổi file
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setFormModalOpen(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  {selectedDocument ? "Cập nhật" : "Thêm"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
       <Modal
         isOpen={deleteModalOpen}
         onClose={() => {
@@ -453,7 +420,7 @@ const ResearchGroupProfile = () => {
         }}
         onConfirm={confirmDelete}
         title="Xác nhận xóa văn bản"
-        message={`Bạn có chắc chắn muốn xóa văn bản "${selectedDocument?.documentName || selectedDocument?.name}"?`}
+        message={`Bạn có chắc muốn xóa "${selectedDocument?.documentName || selectedDocument?.name}"? File trên Cloudinary cũng sẽ bị xóa.`}
         confirmText="Xóa"
         cancelText="Hủy"
         type="delete"
@@ -463,4 +430,3 @@ const ResearchGroupProfile = () => {
 };
 
 export default ResearchGroupProfile;
-

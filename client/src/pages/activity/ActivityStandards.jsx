@@ -6,7 +6,6 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import GroupsIcon from "@mui/icons-material/Groups";
 
 import { useAuth } from "../../context/useAuth";
 import { useToast } from "../../context/ToastContext";
@@ -15,6 +14,7 @@ import nckhTieuChiDinhMucService from "../../services/nckhTieuChiDinhMucService"
 import nckhActivityService from "../../services/nckhActivityService";
 import researchGroupService from "../../services/researchGroupService";
 import groupQuotaService from "../../services/groupQuotaService";
+import GroupQuotaPanel from "../../components/groupQuota/GroupQuotaPanel";
 import PlanPA0 from "./components/PlanPA0";
 import PlanPA1 from "./components/PlanPA1";
 import PlanPA2 from "./components/PlanPA2";
@@ -541,12 +541,10 @@ export default function ActivityStandards() {
             />
 
             {/* 4. Định mức nhóm nghiên cứu */}
-            {(groupStats || groupStatsLoading) && (
-              <GroupQuotaPanel
-                stats={groupStats}
-                loading={groupStatsLoading}
-              />
-            )}
+            <GroupQuotaPanel
+              stats={groupStats}
+              loading={groupStatsLoading}
+            />
           </>
         )}
       </div>
@@ -597,167 +595,3 @@ export default function ActivityStandards() {
   );
 }
 
-// ============================================================
-// GroupQuotaPanel – hiển thị định mức nhóm ngay trong trang
-// định mức cá nhân (ActivityStandards)
-// ============================================================
-const GROUP_TYPE_LABEL = {
-  NCM:      { text: "Nhóm NCM",      cls: "bg-blue-100 text-blue-700 border-blue-200"   },
-  XUAT_SAC: { text: "Nhóm Xuất sắc", cls: "bg-amber-100 text-amber-700 border-amber-200" },
-  TINH_HOA: { text: "Nhóm Tinh hoa", cls: "bg-purple-100 text-purple-700 border-purple-200" },
-};
-
-function resolveTypeKey(type) {
-  const up = (type ?? "").toUpperCase();
-  if (up.includes("TINH_HOA"))  return "TINH_HOA";
-  if (up.includes("XUAT_SAC"))  return "XUAT_SAC";
-  if (up.includes("NCM"))       return "NCM";
-  return null;
-}
-
-function GroupQuotaPanel({ stats, loading }) {
-  const typeKey  = resolveTypeKey(stats?.groupType);
-  const typeInfo = typeKey ? GROUP_TYPE_LABEL[typeKey] : null;
-
-  return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-        <div className="flex items-center gap-3">
-          <div className="rounded-xl bg-mainColor/10 p-2 text-mainColor">
-            <GroupsIcon sx={{ fontSize: 20 }} />
-          </div>
-          <div>
-            <h2 className="text-sm font-extrabold text-slate-800">
-              Định mức nhóm nghiên cứu
-            </h2>
-            <p className="text-xs text-slate-400 font-medium mt-0.5">
-              Tính theo đóng góp tập thể — chia đều cho mỗi thành viên
-            </p>
-          </div>
-        </div>
-        {typeInfo && (
-          <span className={`text-[11px] font-bold px-3 py-1 rounded-full border ${typeInfo.cls}`}>
-            {typeInfo.text}
-          </span>
-        )}
-      </div>
-
-      {loading && (
-        <div className="min-h-[120px]">
-          <LoadingSpinner size="md" />
-        </div>
-      )}
-
-      {!loading && !stats && (
-        <div className="px-6 py-8 text-center text-sm text-slate-400 font-medium">
-          Chưa có dữ liệu hoạt động nhóm.
-        </div>
-      )}
-
-      {!loading && stats && (
-        <>
-          {/* Tóm tắt */}
-          <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100">
-            <div className="px-6 py-4">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Nhóm
-              </p>
-              <p className="text-sm font-extrabold text-slate-800 mt-1 truncate">
-                {stats.groupName}
-              </p>
-            </div>
-            <div className="px-6 py-4">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Tổng giờ nhóm
-              </p>
-              <p className="text-2xl font-black text-mainColor mt-1">
-                {stats.totalGroupHours}
-                <span className="text-sm font-bold text-slate-400 ml-1">giờ</span>
-              </p>
-            </div>
-            <div className="px-6 py-4">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Phần của bạn ({stats.memberCount} người)
-              </p>
-              <p className="text-2xl font-black text-emerald-600 mt-1">
-                {stats.totalPerMemberHours}
-                <span className="text-sm font-bold text-slate-400 ml-1">giờ</span>
-              </p>
-            </div>
-          </div>
-
-          {/* Bảng chi tiết tiêu chí */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="text-left px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider w-[40%]">
-                    Tiêu chí
-                  </th>
-                  <th className="text-center px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Nhóm đạt (tổng)
-                  </th>
-                  <th className="text-center px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Giờ nhóm
-                  </th>
-                  <th className="text-center px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Phần của bạn
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {(stats.criteria ?? []).map((c) => {
-                  const hasActivity = c.groupTotalHours > 0;
-                  return (
-                    <tr key={c.code} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="px-5 py-3 font-medium text-slate-700">
-                        {c.name}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {hasActivity ? (
-                          <span className="text-slate-700 font-semibold">
-                            {c.groupTotalQty}
-                            <span className="text-slate-400 text-xs ml-1">{c.unit}</span>
-                          </span>
-                        ) : (
-                          <span className="text-slate-300 text-xs">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {hasActivity ? (
-                          <span className="font-semibold text-slate-700">
-                            {c.groupTotalHours} giờ
-                          </span>
-                        ) : (
-                          <span className="text-slate-300 text-xs">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {hasActivity ? (
-                          <span className="inline-block bg-emerald-50 text-emerald-700 font-bold text-xs px-2 py-1 rounded-lg border border-emerald-200">
-                            {c.perMemberHours} giờ
-                          </span>
-                        ) : (
-                          <span className="text-slate-300 text-xs">0 giờ</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Note */}
-          <div className="px-5 py-3 bg-blue-50 border-t border-blue-100">
-            <p className="text-xs text-blue-700 font-medium">
-              💡 Giờ quy đổi nhóm được tính bằng tổng đóng góp của toàn bộ thành viên chia đều.
-              Nếu nhóm hoàn thành đủ định mức, mỗi thành viên đều được tính là ĐẠT — kể cả khi cá nhân chưa đóng góp trực tiếp.
-            </p>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}

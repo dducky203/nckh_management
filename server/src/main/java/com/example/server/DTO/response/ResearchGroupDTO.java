@@ -27,6 +27,8 @@ public class ResearchGroupDTO {
     private String description;
     private String googleSheetLink;
         private String type;
+    /** NCM | XUAT_SAC | TINH_HOA */
+    private String groupType;
     private String status;
     private Date createdAt;
     private Date updatedAt;
@@ -63,6 +65,7 @@ public class ResearchGroupDTO {
                 .description(group.getDescription())
                 .googleSheetLink(group.getGoogleSheetLink())
                 .type(group.getType())
+                .groupType(group.getGroupType())
                 .status(group.getStatus().name())
                 .createdAt(group.getCreatedAt())
                 .updatedAt(group.getUpdatedAt())

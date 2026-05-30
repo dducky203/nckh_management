@@ -21,6 +21,7 @@ import com.example.server.DTO.response.ResearchGroupDTO;
 import com.example.server.DTO.response.ResearchGroupDocumentDTO;
 import com.example.server.domain.*;
 import com.example.server.repository.*;
+import com.example.server.service.CloudinaryService;
 import com.example.server.service.ResearchGroupService;
 import com.example.server.utils.SecurityUtils;
 
@@ -35,9 +36,12 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
     private final UserRepository userRepository;
     private final ResearchGroupMemberRepository memberRepository;
     private final ResearchGroupDocumentRepository documentRepository;
+    private final CloudinaryService cloudinaryService;
 
     @Value("${upload.dir}")
     private String uploadDir;
+
+    private static final String RESEARCH_GROUP_CLOUDINARY_FOLDER = "research-groups";
 
     @Override
     @Transactional
@@ -59,12 +63,17 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy thành viên với ID: " + memberId));
         }
 
+        String groupCategory = request.getType() != null ? request.getType() : "student";
+        String quotaScheme = normalizeGroupType(request.getGroupType());
+        validateGroupTypePair(groupCategory, quotaScheme);
+
         // Tạo nhóm mới
         ResearchGroup group = ResearchGroup.builder()
                 .groupName(request.getGroupName())
                 .topicName(request.getTopicName())
                 .description(request.getDescription())
-                .type(request.getType() != null ? request.getType() : "student")
+                .type(groupCategory)
+                .groupType(quotaScheme)
                 .status(ResearchGroup.GroupStatus.PENDING) // Mặc định chờ duyệt
                 .leader(leader)
                 .advisor(advisor)
@@ -137,6 +146,11 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         }
         if (request.getDescription() != null) {
             group.setDescription(request.getDescription());
+        }
+        if (request.getGroupType() != null) {
+            String quotaScheme = normalizeGroupType(request.getGroupType());
+            validateGroupTypePair(group.getType(), quotaScheme);
+            group.setGroupType(quotaScheme);
         }
         if (request.getAdvisorId() != null) {
             User advisor = userRepository.findById(request.getAdvisorId())
@@ -682,22 +696,12 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
             throw new RuntimeException("File không được để trống");
         }
 
-        // Lưu file
         String fileUrl;
         try {
-            Path folderPath = Paths.get(uploadDir, "research-groups", groupId.toString());
-            if (!Files.exists(folderPath)) {
-                Files.createDirectories(folderPath);
-            }
-
-            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            Path targetLocation = folderPath.resolve(Objects.requireNonNull(fileName));
-            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-
-            // Lưu relative path
-            fileUrl = "research-groups/" + groupId + "/" + fileName;
+            fileUrl = cloudinaryService.uploadFile(
+                    file, RESEARCH_GROUP_CLOUDINARY_FOLDER + "/" + groupId);
         } catch (IOException e) {
-            throw new RuntimeException("Lỗi khi lưu file: " + e.getMessage(), e);
+            throw new RuntimeException("Lỗi khi tải file lên Cloudinary: " + e.getMessage(), e);
         }
 
         // Tạo document
@@ -752,27 +756,12 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         // Cập nhật file nếu có
         if (file != null && !file.isEmpty()) {
             try {
-                // Xóa file cũ (optional)
-                if (document.getFileUrl() != null) {
-                    Path oldFile = Paths.get(uploadDir, document.getFileUrl());
-                    if (Files.exists(oldFile)) {
-                        Files.delete(oldFile);
-                    }
-                }
-
-                // Lưu file mới
-                Path folderPath = Paths.get(uploadDir, "research-groups", groupId.toString());
-                if (!Files.exists(folderPath)) {
-                    Files.createDirectories(folderPath);
-                }
-
-                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-                Path targetLocation = folderPath.resolve(Objects.requireNonNull(fileName));
-                Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-
-                document.setFileUrl("research-groups/" + groupId + "/" + fileName);
+                deleteStoredDocumentFile(document.getFileUrl());
+                String newUrl = cloudinaryService.uploadFile(
+                        file, RESEARCH_GROUP_CLOUDINARY_FOLDER + "/" + groupId);
+                document.setFileUrl(newUrl);
             } catch (IOException e) {
-                throw new RuntimeException("Lỗi khi lưu file: " + e.getMessage(), e);
+                throw new RuntimeException("Lỗi khi tải file lên Cloudinary: " + e.getMessage(), e);
             }
         }
 
@@ -804,19 +793,40 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
             throw new RuntimeException("Chỉ thành viên nhóm mới có quyền xóa documents");
         }
 
-        // Xóa file
+        deleteStoredDocumentFile(document.getFileUrl());
+        documentRepository.delete(document);
+    }
+
+    /** Xóa file Cloudinary hoặc file local cũ (đường dẫn tương đối). */
+    private void deleteStoredDocumentFile(String fileUrl) {
+        if (fileUrl == null || fileUrl.isBlank()) {
+            return;
+        }
         try {
-            if (document.getFileUrl() != null) {
-                Path filePath = Paths.get(uploadDir, document.getFileUrl());
+            if (fileUrl.startsWith("http://") || fileUrl.startsWith("https://")) {
+                cloudinaryService.deleteFileByUrl(fileUrl);
+            } else {
+                Path filePath = Paths.get(uploadDir, fileUrl);
                 if (Files.exists(filePath)) {
                     Files.delete(filePath);
                 }
             }
-        } catch (IOException e) {
-            // Log error nhưng vẫn xóa document
-            System.err.println("Lỗi khi xóa file: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Lỗi khi xóa file hồ sơ nhóm: " + e.getMessage());
         }
+    }
 
-        documentRepository.delete(document);
+    private static String normalizeGroupType(String groupType) {
+        if (groupType == null || groupType.isBlank()) {
+            return null;
+        }
+        return groupType.trim().toUpperCase();
+    }
+
+    private static void validateGroupTypePair(String category, String quotaScheme) {
+        boolean lecturer = category != null && "lecturer".equalsIgnoreCase(category.trim());
+        if (quotaScheme != null && !lecturer) {
+            throw new RuntimeException("groupType chỉ áp dụng cho nhóm giảng viên (type = lecturer)");
+        }
     }
 }

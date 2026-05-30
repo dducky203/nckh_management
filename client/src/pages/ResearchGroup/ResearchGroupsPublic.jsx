@@ -5,7 +5,6 @@ import {
   Group,
   Person,
   SupervisorAccount,
-  CheckCircle,
   Visibility,
   School,
   Topic,
@@ -15,7 +14,7 @@ import { useToast } from "../../context/ToastContext";
 import researchGroupService from "../../services/researchGroupService";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import Pagination from "../../components/common/Pagination";
-import { ERROR_MESSAGES, formatDate } from "../../constants";
+import { ERROR_MESSAGES, formatDate, getResearchGroupStatusBadge } from "../../constants";
 import GroupFormModal from "./components/GroupFormModal";
 import GroupDetailModal from "./components/GroupDetailModal";
 import { usePagination } from "../../hooks/usePagination";
@@ -340,11 +339,7 @@ const ResearchGroupsPublic = () => {
           onApprove={() => {}}
           onReject={() => {}}
           onEdit={() => {}}
-          getStatusBadge={() => ({
-            label: "Đã duyệt",
-            color: "bg-green-100 text-green-800",
-            icon: CheckCircle,
-          })}
+          getStatusBadge={() => getResearchGroupStatusBadge("APPROVED")}
         />
       )}
     </div>

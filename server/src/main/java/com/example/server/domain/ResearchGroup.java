@@ -31,8 +31,13 @@ public class ResearchGroup extends EntityBase {
     @Column(columnDefinition = "TEXT")
     private String googleSheetLink;
 
+    /** student | lecturer — loại nhóm SV / GV */
     @Column(length = 500)
     private String type;
+
+    /** NCM | XUAT_SAC | TINH_HOA — phương án định mức (chỉ nhóm GV) */
+    @Column(name = "group_type", length = 50)
+    private String groupType;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

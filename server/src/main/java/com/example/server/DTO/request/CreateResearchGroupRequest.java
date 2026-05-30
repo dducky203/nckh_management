@@ -15,6 +15,10 @@ public class CreateResearchGroupRequest {
     @Pattern(regexp = "^(student|lecturer)$", message = "Type phải là student hoặc lecturer")
     private String type;
 
+    /** NCM | XUAT_SAC | TINH_HOA — bắt buộc khi type = lecturer (nhóm định mức NCKH) */
+    @Pattern(regexp = "^(NCM|XUAT_SAC|TINH_HOA)?$", message = "groupType phải là NCM, XUAT_SAC hoặc TINH_HOA")
+    private String groupType;
+
     @NotBlank(message = "Tên nhóm không được để trống")
     @Size(max = 200, message = "Tên nhóm không được vượt quá 200 ký tự")
     private String groupName;

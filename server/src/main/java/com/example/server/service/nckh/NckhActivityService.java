@@ -13,8 +13,10 @@ import com.example.server.DTO.nckh.*;
 import com.example.server.domain.Title;
 import com.example.server.domain.User;
 import com.example.server.domain.nckh.*;
+import com.example.server.domain.ResearchGroup;
 import com.example.server.repository.UserRepository;
 import com.example.server.repository.nckh.*;
+import com.example.server.service.researchgroup.ResearchGroupQuotaService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -29,6 +31,7 @@ public class NckhActivityService {
     private final NckhComputeService computeService;
     private final UserPlanYearRepository planYearRepo;
     private final UserRepository userRepo;
+    private final ResearchGroupQuotaService quotaGroupService;
 
     public NckhActivityService(
             NckhActivityRepository activityRepo,
@@ -36,13 +39,15 @@ public class NckhActivityService {
             NckhComputeService computeService,
             UserPlanYearRepository planYearRepo,
             NckhTieuChiDinhMucRepository dinhMucRepo,
-            UserRepository userRepo) {
+            UserRepository userRepo,
+            ResearchGroupQuotaService quotaGroupService) {
         this.activityRepo = activityRepo;
         this.dinhMucRepo = dinhMucRepo;
         this.contribRepo = contribRepo;
         this.computeService = computeService;
         this.planYearRepo = planYearRepo;
         this.userRepo = userRepo;
+        this.quotaGroupService = quotaGroupService;
     }
 
     @Transactional
@@ -51,11 +56,11 @@ public class NckhActivityService {
         NckhTieuChiDinhMuc dinhMuc = resolveDinhMuc(creatorUserId, tieuChiCode);
 
         NckhActivity a = new NckhActivity();
-        createActivity(req, a, tieuChiCode, dinhMuc);
+        a.setCreatedByUserId(creatorUserId);
+        createActivity(req, a, tieuChiCode, dinhMuc, creatorUserId);
         a.setMainAuthorUserId(creatorUserId);
         a.setMemberUserIds(null);
         a.setStatus(NckhActivity.Status.DRAFT);
-        a.setCreatedByUserId(creatorUserId);
         return activityRepo.save(a);
     }
 
@@ -248,15 +253,22 @@ public class NckhActivityService {
         String tieuChiCode = requireTieuChiCode(req);
         NckhTieuChiDinhMuc dinhMuc = resolveDinhMuc(userId, tieuChiCode);
 
-        createActivity(req, a, tieuChiCode, dinhMuc);
+        createActivity(req, a, tieuChiCode, dinhMuc, userId);
         a.setApprovedByUserId(null);
         a.setApprovedAt(null);
         return activityRepo.save(a);
     }
 
-    private void createActivity(CreateActivityRequest req, NckhActivity a, String tieuChiCode, NckhTieuChiDinhMuc dinhMuc) {
+    private void createActivity(CreateActivityRequest req, NckhActivity a, String tieuChiCode,
+                                NckhTieuChiDinhMuc dinhMuc, Integer creatorUserId) {
         a.setAcademicYear(req.academicYear);
-        a.setResearchGroupId(req.researchGroupId);
+        Integer groupId = req.researchGroupId;
+        if (groupId == null && creatorUserId != null) {
+            groupId = quotaGroupService.findApprovedQuotaGroup(creatorUserId)
+                    .map(ResearchGroup::getId)
+                    .orElse(null);
+        }
+        a.setResearchGroupId(groupId);
         a.setCatalogCode(tieuChiCode);
         a.setQty(req.qty == null ? 1.0 : req.qty);
         a.setQuotaHoursSnapshot(requireQuotaHoursSnapshot(dinhMuc, tieuChiCode));
@@ -358,10 +370,31 @@ public class NckhActivityService {
     public NckhActivity approve(Long activityId, Integer adminId) {
         NckhActivity a = activityRepo.findById(activityId)
                 .orElseThrow(() -> new IllegalStateException("Activity không tồn tại"));
+
+        ensureContributorsOnApprove(a);
+
+        if (a.getResearchGroupId() == null) {
+            quotaGroupService.findApprovedQuotaGroup(a.getCreatedByUserId())
+                    .map(ResearchGroup::getId)
+                    .ifPresent(a::setResearchGroupId);
+        }
+
         a.setStatus(NckhActivity.Status.APPROVED);
         a.setApprovedByUserId(adminId);
         a.setApprovedAt(LocalDateTime.now());
         return activityRepo.save(a);
+    }
+
+    /** Đảm bảo có contributor để thống kê định mức nhóm tự động. */
+    private void ensureContributorsOnApprove(NckhActivity a) {
+        if (!contribRepo.findByActivityId(a.getId()).isEmpty()) {
+            return;
+        }
+        ContributorItem main = new ContributorItem();
+        main.userId = a.getCreatedByUserId();
+        main.role = "MAIN";
+        main.participantsN = 1;
+        addContributors(a.getId(), List.of(main));
     }
 
     @Transactional

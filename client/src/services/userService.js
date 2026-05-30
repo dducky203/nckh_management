@@ -67,16 +67,6 @@ const userService = {
     });
   },
 
-  // Upload avatar (không cần nữa, đã gộp vào updateProfile)
-  uploadAvatar: async (file, username) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('username', username);
-    
-    return await api.post('/api/users/upload-avatar', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-  },
 
   // Đổi mật khẩu
   changePassword: async (username, data) => {

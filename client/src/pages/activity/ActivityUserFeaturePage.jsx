@@ -32,7 +32,7 @@ const quickCards = [
   },
   {
     title: "Định mức nhóm NCKH",
-    description: "Tính giờ quy đổi theo tiêu chí nhóm NCM / Xuất sắc / Tinh hoa.",
+    description: "Tự động tính định mức từ hoạt động NCKH đã duyệt (NCM / Xuất sắc / Tinh hoa).",
     to: "/activity/group-quota",
     icon: GroupIcon,
     tone: "from-violet-500 to-purple-600",

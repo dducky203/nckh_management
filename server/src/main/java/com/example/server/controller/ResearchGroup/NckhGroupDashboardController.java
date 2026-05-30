@@ -6,15 +6,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.server.DTO.response.SuccessResponseDTO;
-import com.example.server.DTO.nckh.ActivityStatisticsResponse;
 import com.example.server.domain.ResearchGroup;
 import com.example.server.domain.ResearchGroupMember;
 import com.example.server.domain.User;
 import com.example.server.repository.ResearchGroupMemberRepository;
 import com.example.server.repository.ResearchGroupRepository;
 import com.example.server.repository.UserRepository;
-import com.example.server.repository.nckh.NckhActivityRepository;
 import com.example.server.service.nckh.NckhComputeService;
+import com.example.server.service.nckh.NckhGroupQuotaAggregationService;
+import com.example.server.service.nckh.NckhGroupQuotaRules;
+import com.example.server.service.researchgroup.ResearchGroupQuotaService;
 import com.example.server.utils.SecurityUtils;
 
 import lombok.RequiredArgsConstructor;
@@ -33,7 +34,8 @@ public class NckhGroupDashboardController {
     private final ResearchGroupMemberRepository memberRepo;
     private final UserRepository userRepo;
     private final NckhComputeService computeService;
-    private final NckhActivityRepository activityRepo;
+    private final NckhGroupQuotaAggregationService aggregationService;
+    private final ResearchGroupQuotaService quotaGroupService;
 
     // -------------------------------------------------------------------
     // Bảng tiêu chí
@@ -52,8 +54,12 @@ public class NckhGroupDashboardController {
         crit("DE_XUAT_BO",          "Đề xuất cấp Bộ và tương đương",                           "đề xuất"),
         crit("NHIEM_VU_BO_CHU",     "Chủ nhiệm đề tài cấp Bộ",                                 "đề tài"),
         crit("HD_SVNCKH",           "Hướng dẫn SV NCKH / Hợp đồng KH&CN",                     "đề tài"),
-        critGroup("HOI_DONG_TU_VAN", "Tổ chức Hội đồng tư vấn KH",                             "HĐ",   "2 HĐ/năm/nhóm"),
-        critGroup("MOI_CHUYEN_GIA",  "Mời chuyên gia trình bày Seminar/chuyên đề",              "buổi", "2 Seminar/năm/nhóm")
+        critGroup("HOI_THAO_HOC_VIEN", "Tổ chức Hội thảo cấp Học viện",                        "hội thảo", "Bảng 2 — theo quy mô nhóm"),
+        critGroup("HOI_THAO_QUOC_GIA", "Tổ chức Hội thảo quốc gia",                             "hội thảo", "Bảng 2"),
+        critGroup("HOI_THAO_QUOC_TE",  "Tổ chức Hội thảo quốc tế",                              "hội thảo", "Bảng 2"),
+        critGroup("CONG_BO_KHOA_HOC",  "Công bố KH (TV, kỷ yếu, tổng quan)",                    "bài",      "Bảng 2"),
+        critGroup("HOI_DONG_TU_VAN",   "Tổ chức Hội đồng tư vấn KH",                             "HĐ",       "2 HĐ/năm/nhóm"),
+        critGroup("MOI_CHUYEN_GIA",    "Mời chuyên gia trình bày Seminar/chuyên đề",            "buổi",     "2 Seminar/năm/nhóm")
     );
 
     private static final List<Map<String, Object>> XS_CRITERIA = List.of(
@@ -80,14 +86,30 @@ public class NckhGroupDashboardController {
     // Helper để tìm nhóm định mức của user đang đăng nhập
     // -------------------------------------------------------------------
     private ResearchGroup getMyQuotaGroup(Integer userId) {
-        List<ResearchGroupMember> memberships = memberRepo.findAllByUserId(userId);
-        for (ResearchGroupMember rm : memberships) {
-            ResearchGroup g = groupRepo.findById(rm.getGroupId()).orElse(null);
-            if (g != null && g.getStatus() == ResearchGroup.GroupStatus.APPROVED && isQuotaGroup(g.getType())) {
-                return g;
-            }
-        }
-        return null;
+        return quotaGroupService.findApprovedQuotaGroup(userId).orElse(null);
+    }
+
+    // -------------------------------------------------------------------
+    // GET /research-groups/quota/my-membership
+    // Kiểm tra user có thuộc 1 trong 3 nhóm NCM / Xuất sắc / Tinh hoa không
+    // -------------------------------------------------------------------
+    @GetMapping("/my-membership")
+    public ResponseEntity<SuccessResponseDTO<Map<String, Object>>> getMyMembership() {
+        Integer userId = SecurityUtils.getCurrentUserId();
+        if (userId == null) throw new RuntimeException("Vui lòng đăng nhập");
+
+        Map<String, Object> data = quotaGroupService.resolveMembership(userId);
+        String msg = Boolean.TRUE.equals(data.get("inQuotaGroup"))
+                ? "Người dùng thuộc nhóm định mức NCKH"
+                : (String) data.getOrDefault("message", "Không thuộc nhóm định mức");
+        return ResponseEntity.ok(new SuccessResponseDTO<>(data, msg));
+    }
+
+    @GetMapping("/membership")
+    public ResponseEntity<SuccessResponseDTO<Map<String, Object>>> getMembershipByUserId(
+            @RequestParam Integer userId) {
+        Map<String, Object> data = quotaGroupService.resolveMembership(userId);
+        return ResponseEntity.ok(new SuccessResponseDTO<>(data, (String) data.get("message")));
     }
 
     // -------------------------------------------------------------------
@@ -105,7 +127,7 @@ public class NckhGroupDashboardController {
             return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Người dùng không thuộc nhóm định mức nào"));
         }
 
-        String type = group.getType();
+        String type = group.getGroupType();
         User currentUser = userRepo.findById(userId).orElseThrow();
 
         boolean isLeader = group.isLeader(currentUser);
@@ -116,25 +138,49 @@ public class NckhGroupDashboardController {
 
         List<Map<String, Object>> rows = new ArrayList<>();
         for (Map<String, Object> c : criteria) {
-            String code   = (String) c.get("code");
-            Double coeff  = computeService.computeGroupMemberQuota(1.0, type, code, chucDanh, isLeader);
+            String code = (String) c.get("code");
+            boolean isGroupLevel = Boolean.TRUE.equals(c.get("isGroupLevel"));
+            Double requiredQty = isGroupLevel ? null
+                    : computeService.getMemberRequiredQty(type, code, chucDanh, isLeader);
+            Double coeff = requiredQty != null ? requiredQty : 0.0;
 
             Map<String, Object> row = new LinkedHashMap<>();
-            row.put("code",        code);
-            row.put("name",        c.get("name"));
-            row.put("unit",        c.get("unit"));
-            row.put("coefficient", coeff != null ? coeff : 0.0);
+            row.put("code", code);
+            row.put("name", c.get("name"));
+            row.put("unit", c.get("unit"));
+            row.put("isGroupLevel", isGroupLevel);
+            row.put("coefficient", coeff);
+            row.put("requiredQty", requiredQty);
+            if (isGroupLevel) {
+                row.put("groupQuota", c.get("groupQuota"));
+            }
             rows.add(row);
         }
 
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("groupId",     group.getId());
-        data.put("groupName",   group.getGroupName());
-        data.put("groupType",   type);
+        data.put("userId", userId);
+        data.put("groupId", group.getId());
+        data.put("groupName", group.getGroupName());
+        data.put("groupType", type);
         data.put("memberCount", members.size());
-        data.put("isLeader",    isLeader);
-        data.put("chucDanh",    chucDanh);
-        data.put("criteria",    rows);
+        data.put("isLeader", isLeader);
+        data.put("chucDanh", chucDanh);
+        data.put("memberFactor", computeService.getMemberFactor(type));
+        data.put("benefits", NckhGroupQuotaRules.getBenefits(type));
+        data.put("criteria", rows);
+
+        if (NckhGroupQuotaRules.resolveGroupKind(type) != null
+                && NckhGroupQuotaRules.resolveGroupKind(type).equals("NCM")) {
+            Map<String, Object> groupQuotas = NckhGroupQuotaRules.getNcmGroupLevelQuotas(members.size());
+            groupQuotas.put("sizeBandLabel",
+                    NckhGroupQuotaRules.getSizeBandLabel((String) groupQuotas.get("sizeBand")));
+            data.put("ncmGroupQuotas", groupQuotas);
+        }
+
+        Map<String, String> leaderQuota = NckhGroupQuotaRules.getLeaderQuota(type);
+        if (!leaderQuota.isEmpty()) {
+            data.put("leaderQuota", leaderQuota);
+        }
 
         return ResponseEntity.ok(new SuccessResponseDTO<>(data, "Lấy định mức nhóm thành công"));
     }
@@ -158,61 +204,18 @@ public class NckhGroupDashboardController {
 
         int academicYear = (year != null) ? year : java.time.LocalDate.now().getYear();
 
-        // Lấy danh sách userId của toàn bộ thành viên
+        User currentUser = userRepo.findById(userId).orElseThrow();
         List<ResearchGroupMember> members = memberRepo.findByGroupId(group.getId());
         List<Integer> memberIds = members.stream()
                 .map(ResearchGroupMember::getUserId)
                 .collect(java.util.stream.Collectors.toList());
 
-        int memberCount = Math.max(1, memberIds.size());
-
-        // Tổng hợp hoạt động APPROVED của cả nhóm
-        List<ActivityStatisticsResponse> groupStats = activityRepo.getGroupStatsByYear(memberIds, academicYear);
-
-        // Build map: catalogCode → tổng nhóm
-        Map<String, ActivityStatisticsResponse> statsMap = new LinkedHashMap<>();
-        for (ActivityStatisticsResponse s : groupStats) {
-            statsMap.put(s.getCatalogCode(), s);
-        }
-
-        // Tính phần chia đều + đánh giá ĐẠT/KHÔNG ĐẠT cho từng tiêu chí
-        List<Map<String, Object>> criteriaStats = new ArrayList<>();
-        List<Map<String, Object>> criteria = getCriteriaForType(group.getType());
-
-        for (Map<String, Object> c : criteria) {
-            String code = (String) c.get("code");
-            ActivityStatisticsResponse stat = statsMap.get(code);
-
-            double groupTotalQty   = stat != null ? (stat.getTotalQty() != null ? stat.getTotalQty() : 0.0) : 0.0;
-            double groupTotalHours = stat != null ? (stat.getTotalQuotaHours() != null ? stat.getTotalQuotaHours() : 0.0) : 0.0;
-            double perMemberQty    = groupTotalQty / memberCount;
-            double perMemberHours  = groupTotalHours / memberCount;
-
-            Map<String, Object> row = new LinkedHashMap<>();
-            row.put("code",           code);
-            row.put("name",           c.get("name"));
-            row.put("unit",           c.get("unit"));
-            row.put("groupTotalQty",  Math.round(groupTotalQty * 100.0) / 100.0);
-            row.put("groupTotalHours",Math.round(groupTotalHours * 100.0) / 100.0);
-            row.put("perMemberQty",   Math.round(perMemberQty * 100.0) / 100.0);
-            row.put("perMemberHours", Math.round(perMemberHours * 100.0) / 100.0);
-            row.put("memberCount",    memberCount);
-            criteriaStats.add(row);
-        }
-
-        double totalGroupHours  = criteriaStats.stream()
-                .mapToDouble(r -> (Double) r.get("groupTotalHours")).sum();
-        double totalPerMemberHours = totalGroupHours / memberCount;
-
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("groupId",            group.getId());
-        data.put("groupName",          group.getGroupName());
-        data.put("groupType",          group.getType());
-        data.put("memberCount",        memberCount);
-        data.put("academicYear",       academicYear);
-        data.put("totalGroupHours",    Math.round(totalGroupHours * 100.0) / 100.0);
-        data.put("totalPerMemberHours",Math.round(totalPerMemberHours * 100.0) / 100.0);
-        data.put("criteria",           criteriaStats);
+        Map<String, Object> data = aggregationService.buildMemberStats(
+                group,
+                currentUser,
+                memberIds,
+                academicYear,
+                getCriteriaForType(group.getGroupType()));
 
         return ResponseEntity.ok(new SuccessResponseDTO<>(data, "Lấy thống kê nhóm thành công"));
     }
@@ -233,7 +236,7 @@ public class NckhGroupDashboardController {
             return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Người dùng không thuộc nhóm định mức nào"));
         }
 
-        String type = group.getType();
+        String type = group.getGroupType();
         User currentUser = userRepo.findById(userId).orElseThrow();
 
         boolean isLeader = group.isLeader(currentUser);
@@ -283,7 +286,7 @@ public class NckhGroupDashboardController {
             Integer userId = SecurityUtils.getCurrentUserId();
             if (userId != null) {
                 ResearchGroup group = getMyQuotaGroup(userId);
-                if (group != null) groupType = group.getType();
+                if (group != null) groupType = group.getGroupType();
             }
         }
         if (groupType == null) {
@@ -317,7 +320,7 @@ public class NckhGroupDashboardController {
                 Map<String, Double> coeffs = new LinkedHashMap<>();
                 for (String cd : chucDanhs) {
                     String mappedCd = cd.replace("_", "");
-                    Double coeff = computeService.computeGroupMemberQuota(1.0, type, code, mappedCd, false);
+                    Double coeff = computeService.getMemberRequiredQty(type, code, mappedCd, false);
                     coeffs.put(cd, coeff != null ? coeff : 0.0);
                 }
                 row.put("coefficients", coeffs);
@@ -326,9 +329,8 @@ public class NckhGroupDashboardController {
             matrix.add(row);
         }
 
-        Map<String, String> leaderQuota = null;
-        if (type.contains("XUAT_SAC")) leaderQuota = XS_LEADER_QUOTA;
-        else if (type.contains("TINH_HOA")) leaderQuota = TH_LEADER_QUOTA;
+        Map<String, String> leaderQuota = NckhGroupQuotaRules.getLeaderQuota(type);
+        if (leaderQuota.isEmpty()) leaderQuota = null;
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("groupType", groupType);
@@ -361,7 +363,7 @@ public class NckhGroupDashboardController {
         }
 
         List<ResearchGroupMember> members = memberRepo.findByGroupId(group.getId());
-        List<Map<String, Object>> criteria = getCriteriaForType(group.getType());
+        List<Map<String, Object>> criteria = getCriteriaForType(group.getGroupType());
 
         List<Map<String, Object>> memberList = new ArrayList<>();
         for (ResearchGroupMember m : members) {
@@ -375,11 +377,12 @@ public class NckhGroupDashboardController {
             for (Map<String, Object> c : criteria) {
                 if (Boolean.TRUE.equals(c.get("isGroupLevel"))) continue;
                 String code = (String) c.get("code");
-                Double coeff = computeService.computeGroupMemberQuota(1.0, group.getType(), code, chucDanh, isLeader);
+                Double requiredQty = computeService.getMemberRequiredQty(group.getGroupType(), code, chucDanh, isLeader);
                 Map<String, Object> item = new LinkedHashMap<>();
                 item.put("code", code);
                 item.put("name", c.get("name"));
-                item.put("coefficient", coeff != null ? coeff : 0.0);
+                item.put("coefficient", requiredQty != null ? requiredQty : 0.0);
+                item.put("requiredQty", requiredQty);
                 quotaItems.add(item);
             }
 
@@ -396,7 +399,7 @@ public class NckhGroupDashboardController {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("groupId", group.getId());
         data.put("groupName", group.getGroupName());
-        data.put("groupType", group.getType());
+        data.put("groupType", group.getGroupType());
         data.put("memberCount", members.size());
         data.put("members", memberList);
 
@@ -407,9 +410,7 @@ public class NckhGroupDashboardController {
     // Helpers
     // -------------------------------------------------------------------
     private boolean isQuotaGroup(String type) {
-        if (type == null) return false;
-        String up = type.toUpperCase();
-        return up.contains("NCM") || up.contains("XUAT_SAC") || up.contains("TINH_HOA");
+        return ResearchGroupQuotaService.isQuotaGroupType(type);
     }
 
     private List<Map<String, Object>> getCriteriaForType(String type) {
@@ -436,5 +437,9 @@ public class NckhGroupDashboardController {
         m.put("groupQuota", groupQuota);
         m.put("isGroupLevel", true);
         return m;
+    }
+
+    private static double round2(double v) {
+        return Math.round(v * 100.0) / 100.0;
     }
 }

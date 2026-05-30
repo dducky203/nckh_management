@@ -16,6 +16,7 @@ const GroupFormModal = ({
 
   const [formData, setFormData] = useState({
     type: defaultType,
+    groupType: "",
     groupName: "",
     topicName: "",
     description: "",
@@ -45,6 +46,7 @@ const GroupFormModal = ({
     if (group) {
       setFormData({
         type: group.type || defaultType,
+        groupType: group.groupType || "",
         groupName: group.groupName || "",
         topicName: group.topicName || "",
         description: group.description || "",
@@ -245,14 +247,17 @@ const GroupFormModal = ({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // If switching group type, clear advisor when not applicable
-    if (name === "type" && value === "lecturer") {
-      setSelectedAdvisor(null);
-      setAdvisorSearchTerm("");
-      setAdvisorSearchResults([]);
-      setAdvisorPage(0);
-      setAdvisorHasMore(false);
-      setFormData({ ...formData, type: value, advisorId: null });
+    if (name === "type") {
+      if (value === "lecturer") {
+        setSelectedAdvisor(null);
+        setAdvisorSearchTerm("");
+        setAdvisorSearchResults([]);
+        setAdvisorPage(0);
+        setAdvisorHasMore(false);
+        setFormData({ ...formData, type: value, advisorId: null });
+      } else {
+        setFormData({ ...formData, type: value, groupType: "" });
+      }
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -370,6 +375,28 @@ const GroupFormModal = ({
               <p className="mt-1 text-sm text-red-500">{errors.type}</p>
             )}
           </div>
+
+          {formData.type === "lecturer" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Phương án định mức NCKH
+              </label>
+              <select
+                name="groupType"
+                value={formData.groupType || ""}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">— Chưa chọn (admin có thể cập nhật sau) —</option>
+                <option value="NCM">NCM — Nhóm nghiên cứu mạnh (PA 1)</option>
+                <option value="XUAT_SAC">Xuất sắc (PA 2)</option>
+                <option value="TINH_HOA">Tinh hoa (PA 3)</option>
+              </select>
+              <p className="mt-1 text-xs text-gray-500">
+                Chỉ nhóm giảng viên có phương án này mới tính định mức NCKH.
+              </p>
+            </div>
+          )}
 
           {/* Group Name */}
           <div>

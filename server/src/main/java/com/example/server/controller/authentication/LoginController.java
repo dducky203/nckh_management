@@ -68,16 +68,11 @@ public class LoginController {
     @PostMapping("/logout")
     public ResponseEntity<?> logout(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        Map<String, Object> response = new HashMap<>();
-
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             SecurityContextHolder.clearContext();
-
             return ResponseEntity.ok(new SuccessResponseDTO<>("Đăng xuất thành công !"));
         } else {
-            response.put("success", false);
-            response.put("message", "Không tìm thấy token hợp lệ");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponseDTO("Không tìm thấy token hợp lệ"));
         }
     }
 

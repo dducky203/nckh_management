@@ -3,9 +3,6 @@ import {
   Search,
   Add,
   Group,
-  CheckCircle,
-  Cancel,
-  Pending,
   Menu,
   ChevronLeft,
 } from "@mui/icons-material";
@@ -15,7 +12,12 @@ import researchGroupService from "../../services/researchGroupService";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import Pagination from "../../components/common/Pagination";
 import Modal from "../../components/common/Modal";
-import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../constants";
+import {
+  SUCCESS_MESSAGES,
+  ERROR_MESSAGES,
+  getResearchGroupStatusBadge,
+  RESEARCH_GROUP_STATUS_FILTER_OPTIONS,
+} from "../../constants";
 import GroupTable from "./components/GroupTable";
 import { isAdmin as checkIsAdmin } from "../../utils/permissions";
 import GroupFormModal from "./components/GroupFormModal";
@@ -227,26 +229,7 @@ const ResearchGroupManagement = () => {
     }
   };
 
-  const getStatusBadge = (status) => {
-    const statusConfig = {
-      PENDING: {
-        label: "Chờ duyệt",
-        color: "bg-yellow-100 text-yellow-800",
-        icon: Pending,
-      },
-      APPROVED: {
-        label: "Đã duyệt",
-        color: "bg-green-100 text-green-800",
-        icon: CheckCircle,
-      },
-      REJECTED: {
-        label: "Từ chối",
-        color: "bg-red-100 text-red-800",
-        icon: Cancel,
-      },
-    };
-    return statusConfig[status] || statusConfig.PENDING;
-  };
+  const getStatusBadge = getResearchGroupStatusBadge;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -372,9 +355,11 @@ const ResearchGroupManagement = () => {
                       className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="ALL">Tất cả trạng thái</option>
-                      <option value="PENDING">Chờ duyệt</option>
-                      <option value="APPROVED">Đã duyệt</option>
-                      <option value="REJECTED">Từ chối</option>
+                      {RESEARCH_GROUP_STATUS_FILTER_OPTIONS.map(({ value, label }) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
                     </select>
                   )}
 

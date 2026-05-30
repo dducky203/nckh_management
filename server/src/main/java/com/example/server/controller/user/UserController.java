@@ -1,31 +1,40 @@
 package com.example.server.controller.user;
 
-import com.example.server.DTO.response.SuccessResponseDTO;
-import com.example.server.DTO.users.ChangePasswordRequest;
-import com.example.server.DTO.users.UserDetailsDTO;
-import com.example.server.domain.User;
-import com.example.server.exception.ErrorException;
-import com.example.server.mapper.UserMapper;
-import com.example.server.repository.*;
-import com.example.server.service.CloudinaryService;
-import com.example.server.service.UserService;
+import java.time.LocalDate;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.server.DTO.response.SuccessResponseDTO;
+import com.example.server.DTO.users.ChangePasswordRequest;
+import com.example.server.DTO.users.UserDetailsDTO;
+import com.example.server.domain.User;
+import com.example.server.exception.ErrorException;
+import com.example.server.mapper.UserMapper;
+import com.example.server.repository.ResumeRepository;
+import com.example.server.repository.UserRepository;
+import com.example.server.service.CloudinaryService;
+import com.example.server.service.UserService;
+
 @RestController
 @RequestMapping("/users")
 public class UserController {
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private UserMapper userMapper;
-    @Autowired
-    private CloudinaryService cloudinaryService;
+    private final UserService userService;
+    private final UserRepository userRepository;
+
+    private final UserMapper userMapper;
+    private final CloudinaryService cloudinaryService;
+
+    public UserController(UserService userService, UserRepository userRepository, UserMapper userMapper, CloudinaryService cloudinaryService) {
+        this.userService = userService;
+        this.userRepository = userRepository;
+        this.userMapper = userMapper;
+        this.cloudinaryService = cloudinaryService;
+    }
 
     @GetMapping("/profile")
     public ResponseEntity<?> profile(@RequestParam(name = "id") Integer userId) {
@@ -49,31 +58,28 @@ public class UserController {
             @RequestParam(value = "title", required = false) String title,
             @RequestParam(value = "phone", required = false) String phone,
             @RequestParam(value = "address", required = false) String address,
-            @RequestParam(value = "birthday", required = false) String birthday) {
+            @RequestParam(value = "birthday", required = false) LocalDate birthday) {
 
         try {
             User user = userRepository.findByUsername(username);
 
-            if (user == null)
+            if (user == null )
                 throw new ErrorException("Người dùng không tồn tại!", HttpStatus.NOT_FOUND);
 
             // Update basic info
             if (name != null && !name.isEmpty()) user.setName(name);
-//            if (email != null && !email.isEmpty()) user.setEmail(email);
-//            if (title != null && !title.isEmpty()) user.setTitle(title);
-//            if (phone != null && !phone.isEmpty()) user.setPhone(phone);
-//            if (address != null && !address.isEmpty()) user.setAddress(address);
-//            if (birthday != null && !birthday.isEmpty()) user.setBirthday(birthday);
+            if (email != null && !email.isEmpty()) user.getIdResume().setEmail(email);
+            if (title != null && !title.isEmpty()) user.getIdTitle().setName(title);
+            if (phone != null && !phone.isEmpty()) user.getIdResume().setPhone(phone);
+            if (address != null && !address.isEmpty()) user.getIdResume().setAddress(address);
+            if (birthday != null ) user.getIdResume().setBirthday(birthday);
 
             // Upload avatar if provided
             if (avatarFile != null && !avatarFile.isEmpty()) {
                 // Xóa ảnh cũ nếu có
-                if (user.getAvatar() != null && !user.getAvatar().isEmpty()) {
+                if (StringUtils.isNotBlank(user.getAvatar())) {
                     try {
-                        String oldPublicId = cloudinaryService.extractPublicIdFromUrl(user.getAvatar());
-                        if (oldPublicId != null) {
-                            cloudinaryService.deleteFile(oldPublicId);
-                        }
+                        cloudinaryService.deleteFileByUrl(user.getAvatar());
                     } catch (Exception e) {
                         System.err.println("Không thể xóa ảnh cũ: " + e.getMessage());
                     }
