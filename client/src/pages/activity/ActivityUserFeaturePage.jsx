@@ -1,11 +1,14 @@
+import { useContext, useMemo } from "react";
 import { Link } from "react-router-dom";
 import HubIcon from "@mui/icons-material/Hub";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import GroupIcon from "@mui/icons-material/Group";
 import CampaignIcon from "@mui/icons-material/Campaign";
 import { RESEARCH_CATEGORIES } from "../../utils/data";
+import { AuthContext } from "../../context/AuthContext";
+import { canAccessQuotaPages } from "../../utils/permissions";
 
-const quickCards = [
+const ALL_QUICK_CARDS = [
   {
     title: "Định mức hoạt động",
     description: "Theo dõi đối chiếu định mức và dữ liệu thực tế theo năm học.",
@@ -13,6 +16,7 @@ const quickCards = [
     icon: BarChartIcon,
     tone: "from-amber-500 to-orange-500",
     cta: "Mở định mức",
+    requiresQuotaAccess: true,
   },
   {
     title: "Hồ sơ nhóm NCKH",
@@ -37,10 +41,21 @@ const quickCards = [
     icon: GroupIcon,
     tone: "from-violet-500 to-purple-600",
     cta: "Mở định mức nhóm",
+    requiresQuotaAccess: true,
   },
 ];
 
 export default function ActivityUserFeaturePage() {
+  const { user } = useContext(AuthContext);
+  const quotaAllowed = canAccessQuotaPages(user);
+  const quickCards = useMemo(
+    () =>
+      ALL_QUICK_CARDS.filter(
+        (card) => !card.requiresQuotaAccess || quotaAllowed
+      ),
+    [quotaAllowed]
+  );
+
   return (
     <div className="min-h-screen bg-slate-50 pb-10">
       <div className="mx-auto max-w-7xl px-4 pt-8">

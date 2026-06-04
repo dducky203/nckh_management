@@ -18,13 +18,19 @@ import {
   EventNote,
   AdminPanelSettings,
   SupervisorAccount,
+  Psychology,
 } from "@mui/icons-material";
 
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../constants";
 import { AuthContext } from "../../context/AuthContext";
 import { logout } from "../../utils/cookieUtils";
 import { useToast } from "../../context/ToastContext";
-import { hasNckhStaffAccess, isAssistantRole, normalizeRoleName } from "../../utils/permissions";
+import {
+  canAccessQuotaPages,
+  hasNckhStaffAccess,
+  isAssistantRole,
+  normalizeRoleName,
+} from "../../utils/permissions";
 import Modal from "../common/Modal";
 import logoFita from "../../assets/logo_fita.png";
 import noAvatarImg from "../../assets/no-avatar-user.png";
@@ -71,6 +77,7 @@ const Header = () => {
   const { user } = useContext(AuthContext);
   const userNckhStaff = hasNckhStaffAccess(user);
   const userIsAssistant = isAssistantRole(user);
+  const userCanAccessQuota = canAccessQuotaPages(user);
 
   const toggleDropdown = (dropdownName) => {
     const nextDropdown = activeDropdown === dropdownName ? null : dropdownName;
@@ -195,40 +202,18 @@ const Header = () => {
                               <Settings className="w-4 h-4 mr-2 text-gray-400" />
                               <span>Cấu hình NCKH</span>
                             </Link>
-                            <Link
-                              to="/news/manager"
-                              className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                              onClick={closeUserMenu}
-                            >
-                              <Newspaper className="w-4 h-4 mr-2 text-gray-400" />
-                              <span>Quản lý tin tức</span>
-                            </Link>
-                            <Link
-                              to="/events/manage"
-                              className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                              onClick={closeUserMenu}
-                            >
-                              <EventNote className="w-4 h-4 mr-2 text-gray-400" />
-                              <span>Quản lý sự kiện</span>
-                            </Link>
                           </>
                         )}
-                        <Link
-                          to="/activity/standards"
-                          className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                          onClick={closeUserMenu}
-                        >
-                          <BarChart className="w-4 h-4 mr-2 text-gray-400" />
-                          <span>Định mức hoạt động</span>
-                        </Link>
-                        <Link
-                          to="/research-groups/manager"
-                          className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                          onClick={closeUserMenu}
-                        >
-                          <BarChart className="w-4 h-4 mr-2 text-gray-400" />
-                          <span>Quản lý nhóm NCKH</span>
-                        </Link>
+                        {userCanAccessQuota && (
+                          <Link
+                            to="/activity/standards"
+                            className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
+                            onClick={closeUserMenu}
+                          >
+                            <BarChart className="w-4 h-4 mr-2 text-gray-400" />
+                            <span>Định mức hoạt động</span>
+                          </Link>
+                        )}
                         <Link
                           to="/research-groups/profile"
                           className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
@@ -547,22 +532,6 @@ const Header = () => {
                     >
                       <Settings className="w-4 h-4 mr-2" />
                       Cấu hình NCKH
-                    </Link>
-                    <Link
-                      to="/news/manager"
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-mainColor"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <Newspaper className="w-4 h-4 mr-2" />
-                      Quản lý tin tức
-                    </Link>
-                    <Link
-                      to="/events/manage"
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-mainColor"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <EventNote className="w-4 h-4 mr-2" />
-                      Quản lý sự kiện
                     </Link>
                   </>
                 )}

@@ -8,7 +8,7 @@ import {
   Groups,
   Topic,
 } from "@mui/icons-material";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Button from "../../components/common/Button";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
@@ -21,7 +21,9 @@ import {
   getResearchGroupStatus,
   SUCCESS_MESSAGES,
 } from "../../constants";
+import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
+import { canAccessQuotaPages } from "../../utils/permissions";
 import researchGroupService from "../../services/researchGroupService";
 import DocumentFormModal from "./components/DocumentFormModal";
 import ResearchGroupProfileHeader from "./components/ResearchGroupProfileHeader";
@@ -37,6 +39,8 @@ function unwrapList(payload) {
 
 const ResearchGroupProfile = () => {
   const toast = useToast();
+  const { user } = useContext(AuthContext);
+  const quotaAllowed = canAccessQuotaPages(user);
   const [myGroups, setMyGroups] = useState([]);
   const [currentGroup, setCurrentGroup] = useState(null);
   const [documents, setDocuments] = useState([]);
@@ -278,15 +282,17 @@ const ResearchGroupProfile = () => {
                 <span>{currentGroup.topicName || "—"}</span>
               </div>
 
-              {isQuotaGroup(currentGroup) && currentGroup.status === "APPROVED" && (
-                <Link
-                  to="/activity/group-quota"
-                  className="inline-flex items-center gap-2 rounded-xl bg-mainColor px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-mainColor/90 transition"
-                >
-                  <Calculate sx={{ fontSize: 16 }} />
-                  Định mức nhóm NCKH
-                </Link>
-              )}
+              {quotaAllowed &&
+                isQuotaGroup(currentGroup) &&
+                currentGroup.status === "APPROVED" && (
+                  <Link
+                    to="/activity/group-quota"
+                    className="inline-flex items-center gap-2 rounded-xl bg-mainColor px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-mainColor/90 transition"
+                  >
+                    <Calculate sx={{ fontSize: 16 }} />
+                    Định mức nhóm NCKH
+                  </Link>
+                )}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2 shrink-0">

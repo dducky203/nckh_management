@@ -5,8 +5,11 @@ import com.example.server.DTO.nckh.PlanSelectionStatisticsResponse;
 import com.example.server.DTO.nckh.PlanSelectionWindowResponse;
 import com.example.server.DTO.nckh.SelectPlanRequest;
 import com.example.server.domain.nckh.UserPlanYear;
+import com.example.server.domain.User;
+import com.example.server.repository.UserRepository;
 import com.example.server.service.nckh.UserPlanYearService;
 import com.example.server.utils.PlanSelectionWindowUtil;
+import com.example.server.utils.SecurityUtils;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -23,9 +26,11 @@ import java.time.format.DateTimeFormatter;
 public class NckhPlanController {
 
     private final UserPlanYearService service;
+    private final UserRepository userRepository;
 
-    public NckhPlanController(UserPlanYearService service) {
+    public NckhPlanController(UserPlanYearService service, UserRepository userRepository) {
         this.service = service;
+        this.userRepository = userRepository;
     }
 
 
@@ -59,11 +64,15 @@ public class NckhPlanController {
 
     @PostMapping("/select")
     public UserPlanYear select(@RequestBody SelectPlanRequest req, @RequestParam Integer userId) {
+        User user = userRepository.findById(userId).orElse(null);
+        SecurityUtils.assertCanAccessQuota(user);
         return service.selectAndLock(userId, req.planId, req.academicYear);
     }
 
     @GetMapping("/current")
     public ResponseEntity<?> current(@RequestParam Integer userId, @RequestParam Integer year) {
+        User user = userRepository.findById(userId).orElse(null);
+        SecurityUtils.assertCanAccessQuota(user);
         UserPlanYear userPlanYear = service.getPlanCurrent(userId, year);
         if (userPlanYear != null)  return ResponseEntity.ok(new SuccessResponseDTO<>(userPlanYear, "Lấy thành công thông tin phương án năm " + year));
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Bạn chưa chọn phương án cho năm này");

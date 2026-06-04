@@ -86,17 +86,17 @@ const Login = () => {
       power: 2,
     },
     {
-      email: "member789",
-      password: "member456",
+      email: "anthu@gmail.com",
+      password: "Userfita@12345",
       role: "Member (Thành viên)",
       power: 3,
     },
     {
-      email: "guest123",
-      password: "guest789",
-      role: "Guest (Khách)",
+      email: "user38@example.com",
+      password: "Userfita@12345",
+      role: " Sinh viên",
       power: 4,
-    },
+    }
   ];
 
   const selectDemoAccount = (account) => {

@@ -14,6 +14,8 @@ import com.example.server.domain.Title;
 import com.example.server.domain.User;
 import com.example.server.domain.nckh.*;
 import com.example.server.domain.ResearchGroup;
+import com.example.server.domain.ResearchGroupMember;
+import com.example.server.repository.ResearchGroupMemberRepository;
 import com.example.server.repository.UserRepository;
 import com.example.server.repository.nckh.*;
 import com.example.server.service.researchgroup.ResearchGroupQuotaService;
@@ -32,6 +34,7 @@ public class NckhActivityService {
     private final UserPlanYearRepository planYearRepo;
     private final UserRepository userRepo;
     private final ResearchGroupQuotaService quotaGroupService;
+    private final ResearchGroupMemberRepository groupMemberRepo;
 
     public NckhActivityService(
             NckhActivityRepository activityRepo,
@@ -40,7 +43,8 @@ public class NckhActivityService {
             UserPlanYearRepository planYearRepo,
             NckhTieuChiDinhMucRepository dinhMucRepo,
             UserRepository userRepo,
-            ResearchGroupQuotaService quotaGroupService) {
+            ResearchGroupQuotaService quotaGroupService,
+            ResearchGroupMemberRepository groupMemberRepo) {
         this.activityRepo = activityRepo;
         this.dinhMucRepo = dinhMucRepo;
         this.contribRepo = contribRepo;
@@ -48,6 +52,7 @@ public class NckhActivityService {
         this.planYearRepo = planYearRepo;
         this.userRepo = userRepo;
         this.quotaGroupService = quotaGroupService;
+        this.groupMemberRepo = groupMemberRepo;
     }
 
     @Transactional
@@ -509,12 +514,49 @@ public class NckhActivityService {
         String chucDanh = user.getIdTitle().getName();
         Integer phuongAn = userPlan.getPlanId();
 
-        // 3. Get statistics from repository
-        return activityRepo.getStatisticsByUserAndYear(
-                userId,
-                academicYear,
-                phuongAn,
-                chucDanh);
+        List<ActivityStatisticsResponse> personal = activityRepo.getStatisticsByUserAndYear(
+                userId, academicYear, phuongAn, chucDanh);
+
+        Optional<ResearchGroup> quotaGroup = quotaGroupService.findApprovedQuotaGroup(userId);
+        if (quotaGroup.isEmpty()) {
+            return personal;
+        }
+
+        List<Integer> memberIds = groupMemberRepo.findByGroupId(quotaGroup.get().getId()).stream()
+                .map(ResearchGroupMember::getUserId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        int memberCount = Math.max(1, memberIds.size());
+        if (memberIds.isEmpty()) {
+            return personal;
+        }
+
+        Map<String, ActivityStatisticsDto> byCatalog = new LinkedHashMap<>();
+        for (ActivityStatisticsResponse row : personal) {
+            byCatalog.put(row.getCatalogCode(), ActivityStatisticsDto.from(row));
+        }
+
+        for (ActivityStatisticsResponse groupRow : activityRepo.getGroupStatsByYear(memberIds, academicYear)) {
+            double groupHours = groupRow.getTotalQuotaHours() != null ? groupRow.getTotalQuotaHours() : 0;
+            if (groupHours <= 0) continue;
+            String code = groupRow.getCatalogCode();
+            double myHours = 0;
+            ActivityStatisticsDto existing = byCatalog.get(code);
+            if (existing != null) {
+                myHours = existing.getOwnQuotaHours() != null ? existing.getOwnQuotaHours() : 0;
+                existing.applyGroupHoursFromTeam(myHours, groupHours, memberCount);
+            } else {
+                ActivityStatisticsDto created = ActivityStatisticsDto.fromGroupRow(groupRow, 0);
+                created.setPlanContext(phuongAn, chucDanh);
+                created.applyGroupHoursFromTeam(0, groupHours, memberCount);
+                byCatalog.put(code, created);
+            }
+        }
+
+        List<ActivityStatisticsResponse> result = new ArrayList<>(byCatalog.size());
+        result.addAll(byCatalog.values());
+        return result;
     }
 
 

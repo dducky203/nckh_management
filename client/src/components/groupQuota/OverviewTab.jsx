@@ -45,6 +45,12 @@ export default function OverviewTab({ quota, stats, onNavigateTab }) {
             </p>
             <p className="text-xs text-slate-500">
               {stats.achievedCount}/{stats.evaluatedCount} tiêu chí · {round2(stats.myTotalHours)} giờ quy đổi
+              {stats.groupCompletionPercent != null && (
+                <> · Nhóm <strong>{round2(stats.groupCompletionPercent)}%</strong></>
+              )}
+              {stats.myCreditedTotalHours != null && (
+                <> · Giờ được tính <strong>{round2(stats.myCreditedTotalHours)}</strong></>
+              )}
             </p>
           </div>
         </div>
@@ -74,8 +80,9 @@ export default function OverviewTab({ quota, stats, onNavigateTab }) {
       </div>
 
       <p className="text-xs text-slate-500 bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">
-        Mỗi hoạt động cộng vào nhóm theo hệ số <strong>×{quota.memberFactor ?? 0.8}</strong>.
-        Đạt tiêu chí khi <strong>(tổng nhóm ÷ {quota.memberCount} TV) ≥ định mức</strong> — có thể được đồng đội gánh.
+        <strong>% hoàn thành nhóm</strong> theo dõi tiến độ tập thể.{" "}
+        <strong>Giờ cuối</strong> = (giờ nhóm ÷ {quota.memberCount} TV) + phần vượt tổng nhóm — không cộng chồng
+        (seminar 10h, 4 TV → 2,5h mỗi người).
       </p>
 
       {!quota.isLeader && personalCriteria.length > 0 && (

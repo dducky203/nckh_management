@@ -20,7 +20,9 @@ import com.google.genai.types.*;
 
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class GeminiChatService {
@@ -62,6 +64,11 @@ public class GeminiChatService {
     }
 
     public ChatResponse chat(String userMessage, String conversationId) {
+        if (SecurityUtils.getCurrentUserId() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Vui lòng đăng nhập để sử dụng trợ lý chat.");
+        }
         try {
             logger.info("Processing chat request. Message length: {}", userMessage.length());
 
@@ -162,6 +169,57 @@ public class GeminiChatService {
 
         } catch (Exception e) {
             logger.error("Error analyzing user history: {}", e.getMessage(), e);
+            return "Lỗi trong quá trình phân tích: " + e.getMessage();
+        }
+    }
+
+    /**
+     * Phân tích tổng hợp toàn bộ lịch sử chat của TẤT CẢ người dùng.
+     * Mục tiêu: tìm ra xu hướng, chủ đề phổ biến, vấn đề đa số gặp phải.
+     */
+    public String analyzeAllUsersHistory(String historyText, int totalMessages, int totalUsers) {
+        try {
+            String prompt = "Bạn là một chuyên gia phân tích dữ liệu người dùng (Data Analyst) và quản trị hệ thống thông tin học thuật. "
+                    + "Dưới đây là tổng hợp lịch sử chat của " + totalUsers + " người dùng ("
+                    + totalMessages + " tin nhắn) với "
+                    + Constants.CHAT_ASSISTANT_DISPLAY_NAME
+                    + " — chatbot của hệ thống Quản lý Nghiên cứu Khoa học. "
+                    + "Nhiệm vụ của bạn là phân tích toàn bộ để trả lời: "
+                    + "Đa số người dùng đang hỏi về điều gì? Chức năng nào được quan tâm nhiều nhất? "
+                    + "Vấn đề / nỗi đau phổ biến nhất là gì? Hệ thống cần cải thiện điều gì? "
+                    + "Hãy đưa ra nhận định dựa trên dữ liệu, súc tích và có thể hành động được (actionable insights).\n\n"
+                    + "Dữ liệu chat tổng hợp:\n" + historyText;
+
+            Schema schema = Schema.builder()
+                    .type(Type.Known.OBJECT)
+                    .properties(Map.of(
+                            "topTopics", Schema.builder().type(Type.Known.STRING)
+                                    .description("Các chủ đề / chức năng được hỏi nhiều nhất (liệt kê theo thứ tự ưu tiên)").build(),
+                            "commonPainPoints", Schema.builder().type(Type.Known.STRING)
+                                    .description("Vấn đề / khó khăn phổ biến nhất mà đa số người dùng gặp phải").build(),
+                            "topQuestions", Schema.builder().type(Type.Known.STRING)
+                                    .description("Các câu hỏi điển hình được đặt ra nhiều nhất (trích dẫn hoặc tổng hợp)").build(),
+                            "usageTrends", Schema.builder().type(Type.Known.STRING)
+                                    .description("Xu hướng sử dụng hệ thống, thói quen và mẫu hành vi nổi bật").build(),
+                            "systemRecommendations", Schema.builder().type(Type.Known.STRING)
+                                    .description("Đề xuất cải thiện hệ thống dựa trên dữ liệu: tính năng cần thêm, UX cần cải thiện, tài liệu cần bổ sung").build()
+                    ))
+                    .required(List.of("topTopics", "commonPainPoints", "topQuestions", "usageTrends", "systemRecommendations"))
+                    .build();
+
+            GenerateContentConfig config = GenerateContentConfig.builder()
+                    .temperature(0.4f)
+                    .maxOutputTokens(8192)
+                    .responseMimeType("application/json")
+                    .responseSchema(schema)
+                    .build();
+
+            GenerateContentResponse response = geminiClient.models.generateContent(model, prompt, config);
+            String text = response.text();
+            return (text != null && !text.isBlank()) ? text : "Không thể phân tích tổng quan.";
+
+        } catch (Exception e) {
+            logger.error("Error analyzing all users history: {}", e.getMessage(), e);
             return "Lỗi trong quá trình phân tích: " + e.getMessage();
         }
     }

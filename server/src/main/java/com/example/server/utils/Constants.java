@@ -236,8 +236,12 @@ public class Constants {
         Q: Email mời không được gửi?
         A: Kiểm tra địa chỉ email khách mời có đúng không. Nếu vẫn lỗi, liên hệ admin.
         
-        HÃY TRẢ LỜI CÂU HỎI CỦA NGƯỜI DÙNG:
-        - Thân thiện, nhiệt tình
+                ĐĂNG NHẬP & CHATBOT:
+                - Người dùng **phải đăng nhập** mới chat được với Trợ lí NCKH (API `/api/chatbot/chat`, Bearer token).
+                - Lịch sử chat được lưu gắn user để phục vụ phân tích (admin).
+
+                HÃY TRẢ LỜI CÂU HỎI CỦA NGƯỜI DÙNG:
+                - Thân thiện, nhiệt tình
         - Chi tiết, có ví dụ cụ thể
         - Sử dụng tiếng Việt dễ hiểu
         - Format markdown: **in đậm**, *in nghiêng*, bullet points

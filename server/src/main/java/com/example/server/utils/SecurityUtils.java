@@ -1,7 +1,9 @@
 package com.example.server.utils;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.example.server.domain.User;
 import com.example.server.helpers.CustomUserDetails;
@@ -70,5 +72,44 @@ public class SecurityUtils {
      */
     public static boolean isStrictAdminPortalUser(User user) {
         return isAdmin(user) && !isAssistant(user);
+    }
+
+    /** power = 4 hoặc chức danh Sinh viên — không xem định mức cá nhân/nhóm. */
+    public static boolean isStudent(User user) {
+        if (user == null) {
+            return false;
+        }
+        if (user.getPower() != null && user.getPower() == 4) {
+            return true;
+        }
+        if (user.getIdTitle() != null && user.getIdTitle().getName() != null) {
+            return "Sinh viên".equalsIgnoreCase(user.getIdTitle().getName().trim());
+        }
+        return false;
+    }
+
+    public static User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()
+                && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
+            return userDetails.getUser();
+        }
+        return null;
+    }
+
+    public static void assertCanAccessQuota(User user) {
+        if (isStudent(user)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Sinh viên không được truy cập định mức hoạt động cá nhân và định mức nhóm.");
+        }
+    }
+
+    public static void assertCurrentUserCanAccessQuota() {
+        User user = getCurrentUser();
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Vui lòng đăng nhập");
+        }
+        assertCanAccessQuota(user);
     }
 }

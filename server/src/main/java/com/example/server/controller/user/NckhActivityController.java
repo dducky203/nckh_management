@@ -4,10 +4,13 @@ import com.example.server.DTO.nckh.CreateActivityRequest;
 import com.example.server.DTO.nckh.DashboardResponse;
 import com.example.server.DTO.nckh.UpsertContributorsRequest;
 import com.example.server.DTO.nckh.ActivityStatisticsResponse;
+import com.example.server.domain.User;
 import com.example.server.domain.nckh.NckhActivity;
 import com.example.server.domain.nckh.NckhActivityContributor;
+import com.example.server.repository.UserRepository;
 import com.example.server.service.nckh.NckhActivityService;
 import com.example.server.service.nckh.NckhDashboardService;
+import com.example.server.utils.SecurityUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,10 +22,15 @@ public class NckhActivityController {
 
     private final NckhActivityService activityService;
     private final NckhDashboardService dashboardService;
+    private final UserRepository userRepository;
 
-    public NckhActivityController(NckhActivityService activityService, NckhDashboardService dashboardService) {
+    public NckhActivityController(
+            NckhActivityService activityService,
+            NckhDashboardService dashboardService,
+            UserRepository userRepository) {
         this.activityService = activityService;
         this.dashboardService = dashboardService;
+        this.userRepository = userRepository;
     }
 
     // TODO: thay userId bằng SecurityContext/session
@@ -107,6 +115,8 @@ public class NckhActivityController {
     public List<ActivityStatisticsResponse> getStatistics(
             @RequestParam Integer userId,
             @RequestParam Integer academicYear) {
+        User user = userRepository.findById(userId).orElse(null);
+        SecurityUtils.assertCanAccessQuota(user);
         return activityService.getStatistics(userId, academicYear);
     }
 

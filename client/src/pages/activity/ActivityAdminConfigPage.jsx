@@ -102,6 +102,15 @@ const adminCards = [
     tone: "from-purple-500 to-indigo-600",
     cta: "Mở phân tích AI",
   },
+  {
+    title: "Thống kê định mức nhóm",
+    description:
+      "Theo dõi % hoàn thành của từng nhóm và tỷ lệ tham gia của từng thành viên.",
+    to: "/activity/admin/group-quota",
+    icon: QueryStatsIcon,
+    tone: "from-fuchsia-500 to-violet-600",
+    cta: "Mở thống kê nhóm",
+  },
 ];
 
 export default function ActivityAdminConfigPage() {

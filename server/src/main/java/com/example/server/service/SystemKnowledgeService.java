@@ -122,7 +122,15 @@ public class SystemKnowledgeService {
 
                 "api", "rest", "endpoint",
 
-                "assistant", "tro ly", "ban la ai", "ten cua ban"
+                "assistant", "tro ly", "ban la ai", "ten cua ban",
+
+                "dashboard", "cong tac", "contributor", "minh chung", "nop ho so",
+
+                "wos", "scopus", "bai bao", "hoi thao", "seminar", "de tai",
+
+                "year quota", "cau hinh dinh muc", "pl2", "phu luc",
+
+                "chat phai", "token", "jwt", "bao mat"
 
         };
 
@@ -200,7 +208,7 @@ public class SystemKnowledgeService {
 
                 - **Hồ sơ cá nhân**: `/profile`
 
-                - **Trợ lí NCKH** (ô chat nổi; API: `POST /api/public/chatbot/chat`)
+                - **Trợ lí NCKH** (ô chat nổi; cần đăng nhập; API: `POST /api/chatbot/chat`)
 
 
 
@@ -240,7 +248,7 @@ public class SystemKnowledgeService {
 
                 - **Tin tức công khai**: `GET /api/public/news`, `GET /api/public/news/{id}`
 
-                - **Trợ lí NCKH (chat)**: `POST /api/public/chatbot/chat`
+                - **Trợ lí NCKH (chat, đã đăng nhập)**: `POST /api/chatbot/chat`
 
 
 
@@ -631,6 +639,398 @@ public class SystemKnowledgeService {
 
 
                 Nếu thiếu quyền thao tác, vui lòng liên hệ admin để cấp đúng role/power.
+
+                """
+
+        ));
+
+
+
+        list.add(new KnowledgeRule(
+
+                List.of("dang nhap", "chat", "tro ly", "chatbot", "hoi chat"),
+
+                2,
+
+                """
+
+                **Trợ lí NCKH (chatbot)** chỉ hoạt động khi bạn **đã đăng nhập**.
+
+                - Đăng nhập tại **`/login`** (email + mật khẩu).
+
+                - Sau khi đăng nhập, mở ô chat góc dưới phải màn hình (biểu tượng tên lửa).
+
+                - API: **`POST /api/chatbot/chat`** (kèm header `Authorization: Bearer <token>`).
+
+                - Chưa đăng nhập: không gửi được tin; hệ thống trả **401** hoặc hiện nút **Đăng nhập** trong khung chat.
+
+                """
+
+        ));
+
+
+
+        list.add(new KnowledgeRule(
+
+                List.of("phuong an", "chon pa", "plan", "dang ky phuong an", "window"),
+
+                2,
+
+                """
+
+                **Phương án (PA) theo năm** — mỗi năm học bạn chọn một phương án (Bảng 1–6) để áp định mức cá nhân:
+
+                - Xem / chọn phương án: **`/activity/standards`** (khung chọn năm + phương án).
+
+                - Trang tổng hợp NCKH user: **`/activity/user`**.
+
+                - API gợi ý:
+
+                  - `GET /api/nckh/plan/window` — khung thời gian được phép đăng ký.
+
+                  - `GET /api/nckh/plan/current` — phương án hiện tại.
+
+                  - `POST /api/nckh/plan/select` — chọn / đổi phương án.
+
+                  - `GET /api/nckh/plan/statistics` — thống kê (thường dành cán bộ).
+
+                Định mức số liệu theo **chức danh** (GS/PGS, TS, ThS, KS/CN) lấy từ bảng tiêu chí năm đã cấu hình.
+
+                """
+
+        ));
+
+
+
+        list.add(new KnowledgeRule(
+
+                List.of("activity/user", "tong quan nckh", "hub nckh", "chuc nang nckh user"),
+
+                1,
+
+                """
+
+                Trang **`/activity/user`** là **cổng NCKH cho người dùng**, gồm các lối tắt:
+
+                - **Định mức hoạt động** → `/activity/standards`
+
+                - **Định mức nhóm** (NCM / Xuất sắc / Tinh hoa) → `/activity/group-quota`
+
+                - **Hồ sơ nhóm** → `/research-groups/profile`
+
+                - **Danh sách nhóm** → `/research-groups`
+
+                - Khai báo từng loại hoạt động → `/activity/declarations/...`
+
+                """
+
+        ));
+
+
+
+        list.add(new KnowledgeRule(
+
+                List.of("dinh muc ca nhan", "activity/standards", "doi chieu", "tieu chi nam"),
+
+                2,
+
+                """
+
+                **`/activity/standards`** — Định mức & đối chiếu **cá nhân**:
+
+                - Chọn **năm** và **phương án** đã đăng ký.
+
+                - Bảng tiêu chí: định mức tối thiểu, giờ quy đổi/đơn vị, tiến độ thực tế từ hoạt động **đã duyệt**.
+
+                - Nếu bạn thuộc nhóm NCM/Xuất sắc/Tinh hoa, có thêm panel **Định mức nhóm** (tóm tắt); chi tiết tại `/activity/group-quota`.
+
+                - API đọc định mức: `GET /api/nckh/tieu-chi-dinh-muc` (lọc năm, phương án, chức danh).
+
+                """
+
+        ));
+
+
+
+        list.add(new KnowledgeRule(
+
+                List.of("gio quy doi", "dat dinh muc nhom", "phan tram", "bang 2", "tinh hoa", "xuat sac"),
+
+                2,
+
+                """
+
+                **Định mức nhóm** (`/activity/group-quota`) — áp dụng khi bạn là thành viên nhóm loại **NCM**, **Xuất sắc** hoặc **Tinh hoa** (nhóm **đã duyệt**):
+
+                - Hệ thống tổng hợp từ hoạt động NCKH **đã duyệt** (giờ, số lượng theo tiêu chí).
+
+                - **Giờ cá nhân** (thành viên nhóm định mức): phần chia đều giờ nhóm + phần tự làm vượt định mức nhóm (tránh cộng trùng seminar/hội thảo chung).
+
+                - **% hoàn thành nhóm**: trung bình tiến độ các chỉ tiêu (gồm chỉ tiêu Bảng 2 với nhóm NCM).
+
+                - Trưởng nhóm có thêm phần đánh giá / tổng hợp (nếu được phân quyền).
+
+                - API: `GET /api/research-groups/quota/my-quota`, `my-stats`, `POST .../my-calculate`.
+
+                """
+
+        ));
+
+
+
+        list.add(new KnowledgeRule(
+
+                List.of("nop", "duyet", "cho duyet", "tu choi", "trang thai", "submit", "draft"),
+
+                2,
+
+                """
+
+                **Quy trình khai báo NCKH** (người dùng):
+
+                1. Vào đúng form khai báo (`/activity/declarations/...`).
+
+                2. Nhập thông tin, đính kèm **minh chứng** (file/ảnh).
+
+                3. Thêm **cộng tác viên** nếu có (chia tỷ lệ đóng góp).
+
+                4. **Lưu nháp** hoặc **Nộp** để chờ duyệt.
+
+                5. Theo dõi trạng thái tại **`/activity/user`** hoặc danh sách hoạt động của bạn.
+
+                **Duyệt / từ chối** do cán bộ có quyền (`/activity/admin/approval` hoặc cổng admin NCKH).
+
+                """
+
+        ));
+
+
+
+        list.add(new KnowledgeRule(
+
+                List.of("cong tac", "contributor", "dong tac gia", "ty le dong gop"),
+
+                2,
+
+                """
+
+                **Cộng tác viên** khi khai báo hoạt động NCKH:
+
+                - Thêm người cùng thực hiện và **tỷ lệ %** đóng góp (tổng thường = 100%).
+
+                - Giờ / số lượng quy đổi có thể chia theo tỷ lệ khi tính định mức.
+
+                - Chỉnh sửa khi hồ sơ còn ở trạng thái cho phép sửa (nháp hoặc bị trả về).
+
+                """
+
+        ));
+
+
+
+        list.add(new KnowledgeRule(
+
+                List.of("loai khai bao", "seminar", "bai bao", "wos", "scopus", "de xuat", "hoi dong"),
+
+                2,
+
+                """
+
+                **Bản đồ loại khai báo** (route chính):
+
+                | Loại | Route |
+
+                |------|--------|
+
+                | Seminar | `/activity/declarations/seminar` |
+
+                | Hội thảo / tham luận | `/activity/declarations/conference` |
+
+                | Bài báo quốc tế | `/activity/declarations/international-paper` |
+
+                | Bài báo tiếng Việt | `/activity/declarations/vietnamese-paper` |
+
+                | Kỷ yếu / proceeding | `/activity/declarations/proceeding` |
+
+                | Bài tổng quan | `/activity/declarations/review-paper` |
+
+                | Tư vấn kỹ thuật | `/activity/declarations/tech-consult` |
+
+                | Quy trình / tiêu chuẩn KT | `/activity/declarations/tech-procedure` |
+
+                | Đề xuất đề tài | `/activity/declarations/proposal` |
+
+                | Đề tài đã duyệt / nghiệm thu | `/activity/declarations/approved-task` |
+
+                | Hội đồng | `/activity/declarations/council` |
+
+                | Mời chuyên gia | `/activity/declarations/expert-invite` |
+
+                | Hoạt động khác | `/activity/declarations/other-activity` |
+
+                """
+
+        ));
+
+
+
+        list.add(new KnowledgeRule(
+
+                List.of("tro ly nckh", "nckh staff", "activity/admin", "cau hinh dinh muc", "year-quota"),
+
+                2,
+
+                """
+
+                **Cán bộ vận hành NCKH** (role **assistant** / **admin** hoặc lãnh đạo khoa) — các màn thường gặp:
+
+                - **`/activity/admin`** — cổng quản trị NCKH.
+
+                - **`/activity/admin/approval`** — duyệt / từ chối khai báo.
+
+                - **`/activity/admin/year-quota`** — cấu hình **định mức theo năm** (import Excel, **quét AI** PDF/ảnh).
+
+                - **`/activity/admin/config`** — cấu hình bổ sung.
+
+                - **`/activity/admin/plan-statistics`** — thống kê phương án.
+
+                - **`/admin/chat-analysis`** — phân tích lịch sử chatbot (AI).
+
+                - **`/research-groups/manager`** — duyệt / quản lý nhóm NC.
+
+                - **`/user/manager`** — quản lý user (thường **admin** thuần, không phải Trợ lí NCKH).
+
+                **Quét AI định mức**: upload PDF/ảnh bảng PA + Phụ lục 2 → AI gán `pl2GroupKey` → hệ thống ghép và lưu tiêu chí.
+
+                """
+
+        ));
+
+
+
+        list.add(new KnowledgeRule(
+
+                List.of("import excel", "excel dinh muc", "ai scan", "quet file", "pdf dinh muc"),
+
+                2,
+
+                """
+
+                **Nhập định mức năm** (cán bộ, tại `/activity/admin/year-quota`):
+
+                - **Import Excel** theo mẫu hệ thống (hàng loạt tiêu chí × phương án × chức danh).
+
+                - **Quét AI**: tải PDF/ảnh quy định định mức; AI trích xuất Bảng 1–6 + Phụ lục 2.
+
+                - AI gán **`pl2GroupKey`** để ghép dòng PA với dòng quy đổi giờ (không cần khớp chữ tên thủ công).
+
+                - Xem trước bảng → chỉnh sửa → lưu vào năm đang chọn.
+
+                User thường **không** vào màn này; chỉ xem kết quả tại `/activity/standards`.
+
+                """
+
+        ));
+
+
+
+        list.add(new KnowledgeRule(
+
+                List.of("phan tich chat", "chat analysis", "lich su chat", "hanh vi nguoi dung"),
+
+                2,
+
+                """
+
+                **Phân tích chatbot** (admin, `/admin/chat-analysis`):
+
+                - Danh sách user đã từng chat với Trợ lí NCKH.
+
+                - Xem **lịch sử chat phân trang** (server trả từng trang, không tải hết một lần).
+
+                - **Phân tích AI cá nhân** — vấn đề & gợi ý theo từng user.
+
+                - **Phân tích tổng quan** — chủ đề phổ biến, pain point, đề xuất cải thiện hệ thống.
+
+                API: `/api/v1/admin/chat-analysis/...`
+
+                """
+
+        ));
+
+
+
+        list.add(new KnowledgeRule(
+
+                List.of("dashboard", "thong ke ca nhan", "activities/my", "tien do"),
+
+                2,
+
+                """
+
+                **Theo dõi tiến độ NCKH cá nhân**:
+
+                - Trang định mức: **`/activity/standards`** (đối chiếu chỉ tiêu vs thực tế).
+
+                - API dashboard: `GET /api/nckh/dashboard`, `GET /api/nckh/activities/my`.
+
+                - Hoạt động chỉ tính vào định mức khi ở trạng thái **đã duyệt** (tùy cấu hình workflow).
+
+                """
+
+        ));
+
+
+
+        list.add(new KnowledgeRule(
+
+                List.of("quan ly nhom", "research-groups/manager", "duyet nhom", "loai nhom"),
+
+                2,
+
+                """
+
+                **Nhóm nghiên cứu** — hai luồng:
+
+                **Người dùng**
+
+                - `/research-groups` — xem, đăng ký tạo nhóm.
+
+                - `/research-groups/profile` — hồ sơ, tài liệu, link Google Sheet.
+
+                **Cán bộ quản lý**
+
+                - `/research-groups/manager` — duyệt nhóm, chỉnh loại (**NCM** / **Xuất sắc** / **Tinh hoa** / thường).
+
+                Nhóm **đã duyệt** + đúng loại mới tính **định mức nhóm** tại `/activity/group-quota`.
+
+                """
+
+        ));
+
+
+
+        list.add(new KnowledgeRule(
+
+                List.of("loi", "khong gui duoc", "401", "403", "loi he thong", "bao loi"),
+
+                2,
+
+                """
+
+                **Xử lý lỗi thường gặp**:
+
+                - **401 / bị đăng xuất**: token hết hạn → đăng nhập lại tại `/login`.
+
+                - **403 / không đủ quyền**: tài khoản thiếu role (admin / assistant / lãnh đạo) → liên hệ quản trị.
+
+                - **Chatbot không trả lời**: kiểm tra đã đăng nhập; thử tải lại trang; kiểm tra mạng.
+
+                - **Quét AI thiếu dòng**: file mờ/cắt bảng → chụp lại rõ hoặc import Excel.
+
+                - **Định mức nhóm = 0**: chưa có hoạt động duyệt hoặc chưa thuộc nhóm đúng loại.
+
+                Hỗ trợ kỹ thuật: **cntt@vnua.edu.vn**
 
                 """
 

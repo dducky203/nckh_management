@@ -1,4 +1,5 @@
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef, useEffect, useContext } from "react";
+import { Link } from "react-router-dom";
 import {
   Send,
   Person,
@@ -16,6 +17,7 @@ import ReactMarkdown from "react-markdown";
 import logo from "../../assets/logo_fita.png";
 import chatbotService from "../../services/chatbotService";
 import { CHAT_ASSISTANT_DISPLAY_NAME, CHAT_ASSISTANT_ROLE } from "../../constants";
+import { AuthContext } from "../../context/AuthContext";
 
 const INITIAL_MESSAGE =
   `Xin chào! Tôi là **${CHAT_ASSISTANT_DISPLAY_NAME}** (vai trò: \`${CHAT_ASSISTANT_ROLE}\`) — trợ lý NCKH trên hệ thống này.\n\nTôi ưu tiên trả lời các nội dung trong hệ thống như:\n- Định mức theo năm, quét AI, import Excel\n- Khai báo hoạt động NCKH\n- Nhóm nghiên cứu và định mức nhóm\n- Quy trình duyệt, phân quyền, thao tác theo menu\n\nBạn có thể chọn gợi ý nhanh bên dưới hoặc đặt câu hỏi trực tiếp.`;
@@ -47,7 +49,13 @@ const QUICK_ACTIONS = [
   },
 ];
 
+const LOGIN_REQUIRED_MESSAGE =
+  "Bạn cần **đăng nhập** để chat với trợ lý NCKH. Sau khi đăng nhập, mở lại cửa sổ chat để tiếp tục.";
+
 const ChatBotWidget = () => {
+  const { isAuthenticated } = useContext(AuthContext);
+  const loggedIn = isAuthenticated();
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
@@ -72,8 +80,8 @@ const ChatBotWidget = () => {
   }, [messages]);
 
   const canSend = useMemo(
-    () => inputText.trim().length > 0 && !isTyping,
-    [inputText, isTyping]
+    () => loggedIn && inputText.trim().length > 0 && !isTyping,
+    [loggedIn, inputText, isTyping]
   );
 
   const addBotMessage = (text) => {
@@ -90,6 +98,7 @@ const ChatBotWidget = () => {
 
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
+    if (!loggedIn) return;
 
     const userMessage = {
       id: Date.now(),
@@ -124,9 +133,14 @@ const ChatBotWidget = () => {
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
       console.error("Chatbot request failed:", error);
-      addBotMessage(
-        "Hiện tại tôi chưa phản hồi được từ server. Bạn thử lại sau vài giây hoặc kiểm tra kết nối."
-      );
+      const msg = error?.message || "";
+      if (msg.toLowerCase().includes("đăng nhập")) {
+        addBotMessage(LOGIN_REQUIRED_MESSAGE);
+      } else {
+        addBotMessage(
+          "Hiện tại tôi chưa phản hồi được từ server. Bạn thử lại sau vài giây hoặc kiểm tra kết nối."
+        );
+      }
     } finally {
       setIsTyping(false);
     }
@@ -292,8 +306,10 @@ const ChatBotWidget = () => {
                     return (
                       <button
                         key={item.label}
-                        onClick={() => setInputText(item.question)}
-                        className="px-2 py-1.5 text-[10px] bg-slate-50 text-slate-700 rounded-lg border border-slate-200 hover:bg-mainColor/10 hover:border-mainColor/30 hover:text-mainColor transition-all duration-200 font-semibold flex items-center justify-center gap-1"
+                        type="button"
+                        disabled={!loggedIn}
+                        onClick={() => loggedIn && setInputText(item.question)}
+                        className="px-2 py-1.5 text-[10px] bg-slate-50 text-slate-700 rounded-lg border border-slate-200 hover:bg-mainColor/10 hover:border-mainColor/30 hover:text-mainColor transition-all duration-200 font-semibold flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Icon fontSize="small" />
                         <span>{item.label}</span>
@@ -307,12 +323,28 @@ const ChatBotWidget = () => {
 
           {/* Input Area */}
           <div className="p-4 bg-white border-t border-slate-100">
+            {!loggedIn && (
+              <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900">
+                <p className="mb-2">{LOGIN_REQUIRED_MESSAGE.replace(/\*\*/g, "")}</p>
+                <Link
+                  to="/login"
+                  className="inline-flex items-center justify-center rounded-lg bg-mainColor px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
+                >
+                  Đăng nhập
+                </Link>
+              </div>
+            )}
             <div className="flex gap-2 items-end">
               <textarea
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Nhập câu hỏi về hệ thống NCKH..."
+                disabled={!loggedIn}
+                placeholder={
+                  loggedIn
+                    ? "Nhập câu hỏi về hệ thống NCKH..."
+                    : "Đăng nhập để chat..."
+                }
                 rows={1}
                 className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-mainColor/30 focus:border-mainColor resize-none bg-slate-50 placeholder-slate-400"
                 style={{ minHeight: "36px", maxHeight: "96px" }}

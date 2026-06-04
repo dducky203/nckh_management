@@ -80,11 +80,12 @@ export default function GroupQuotaPanel({ stats, loading }) {
             </div>
           )}
 
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-slate-100 border-b border-slate-100 mt-2">
+          <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-y md:divide-y-0 divide-slate-100 border-b border-slate-100 mt-2">
             <MiniStat label="Nhóm" value={stats.groupName} isText />
-            <MiniStat label="Giờ của bạn" value={round2(stats.myTotalHours)} suffix="giờ" highlight />
+            <MiniStat label="% hoàn thành" value={round2(stats.groupCompletionPercent ?? 0)} suffix="%" highlight />
+            <MiniStat label="Giờ cuối" value={round2(stats.myCreditedTotalHours ?? stats.myGroupQuotaHours ?? 0)} suffix="giờ" />
             <MiniStat label="Tổng nhóm" value={round2(stats.totalGroupHours)} suffix="giờ" />
-            <MiniStat label="Chia đều" value={round2(stats.totalPerMemberHours)} suffix="giờ" />
+            <MiniStat label="Nhóm÷TV" value={round2(stats.totalPerMemberHours)} suffix="giờ" />
           </div>
 
           {stats.personalEvaluation?.length > 0 && (
@@ -130,9 +131,9 @@ export default function GroupQuotaPanel({ stats, loading }) {
 
           <div className="px-5 py-3 bg-blue-50 border-t border-blue-100 flex justify-between items-center">
             <p className="text-xs text-blue-700">
-              Tổng nhóm × hệ số PA, chia đều {stats.memberCount} người để đánh giá (năm {stats.academicYear}).
-              {stats.myGroupQuotaHours != null && (
-                <> Giờ ĐM nhóm của bạn: <strong>{stats.myGroupQuotaHours}</strong>.</>
+              Nhóm {round2(stats.groupCompletionPercent ?? 0)}% · giờ cuối = chia đều + phần vượt (năm {stats.academicYear}).
+              {stats.myCreditedTotalHours != null && (
+                <> Giờ được tính: <strong>{round2(stats.myCreditedTotalHours)}</strong>.</>
               )}
             </p>
             <Link

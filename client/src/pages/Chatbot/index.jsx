@@ -28,9 +28,9 @@ const ChatBot = () => {
           <p className="text-lg text-gray-600 mb-8 leading-relaxed">
             <strong>{CHAT_ASSISTANT_DISPLAY_NAME}</strong> (vai trò:{" "}
             <code className="text-sm bg-slate-100 px-1 rounded">{CHAT_ASSISTANT_ROLE}</code>)
-            {" "}được tích hợp dưới dạng widget nổi và tối ưu cho các nghiệp
-            vụ trong hệ thống. Bạn có thể truy cập từ bất kỳ trang nào bằng cách
-            nhấp vào
+            {" "}            được tích hợp dưới dạng widget nổi và tối ưu cho các nghiệp
+            vụ trong hệ thống. Bạn cần <strong>đăng nhập</strong> trước khi chat.
+            Sau khi đăng nhập, mở widget bằng cách nhấp vào
             <span className="inline-flex items-center mx-2 px-2 py-1 bg-mainColor/10 text-mainColor rounded-lg text-sm font-medium">
               <ChatBubble className="w-4 h-4 mr-1" />
               biểu tượng chat

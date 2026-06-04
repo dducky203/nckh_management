@@ -1,9 +1,13 @@
 import { useContext } from "react";
 import { Navigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
-import { hasNckhStaffAccess, isStrictAdminPortalUser } from "../../utils/permissions";
+import {
+  canAccessQuotaPages,
+  hasNckhStaffAccess,
+  isStrictAdminPortalUser,
+} from "../../utils/permissions";
 
-const ProtectedRoute = ({ children, requiredPower = null }) => {
+const ProtectedRoute = ({ children, requiredPower = null, requireQuotaAccess = false }) => {
   const { user, isInitializing } = useContext(AuthContext);
 
   if (isInitializing) {

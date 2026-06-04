@@ -33,8 +33,9 @@ export default function EvaluationTab({
             <h3 className="text-sm font-bold text-slate-800">Đánh giá thực hiện</h3>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Đóng góp nhóm = SL chuẩn × {memberFactor}. Đạt khi{" "}
-            <strong>tổng nhóm ÷ số TV ≥ định mức</strong> — đồng đội có thể gánh hộ bạn.
+            <strong>% hoàn thành nhóm</strong> = TB tiến độ các chỉ tiêu.{" "}
+            <strong>Giờ cuối</strong> = (giờ nhóm ÷ số TV) + phần bạn vượt tổng nhóm — không cộng chồng giờ đã nằm trong tổng
+            (vd. seminar 10h/4 TV → <strong>2,5h</strong>, không phải 12,5h).
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -64,16 +65,50 @@ export default function EvaluationTab({
 
       {stats && (
         <>
-          <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <StatBox label="Giờ của bạn" value={stats.myTotalHours} unit="giờ" accent="main" />
+          <div className="px-5 py-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <StatBox
+              label="% hoàn thành nhóm"
+              value={stats.groupCompletionPercent ?? 0}
+              unit="%"
+              accent="main"
+              sub={
+                stats.groupCompletionCriteriaCount != null
+                  ? `${stats.groupCompletionCriteriaCount} chỉ tiêu`
+                  : undefined
+              }
+            />
+            <StatBox label="Giờ tự làm" value={stats.myTotalHours} unit="giờ" />
+            <StatBox
+              label="Giờ cuối (được tính)"
+              value={stats.myCreditedTotalHours ?? stats.myGroupQuotaHours}
+              unit="giờ"
+              accent="main"
+            />
             <StatBox label="Tổng giờ nhóm" value={stats.totalGroupHours} unit="giờ" />
             <StatBox
-              label="Phần chia đều"
+              label="Nhóm ÷ TV"
               value={stats.totalPerMemberHours}
               unit="giờ"
               sub={`${stats.memberCount} thành viên`}
             />
           </div>
+
+          {stats.groupCompletionPercent != null && !isLeader && (
+            <div className="px-5 pb-2">
+              <div className="rounded-xl border border-violet-100 bg-violet-50/60 px-4 py-3">
+                <div className="flex justify-between mb-2">
+                  <p className="text-xs font-bold text-violet-800">Tiến độ tập thể</p>
+                  <p className="text-sm font-black text-violet-700">{round2(stats.groupCompletionPercent)}%</p>
+                </div>
+                <div className="h-2 rounded-full bg-violet-100 overflow-hidden">
+                  <div
+                    className="h-full bg-mainColor rounded-full"
+                    style={{ width: `${Math.min(100, stats.groupCompletionPercent)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="px-5 pb-4">
             {isLeader ? (
@@ -120,6 +155,7 @@ export default function EvaluationTab({
                     <th className="text-center px-3 py-3 text-xs font-bold text-slate-500 uppercase">Bạn làm</th>
                     <th className="text-center px-3 py-3 text-xs font-bold text-slate-500 uppercase">Tổng nhóm</th>
                     <th className="text-center px-3 py-3 text-xs font-bold text-slate-500 uppercase">Chia đều</th>
+                    <th className="text-center px-3 py-3 text-xs font-bold text-slate-500 uppercase">Giờ cuối</th>
                     <th className="text-center px-3 py-3 text-xs font-bold text-slate-500 uppercase">Kết quả</th>
                   </tr>
                 </thead>
@@ -152,8 +188,9 @@ export default function EvaluationTab({
                       <th className="text-left px-3 py-2 font-bold text-slate-500">Tiêu chí</th>
                       <th className="text-center px-2 py-2 font-bold text-slate-500">Tổng nhóm (×PA)</th>
                       <th className="text-center px-2 py-2 font-bold text-slate-500">Chia đều</th>
-                      <th className="text-center px-2 py-2 font-bold text-slate-500">Bạn tự làm</th>
-                      <th className="text-center px-2 py-2 font-bold text-slate-500">Được tính</th>
+                      <th className="text-center px-2 py-2 font-bold text-slate-500">Giờ tự làm</th>
+                      <th className="text-center px-2 py-2 font-bold text-slate-500">Giờ cuối</th>
+                      <th className="text-center px-2 py-2 font-bold text-slate-500">Đạt SL</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -166,7 +203,15 @@ export default function EvaluationTab({
                             <td className="px-3 py-2 text-slate-700">{row.name}</td>
                             <td className="px-2 py-2 text-center">{row.groupTotalQty}</td>
                             <td className="px-2 py-2 text-center font-bold text-mainColor">{row.perMemberQty}</td>
-                            <td className="px-2 py-2 text-center text-slate-500">{row.myQty ?? row.myPoolQty}</td>
+                            <td className="px-2 py-2 text-center text-slate-500">{row.myHours ?? 0}</td>
+                            <td className="px-2 py-2 text-center font-bold text-blue-700">
+                              {round2(row.myCreditedHours ?? row.myHours ?? 0)}
+                              {(row.groupHoursCredit ?? 0) > 0 && (
+                                <span className="block text-[10px] text-blue-500 font-normal">
+                                  gồm +{round2(row.groupHoursCredit)} nhóm
+                                </span>
+                              )}
+                            </td>
                             <td className="px-2 py-2 text-center">
                               {met ? (
                                 <span className="text-emerald-600 font-bold">Đạt</span>
@@ -193,6 +238,7 @@ function EvaluationCriterionRow({ row }) {
   const acts = row.activities ?? [];
   const perMember = row.perMemberQty ?? row.actualQty;
   const myQty = row.myQty ?? 0;
+  const creditedH = row.myCreditedHours ?? row.actualHours ?? row.myHours ?? 0;
 
   return (
     <>
@@ -213,6 +259,12 @@ function EvaluationCriterionRow({ row }) {
         <td className="px-3 py-3 text-center text-slate-500">{row.groupTotalQty ?? "—"}</td>
         <td className="px-3 py-3 text-center font-bold text-mainColor">{perMember}</td>
         <td className="px-3 py-3 text-center">
+          <span className="font-bold text-blue-700">{round2(creditedH)}</span>
+          {(row.groupHoursCredit ?? 0) > 0 && (
+            <span className="block text-[10px] text-blue-500">+{round2(row.groupHoursCredit)} nhóm</span>
+          )}
+        </td>
+        <td className="px-3 py-3 text-center">
           {row.achieved ? (
             <span className="inline-flex flex-col items-center gap-0.5">
               <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
@@ -231,7 +283,7 @@ function EvaluationCriterionRow({ row }) {
       </tr>
       {open && acts.map((act) => (
         <tr key={act.activityId} className="bg-slate-50/80">
-          <td colSpan={3} className="px-6 py-2 text-xs text-slate-500 pl-8">
+          <td colSpan={4} className="px-6 py-2 text-xs text-slate-500 pl-8">
             ↳ {act.title || act.catalogName}
           </td>
           <td className="px-3 py-2 text-center text-xs font-semibold text-mainColor">

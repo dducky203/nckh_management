@@ -48,6 +48,21 @@ const groupQuotaService = {
         params: groupId ? { groupId } : {},
       })
     ),
+
+  /** Danh sách nhóm mà user hiện tại được xem thống kê */
+  getManageableGroups: async () =>
+    unwrap(await api.get("/research-groups/quota/admin-groups")),
+
+  /** Thống kê hoàn thành nhóm + tỷ lệ tham gia từng thành viên */
+  getAdminGroupStats: async (groupId, year) =>
+    unwrap(
+      await api.get("/research-groups/quota/admin-group-stats", {
+        params: {
+          groupId,
+          ...(year ? { year } : {}),
+        },
+      })
+    ),
 };
 
 export default groupQuotaService;

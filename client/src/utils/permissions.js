@@ -50,3 +50,16 @@ export const canEditGroup = (user, group) => {
 export const canViewAllGroups = (user) => {
   return isAdmin(user);
 };
+
+/** Sinh viên: power = 4 hoặc chức danh "Sinh viên" (đồng bộ backend). */
+export const isStudent = (user) => {
+  if (!user) return false;
+  if (user.power != null && Number(user.power) === 4) return true;
+  if (user.title && String(user.title).trim().toLowerCase() === "sinh viên") {
+    return true;
+  }
+  return false;
+};
+
+/** Định mức cá nhân (/activity/standards) và định mức nhóm (/activity/group-quota). */
+export const canAccessQuotaPages = (user) => !!user && !isStudent(user);

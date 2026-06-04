@@ -42,6 +42,7 @@ import PlanStatisticsPage from "./pages/activity/PlanStatisticsPage";
 import ActivityAdminConfigPage from "./pages/activity/ActivityAdminConfigPage";
 import ActivityUserFeaturePage from "./pages/activity/ActivityUserFeaturePage";
 import ActivityYearQuotaConfigPage from "./pages/activity/ActivityYearQuotaConfigPage";
+import AdminGroupQuotaStatsPage from "./pages/activity/AdminGroupQuotaStatsPage";
 import SeminarDeclarationPage from "./pages/activity/declarations/SeminarDeclarationPage";
 import ConferenceDeclarationPage from "./pages/activity/declarations/ConferenceDeclarationPage";
 import InternationalPaperDeclarationPage from "./pages/activity/declarations/InternationalPaperDeclarationPage";
@@ -56,6 +57,7 @@ import CouncilDeclarationPage from "./pages/activity/declarations/CouncilDeclara
 import ExpertInviteDeclarationPage from "./pages/activity/declarations/ExpertInviteDeclarationPage";
 import OtherActivityDeclarationPage from "./pages/activity/declarations/OtherActivityDeclarationPage";
 import GroupQuotaPage from "./pages/activity/GroupQuotaPage";
+import ChatAnalysisPage from "./pages/Admin/ChatAnalysis/ChatAnalysisPage";
 
 function App() {
   // Load rooms data when app starts
@@ -115,7 +117,7 @@ function App() {
                     <Route
                       path="/activity/standards"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <ActivityStandards />
                         </ProtectedRoute>
                       }
@@ -123,7 +125,7 @@ function App() {
                     <Route
                       path="/activity/group-quota"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <GroupQuotaPage />
                         </ProtectedRoute>
                       }
@@ -165,6 +167,14 @@ function App() {
                       element={
                         <ProtectedRoute requiredPower="nckhStaff">
                           <ActivityYearQuotaConfigPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/admin/group-quota"
+                      element={
+                        <ProtectedRoute>
+                          <AdminGroupQuotaStatsPage />
                         </ProtectedRoute>
                       }
                     />
@@ -288,6 +298,14 @@ function App() {
                       element={
                         <ProtectedRoute requiredPower="admin">
                           <UserManagement />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/chat-analysis"
+                      element={
+                        <ProtectedRoute requiredPower="nckhStaff">
+                          <ChatAnalysisPage />
                         </ProtectedRoute>
                       }
                     />

@@ -432,4 +432,44 @@ public final class NckhGroupQuotaRules {
     public static boolean isAchievedByOwnWork(double myPoolQty, Double requiredQty) {
         return isAchieved(myPoolQty, requiredQty);
     }
+
+    /** Giờ nhóm hoàn thành cho một tiêu chí, chia đều cho mỗi thành viên. */
+    public static double perMemberGroupHours(double groupCriterionHours, int memberCount) {
+        return groupCriterionHours / Math.max(1, memberCount);
+    }
+
+    /**
+     * Giờ cuối cùng để xét định mức (thành viên nhóm):
+     * phần chia đều từ tổng nhóm + giờ cá nhân vượt ngoài tổng nhóm (nếu có).
+     * Giờ đã nằm trong tổng nhóm không cộng chồng (vd. seminar 10h/4 TV = 2,5h, không phải 12,5h).
+     */
+    public static double creditedHoursForGroupMember(
+            double myHours, double groupCriterionHours, int memberCount) {
+        double perMember = perMemberGroupHours(groupCriterionHours, memberCount);
+        double extraPersonal = Math.max(0, myHours - groupCriterionHours);
+        return perMember + extraPersonal;
+    }
+
+    /** Tỷ lệ hoàn thành một chỉ tiêu nhóm (0–1). */
+    public static double criterionCompletionRatio(double actualQty, Double requiredQty) {
+        if (requiredQty == null || requiredQty <= 0) {
+            return 1.0;
+        }
+        if (actualQty <= 0) {
+            return 0.0;
+        }
+        return Math.min(1.0, actualQty / requiredQty);
+    }
+
+    /** % hoàn thành chung của nhóm = trung bình các chỉ tiêu (0–1). */
+    public static double averageGroupCompletionPercent(List<Double> criterionRatios) {
+        if (criterionRatios == null || criterionRatios.isEmpty()) {
+            return 0.0;
+        }
+        double sum = 0;
+        for (Double r : criterionRatios) {
+            sum += r != null ? r : 0;
+        }
+        return sum / criterionRatios.size();
+    }
 }

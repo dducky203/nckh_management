@@ -30,7 +30,9 @@ public class NckhGroupQuotaAggregationService {
     /**
      * Tổng hợp định mức nhóm từ hoạt động APPROVED.
      * - Đóng góp vào nhóm: equiv_qty × hệ số PA (0,8 với NCM/Tinh hoa).
-     * - Đánh giá cá nhân: phần chia đều (tổng nhóm / số TV) ≥ định mức → ĐẠT (kể cả không tự làm).
+     * - Giờ cá nhân (TV nhóm): chia đều tổng nhóm + phần vượt (không cộng chồng giờ trong tổng).
+     * - % hoàn thành nhóm: trung bình tiến độ các chỉ tiêu.
+     * - Đánh giá SL: chia đều ≥ định mức hoặc tự làm đủ.
      */
     public Map<String, Object> buildMemberStats(
             ResearchGroup group,
@@ -61,10 +63,16 @@ public class NckhGroupQuotaAggregationService {
         List<Map<String, Object>> personalEvaluation = new ArrayList<>();
         List<Map<String, Object>> activityBreakdown = new ArrayList<>();
 
+        List<Double> groupCompletionRatios = new ArrayList<>();
         boolean allPersonalAchieved = true;
         int evaluatedCount = 0;
         int achievedCount = 0;
-        double myGroupQuotaHours = 0;
+
+        Map<String, Double> myHoursByCatalog = buildHoursByCatalog(myActivities);
+        Map<String, Double> groupHoursByCatalog = buildHoursByCatalog(groupActivities);
+        double myCreditedTotalHours = isLeader
+                ? 0
+                : computeCreditedTotalHours(myHoursByCatalog, groupHoursByCatalog, memberCount);
 
         for (GroupQuotaActivityProjection act : myActivities) {
             activityBreakdown.add(toActivityMap(act, groupType, chucDanh, isLeader, userNames, memberFactor));
@@ -81,10 +89,9 @@ public class NckhGroupQuotaAggregationService {
 
             double myHours = sumHoursShareForCriterion(myActivities, code);
             double groupCriterionHours = sumHoursShareForCriterion(groupActivities, code);
-
-            if (!isGroupLevel && !isLeader) {
-                myGroupQuotaHours += myHours;
-            }
+            double perMemberHours = NckhGroupQuotaRules.perMemberGroupHours(groupCriterionHours, memberCount);
+            double myCreditedHours = NckhGroupQuotaRules.creditedHoursForGroupMember(
+                    myHours, groupCriterionHours, memberCount);
 
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("code", code);
@@ -96,12 +103,14 @@ public class NckhGroupQuotaAggregationService {
             row.put("groupTotalRawQty", round2(sumRawForCriterion(groupActivities, code)));
             row.put("groupTotalHours", round2(groupCriterionHours));
             row.put("perMemberQty", round2(perMemberQty));
-            row.put("perMemberHours", round2(groupCriterionHours / memberCount));
+            row.put("perMemberHours", round2(perMemberHours));
+            row.put("groupHoursCredit", round2(perMemberHours));
             row.put("myQty", round2(myRawQty));
             row.put("myPoolQty", round2(myPoolQty));
             row.put("myCreditedQty", round2(perMemberQty));
             row.put("myHours", round2(myHours));
-            row.put("myGroupQuotaHours", round2(myHours));
+            row.put("myCreditedHours", round2(myCreditedHours));
+            row.put("myGroupQuotaHours", round2(myCreditedHours));
             row.put("memberCount", memberCount);
 
             if (isGroupLevel && "NCM".equals(NckhGroupQuotaRules.resolveGroupKind(groupType))) {
@@ -129,7 +138,19 @@ public class NckhGroupQuotaAggregationService {
             row.put("achievedViaShare", memberRequired != null && memberRequired > 0
                     && NckhGroupQuotaRules.isAchievedViaGroupShare(groupPoolTotal, memberCount, memberRequired));
 
+            if (memberRequired != null && memberRequired > 0) {
+                double critRatio = NckhGroupQuotaRules.criterionCompletionRatio(perMemberQty, memberRequired);
+                row.put("criterionCompletionPercent", round2(critRatio * 100));
+            }
+
             criteriaStats.add(row);
+
+            if (!isGroupLevel && !isLeader && memberRequired != null && memberRequired > 0) {
+                groupCompletionRatios.add(
+                        NckhGroupQuotaRules.criterionCompletionRatio(perMemberQty, memberRequired));
+            } else if (isGroupLevel && "NCM".equals(NckhGroupQuotaRules.resolveGroupKind(groupType))) {
+                appendNcmGroupLevelCompletionRatio(groupCompletionRatios, code, groupActivities, memberCount);
+            }
 
             if (!isGroupLevel && !isLeader) {
                 Double requiredQty = memberRequired;
@@ -154,7 +175,10 @@ public class NckhGroupQuotaAggregationService {
                     evalRow.put("perMemberQty", round2(perMemberQty));
                     evalRow.put("groupTotalQty", round2(groupPoolTotal));
                     evalRow.put("actualQty", round2(perMemberQty));
-                    evalRow.put("actualHours", round2(myHours));
+                    evalRow.put("myHours", round2(myHours));
+                    evalRow.put("groupHoursCredit", round2(perMemberHours));
+                    evalRow.put("myCreditedHours", round2(myCreditedHours));
+                    evalRow.put("actualHours", round2(myCreditedHours));
                     evalRow.put("achieved", achieved);
                     evalRow.put("achievedByOwn", achievedByOwn);
                     evalRow.put("carriedByTeam", carriedByTeam);
@@ -170,6 +194,20 @@ public class NckhGroupQuotaAggregationService {
             }
         }
 
+        Map<String, Object> ncmGroupQuotas = null;
+        if ("NCM".equals(NckhGroupQuotaRules.resolveGroupKind(groupType))) {
+            ncmGroupQuotas = NckhGroupQuotaRules.buildNcmGroupQuotasWithEvaluation(groupActivities, memberCount);
+            appendTable2CompletionRatios(groupCompletionRatios, ncmGroupQuotas);
+        }
+        double groupCompletionPercent = NckhGroupQuotaRules.averageGroupCompletionPercent(groupCompletionRatios);
+        double groupPctDisplay = round2(groupCompletionPercent * 100);
+        for (Map<String, Object> row : criteriaStats) {
+            row.put("groupCompletionPercent", groupPctDisplay);
+        }
+        for (Map<String, Object> evalRow : personalEvaluation) {
+            evalRow.put("groupCompletionPercent", groupPctDisplay);
+        }
+
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("groupId", group.getId());
         data.put("groupName", group.getGroupName());
@@ -181,13 +219,16 @@ public class NckhGroupQuotaAggregationService {
         data.put("memberFactor", memberFactor);
         data.put("autoCalculated", true);
         data.put("dataSource", "APPROVED_ACTIVITIES");
-        data.put("evaluationRule", "GROUP_POOL_WEIGHTED_THEN_EQUAL_SHARE");
+        data.put("evaluationRule", "GROUP_EQUAL_SHARE_HOURS_AND_COMPLETION_PERCENT");
+        data.put("groupCompletionPercent", round2(groupCompletionPercent * 100));
+        data.put("groupCompletionCriteriaCount", groupCompletionRatios.size());
         double totalGroupQuotaHours = sumHoursShare(groupActivities);
         double myTotalHours = sumHoursShare(myActivities);
         data.put("totalGroupHours", round2(totalGroupQuotaHours));
-        data.put("totalPerMemberHours", round2(totalGroupQuotaHours / memberCount));
+        data.put("totalPerMemberHours", round2(NckhGroupQuotaRules.perMemberGroupHours(totalGroupQuotaHours, memberCount)));
         data.put("myTotalHours", round2(myTotalHours));
-        data.put("myGroupQuotaHours", round2(myGroupQuotaHours));
+        data.put("myCreditedTotalHours", round2(myCreditedTotalHours));
+        data.put("myGroupQuotaHours", round2(myCreditedTotalHours));
         data.put("criteria", criteriaStats);
         data.put("personalEvaluation", personalEvaluation);
         data.put("activities", activityBreakdown);
@@ -195,12 +236,53 @@ public class NckhGroupQuotaAggregationService {
         data.put("achievedCount", achievedCount);
         data.put("evaluatedCount", evaluatedCount);
 
-        if ("NCM".equals(NckhGroupQuotaRules.resolveGroupKind(groupType))) {
-            data.put("ncmGroupQuotas",
-                    NckhGroupQuotaRules.buildNcmGroupQuotasWithEvaluation(groupActivities, memberCount));
+        if (ncmGroupQuotas != null) {
+            ncmGroupQuotas.put("groupCompletionPercent", round2(groupCompletionPercent * 100));
+            data.put("ncmGroupQuotas", ncmGroupQuotas);
         }
 
         return data;
+    }
+
+    private static void appendNcmGroupLevelCompletionRatio(
+            List<Double> ratios, String code, List<GroupQuotaActivityProjection> activities, int memberCount) {
+        if ("SEMINAR_THAM_DU".equals(code)) {
+            Map<String, Object> seminar = NckhGroupQuotaRules.evaluateSeminarPresentedRatio(activities);
+            Object ratio = seminar.get("actualRatio");
+            if (ratio instanceof Number n) {
+                ratios.add(Math.min(1.0, n.doubleValue() / NckhGroupQuotaRules.NCM_SEMINAR_PRESENTED_RATIO));
+            }
+            return;
+        }
+        Double req = NckhGroupQuotaRules.getNcmGroupRequired(code, memberCount);
+        if (req != null && req > 0) {
+            double actual = NckhGroupQuotaRules.sumActualQty(activities, code);
+            ratios.add(NckhGroupQuotaRules.criterionCompletionRatio(actual, req));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void appendTable2CompletionRatios(List<Double> ratios, Map<String, Object> ncmQuotas) {
+        Object table2 = ncmQuotas.get("table2Evaluation");
+        if (!(table2 instanceof List<?> list)) {
+            return;
+        }
+        for (Object item : list) {
+            if (!(item instanceof Map<?, ?> row)) continue;
+            Map<String, Object> m = (Map<String, Object>) row;
+            if ("SEMINAR_TRINH_BAY_RATIO".equals(m.get("code"))) {
+                Object ar = m.get("actualRatio");
+                if (ar instanceof Number n) {
+                    ratios.add(Math.min(1.0, n.doubleValue() / NckhGroupQuotaRules.NCM_SEMINAR_PRESENTED_RATIO));
+                }
+            } else {
+                Object actual = m.get("actualQty");
+                Object required = m.get("requiredQty");
+                if (actual instanceof Number a && required instanceof Number r && r.doubleValue() > 0) {
+                    ratios.add(NckhGroupQuotaRules.criterionCompletionRatio(a.doubleValue(), r.doubleValue()));
+                }
+            }
+        }
     }
 
     private void appendGroupLevelEvaluation(
@@ -300,6 +382,33 @@ public class NckhGroupQuotaAggregationService {
             sum += hoursFromActivity(act);
         }
         return sum;
+    }
+
+    /** Gom giờ theo catalog — mỗi hoạt động chỉ tính một lần (tránh cộng trùng qua nhiều tiêu chí). */
+    private static Map<String, Double> buildHoursByCatalog(List<GroupQuotaActivityProjection> activities) {
+        Map<String, Double> map = new LinkedHashMap<>();
+        if (activities == null) return map;
+        for (GroupQuotaActivityProjection act : activities) {
+            if (act.getCatalogCode() == null) continue;
+            map.merge(act.getCatalogCode(), hoursFromActivity(act), Double::sum);
+        }
+        return map;
+    }
+
+    private static double computeCreditedTotalHours(
+            Map<String, Double> myHoursByCatalog,
+            Map<String, Double> groupHoursByCatalog,
+            int memberCount) {
+        Set<String> catalogs = new HashSet<>();
+        catalogs.addAll(myHoursByCatalog.keySet());
+        catalogs.addAll(groupHoursByCatalog.keySet());
+        double total = 0;
+        for (String catalog : catalogs) {
+            double myH = myHoursByCatalog.getOrDefault(catalog, 0.0);
+            double groupH = groupHoursByCatalog.getOrDefault(catalog, 0.0);
+            total += NckhGroupQuotaRules.creditedHoursForGroupMember(myH, groupH, memberCount);
+        }
+        return total;
     }
 
     private static double sumHoursShareForCriterion(

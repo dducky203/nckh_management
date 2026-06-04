@@ -1,11 +1,16 @@
+import { useContext } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import FolderSharedIcon from "@mui/icons-material/FolderShared";
+import { AuthContext } from "../../../context/AuthContext";
+import { canAccessQuotaPages } from "../../../utils/permissions";
 
 export default function ResearchGroupProfileHeader({ groupName }) {
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
+  const quotaAllowed = canAccessQuotaPages(user);
 
   return (
     <div className="bg-white border-b border-slate-200 shadow-sm">
@@ -40,13 +45,15 @@ export default function ResearchGroupProfileHeader({ groupName }) {
             Danh sách nhóm
             <OpenInNewIcon sx={{ fontSize: 14 }} />
           </Link>
-          <Link
-            to="/activity/group-quota"
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
-          >
-            Định mức nhóm
-            <OpenInNewIcon sx={{ fontSize: 14 }} />
-          </Link>
+          {quotaAllowed && (
+            <Link
+              to="/activity/group-quota"
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
+            >
+              Định mức nhóm
+              <OpenInNewIcon sx={{ fontSize: 14 }} />
+            </Link>
+          )}
         </div>
       </div>
     </div>

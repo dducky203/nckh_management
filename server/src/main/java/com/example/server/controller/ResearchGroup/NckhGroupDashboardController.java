@@ -4,6 +4,8 @@ import java.util.*;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import com.example.server.DTO.response.SuccessResponseDTO;
 import com.example.server.domain.ResearchGroup;
@@ -95,6 +97,7 @@ public class NckhGroupDashboardController {
     // -------------------------------------------------------------------
     @GetMapping("/my-membership")
     public ResponseEntity<SuccessResponseDTO<Map<String, Object>>> getMyMembership() {
+        SecurityUtils.assertCurrentUserCanAccessQuota();
         Integer userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new RuntimeException("Vui lòng đăng nhập");
 
@@ -118,7 +121,7 @@ public class NckhGroupDashboardController {
     // -------------------------------------------------------------------
     @GetMapping("/my-quota")
     public ResponseEntity<SuccessResponseDTO<Map<String, Object>>> getMyQuota() {
-
+        SecurityUtils.assertCurrentUserCanAccessQuota();
         Integer userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new RuntimeException("Vui lòng đăng nhập");
 
@@ -193,7 +196,7 @@ public class NckhGroupDashboardController {
     @GetMapping("/my-stats")
     public ResponseEntity<SuccessResponseDTO<Map<String, Object>>> getMyGroupStats(
             @RequestParam(required = false) Integer year) {
-
+        SecurityUtils.assertCurrentUserCanAccessQuota();
         Integer userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new RuntimeException("Vui lòng đăng nhập");
 
@@ -227,7 +230,7 @@ public class NckhGroupDashboardController {
     @PostMapping("/my-calculate")
     public ResponseEntity<SuccessResponseDTO<Map<String, Object>>> calculateMyGroup(
             @RequestBody Map<String, Object> body) {
-
+        SecurityUtils.assertCurrentUserCanAccessQuota();
         Integer userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new RuntimeException("Vui lòng đăng nhập");
 
@@ -281,7 +284,7 @@ public class NckhGroupDashboardController {
     @GetMapping("/criteria-matrix")
     public ResponseEntity<SuccessResponseDTO<Map<String, Object>>> getCriteriaMatrix(
             @RequestParam(required = false) String groupType) {
-
+        SecurityUtils.assertCurrentUserCanAccessQuota();
         if (groupType == null || groupType.isBlank()) {
             Integer userId = SecurityUtils.getCurrentUserId();
             if (userId != null) {
@@ -348,7 +351,7 @@ public class NckhGroupDashboardController {
     @GetMapping("/group-members")
     public ResponseEntity<SuccessResponseDTO<Map<String, Object>>> getGroupMembers(
             @RequestParam(required = false) Integer groupId) {
-
+        SecurityUtils.assertCurrentUserCanAccessQuota();
         Integer userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new RuntimeException("Vui lòng đăng nhập");
 
@@ -407,10 +410,175 @@ public class NckhGroupDashboardController {
     }
 
     // -------------------------------------------------------------------
+    // GET /research-groups/quota/admin-groups
+    // Nhóm có thể xem thống kê:
+    // - admin/assistant: toàn bộ nhóm định mức đã duyệt
+    // - leader: chỉ nhóm mình đang làm leader
+    // -------------------------------------------------------------------
+    @GetMapping("/admin-groups")
+    public ResponseEntity<SuccessResponseDTO<Map<String, Object>>> getManageableGroups() {
+        SecurityUtils.assertCurrentUserCanAccessQuota();
+        User currentUser = requireCurrentUser();
+        boolean staff = SecurityUtils.hasNckhStaffAccess(currentUser);
+
+        List<ResearchGroup> groups;
+        if (staff) {
+            groups = groupRepo.findAll().stream()
+                    .filter(ResearchGroupQuotaService::qualifiesForQuota)
+                    .toList();
+        } else {
+            LinkedHashSet<ResearchGroup> leaderAndMemberGroups = new LinkedHashSet<>();
+            // Trưởng nhóm có thể không có bản ghi trong research_group_member,
+            // nên phải lấy thêm theo leader_id để không bỏ sót quyền xem.
+            leaderAndMemberGroups.addAll(groupRepo.findByLeader(currentUser));
+            memberRepo.findAllByUserId(currentUser.getId()).stream()
+                    .map(m -> groupRepo.findById(m.getGroupId()).orElse(null))
+                    .filter(Objects::nonNull)
+                    .forEach(leaderAndMemberGroups::add);
+
+            groups = leaderAndMemberGroups.stream()
+                    .filter(ResearchGroupQuotaService::qualifiesForQuota)
+                    .filter(g -> g.isLeader(currentUser))
+                    .toList();
+        }
+
+        List<Map<String, Object>> rows = groups.stream()
+                .map(g -> {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("groupId", g.getId());
+                    row.put("groupName", g.getGroupName());
+                    row.put("groupType", g.getGroupType());
+                    row.put("isLeader", g.isLeader(currentUser));
+                    row.put("canViewStats", staff || g.isLeader(currentUser));
+                    return row;
+                })
+                .toList();
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("groups", rows);
+        data.put("count", rows.size());
+        data.put("asStaff", staff);
+        return ResponseEntity.ok(new SuccessResponseDTO<>(data, "Lấy danh sách nhóm thành công"));
+    }
+
+    // -------------------------------------------------------------------
+    // GET /research-groups/quota/admin-group-stats?groupId=1&year=2026
+    // Trả về thống kê hoàn thành nhóm + tỷ lệ đóng góp từng thành viên
+    // -------------------------------------------------------------------
+    @GetMapping("/admin-group-stats")
+    public ResponseEntity<SuccessResponseDTO<Map<String, Object>>> getAdminGroupStats(
+            @RequestParam Integer groupId,
+            @RequestParam(required = false) Integer year) {
+        SecurityUtils.assertCurrentUserCanAccessQuota();
+        User currentUser = requireCurrentUser();
+        ResearchGroup group = groupRepo.findById(groupId).orElseThrow();
+        if (!ResearchGroupQuotaService.qualifiesForQuota(group)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nhóm không thuộc diện định mức hoặc chưa duyệt");
+        }
+
+        boolean staff = SecurityUtils.hasNckhStaffAccess(currentUser);
+        boolean leader = group.isLeader(currentUser);
+        if (!staff && !leader) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền xem thống kê nhóm này");
+        }
+
+        int academicYear = (year != null) ? year : java.time.LocalDate.now().getYear();
+        List<ResearchGroupMember> members = memberRepo.findByGroupId(group.getId());
+        LinkedHashSet<Integer> memberIdSet = new LinkedHashSet<>();
+        for (ResearchGroupMember m : members) memberIdSet.add(m.getUserId());
+        if (group.getLeader() != null && group.getLeader().getId() != null) {
+            memberIdSet.add(group.getLeader().getId());
+        }
+        List<Integer> memberIds = new ArrayList<>(memberIdSet);
+        if (memberIds.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nhóm chưa có thành viên");
+        }
+
+        List<User> memberUsers = userRepo.findAllById(memberIds);
+        Map<Integer, User> userMap = new HashMap<>();
+        for (User u : memberUsers) userMap.put(u.getId(), u);
+
+        List<Map<String, Object>> criteriaDefs = getCriteriaForType(group.getGroupType());
+        List<Map<String, Object>> memberStats = new ArrayList<>();
+        List<Double> completionPercents = new ArrayList<>();
+        double totalCreditedHours = 0;
+
+        for (Integer memberId : memberIds) {
+            User memberUser = userMap.get(memberId);
+            if (memberUser == null) continue;
+
+            Map<String, Object> raw = aggregationService.buildMemberStats(
+                    group, memberUser, memberIds, academicYear, criteriaDefs);
+
+            double creditedHours = toDouble(raw.get("myCreditedTotalHours"));
+            double completion = toDouble(raw.get("groupCompletionPercent"));
+
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("userId", memberUser.getId());
+            row.put("name", memberUser.getName());
+            row.put("chucDanh", memberUser.getIdTitle() != null ? memberUser.getIdTitle().getName() : "KS/CN");
+            row.put("isLeader", group.isLeader(memberUser));
+            row.put("creditedHours", round2(creditedHours));
+            row.put("groupCompletionPercent", round2(completion));
+            row.put("overallAchieved", raw.get("overallAchieved"));
+            row.put("achievedCount", raw.get("achievedCount"));
+            row.put("evaluatedCount", raw.get("evaluatedCount"));
+            memberStats.add(row);
+
+            completionPercents.add(completion);
+            totalCreditedHours += creditedHours;
+        }
+
+        for (Map<String, Object> row : memberStats) {
+            double creditedHours = toDouble(row.get("creditedHours"));
+            double participation = totalCreditedHours > 0
+                    ? (creditedHours / totalCreditedHours) * 100.0
+                    : 0;
+            row.put("participationPercent", round2(participation));
+        }
+
+        memberStats.sort((a, b) -> {
+            boolean al = Boolean.TRUE.equals(a.get("isLeader"));
+            boolean bl = Boolean.TRUE.equals(b.get("isLeader"));
+            if (al != bl) return al ? -1 : 1;
+            return Double.compare(toDouble(b.get("participationPercent")), toDouble(a.get("participationPercent")));
+        });
+
+        double groupCompletionPercent = completionPercents.stream()
+                .mapToDouble(Double::doubleValue)
+                .average()
+                .orElse(0);
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("groupId", group.getId());
+        data.put("groupName", group.getGroupName());
+        data.put("groupType", group.getGroupType());
+        data.put("academicYear", academicYear);
+        data.put("memberCount", memberStats.size());
+        data.put("groupCompletionPercent", round2(groupCompletionPercent));
+        data.put("totalCreditedHours", round2(totalCreditedHours));
+        data.put("members", memberStats);
+        data.put("viewerIsStaff", staff);
+        data.put("viewerIsLeader", leader);
+
+        return ResponseEntity.ok(new SuccessResponseDTO<>(data, "Lấy thống kê nhóm thành công"));
+    }
+
+    // -------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------
     private boolean isQuotaGroup(String type) {
         return ResearchGroupQuotaService.isQuotaGroupType(type);
+    }
+
+    private User requireCurrentUser() {
+        Integer userId = SecurityUtils.getCurrentUserId();
+        if (userId == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Vui lòng đăng nhập");
+        return userRepo.findById(userId).orElseThrow();
+    }
+
+    private static double toDouble(Object v) {
+        return v instanceof Number n ? n.doubleValue() : 0.0;
     }
 
     private List<Map<String, Object>> getCriteriaForType(String type) {

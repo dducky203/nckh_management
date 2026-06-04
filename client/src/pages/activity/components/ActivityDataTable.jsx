@@ -149,6 +149,8 @@ export default function ActivityDataTable({ criteria, actualStats = [] }) {
                           const hours = actual
                             ? actual.totalQuotaHours || 0
                             : 0;
+                          const ownH = actual?.ownQuotaHours ?? hours;
+                          const teamH = actual?.groupHoursCredit ?? 0;
                           const participants = actual
                             ? Math.round(actual.avgParticipantsN || 0)
                             : 0;
@@ -219,6 +221,12 @@ export default function ActivityDataTable({ criteria, actualStats = [] }) {
                                 >
                                   {hours > 0 ? round1(hours) : "0"}
                                 </span>
+                                {teamH > 0 && (
+                                  <span className="block text-[10px] text-blue-600 font-medium">
+                                    gồm {round1(teamH)}h nhóm
+                                    {ownH > hours + 0.01 ? ` · tự làm ${round1(ownH)}` : ""}
+                                  </span>
+                                )}
                               </td>
                             </tr>
                           );

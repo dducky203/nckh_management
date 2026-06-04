@@ -13,6 +13,7 @@ import com.example.server.DTO.response.SuccessResponseDTO;
 import com.example.server.DTO.nckh.*;
 import com.example.server.service.DinhMucAiScanService;
 import com.example.server.service.nckh.NckhTieuChiDinhMucService;
+import com.example.server.utils.SecurityUtils;
 
 @RestController
 @RequestMapping("/nckh/tieu-chi-dinh-muc")
@@ -46,6 +47,7 @@ public class DinhMucController {
             @RequestParam(required = false) String chucDanh,
             @RequestParam(required = false) Integer year
     ) {
+        SecurityUtils.assertCurrentUserCanAccessQuota();
         int currentYear = year == null ? Year.now().getValue() : year;
         return service.getAll(phuongAn, chucDanh, String.valueOf(currentYear));
     }
