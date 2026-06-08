@@ -120,15 +120,13 @@ export default function NcmGroupQuotasCard({ quotas, compact = false }) {
 
           <span
 
-            className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+            className={`text-xs font-bold px-2 py-0.5 rounded-full ${quotas.table2OverallAchieved
 
-              quotas.table2OverallAchieved
+              ? "bg-emerald-100 text-emerald-800"
 
-                ? "bg-emerald-100 text-emerald-800"
+              : "bg-amber-100 text-amber-800"
 
-                : "bg-amber-100 text-amber-800"
-
-            }`}
+              }`}
 
           >
 

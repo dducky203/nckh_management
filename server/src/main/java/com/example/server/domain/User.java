@@ -44,7 +44,7 @@ public class User extends EntityBase implements Serializable {
     @JoinColumn(name = "id_resume", unique = true)
     private Resume idResume;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     @JoinColumn(name = "id_title")
     private Title idTitle;

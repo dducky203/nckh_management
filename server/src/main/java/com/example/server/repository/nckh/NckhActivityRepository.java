@@ -55,7 +55,7 @@ public interface NckhActivityRepository extends JpaRepository<NckhActivity, Long
             "AVG(b.participants_n) AS avgParticipantsN " +
             "FROM nckh_activity a " +
             "INNER JOIN nckh_activity_contributor b ON a.id = b.activity_id " +
-            "LEFT JOIN nckh_tieu_chi_dinh_muc cat ON a.catalog_code = cat.tieu_chi_code " +
+            "LEFT JOIN (SELECT tieu_chi_code, MAX(tieu_chi_name) AS tieu_chi_name, MAX(don_vi_tinh) AS don_vi_tinh FROM nckh_tieu_chi_dinh_muc GROUP BY tieu_chi_code) cat ON a.catalog_code = cat.tieu_chi_code " +
             "WHERE b.user_id IN (:userIds) " +
             "AND a.academic_year = :academicYear " +
             "AND a.status = 'APPROVED' " +
@@ -79,7 +79,7 @@ public interface NckhActivityRepository extends JpaRepository<NckhActivity, Long
             "AVG(b.participants_n) AS avgParticipantsN " +
             "FROM nckh_activity a " +
             "INNER JOIN nckh_activity_contributor b ON a.id = b.activity_id " +
-            "LEFT JOIN nckh_tieu_chi_dinh_muc cat ON a.catalog_code = cat.tieu_chi_code " +
+            "LEFT JOIN (SELECT tieu_chi_code, MAX(tieu_chi_name) AS tieu_chi_name, MAX(don_vi_tinh) AS don_vi_tinh FROM nckh_tieu_chi_dinh_muc GROUP BY tieu_chi_code) cat ON a.catalog_code = cat.tieu_chi_code " +
             "WHERE b.user_id = :userId " +
             "AND a.academic_year = :academicYear " +
             "AND a.status = 'APPROVED' " +
@@ -102,7 +102,7 @@ public interface NckhActivityRepository extends JpaRepository<NckhActivity, Long
             "a.activity_date AS activityDate " +
             "FROM nckh_activity a " +
             "INNER JOIN nckh_activity_contributor b ON a.id = b.activity_id " +
-            "LEFT JOIN nckh_tieu_chi_dinh_muc cat ON a.catalog_code = cat.tieu_chi_code " +
+            "LEFT JOIN (SELECT tieu_chi_code, MAX(tieu_chi_name) AS tieu_chi_name, MAX(don_vi_tinh) AS don_vi_tinh FROM nckh_tieu_chi_dinh_muc GROUP BY tieu_chi_code) cat ON a.catalog_code = cat.tieu_chi_code " +
             "WHERE b.user_id = :userId " +
             "AND a.academic_year = :academicYear " +
             "AND a.status = 'APPROVED' " +
@@ -125,7 +125,7 @@ public interface NckhActivityRepository extends JpaRepository<NckhActivity, Long
             "a.activity_date AS activityDate " +
             "FROM nckh_activity a " +
             "INNER JOIN nckh_activity_contributor b ON a.id = b.activity_id " +
-            "LEFT JOIN nckh_tieu_chi_dinh_muc cat ON a.catalog_code = cat.tieu_chi_code " +
+            "LEFT JOIN (SELECT tieu_chi_code, MAX(tieu_chi_name) AS tieu_chi_name, MAX(don_vi_tinh) AS don_vi_tinh FROM nckh_tieu_chi_dinh_muc GROUP BY tieu_chi_code) cat ON a.catalog_code = cat.tieu_chi_code " +
             "WHERE b.user_id IN (:userIds) " +
             "AND a.academic_year = :academicYear " +
             "AND a.status = 'APPROVED' " +
