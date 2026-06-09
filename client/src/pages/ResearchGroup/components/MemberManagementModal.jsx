@@ -497,9 +497,7 @@ const MemberManagementModal = ({
                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                           Nhiệm vụ
                         </th>
-                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                          Tỷ lệ tham gia
-                        </th>
+                    
                         <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                           Thao tác
                         </th>
@@ -582,32 +580,7 @@ const MemberManagementModal = ({
                                   {role}
                                 </span>
                               )}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-center">
-                              {isEditing ? (
-                                <div className="flex items-center gap-2 justify-center">
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    value={editParticipationRate}
-                                    onChange={(e) =>
-                                      setEditParticipationRate(
-                                        parseInt(e.target.value) || 0,
-                                      )
-                                    }
-                                    className="w-20 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
-                                  />
-                                  <span className="text-sm font-medium text-gray-600">
-                                    %
-                                  </span>
-                                </div>
-                              ) : (
-                                <span className="inline-flex items-center px-3 py-1 text-sm font-semibold text-gray-700 bg-gray-100 rounded-md">
-                                  {participationRate}%
-                                </span>
-                              )}
-                            </td>
+                            </td>                    
                             <td className="px-6 py-4 whitespace-nowrap text-center">
                               <div className="flex items-center justify-center gap-2">
                                 {isEditing ? (

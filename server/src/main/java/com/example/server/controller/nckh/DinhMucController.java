@@ -14,6 +14,7 @@ import com.example.server.DTO.nckh.*;
 import com.example.server.service.DinhMucAiScanService;
 import com.example.server.service.nckh.NckhTieuChiDinhMucService;
 import com.example.server.utils.SecurityUtils;
+import com.example.server.domain.User;
 
 @RestController
 @RequestMapping("/nckh/tieu-chi-dinh-muc")
@@ -26,13 +27,33 @@ public class DinhMucController {
     @Autowired
     private DinhMucAiScanService aiScanService;
 
+    // ─── Helpers ────────────────────────────────────────────────────
+    /** Chỉ admin hoặc Trợ lí NCKH (assistant) mới được phép thao tác write. */
+    private void assertCanWrite() {
+        User user = SecurityUtils.getCurrentUser();
+        if (user == null) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED, "Vui lòng đăng nhập");
+        }
+        if (!SecurityUtils.hasNckhStaffAccess(user)) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Chỉ Admin hoặc Trợ lí NCKH mới được phép thực hiện thao tác này.");
+        }
+    }
+
+    // ─── CRUD ───────────────────────────────────────────────────────
+
     @PostMapping
     public NckhTieuChiDinhMucResponse create(@RequestBody NckhTieuChiDinhMucRequest request) {
+        assertCanWrite();
         return service.create(request);
     }
 
     @PutMapping("/{id}")
-    public NckhTieuChiDinhMucResponse update(@PathVariable Long id, @RequestBody NckhTieuChiDinhMucRequest request) {
+    public NckhTieuChiDinhMucResponse update(@PathVariable Long id,
+                                              @RequestBody NckhTieuChiDinhMucRequest request) {
+        assertCanWrite();
         return service.update(id, request);
     }
 
@@ -54,8 +75,11 @@ public class DinhMucController {
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
+        assertCanWrite();
         service.delete(id);
     }
+
+    // ─── Template & Import ──────────────────────────────────────────
 
     @GetMapping("/export-template")
     public ResponseEntity<ByteArrayResource> exportImportTemplate(
@@ -81,6 +105,7 @@ public class DinhMucController {
 
     @PostMapping("/import")
     public ResponseEntity<ByteArrayResource> importFromExcel(@RequestParam("file") MultipartFile file) {
+        assertCanWrite();
         try {
             NckhTieuChiDinhMucImportResult result = service.importFromExcel(file);
 
@@ -105,6 +130,8 @@ public class DinhMucController {
         }
     }
 
+    // ─── AI Scan ────────────────────────────────────────────────────
+
     /**
      * Quét nhiều ảnh/PDF bằng Gemini AI, trả về danh sách định mức để preview.
      * Frontend hiển thị bảng preview, cho phép sửa rồi gọi /batch-save.
@@ -114,6 +141,7 @@ public class DinhMucController {
             @RequestParam("files") List<MultipartFile> files,
             @RequestParam(value = "year", required = false) String year) {
 
+        assertCanWrite();
         if (files == null || files.isEmpty()) throw new RuntimeException("Chưa chọn file nào");
 
         String effectiveYear = (year != null && !year.isBlank())
@@ -126,23 +154,29 @@ public class DinhMucController {
 
     /**
      * Lưu hàng loạt các dòng định mức đã được confirm từ bước preview.
+     * Dùng UPSERT: nếu đã tồn tại (tieuChiCode + chucDanh + year + phuongAn) → UPDATE, chưa có → INSERT.
      */
     @PostMapping("/batch-save")
     public ResponseEntity<SuccessResponseDTO<Integer>> batchSave(
             @RequestBody List<NckhTieuChiDinhMucRequest> rows) {
 
+        assertCanWrite();
         if (rows == null || rows.isEmpty()) throw new RuntimeException("Danh sách rỗng");
 
-        int count = 0;
+        int saved = 0, updated = 0, failed = 0;
         for (NckhTieuChiDinhMucRequest req : rows) {
             try {
-                service.create(req);
-                count++;
+                var result = service.upsert(req);
+                // result.id đã tồn tại trước đó nếu là update, nhưng ta không phân biệt ở đây
+                saved++;
             } catch (Exception e) {
-                // Bỏ qua dòng lỗi, tiếp tục
+                failed++;
             }
         }
-        return ResponseEntity.ok(new SuccessResponseDTO<>(count,
-                "Đã lưu " + count + "/" + rows.size() + " dòng thành công"));
+
+        String msg = String.format("Đã xử lý %d/%d dòng thành công%s",
+                saved, rows.size(),
+                failed > 0 ? " (" + failed + " lỗi)" : "");
+        return ResponseEntity.ok(new SuccessResponseDTO<>(saved, msg));
     }
 }

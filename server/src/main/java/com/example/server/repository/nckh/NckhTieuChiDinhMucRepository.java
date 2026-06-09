@@ -38,4 +38,22 @@ public interface NckhTieuChiDinhMucRepository extends JpaRepository<NckhTieuChiD
         Optional<NckhTieuChiDinhMuc> findFirstByTieuChiCode(@Param("tieuChiCode") String tieuChiCode);
 
     List<NckhTieuChiDinhMuc> findAllByYear(String year);
+
+    /**
+     * Tìm record theo (tieuChiCode, chucDanh, year, phuongAn) để thực hiện upsert.
+     * Nếu tìm thấy → UPDATE, chưa có → INSERT.
+     */
+    @Query(value = "SELECT * FROM nckh_tieu_chi_dinh_muc " +
+            "WHERE tieu_chi_code = :tieuChiCode " +
+            "AND chuc_danh = :chucDanh " +
+            "AND year = :year " +
+            "AND phuong_an = :phuongAn " +
+            "LIMIT 1",
+            nativeQuery = true)
+    Optional<NckhTieuChiDinhMuc> findForUpsert(
+            @Param("tieuChiCode") String tieuChiCode,
+            @Param("chucDanh") String chucDanh,
+            @Param("year") String year,
+            @Param("phuongAn") Integer phuongAn);
 }
+

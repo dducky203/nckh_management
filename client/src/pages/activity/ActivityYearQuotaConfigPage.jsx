@@ -3,13 +3,16 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
+import DeleteIcon from "@mui/icons-material/Delete";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useToast } from "../../context/ToastContext";
+import { useAuth } from "../../context/useAuth";
 import nckhTieuChiDinhMucService from "../../services/nckhTieuChiDinhMucService";
 import { downloadFileFromResponse, formatNumber } from "../../utils/helpers";
-
-
+import Modal from "../../components/common/Modal";
 
 function AiUploadModal({ onClose, onScan, scanning }) {
   const [files, setFiles] = useState([]);
@@ -340,16 +343,32 @@ export default function ActivityYearQuotaConfigPage() {
   const [importing, setImporting] = useState(false);
   const [downloadingTemplate, setDownloadingTemplate] = useState(false);
 
-
   // AI scan states
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [scanning, setScanning] = useState(false);
-  const [previewRows, setPreviewRows] = useState(null); // null = modal closed
+  const [previewRows, setPreviewRows] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  // Inline edit states
+  const [editingId, setEditingId] = useState(null); // row id being edited
+  const [editingValues, setEditingValues] = useState({ dinhMucToiThieu: "", gioQuyDoiPerUnit: "" });
+  const [editSaving, setEditSaving] = useState(false);
+
+  // Confirm modal state
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: "", row: null });
 
   const fileInputRef = useRef(null);
   const debounceRef = useRef(null);
   const toast = useToast();
+  const { user } = useAuth();
+
+
+  // Access guard: only admin or assistant can write
+  const canEdit = useMemo(() => {
+    if (!user) return false;
+    const role = (user?.role ?? "").toLowerCase();
+    return role === "admin" || role === "assistant" || user?.idRole === 1;
+  }, [user]);
 
   const getPlanValue = (row) => (row?.phuongAn ?? "");
 
@@ -384,16 +403,17 @@ export default function ActivityYearQuotaConfigPage() {
 
   const planOptions = useMemo(() => {
     const values = Array.from(
-      new Set(rows.map((row) => getPlanValue(row)).filter(Boolean))
+      new Set(rows.map((row) => getPlanValue(row)).filter((v) => v !== "" && v != null))
     );
-    return values.sort((a, b) => a - b);
+    return values.sort((a, b) => Number(a) - Number(b));
   }, [rows]);
 
+  // FIX: dùng Number() để tránh bug so sánh string vs number
   const filteredRows = useMemo(
     () =>
       selectedPlan === "all"
         ? rows
-        : rows.filter((row) => getPlanValue(row) === selectedPlan),
+        : rows.filter((row) => Number(getPlanValue(row)) === Number(selectedPlan)),
     [rows, selectedPlan]
   );
 
@@ -401,6 +421,64 @@ export default function ActivityYearQuotaConfigPage() {
     () => filteredRows.reduce((sum, row) => sum + (+row.tongGioToiThieu || 0), 0),
     [filteredRows]
   );
+
+  // ── Inline Edit Handlers ──────────────────────────────────────────────
+  const startEdit = (row) => {
+    setEditingId(row.id);
+    setEditingValues({
+      dinhMucToiThieu: row.dinhMucToiThieu ?? "",
+      gioQuyDoiPerUnit: row.gioQuyDoiPerUnit ?? "",
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingValues({ dinhMucToiThieu: "", gioQuyDoiPerUnit: "" });
+  };
+
+  const executeSaveEdit = async (row) => {
+    try {
+      setEditSaving(true);
+      await nckhTieuChiDinhMucService.update(row.id, {
+        phuongAn: row.phuongAn,
+        tieuChiCode: row.tieuChiCode,
+        tieuChiName: row.tieuChiName,
+        chucDanh: row.chucDanh,
+        donViTinh: row.donViTinh,
+        year: row.year,
+        dinhMucToiThieu: editingValues.dinhMucToiThieu !== "" ? Number(editingValues.dinhMucToiThieu) : null,
+        gioQuyDoiPerUnit: editingValues.gioQuyDoiPerUnit !== "" ? Number(editingValues.gioQuyDoiPerUnit) : null,
+      });
+      toast.success("Đã lưu thay đổi.");
+      cancelEdit();
+      await fetchData(yearInput);
+    } catch (e) {
+      toast.error(e?.message || "Lưu thất bại.");
+    } finally {
+      setEditSaving(false);
+      setConfirmModal({ isOpen: false, type: "", row: null });
+    }
+  };
+
+  const executeDelete = async (row) => {
+    try {
+      setEditSaving(true);
+      await nckhTieuChiDinhMucService.delete(row.id);
+      toast.success("Đã xóa định mức.");
+      cancelEdit();
+      await fetchData(yearInput);
+    } catch (e) {
+      toast.error(e?.message || "Xóa thất bại.");
+    } finally {
+      setEditSaving(false);
+      setConfirmModal({ isOpen: false, type: "", row: null });
+    }
+  };
+
+  const requestConfirm = (type, row) => {
+    setConfirmModal({ isOpen: true, type, row });
+  };
+
 
   const handleDownloadTemplate = async () => {
     try {
@@ -478,6 +556,20 @@ export default function ActivityYearQuotaConfigPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-10">
+      {/* Confirm Modal */}
+      <Modal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, type: "", row: null })}
+        onConfirm={() => confirmModal.type === "delete" ? executeDelete(confirmModal.row) : executeSaveEdit(confirmModal.row)}
+        title={confirmModal.type === "delete" ? "Xác nhận xóa?" : "Xác nhận lưu?"}
+        message={confirmModal.type === "delete" 
+          ? "Bạn có chắc chắn muốn xóa định mức này không? Hành động này không thể hoàn tác."
+          : "Bạn có chắc chắn muốn lưu các thay đổi cho định mức này?"}
+        confirmText="Xác nhận"
+        cancelText="Hủy"
+        type={confirmModal.type === "delete" ? "delete" : "info"}
+      />
+
       {/* Upload Modal */}
       {showUploadModal && (
         <AiUploadModal
@@ -497,7 +589,7 @@ export default function ActivityYearQuotaConfigPage() {
         />
       )}
 
-      <div className="mx-auto max-w-7xl px-4 pt-8">
+      <div className="mx-auto max-w-[1400px] px-4 pt-8">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
             <div>
@@ -520,30 +612,35 @@ export default function ActivityYearQuotaConfigPage() {
                 {downloadingTemplate ? "Đang tải..." : "Tải file mẫu"}
               </button>
 
-              {/* Import Excel */}
-              <label
-                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-white shadow-sm transition cursor-pointer ${importing ? "bg-emerald-400 cursor-wait" : "bg-emerald-600 hover:bg-emerald-700"
-                  }`}
-              >
-                {importing ? "Đang import..." : "Import Excel"}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".xlsx,.xls"
-                  onChange={handleImportExcel}
-                  disabled={importing}
-                  className="hidden"
-                />
-              </label>
+              {/* Import Excel — chỉ admin/assistant */}
+              {canEdit && (
+                <label
+                  className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-white shadow-sm transition cursor-pointer ${importing ? "bg-emerald-400 cursor-wait" : "bg-emerald-600 hover:bg-emerald-700"
+                    }`}
+                >
+                  {importing ? "Đang import..." : "Import Excel"}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".xlsx,.xls"
+                    onChange={handleImportExcel}
+                    disabled={importing}
+                    className="hidden"
+                  />
+                </label>
+              )}
 
-              <button
-                type="button"
-                onClick={() => setShowUploadModal(true)}
-                className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-white shadow-sm transition bg-violet-600 hover:bg-violet-700"
-              >
-                <AutoAwesomeIcon sx={{ fontSize: 16 }} />
-                Quét bằng AI
-              </button>
+              {/* Quét AI — chỉ admin/assistant */}
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={() => setShowUploadModal(true)}
+                  className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-white shadow-sm transition bg-violet-600 hover:bg-violet-700"
+                >
+                  <AutoAwesomeIcon sx={{ fontSize: 16 }} />
+                  Quét bằng AI
+                </button>
+              )}
             </div>
           </div>
 
@@ -615,15 +712,21 @@ export default function ActivityYearQuotaConfigPage() {
                       <th className="py-3.5 px-4 text-right min-w-[110px]">Định mức</th>
                       <th className="py-3.5 px-4 text-right min-w-[110px]">Giờ quy đổi</th>
                       <th className="py-3.5 px-4 text-right min-w-[140px]">Tổng giờ tối thiểu</th>
+                      {canEdit && <th className="py-3.5 px-4 w-20 text-center">Action</th>}
                     </tr>
                   </thead>
                   <tbody className="text-sm">
                     {filteredRows.map((row, index) => {
                       const hasHours = row.tongGioToiThieu > 0;
+                      const isEditing = editingId === row.id;
                       return (
                         <tr
                           key={`${row.id || row.tieuChiCode || "item"}-${index}`}
-                          className={`group/row transition-colors duration-200 border-b border-slate-100 last:border-0 ${hasHours ? "bg-slate-50" : "hover:bg-slate-50"
+                          className={`group/row transition-colors duration-200 border-b border-slate-100 last:border-0 ${isEditing
+                              ? "bg-amber-50/60 ring-1 ring-inset ring-amber-300"
+                              : hasHours
+                                ? "bg-slate-50"
+                                : "hover:bg-slate-50"
                             }`}
                         >
                           <td className="py-3 px-4 text-center align-middle font-medium text-slate-500">
@@ -640,24 +743,111 @@ export default function ActivityYearQuotaConfigPage() {
                           </td>
                           <td className="py-3 px-4 text-slate-700">{row.chucDanh || "-"}</td>
                           <td className="py-3 px-4 text-slate-700">{row.donViTinh || "-"}</td>
-                          <td className="py-3 px-4 text-right">
-                            <span className="inline-block text-xs font-semibold text-slate-600 bg-slate-100/50 px-2.5 py-1 rounded-md">
-                              {formatNumber(row.dinhMucToiThieu)}
-                            </span>
+
+                          {/* Định mức — editable */}
+                          <td className="py-2 px-4 text-right">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={editingValues.dinhMucToiThieu}
+                                onChange={(e) => setEditingValues((v) => ({ ...v, dinhMucToiThieu: e.target.value }))}
+                                className="w-16 border border-amber-400 rounded-md px-2 py-1 text-right text-sm focus:outline-none focus:ring-1 focus:ring-amber-400 bg-white"
+                                autoFocus
+                              />
+                            ) : (
+                              <span className="inline-block text-xs font-semibold text-slate-600 bg-slate-100/50 px-2.5 py-1 rounded-md">
+                                {formatNumber(row.dinhMucToiThieu)}
+                              </span>
+                            )}
                           </td>
-                          <td className="py-3 px-4 text-right">
-                            <span className="inline-block text-xs font-semibold text-slate-600 bg-slate-100/50 px-2.5 py-1 rounded-md">
-                              {formatNumber(row.gioQuyDoiPerUnit)}
-                            </span>
+
+                          {/* Giờ quy đổi — editable */}
+                          <td className="py-2 px-4 text-right">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={editingValues.gioQuyDoiPerUnit}
+                                onChange={(e) => setEditingValues((v) => ({ ...v, gioQuyDoiPerUnit: e.target.value }))}
+                                className="w-16 border border-amber-400 rounded-md px-2 py-1 text-right text-sm focus:outline-none focus:ring-1 focus:ring-amber-400 bg-white"
+                              />
+                            ) : (
+                              <span className="inline-block text-xs font-semibold text-slate-600 bg-slate-100/50 px-2.5 py-1 rounded-md">
+                                {formatNumber(row.gioQuyDoiPerUnit)}
+                              </span>
+                            )}
                           </td>
+
+                          {/* Tổng giờ tối thiểu — hiện live khi đang edit */}
                           <td className="py-3 px-4 text-right">
-                            <span
-                              className={`font-black text-lg transition-colors ${hasHours ? "text-mainColor" : "text-slate-300"
-                                }`}
-                            >
-                              {hasHours ? formatNumber(row.tongGioToiThieu) : "0"}
-                            </span>
+                            {isEditing ? (() => {
+                              const dm = Number(editingValues.dinhMucToiThieu) || 0;
+                              const gqd = Number(editingValues.gioQuyDoiPerUnit) || 0;
+                              const preview = dm * gqd;
+                              return (
+                                <span className={`font-black text-lg transition-colors ${preview > 0 ? "text-amber-600" : "text-slate-300"
+                                  }`}>
+                                  {preview > 0 ? formatNumber(preview) : "0"}
+                                </span>
+                              );
+                            })() : (
+                              <span className={`font-black text-lg transition-colors ${hasHours ? "text-mainColor" : "text-slate-300"
+                                }`}>
+                                {hasHours ? formatNumber(row.tongGioToiThieu) : "0"}
+                              </span>
+                            )}
                           </td>
+
+                          {/* Edit / Save / Cancel */}
+                          {canEdit && (
+                            <td className="py-2 px-3 text-center align-middle">
+                              {isEditing ? (
+                                <div className="inline-flex items-center gap-1">
+                                  <button
+                                    onClick={() => requestConfirm("save", row)}
+                                    disabled={editSaving}
+                                    title="Lưu"
+                                    className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-700 transition disabled:opacity-50"
+                                  >
+                                    {editSaving ? (
+                                      <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
+                                      </svg>
+                                    ) : (
+                                      <SaveIcon sx={{ fontSize: 14 }} />
+                                    )}
+                                  </button>
+                                  <button
+                                    onClick={cancelEdit}
+                                    disabled={editSaving}
+                                    title="Hủy"
+                                    className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-slate-100 hover:bg-rose-100 text-slate-400 hover:text-rose-600 transition"
+                                  >
+                                    <CloseIcon sx={{ fontSize: 14 }} />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="inline-flex items-center gap-1">
+                                  <button
+                                    onClick={() => startEdit(row)}
+                                    title="Chỉnh sửa"
+                                    className="opacity-0 group-hover/row:opacity-100 inline-flex items-center justify-center w-7 h-7 rounded-lg bg-slate-100 hover:bg-mainColor/10 text-slate-400 hover:text-mainColor transition"
+                                  >
+                                    <EditIcon sx={{ fontSize: 14 }} />
+                                  </button>
+                                  <button
+                                    onClick={() => requestConfirm("delete", row)}
+                                    title="Xóa"
+                                    className="opacity-0 group-hover/row:opacity-100 inline-flex items-center justify-center w-7 h-7 rounded-lg bg-slate-100 hover:bg-rose-100 text-slate-400 hover:text-rose-600 transition"
+                                  >
+                                    <DeleteIcon sx={{ fontSize: 14 }} />
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                          )}
                         </tr>
                       );
                     })}

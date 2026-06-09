@@ -54,43 +54,123 @@ public class DinhMucAiScanService {
     // ═══════════════════════════════════════════════════════════════
 
     private static final String PA_PROMPT = """
-            Trích xuất TOÀN BỘ dòng dữ liệu từ bảng phương án NCKH trong ảnh/PDF. Trả về JSON array.
+            Bạn là OCR chuyên trích xuất bảng định mức NCKH từ tài liệu PDF/ảnh của Học viện Công nghệ Bưu chính Viễn thông.
             NĂM: year = "%s".
 
-            QUY TẮC:
-            - Mỗi dòng trong bảng → 1 object JSON.
-            - Tạo dòng RIÊNG cho từng chức danh (GS/PGS, TS, ThS, KS/CN) nếu giá trị khác nhau.
-            - Cột "Định mức" trong bảng này = dinhMucToiThieu.
-            - gioQuyDoiPerUnit = null (bảng PA không có giờ quy đổi).
-            - BỎ QUA: dòng tổng, ghi chú, tiêu đề cột, dòng trống.
-            - Số thập phân dùng dấu CHẤM.
-            - Trích xuất ĐẦY ĐỦ, KHÔNG bỏ sót.
+            === CẤU TRÚC BẢNG ===
+            Bảng có cấu trúc MULTI-HEADER (header 2 tầng):
+            - Tầng 1: "Tiêu chí hoạt động KH&CN" | "Đơn vị tính" | "Định mức theo chức danh cá nhân"
+            - Tầng 2 (dưới "Định mức..."): "GS/PGS" | "TS" | "ThS" | "KS/CN"
+            - Mỗi ô số tương ứng với 1 chức danh cụ thể.
+            - Các nhóm tiêu chí có tên nhóm (ví dụ "Seminar", "Hội thảo") là dòng TIÊU ĐỀ NHÓM — không có số → bỏ qua.
+            - Dòng con bên dưới (ví dụ "Trình bày Seminar", "Tham dự Seminar") có giá trị số → trích xuất.
+            - Một số tiêu chí chỉ áp dụng cho 1-2 chức danh, các chức danh còn lại để trống → bỏ qua ô trống.
+
+            === QUY TẮC TRÍCH XUẤT ===
+            1. Mỗi (tiêu chí × chức danh) có giá trị số → 1 object JSON riêng.
+               Ví dụ "Trình bày Seminar" có 4 cột → tạo 4 object.
+            2. tieuChiName: tên tiêu chí CON (không phải tên nhóm). Nếu ô bị merge, suy luận tên từ dòng phía trên.
+            3. chucDanh: map chính xác theo enum: "GS_PGS", "TS", "THS", "KS_CN".
+            4. dinhMucToiThieu: giá trị số trong cột chức danh đó. Dùng dấu CHẤM thập phân.
+            5. gioQuyDoiPerUnit: null (bảng PA không có cột này).
+            6. phuongAn: xác định từ tên file hoặc tiêu đề bảng (1–6). Nếu không rõ để null.
+            7. donViTinh: lấy từ cột "Đơn vị tính" (VD: "Lần/năm", "Bài/năm", "Seminar/năm/người").
+            8. sortOrder: thứ tự dòng trong bảng (1, 2, 3…).
+            9. BỎ QUA: dòng tổng, ghi chú, tiêu đề cột, dòng trống, dòng chỉ có tên nhóm không có số.
+            10. Nếu bảng là "Nhóm nghiên cứu mạnh" (Bảng 2): có cột "Định mức theo nhóm" — BỎ QUA cột đó, CHỈ lấy cột cá nhân.
+            11. ĐẶC BIỆT QUAN TRỌNG: Nếu ảnh là trang tiếp theo của bảng (không có tiêu đề cột), HÃY TỰ ĐỘNG SUY LUẬN thứ tự cột số liệu từ trái sang phải ứng với: GS/PGS, TS, ThS, KS/CN. Mặc định bỏ qua cột "Định mức theo nhóm" (nếu có).
+            === VÍ DỤ ĐẦU RA JSON ===
+            Với dòng bảng: "Trình bày Seminar | Seminar/năm/người | 1.6 | 0.8 | 0.8 | 0.8"
+            Tạo ra:
+            [
+              {"phuongAn": 1, "tieuChiName": "Trình bày Seminar", "chucDanh": "GS_PGS", "donViTinh": "Seminar/năm/người", "dinhMucToiThieu": 1.6, "gioQuyDoiPerUnit": null, "year": "2025", "sortOrder": 1},
+              {"phuongAn": 1, "tieuChiName": "Trình bày Seminar", "chucDanh": "TS",     "donViTinh": "Seminar/năm/người", "dinhMucToiThieu": 0.8, "gioQuyDoiPerUnit": null, "year": "2025", "sortOrder": 1},
+              {"phuongAn": 1, "tieuChiName": "Trình bày Seminar", "chucDanh": "THS",    "donViTinh": "Seminar/năm/người", "dinhMucToiThieu": 0.8, "gioQuyDoiPerUnit": null, "year": "2025", "sortOrder": 1},
+              {"phuongAn": 1, "tieuChiName": "Trình bày Seminar", "chucDanh": "KS_CN",  "donViTinh": "Seminar/năm/người", "dinhMucToiThieu": 0.8, "gioQuyDoiPerUnit": null, "year": "2025", "sortOrder": 1}
+            ]
+
+            Với dòng bảng: "Bài báo quốc tế danh mục WoS/Scopus | Bài/năm/người | 0.48 | 0.32 | (trống) | (trống)"
+            Tạo ra:
+            [
+              {"phuongAn": 1, "tieuChiName": "Bài báo quốc tế danh mục WoS/Scopus", "chucDanh": "GS_PGS", "donViTinh": "Bài/năm/người", "dinhMucToiThieu": 0.48, "gioQuyDoiPerUnit": null, "year": "2025", "sortOrder": 5},
+              {"phuongAn": 1, "tieuChiName": "Bài báo quốc tế danh mục WoS/Scopus", "chucDanh": "TS",     "donViTinh": "Bài/năm/người", "dinhMucToiThieu": 0.32, "gioQuyDoiPerUnit": null, "year": "2025", "sortOrder": 5}
+            ]
+
+            Trả về JSON array. Trích xuất ĐẦY ĐỦ tất cả các dòng, KHÔNG bỏ sót.
             """;
 
+    /**
+     * Prompt cho Phụ lục 2 — bảng quy đổi giờ NCKH (không có cột chức danh).
+     *
+     * Cấu trúc: TT | Tiêu chí | Đơn vị tính | Định mức (giờ/đơn vị)
+     * Mỗi tiêu chí chỉ có 1 số duy nhất → 1 object JSON.
+     */
     private static final String PL2_PROMPT = """
-            Trích xuất TOÀN BỘ dòng dữ liệu từ bảng Phụ lục 2 (Quy đổi giờ NCKH) trong ảnh/PDF. Trả về JSON array.
+            Bạn là OCR chuyên trích xuất bảng Phụ lục 2 (Quy đổi giờ NCKH) từ tài liệu PDF/ảnh.
             NĂM: year = "%s".
 
-            QUY TẮC:
-            - Mỗi dòng tiêu chí → 1 object JSON. CHỈ 1 dòng mỗi tiêu chí.
-            - Cột "Định mức" trong bảng này = gioQuyDoiPerUnit (giờ quy đổi / đơn vị).
-            - phuongAn = null, chucDanh = null, dinhMucToiThieu = null.
-            - BỎ QUA: dòng "Trừ giờ", dòng tổng, ghi chú, tiêu đề cột, dòng trống.
-            - Số thập phân dùng dấu CHẤM.
-            - NẾU Ô CÓ CHỨA KHOẢNG SỐ (Ví dụ: "50-120"), CHỈ LẤY SỐ NHỎ NHẤT (Ví dụ: 50).
-            - Trích xuất ĐẦY ĐỦ, KHÔNG bỏ sót.
+            === CẤU TRÚC BẢNG ===
+            Bảng có cấu trúc ĐƠN GIẢN: TT | Tiêu chí hoạt động KH&CN | Đơn vị tính | Định mức (giờ quy đổi / đơn vị)
+            - KHÔNG có cột chức danh (GS/PGS, TS, ThS, KS/CN).
+            - Cột "Định mức" = số giờ quy đổi trên mỗi đơn vị sản phẩm.
+            - Một tiêu chí = 1 dòng = 1 object JSON.
+
+            === QUY TẮC TRÍCH XUẤT ===
+            1. gioQuyDoiPerUnit: giá trị cột "Định mức". Dùng dấu CHẤM thập phân.
+            2. phuongAn: null. chucDanh: null. dinhMucToiThieu: null.
+            3. tieuChiName: tên tiêu chí ĐÚNG như trong bảng (giữ nguyên tiếng Việt).
+            4. donViTinh: lấy từ cột "Đơn vị tính".
+            5. NẾU Ô CÓ KHOẢNG SỐ (VD: "50-120"): CHỈ lấy số NHỎ NHẤT (VD: 50).
+            6. BỎ QUA: dòng "Trừ giờ", dòng tổng, ghi chú, tiêu đề cột, dòng trống.
+            7. Số thập phân dùng dấu CHẤM.
+
+            === VÍ DỤ ĐẦU RA JSON ===
+            Với dòng: "Trình bày Seminar | Giờ/bài | 10"
+            Tạo ra:
+            {"phuongAn": null, "tieuChiName": "Trình bày Seminar", "chucDanh": null, "donViTinh": "Giờ/bài", "dinhMucToiThieu": null, "gioQuyDoiPerUnit": 10.0, "year": "2025", "sortOrder": 1}
+
+            Với dòng: "Đề án Học viện (50-120) | Giờ/đề án | 50-120"
+            Tạo ra:
+            {"phuongAn": null, "tieuChiName": "Đề án Học viện", "chucDanh": null, "donViTinh": "Giờ/đề án", "dinhMucToiThieu": null, "gioQuyDoiPerUnit": 50.0, "year": "2025", "sortOrder": 12}
+
+            Trả về JSON array. Trích xuất ĐẦY ĐỦ, KHÔNG bỏ sót.
             """;
 
+    /**
+     * Prompt tổng quát khi không xác định được loại bảng từ tên file.
+     */
     private static final String GENERIC_PROMPT = """
-            Trích xuất TOÀN BỘ dòng dữ liệu từ bảng định mức NCKH trong ảnh/PDF. Trả về JSON array.
+            Bạn là OCR chuyên trích xuất bảng định mức NCKH từ tài liệu PDF/ảnh của Học viện Công nghệ Bưu chính Viễn thông.
             NĂM: year = "%s".
 
-            Xác định loại bảng:
-            - Bảng Phương án (1-6): có cột chức danh → dinhMucToiThieu = cột "Định mức", gioQuyDoiPerUnit = null.
-            - Phụ lục 2: không có chức danh → gioQuyDoiPerUnit = cột "Định mức", dinhMucToiThieu = null.
+            === NHẬN DẠNG LOẠI BẢNG ===
+            - Bảng Phương án (PA) / Bảng theo chức danh cá nhân: có CỘT CHỨC DANH (GS/PGS, TS, ThS, KS/CN).
+              → mỗi (tiêu chí × chức danh) = 1 object. dinhMucToiThieu = giá trị số, gioQuyDoiPerUnit = null.
+            - Phụ lục 2 (Quy đổi giờ): KHÔNG có cột chức danh, chỉ có 1 cột số duy nhất.
+              → mỗi tiêu chí = 1 object. gioQuyDoiPerUnit = giá trị số, dinhMucToiThieu = null, chucDanh = null.
 
-            BỎ QUA: dòng tổng, ghi chú, tiêu đề cột, dòng trống, dòng "Trừ giờ".
-            Số thập phân dùng dấu CHẤM. Trích xuất ĐẦY ĐỦ, KHÔNG bỏ sót.
+            === QUY TẮC CHUNG ===
+            1. Header bảng có thể là 2 tầng (multi-header) — đọc kỹ để xác định đúng cột nào là chức danh nào.
+            2. Ô bị merge (rowspan/colspan): suy luận giá trị từ ngữ cảnh dòng liền kề.
+            3. Tên tiêu chí: lấy tên CON (dòng có số liệu), KHÔNG lấy tên nhóm.
+            4. BỎ QUA: dòng "Trừ giờ", dòng tổng, ghi chú, tiêu đề, dòng trống, dòng chỉ có tên nhóm.
+            5. Khoảng số (VD: "50-120"): lấy số NHỎ NHẤT.
+            6. chucDanh enum: "GS_PGS", "TS", "THS", "KS_CN".
+            7. Số thập phân dùng dấu CHẤM. Trích xuất ĐẦY ĐỦ, KHÔNG bỏ sót.
+
+            === VÍ DỤ ĐẦU RA JSON ===
+            Bảng PA — dòng "Tham dự Seminar | Lần/năm | 3 | 3 | 6 | 6":
+            [
+              {"phuongAn": null, "tieuChiName": "Tham dự Seminar", "chucDanh": "GS_PGS", "donViTinh": "Lần/năm", "dinhMucToiThieu": 3, "gioQuyDoiPerUnit": null, "year": "2025", "sortOrder": 2},
+              {"phuongAn": null, "tieuChiName": "Tham dự Seminar", "chucDanh": "TS",     "donViTinh": "Lần/năm", "dinhMucToiThieu": 3, "gioQuyDoiPerUnit": null, "year": "2025", "sortOrder": 2},
+              {"phuongAn": null, "tieuChiName": "Tham dự Seminar", "chucDanh": "THS",    "donViTinh": "Lần/năm", "dinhMucToiThieu": 6, "gioQuyDoiPerUnit": null, "year": "2025", "sortOrder": 2},
+              {"phuongAn": null, "tieuChiName": "Tham dự Seminar", "chucDanh": "KS_CN",  "donViTinh": "Lần/năm", "dinhMucToiThieu": 6, "gioQuyDoiPerUnit": null, "year": "2025", "sortOrder": 2}
+            ]
+
+            Bảng Phụ lục 2 — dòng "Bài báo WoS | Giờ/bài | 210":
+            {"phuongAn": null, "tieuChiName": "Bài báo WoS", "chucDanh": null, "donViTinh": "Giờ/bài", "dinhMucToiThieu": null, "gioQuyDoiPerUnit": 210.0, "year": "2025", "sortOrder": 3}
+
+            Trả về JSON array.
             """;
 
     private static final Schema RESPONSE_SCHEMA = Schema.builder()
@@ -121,83 +201,161 @@ public class DinhMucAiScanService {
 
     private static final LinkedHashMap<String, String> TIEU_CHI_CODE_MAP = new LinkedHashMap<>();
     static {
+        // ── Seminar ──────────────────────────────────────────────
         TIEU_CHI_CODE_MAP.put("trinh bay seminar", "SEMINAR_TRINH_BAY");
+        TIEU_CHI_CODE_MAP.put("tham du seminar", "SEMINAR_THAM_DU");
+        TIEU_CHI_CODE_MAP.put("tham du seminar co phan bien", "SEMINAR_THAM_DU");
+        TIEU_CHI_CODE_MAP.put("seminar co phan bien", "SEMINAR_THAM_DU");
+        TIEU_CHI_CODE_MAP.put("trinh bay seminar chuyen de", "SEMINAR_TRINH_BAY");
 
+        // ── Hội thảo ────────────────────────────────────────────
         TIEU_CHI_CODE_MAP.put("to chuc hoi thao quoc te", "HT_TO_CHUC_QUOC_TE");
         TIEU_CHI_CODE_MAP.put("to chuc ht quoc te", "HT_TO_CHUC_QUOC_TE");
+        TIEU_CHI_CODE_MAP.put("hoi thao quoc te", "HT_TO_CHUC_QUOC_TE");
         TIEU_CHI_CODE_MAP.put("to chuc hoi thao quoc gia", "HT_TO_CHUC_QUOC_GIA");
         TIEU_CHI_CODE_MAP.put("to chuc ht quoc gia", "HT_TO_CHUC_QUOC_GIA");
+        TIEU_CHI_CODE_MAP.put("hoi thao quoc gia", "HT_TO_CHUC_QUOC_GIA");
         TIEU_CHI_CODE_MAP.put("to chuc hoi thao hoc vien", "HT_TO_CHUC_HOC_VIEN");
         TIEU_CHI_CODE_MAP.put("to chuc ht hoc vien", "HT_TO_CHUC_HOC_VIEN");
+        TIEU_CHI_CODE_MAP.put("hoi thao hoc vien", "HT_TO_CHUC_HOC_VIEN");
+        TIEU_CHI_CODE_MAP.put("hoi thao cap hoc vien", "HT_TO_CHUC_HOC_VIEN");
         TIEU_CHI_CODE_MAP.put("tham gia hoi thao", "HT_THAM_GIA");
+        TIEU_CHI_CODE_MAP.put("tham du hoi thao", "HT_THAM_GIA");
+        TIEU_CHI_CODE_MAP.put("bai tham luan trinh bay tai hoi thao", "HT_THAM_LUAN_QUOC_TE");
 
+        // ── Bài tham luận ───────────────────────────────────────
         TIEU_CHI_CODE_MAP.put("tham luan quoc te", "HT_THAM_LUAN_QUOC_TE");
         TIEU_CHI_CODE_MAP.put("trinh bay tai hoi thao quoc te", "HT_THAM_LUAN_QUOC_TE");
+        TIEU_CHI_CODE_MAP.put("bai tham luan quoc te", "HT_THAM_LUAN_QUOC_TE");
         TIEU_CHI_CODE_MAP.put("tham luan quoc gia", "HT_THAM_LUAN_QUOC_GIA");
         TIEU_CHI_CODE_MAP.put("trinh bay tai hoi thao quoc gia", "HT_THAM_LUAN_QUOC_GIA");
+        TIEU_CHI_CODE_MAP.put("bai tham luan quoc gia", "HT_THAM_LUAN_QUOC_GIA");
         TIEU_CHI_CODE_MAP.put("tham luan hoc vien", "HT_THAM_LUAN_HOC_VIEN");
         TIEU_CHI_CODE_MAP.put("trinh bay tai hoi thao hoc vien", "HT_THAM_LUAN_HOC_VIEN");
+        TIEU_CHI_CODE_MAP.put("bai tham luan hoc vien", "HT_THAM_LUAN_HOC_VIEN");
 
+        // ── Bài báo quốc tế ─────────────────────────────────────
         TIEU_CHI_CODE_MAP.put("bai bao wos", "BB_WOS");
         TIEU_CHI_CODE_MAP.put("danh muc wos", "BB_WOS");
+        TIEU_CHI_CODE_MAP.put("bai bao wos scopus", "BB_WOS");
+        TIEU_CHI_CODE_MAP.put("bai bao quoc te danh muc wos scopus", "BB_WOS");
+        TIEU_CHI_CODE_MAP.put("bai bao quoc te wos scopus", "BB_WOS");
+        TIEU_CHI_CODE_MAP.put("la tac gia chinh wos scopus", "BB_WOS");
         TIEU_CHI_CODE_MAP.put("bai bao scopus", "BB_SCOPUS");
         TIEU_CHI_CODE_MAP.put("danh muc scopus", "BB_SCOPUS");
         TIEU_CHI_CODE_MAP.put("bai bao tieng anh hoc vien", "BB_TA_HOCVIEN");
         TIEU_CHI_CODE_MAP.put("tieng anh tap chi hoc vien", "BB_TA_HOCVIEN");
+        TIEU_CHI_CODE_MAP.put("bai bao tieng anh tap chi hoc vien", "BB_TA_HOCVIEN");
         TIEU_CHI_CODE_MAP.put("bai bao quoc te khong wos", "BB_QUOC_TE_KHAC");
         TIEU_CHI_CODE_MAP.put("khong thuoc danh muc wos", "BB_QUOC_TE_KHAC");
+        TIEU_CHI_CODE_MAP.put("bai bao quoc te khac", "BB_QUOC_TE_KHAC");
         TIEU_CHI_CODE_MAP.put("trich dan bai bao", "BB_TRICH_DAN_TA");
+        TIEU_CHI_CODE_MAP.put("trich dan", "BB_TRICH_DAN_TA");
 
+        // ── Bài báo tiếng Việt ──────────────────────────────────
         TIEU_CHI_CODE_MAP.put("bai bao tieng viet tap chi hoc vien", "BB_TV_HOCVIEN");
         TIEU_CHI_CODE_MAP.put("tieng viet tap chi hoc vien", "BB_TV_HOCVIEN");
+        TIEU_CHI_CODE_MAP.put("bai bao tieng viet", "BB_TV_HOCVIEN");
         TIEU_CHI_CODE_MAP.put("bai bao tieng viet tap chi khac", "BB_TV_KHAC");
         TIEU_CHI_CODE_MAP.put("tieng viet cac tap chi khac", "BB_TV_KHAC");
+        TIEU_CHI_CODE_MAP.put("tap chi khac", "BB_TV_KHAC");
 
+        // ── Kỷ yếu (bài tham luận đăng kỷ yếu) ─────────────────
         TIEU_CHI_CODE_MAP.put("ky yeu quoc te", "BTL_QUOC_TE");
         TIEU_CHI_CODE_MAP.put("ky yeu hoi thao quoc te", "BTL_QUOC_TE");
         TIEU_CHI_CODE_MAP.put("full text quoc te", "BTL_QUOC_TE");
+        TIEU_CHI_CODE_MAP.put("bai tham luan dang ky yeu quoc te", "BTL_QUOC_TE");
+        TIEU_CHI_CODE_MAP.put("gio ht quoc gia", "BTL_QUOC_GIA");
         TIEU_CHI_CODE_MAP.put("ky yeu quoc gia", "BTL_QUOC_GIA");
         TIEU_CHI_CODE_MAP.put("ky yeu hoi thao quoc gia", "BTL_QUOC_GIA");
         TIEU_CHI_CODE_MAP.put("full text quoc gia", "BTL_QUOC_GIA");
+        TIEU_CHI_CODE_MAP.put("bai tham luan dang ky yeu quoc gia", "BTL_QUOC_GIA");
         TIEU_CHI_CODE_MAP.put("ky yeu hoc vien", "BTL_HOC_VIEN");
         TIEU_CHI_CODE_MAP.put("ky yeu hoi thao hoc vien", "BTL_HOC_VIEN");
         TIEU_CHI_CODE_MAP.put("full text hoc vien", "BTL_HOC_VIEN");
 
+        // ── Bài tổng quan ───────────────────────────────────────
         TIEU_CHI_CODE_MAP.put("bai tong quan", "TONG_QUAN");
         TIEU_CHI_CODE_MAP.put("tong quan ve linh vuc", "TONG_QUAN");
+        TIEU_CHI_CODE_MAP.put("tong quan linh vuc nghien cuu", "TONG_QUAN");
+
+        // ── Tư vấn / Bản tin website ────────────────────────────
         TIEU_CHI_CODE_MAP.put("tu van", "TU_VAN_BAN_TIN");
         TIEU_CHI_CODE_MAP.put("ban tin", "TU_VAN_BAN_TIN");
         TIEU_CHI_CODE_MAP.put("huong dan ky thuat", "TU_VAN_BAN_TIN");
+        TIEU_CHI_CODE_MAP.put("hoat dong tu van huong dan ky thuat ban tin", "TU_VAN_BAN_TIN");
+        TIEU_CHI_CODE_MAP.put("tu van huong dan ban tin website", "TU_VAN_BAN_TIN");
+        TIEU_CHI_CODE_MAP.put("ban tin website hoc vien", "TU_VAN_BAN_TIN");
+
+        // ── Quy trình kỹ thuật ──────────────────────────────────
         TIEU_CHI_CODE_MAP.put("quy trinh ky thuat", "QUY_TRINH_KY_THUAT");
         TIEU_CHI_CODE_MAP.put("tieu bo ky thuat", "QUY_TRINH_KY_THUAT");
         TIEU_CHI_CODE_MAP.put("tieu chuan ky thuat", "QUY_TRINH_KY_THUAT");
-        TIEU_CHI_CODE_MAP.put("de xuat quoc gia", "DE_XUAT_QG");
-        TIEU_CHI_CODE_MAP.put("de xuat cap bo", "DE_XUAT_BO");
-        TIEU_CHI_CODE_MAP.put("danh muc tuyen chon cap bo", "DE_XUAT_BO");
+        TIEU_CHI_CODE_MAP.put("tien bo ky thuat", "QUY_TRINH_KY_THUAT");
+        TIEU_CHI_CODE_MAP.put("gop y van ban quy pham phap luat", "QUY_TRINH_KY_THUAT");
+        TIEU_CHI_CODE_MAP.put("thong tin ket qua nghien cuu", "QUY_TRINH_KY_THUAT");
 
+        // ── Đề xuất nhiệm vụ NCKH ──────────────────────────────
+        TIEU_CHI_CODE_MAP.put("de xuat quoc gia", "DE_XUAT_QG");
+        TIEU_CHI_CODE_MAP.put("de xuat cap quoc gia", "DE_XUAT_QG");
+        TIEU_CHI_CODE_MAP.put("de xuat cap bo", "DE_XUAT_BO");
+        TIEU_CHI_CODE_MAP.put("de xuat cap bo va tuong duong", "DE_XUAT_BO");
+        TIEU_CHI_CODE_MAP.put("danh muc tuyen chon cap bo", "DE_XUAT_BO");
+        TIEU_CHI_CODE_MAP.put("de xuat nhiem vu nckh", "DE_XUAT_BO");
+
+        // ── Nhiệm vụ KH&CN được phê duyệt ──────────────────────
         TIEU_CHI_CODE_MAP.put("nhiem vu quoc gia chu nhiem", "NHIEM_VU_QG_CHU");
+        TIEU_CHI_CODE_MAP.put("de tai cap quoc gia chu nhiem", "NHIEM_VU_QG_CHU");
         TIEU_CHI_CODE_MAP.put("nhiem vu quoc gia thu ky", "NHIEM_VU_QG_TK");
         TIEU_CHI_CODE_MAP.put("nhiem vu quoc gia tham gia", "NHIEM_VU_QG_TG");
         TIEU_CHI_CODE_MAP.put("nhiem vu cap bo chu nhiem", "NHIEM_VU_BO_CHU");
+        TIEU_CHI_CODE_MAP.put("de tai cap bo chu nhiem", "NHIEM_VU_BO_CHU");
+        TIEU_CHI_CODE_MAP.put("de tai cap bo va tuong duong chu tri", "NHIEM_VU_BO_CHU");
         TIEU_CHI_CODE_MAP.put("nhiem vu cap bo thu ky", "NHIEM_VU_BO_TK");
         TIEU_CHI_CODE_MAP.put("nhiem vu cap bo tham gia", "NHIEM_VU_BO_TG");
         TIEU_CHI_CODE_MAP.put("nhiem vu hoc vien chu nhiem", "NHIEM_VU_HV_CHU");
         TIEU_CHI_CODE_MAP.put("nhiem vu hoc vien tham gia", "NHIEM_VU_HV_TG");
+        TIEU_CHI_CODE_MAP.put("de tai cap hoc vien tham gia", "NHIEM_VU_HV_TG");
+        TIEU_CHI_CODE_MAP.put("nhiem vu khcn duoc phe duyet", "NHIEM_VU_BO_CHU");
 
+        // ── Hướng dẫn SV NCKH ───────────────────────────────────
         TIEU_CHI_CODE_MAP.put("huong dan sv nckh", "HD_SVNCKH");
         TIEU_CHI_CODE_MAP.put("huong dan sinh vien", "HD_SVNCKH");
+        TIEU_CHI_CODE_MAP.put("huong dan nhom sinh vien nckh", "HD_SVNCKH");
+        TIEU_CHI_CODE_MAP.put("hop dong khcn tap huan", "HD_SVNCKH");
+        TIEU_CHI_CODE_MAP.put("hop dong nckh khac tap huan de an", "HD_SVNCKH");
+
+        // ── Hội đồng tư vấn ─────────────────────────────────────
         TIEU_CHI_CODE_MAP.put("hoi dong tu van", "HOI_DONG_TV");
         TIEU_CHI_CODE_MAP.put("thanh vien hoi dong", "HOI_DONG_TV");
-        TIEU_CHI_CODE_MAP.put("moi chuyen gia", "MOI_CHUYEN_GIA");
+        TIEU_CHI_CODE_MAP.put("to chuc hoi dong tu van khoa hoc", "HOI_DONG_TV");
+        TIEU_CHI_CODE_MAP.put("tham du hoi dong tu van khoa hoc", "HOI_DONG_TV");
+        TIEU_CHI_CODE_MAP.put("tu van dinh huong nghien cuu xay dung thuyet minh", "HOI_DONG_TV");
 
+        // ── Mời chuyên gia ───────────────────────────────────────
+        TIEU_CHI_CODE_MAP.put("moi chuyen gia", "MOI_CHUYEN_GIA");
+        TIEU_CHI_CODE_MAP.put("moi chuyen gia trinh bay seminar", "MOI_CHUYEN_GIA");
+        TIEU_CHI_CODE_MAP.put("tham du seminar chuyen de do chuyen gia", "MOI_CHUYEN_GIA");
+
+        // ── Xuất bản sách / Giáo trình ──────────────────────────
         TIEU_CHI_CODE_MAP.put("chuong sach", "CHUONG_SACH");
+        TIEU_CHI_CODE_MAP.put("chuong sach isbn", "CHUONG_SACH");
         TIEU_CHI_CODE_MAP.put("giao trinh", "GIAO_TRINH");
+        TIEU_CHI_CODE_MAP.put("giao trinh xuat ban", "GIAO_TRINH");
+        TIEU_CHI_CODE_MAP.put("bai giang mon hoc moi", "GIAO_TRINH");
+        TIEU_CHI_CODE_MAP.put("bai giang moi", "GIAO_TRINH");
         TIEU_CHI_CODE_MAP.put("sach chuyen khao", "SACH_CHUYEN_KHAO");
         TIEU_CHI_CODE_MAP.put("sach tham khao", "SACH_THAM_KHAO");
+
+        // ── Hợp đồng / Đề án ────────────────────────────────────
         TIEU_CHI_CODE_MAP.put("hop dong khcn", "HOP_DONG_KHCN");
         TIEU_CHI_CODE_MAP.put("hop dong kh&cn", "HOP_DONG_KHCN");
+        TIEU_CHI_CODE_MAP.put("hop dong khoa hoc cong nghe", "HOP_DONG_KHCN");
         TIEU_CHI_CODE_MAP.put("de an hoc vien", "DE_AN_HV");
+        TIEU_CHI_CODE_MAP.put("xd de an hoc vien", "DE_AN_HV");
+        TIEU_CHI_CODE_MAP.put("xay dung de an nhiem vu hoc vien", "DE_AN_HV");
         TIEU_CHI_CODE_MAP.put("bai quang ba", "BAI_QUANG_BA");
+        TIEU_CHI_CODE_MAP.put("bai quang ba khcn", "BAI_QUANG_BA");
     }
     public List<NckhTieuChiDinhMucRequest> scanFiles(List<MultipartFile> files, String year) {
         String effectiveYear = (year != null && !year.isBlank())
@@ -236,7 +394,7 @@ public class DinhMucAiScanService {
 
         List<NckhTieuChiDinhMucRequest> result;
         if (!paRows.isEmpty() && !pl2Rows.isEmpty()) {
-            result = mergePl2Driven(paRows, pl2Rows);
+            result = mergePaDriven(paRows, pl2Rows);
         } else if (!paRows.isEmpty()) {
             result = paRows;
         } else {
@@ -248,74 +406,103 @@ public class DinhMucAiScanService {
     }
 
 
-    private List<NckhTieuChiDinhMucRequest> mergePl2Driven(
+    /**
+     * PA-DRIVEN merge: Iterate PA rows (the plan criteria), look up gioQuyDoiPerUnit from PL2.
+     * Output = exactly the PA rows, with gioQuyDoiPerUnit filled where a PL2 match is found.
+     * PL2-only rows are DROPPED — they are not part of this plan.
+     *
+     * Example: PA1 has 50 criteria, PL2 has 150 → output is 50 rows (PA1 criteria only).
+     */
+    private List<NckhTieuChiDinhMucRequest> mergePaDriven(
             List<NckhTieuChiDinhMucRequest> paRows,
             List<NckhTieuChiDinhMucRequest> pl2Rows) {
 
-        Map<String, List<NckhTieuChiDinhMucRequest>> paGroups = new LinkedHashMap<>();
-        for (NckhTieuChiDinhMucRequest pa : paRows) {
-            String key = normalizeForMatch(pa.tieuChiName);
-            paGroups.computeIfAbsent(key, k -> new ArrayList<>()).add(pa);
+        // Build PL2 lookup: normalizedKey → PL2 row
+        Map<String, NckhTieuChiDinhMucRequest> pl2Index = new LinkedHashMap<>();
+        for (NckhTieuChiDinhMucRequest pl2 : pl2Rows) {
+            String key = normalizeForMatch(pl2.tieuChiName);
+            pl2Index.put(key, pl2);
         }
 
         List<NckhTieuChiDinhMucRequest> result = new ArrayList<>();
-        int matched = 0, unmatched = 0;
+        int matched = 0, notFound = 0;
 
-        for (NckhTieuChiDinhMucRequest pl2 : pl2Rows) {
-            String pl2Key = normalizeForMatch(pl2.tieuChiName);
-            List<NckhTieuChiDinhMucRequest> bestPaGroup = findBestPaMatch(pl2Key, paGroups);
+        for (NckhTieuChiDinhMucRequest pa : paRows) {
+            NckhTieuChiDinhMucRequest merged = new NckhTieuChiDinhMucRequest();
+            // Copy all PA fields
+            merged.phuongAn        = pa.phuongAn;
+            merged.tieuChiName     = pa.tieuChiName;
+            merged.chucDanh        = pa.chucDanh;
+            merged.donViTinh       = pa.donViTinh;
+            merged.dinhMucToiThieu = pa.dinhMucToiThieu;
+            merged.sortOrder       = pa.sortOrder;
+            merged.year            = pa.year;
 
-            if (bestPaGroup != null && !bestPaGroup.isEmpty()) {
-                for (NckhTieuChiDinhMucRequest pa : bestPaGroup) {
-                    NckhTieuChiDinhMucRequest merged = new NckhTieuChiDinhMucRequest();
-                    merged.tieuChiName = pl2.tieuChiName;
-                    merged.gioQuyDoiPerUnit = pl2.gioQuyDoiPerUnit;
-                    merged.donViTinh = pl2.donViTinh;
-                    merged.sortOrder = pl2.sortOrder;
-                    merged.phuongAn = pa.phuongAn;
-                    merged.chucDanh = pa.chucDanh;
-                    merged.dinhMucToiThieu = pa.dinhMucToiThieu;
-                    merged.year = pa.year != null ? pa.year : pl2.year;
-                    result.add(merged);
+            // Look up gioQuyDoiPerUnit from PL2
+            String paKey = normalizeForMatch(pa.tieuChiName);
+            NckhTieuChiDinhMucRequest pl2Match = findBestPl2Match(paKey, pl2Index);
+            if (pl2Match != null) {
+                merged.gioQuyDoiPerUnit = pl2Match.gioQuyDoiPerUnit;
+                // If donViTinh is missing from PA, take from PL2
+                if (merged.donViTinh == null || merged.donViTinh.isBlank()) {
+                    merged.donViTinh = pl2Match.donViTinh;
                 }
                 matched++;
             } else {
-                result.add(pl2);
-                unmatched++;
-                logger.warn("PL2 '{}' (key='{}') → không tìm thấy PA tương ứng", pl2.tieuChiName, pl2Key);
+                merged.gioQuyDoiPerUnit = null;
+                notFound++;
+                logger.warn("PA '{}' (key='{}') → không tìm thấy PL2 tương ứng, gioQuyDoiPerUnit=null",
+                        pa.tieuChiName, paKey);
             }
+
+            result.add(merged);
         }
 
-        logger.info("PL2-driven merge: {} PL2 matched, {} unmatched → {} output rows",
-                matched, unmatched, result.size());
+        logger.info("PA-driven merge: {} PA rows, {} matched PL2, {} unmatched → {} output rows",
+                paRows.size(), matched, notFound, result.size());
         return result;
     }
 
-    private List<NckhTieuChiDinhMucRequest> findBestPaMatch(
-            String pl2Key, Map<String, List<NckhTieuChiDinhMucRequest>> paGroups) {
+    /**
+     * Find the best matching PL2 row for a given PA key using word-overlap scoring.
+     */
+    private NckhTieuChiDinhMucRequest findBestPl2Match(
+            String paKey, Map<String, NckhTieuChiDinhMucRequest> pl2Index) {
 
-        Set<String> pl2Words = significantWords(pl2Key);
-        String bestKey = null;
-        int bestScore = 0;
+        // 1. Exact match first
+        if (pl2Index.containsKey(paKey)) {
+            return pl2Index.get(paKey);
+        }
 
-        for (String paKey : paGroups.keySet()) {
-            Set<String> paWords = significantWords(paKey);
-            int score = 0;
-            for (String w : pl2Words) {
-                if (paWords.contains(w))
-                    score++;
-            }
-            if (score > bestScore) {
-                bestScore = score;
-                bestKey = paKey;
+        // 2. Substring match
+        for (Map.Entry<String, NckhTieuChiDinhMucRequest> entry : pl2Index.entrySet()) {
+            if (paKey.contains(entry.getKey()) || entry.getKey().contains(paKey)) {
+                return entry.getValue();
             }
         }
 
-        if (bestScore < 2)
-            return null;
-        logger.debug("PL2 '{}' matched PA '{}' (score={})", pl2Key, bestKey, bestScore);
-        return paGroups.get(bestKey);
+        // 3. Word-overlap fuzzy match
+        Set<String> paWords = significantWords(paKey);
+        String bestKey = null;
+        int bestScore = 0;
+
+        for (String pl2Key : pl2Index.keySet()) {
+            Set<String> pl2Words = significantWords(pl2Key);
+            int score = 0;
+            for (String w : paWords) {
+                if (pl2Words.contains(w)) score++;
+            }
+            if (score > bestScore) {
+                bestScore = score;
+                bestKey = pl2Key;
+            }
+        }
+
+        if (bestScore < 2) return null;
+        logger.debug("PA '{}' fuzzy-matched PL2 '{}' (score={})", paKey, bestKey, bestScore);
+        return pl2Index.get(bestKey);
     }
+
 
     private static final Set<String> STOP_WORDS = Set.of(
             "cac", "cua", "va", "cho", "voi", "trong",

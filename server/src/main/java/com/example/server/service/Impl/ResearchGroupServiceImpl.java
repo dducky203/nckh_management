@@ -67,6 +67,11 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         String quotaScheme = normalizeGroupType(request.getGroupType());
         validateGroupTypePair(groupCategory, quotaScheme);
 
+        // Nhóm SV → chờ giảng viên duyệt trước; Nhóm GV → chờ Admin duyệt
+        ResearchGroup.GroupStatus initialStatus = "student".equals(groupCategory)
+                ? ResearchGroup.GroupStatus.PENDING_ADVISOR
+                : ResearchGroup.GroupStatus.PENDING;
+
         // Tạo nhóm mới
         ResearchGroup group = ResearchGroup.builder()
                 .groupName(request.getGroupName())
@@ -74,7 +79,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                 .description(request.getDescription())
                 .type(groupCategory)
                 .groupType(quotaScheme)
-                .status(ResearchGroup.GroupStatus.PENDING) // Mặc định chờ duyệt
+                .status(initialStatus)
                 .leader(leader)
                 .advisor(advisor)
                 .build();
@@ -104,9 +109,86 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         ResearchGroup group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
 
+        // Admin chỉ được duyệt nhóm đang PENDING hoặc PENDING_ADMIN
+        if (group.getStatus() == ResearchGroup.GroupStatus.PENDING_ADVISOR) {
+            throw new RuntimeException("Nhóm này đang chờ giảng viên hướng dẫn xét duyệt trước khi Admin duyệt.");
+        }
+        if (group.getStatus() == ResearchGroup.GroupStatus.APPROVED) {
+            throw new RuntimeException("Nhóm này đã được duyệt rồi.");
+        }
+        if (group.getStatus() == ResearchGroup.GroupStatus.REJECTED) {
+            throw new RuntimeException("Nhóm này đã bị từ chối.");
+        }
+
         group.setStatus(ResearchGroup.GroupStatus.APPROVED);
         ResearchGroup savedGroup = groupRepository.save(group);
         return getGroupById(savedGroup.getId());
+    }
+
+    @Override
+    @Transactional
+    public ResearchGroupDTO advisorApproveGroup(Integer groupId, Integer advisorId) {
+        ResearchGroup group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
+
+        // Kiểm tra người dùng hiện tại có phải advisor của nhóm này không
+        if (group.getAdvisor() == null || !group.getAdvisor().getId().equals(advisorId)) {
+            throw new RuntimeException("Bạn không phải là giảng viên hướng dẫn của nhóm này.");
+        }
+
+        if (group.getStatus() != ResearchGroup.GroupStatus.PENDING_ADVISOR) {
+            throw new RuntimeException("Nhóm này không ở trạng thái chờ giảng viên duyệt.");
+        }
+
+        group.setStatus(ResearchGroup.GroupStatus.PENDING_ADMIN);
+        ResearchGroup savedGroup = groupRepository.save(group);
+        return getGroupById(savedGroup.getId());
+    }
+
+    @Override
+    @Transactional
+    public ResearchGroupDTO advisorRejectGroup(Integer groupId, Integer advisorId, String reason) {
+        ResearchGroup group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
+
+        // Kiểm tra advisor
+        if (group.getAdvisor() == null || !group.getAdvisor().getId().equals(advisorId)) {
+            throw new RuntimeException("Bạn không phải là giảng viên hướng dẫn của nhóm này.");
+        }
+
+        if (group.getStatus() != ResearchGroup.GroupStatus.PENDING_ADVISOR) {
+            throw new RuntimeException("Nhóm này không ở trạng thái chờ giảng viên duyệt.");
+        }
+
+        group.setStatus(ResearchGroup.GroupStatus.REJECTED);
+        if (reason != null && !reason.isEmpty()) {
+            String currentDesc = group.getDescription() != null ? group.getDescription() : "";
+            group.setDescription(currentDesc + "\n\n[GV Từ chối]: " + reason);
+        }
+        ResearchGroup savedGroup = groupRepository.save(group);
+        return getGroupById(savedGroup.getId());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ResearchGroupDTO> getGroupsForAdvisor(Integer advisorId, String status) {
+        User advisor = userRepository.findById(advisorId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy giảng viên"));
+
+        List<ResearchGroup> groups;
+        if (status != null && !status.isBlank() && !"ALL".equalsIgnoreCase(status)) {
+            ResearchGroup.GroupStatus groupStatus = ResearchGroup.GroupStatus.valueOf(status.toUpperCase());
+            groups = groupRepository.findByAdvisorAndStatus(advisor, groupStatus);
+        } else {
+            groups = groupRepository.findByAdvisor(advisor);
+        }
+
+        return groups.stream()
+                .map(group -> {
+                    List<ResearchGroupMember> memberInfos = memberRepository.findByGroupId(group.getId());
+                    return ResearchGroupDTO.fromEntity(group, memberInfos);
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -286,26 +368,25 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ResearchGroupDTO> getAllGroups(String keyword, String status, String type, Pageable pageable) {
-        Page<ResearchGroup> groups;
-
+    public Page<ResearchGroupDTO> getAllGroups(String keyword, String status, String type, Date startDate, Date endDate, Pageable pageable) {
+        ResearchGroup.GroupStatus groupStatus = null;
         if (status != null && !status.isEmpty() && !"ALL".equalsIgnoreCase(status)) {
-            ResearchGroup.GroupStatus groupStatus = ResearchGroup.GroupStatus.valueOf(status.toUpperCase());
-            if (keyword != null && !keyword.isEmpty()) {
-                groups = groupRepository.searchByKeywordAndStatus(keyword, type, groupStatus, pageable);
-            } else {
-                groups = groupRepository.findByStatusAndType(groupStatus, type, pageable);
-            }
-        } else {
-            if (keyword != null && !keyword.isEmpty()) {
-                groups = groupRepository.searchByKeyword(keyword, type, pageable);
-            } else {
-                groups = groupRepository.findAllByType(type,pageable);
-            }
+            groupStatus = ResearchGroup.GroupStatus.valueOf(status.toUpperCase());
         }
 
+        Page<ResearchGroup> groups;
+        if(startDate != null & endDate != null){
+           groups = groupRepository.searchWithFilters(keyword, type, groupStatus, startDate, endDate, pageable);
+        }else{
+            groups = groupRepository.searchWithFilters(keyword, type, groupStatus, pageable);
+        }
+
+        List<Integer> groupIds = groups.getContent().stream().map(ResearchGroup::getId).collect(Collectors.toList());
+        List<ResearchGroupMember> allMembers = groupIds.isEmpty() ? Collections.emptyList() : memberRepository.findByGroupIdIn(groupIds);
+        Map<Integer, List<ResearchGroupMember>> membersByGroupId = allMembers.stream().collect(Collectors.groupingBy(ResearchGroupMember::getGroupId));
+
         return groups.map(group -> {
-            List<ResearchGroupMember> memberInfos = memberRepository.findByGroupId(group.getId());
+            List<ResearchGroupMember> memberInfos = membersByGroupId.getOrDefault(group.getId(), Collections.emptyList());
             return ResearchGroupDTO.fromEntity(group, memberInfos);
         });
     }
@@ -332,9 +413,13 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         Set<ResearchGroup> allGroups = new HashSet<>(leaderGroups);
         allGroups.addAll(memberGroups);
 
+        List<Integer> groupIds = allGroups.stream().map(ResearchGroup::getId).collect(Collectors.toList());
+        List<ResearchGroupMember> allMembers = groupIds.isEmpty() ? java.util.Collections.emptyList() : memberRepository.findByGroupIdIn(groupIds);
+        java.util.Map<Integer, List<ResearchGroupMember>> membersByGroupId = allMembers.stream().collect(java.util.stream.Collectors.groupingBy(ResearchGroupMember::getGroupId));
+
         return allGroups.stream()
                 .map(group -> {
-                    List<ResearchGroupMember> memberInfos = memberRepository.findByGroupId(group.getId());
+                    List<ResearchGroupMember> memberInfos = membersByGroupId.getOrDefault(group.getId(), java.util.Collections.emptyList());
                     return ResearchGroupDTO.fromEntity(group, memberInfos);
                 })
                 .collect(Collectors.toList());

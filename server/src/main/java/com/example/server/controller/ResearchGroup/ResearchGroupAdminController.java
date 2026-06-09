@@ -48,6 +48,8 @@ public class ResearchGroupAdminController {
             @RequestParam(defaultValue = "") String keyword,
             @RequestParam(required = false) String status,
             @RequestParam String type,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.util.Date startDate,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.util.Date endDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -55,7 +57,7 @@ public class ResearchGroupAdminController {
         Sort.Direction direction = sortDir.equalsIgnoreCase("ASC") ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
-        Page<ResearchGroupDTO> groupsPage = researchGroupService.getAllGroups(keyword, status, type, pageable);
+        Page<ResearchGroupDTO> groupsPage = researchGroupService.getAllGroups(keyword, status, type, startDate, endDate, pageable);
 
         Map<String, Object> response = new HashMap<>();
         response.put("groups", groupsPage.getContent());

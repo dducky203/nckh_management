@@ -77,6 +77,29 @@ export const formatDateTime = (dateString) => {
   }
 };
 
+export const getSemesterFromDate = (dateString) => {
+  if (!dateString) return "Không có thông tin";
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Ngày không hợp lệ";
+    
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1; // 1-12
+    
+    // Học kỳ 1: Tháng 8 -> Tháng 1 năm sau
+    // Học kỳ 2: Tháng 2 -> Tháng 7 năm đó
+    if (month >= 8) {
+      return `Học kỳ 1 / ${year}-${year + 1}`;
+    } else if (month === 1) {
+      return `Học kỳ 1 / ${year - 1}-${year}`;
+    } else {
+      return `Học kỳ 2 / ${year - 1}-${year}`;
+    }
+  } catch (error) {
+    return "Lỗi định dạng";
+  }
+};
+
 // API endpoints
 export const API_ENDPOINTS = {
   AUTH: {

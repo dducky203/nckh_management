@@ -222,6 +222,16 @@ const Header = () => {
                           <Group className="w-4 h-4 mr-2 text-gray-400" />
                           <span>Hồ sơ nhóm</span>
                         </Link>
+                        {userCanAccessQuota && (
+                          <Link
+                            to="/research-groups/advisor-approval"
+                            className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
+                            onClick={closeUserMenu}
+                          >
+                            <Psychology className="w-4 h-4 mr-2 text-gray-400" />
+                            <span>Duyệt nhóm NCKH</span>
+                          </Link>
+                        )}
                       </div>
 
                       <div className="border-t border-gray-100">
@@ -534,6 +544,16 @@ const Header = () => {
                       Cấu hình NCKH
                     </Link>
                   </>
+                )}
+                {userCanAccessQuota && (
+                  <Link
+                    to="/research-groups/advisor-approval"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-mainColor"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Psychology className="w-4 h-4 mr-2" />
+                    Duyệt nhóm NCKH
+                  </Link>
                 )}
                 <button
                   onClick={() => {

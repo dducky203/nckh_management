@@ -28,7 +28,10 @@ import { usePagination } from "../../hooks/usePagination";
 import Button from "../../components/common/Button";
 import Statistic from "./components/Statistic";
 
+import { useNavigate } from "react-router-dom";
+
 const ResearchGroupManagement = () => {
+  const navigate = useNavigate();
   const { user } = useContext(AuthContext);
   const toast = useToast();
   const [groups, setGroups] = useState([]);
@@ -36,6 +39,8 @@ const ResearchGroupManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [activeTab, setActiveTab] = useState("my-groups"); // my-groups, student, or lecturer
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedSemester, setSelectedSemester] = useState("ALL");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -80,7 +85,7 @@ const ResearchGroupManagement = () => {
       fetchStatistics();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, statusFilter, activeTab]);
+  }, [currentPage, statusFilter, activeTab, selectedYear, selectedSemester]);
 
   const fetchGroups = async () => {
     try {
@@ -99,6 +104,25 @@ const ResearchGroupManagement = () => {
           currentPage: 0,
         });
       } else {
+        // Calculate startDate and endDate for student groups
+        let startDate = null;
+        let endDate = null;
+
+        if (activeTab === "student" && selectedYear) {
+          const year = parseInt(selectedYear, 10);
+          if (selectedSemester === "1") {
+            startDate = new Date(year, 7, 1).toISOString(); // Tháng 8 năm đó
+            endDate = new Date(year + 1, 0, 31, 23, 59, 59).toISOString(); // Tháng 1 năm sau
+          } else if (selectedSemester === "2") {
+            startDate = new Date(year + 1, 1, 1).toISOString(); // Tháng 2 năm sau
+            endDate = new Date(year + 1, 6, 31, 23, 59, 59).toISOString(); // Tháng 7 năm sau
+          } else {
+             // ALL semesters in that year
+             startDate = new Date(year, 7, 1).toISOString();
+             endDate = new Date(year + 1, 6, 31, 23, 59, 59).toISOString();
+          }
+        }
+
         // Call admin getAllGroups API for student/lecturer tabs
         const response = await researchGroupService.getAllGroups(
           searchTerm,
@@ -106,6 +130,8 @@ const ResearchGroupManagement = () => {
           activeTab,
           currentPage,
           9,
+          startDate,
+          endDate
         );
         const responseData = response.data || response;
         setGroups(responseData?.groups || []);
@@ -155,8 +181,12 @@ const ResearchGroupManagement = () => {
   };
 
   const handleManageProductsAndCompletion = (group) => {
-    setManagementGroup(group);
-    setProductModalOpen(true);
+    if (group.type !== "student") {
+      navigate("/activity/group-quota");
+    } else {
+      setManagementGroup(group);
+      setProductModalOpen(true);
+    }
   };
 
   const handleApprove = (groupId) => {
@@ -323,28 +353,44 @@ const ResearchGroupManagement = () => {
             {isAdmin && statistics && <Statistic statistics={statistics} />}
 
             {/* Search and Filter Bar */}
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <form onSubmit={handleSearch} className="flex-1 flex gap-4">
-                  <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Tìm kiếm theo tên nhóm hoặc đề tài..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Tìm kiếm
-                  </Button>
-                </form>
+            <div className="bg-white rounded-xl shadow-sm p-5 mb-6 border border-gray-100">
+              <div className="flex flex-col gap-4">
+                {/* Top Row: Search and Actions */}
+                <div className="flex justify-between items-start md:items-center flex-col md:flex-row gap-4">
+                  <form onSubmit={handleSearch} className="flex-1 w-full md:max-w-md flex gap-2">
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Tìm kiếm nhóm, đề tài..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                    >
+                      Tìm kiếm
+                    </Button>
+                  </form>
 
-                <div className="flex gap-4">
+                  <button
+                    onClick={handleCreateGroup}
+                    className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium whitespace-nowrap shadow-sm"
+                  >
+                    <Add fontSize="small" />
+                    Tạo nhóm mới
+                  </button>
+                </div>
+
+                {/* Bottom Row: Filters */}
+                <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-gray-100">
+                  <span className="text-sm font-medium text-gray-500 flex items-center gap-1">
+                    Bộ lọc:
+                  </span>
+                  
                   {isAdmin && (
                     <select
                       value={statusFilter}
@@ -352,7 +398,7 @@ const ResearchGroupManagement = () => {
                         setStatusFilter(e.target.value);
                         resetPagination();
                       }}
-                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                     >
                       <option value="ALL">Tất cả trạng thái</option>
                       {RESEARCH_GROUP_STATUS_FILTER_OPTIONS.map(({ value, label }) => (
@@ -363,13 +409,36 @@ const ResearchGroupManagement = () => {
                     </select>
                   )}
 
-                  <button
-                    onClick={handleCreateGroup}
-                    className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    <Add />
-                    Tạo nhóm mới
-                  </button>
+                  {activeTab === "student" && (
+                    <>
+                      <select
+                        value={selectedYear}
+                        onChange={(e) => {
+                          setSelectedYear(e.target.value);
+                          resetPagination();
+                        }}
+                        className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                      >
+                        {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(year => (
+                          <option key={year} value={year}>
+                            Năm học {year}-{year + 1}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        value={selectedSemester}
+                        onChange={(e) => {
+                          setSelectedSemester(e.target.value);
+                          resetPagination();
+                        }}
+                        className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                      >
+                        <option value="ALL">Tất cả học kỳ</option>
+                        <option value="1">Học kỳ 1</option>
+                        <option value="2">Học kỳ 2</option>
+                      </select>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -489,6 +558,7 @@ const ResearchGroupManagement = () => {
       {productModalOpen && (
         <ProductManagementModal
           isOpen={productModalOpen}
+          group={managementGroup}
           onClose={() => {
             setProductModalOpen(false);
             setManagementGroup(null);

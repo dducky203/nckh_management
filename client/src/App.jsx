@@ -36,6 +36,7 @@ import NewsManager from "./pages/News/NewsManager";
 import ResearchGroupManagement from "./pages/ResearchGroup/ResearchGroupManagement";
 import ResearchGroupsPublic from "./pages/ResearchGroup/ResearchGroupsPublic";
 import ResearchGroupProfile from "./pages/ResearchGroup/ResearchGroupProfile";
+import AdvisorGroupApprovalPage from "./pages/ResearchGroup/AdvisorGroupApprovalPage";
 import ActivityStandards from "./pages/activity/ActivityStandards";
 import NckhApprovalPage from "./pages/activity/NckhApprovalPage";
 import PlanStatisticsPage from "./pages/activity/PlanStatisticsPage";
@@ -326,6 +327,14 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <ResearchGroupProfile />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/research-groups/advisor-approval"
+                      element={
+                        <ProtectedRoute>
+                          <AdvisorGroupApprovalPage />
                         </ProtectedRoute>
                       }
                     />

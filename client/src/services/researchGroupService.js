@@ -10,7 +10,9 @@ const researchGroupService = {
     status = "",
     type = "",
     page = 0,
-    size = 10
+    size = 10,
+    startDate = null,
+    endDate = null
   ) => {
     const params = {
       keyword,
@@ -18,6 +20,8 @@ const researchGroupService = {
       type,
       page,
       size,
+      startDate,
+      endDate,
       sortBy: "createdAt",
       sortDir: "DESC",
     };
@@ -32,13 +36,17 @@ const researchGroupService = {
     keyword = "",
     type = "",
     page = 0,
-    size = 10
+    size = 10,
+    startDate = null,
+    endDate = null
   ) => {
     const params = {
       keyword,
       type,
       page,
       size,
+      startDate,
+      endDate,
       sortBy: "createdAt",
       sortDir: "DESC",
     };
@@ -101,6 +109,21 @@ const researchGroupService = {
   deleteGroup: async (groupId) => {
     const response = await api.delete(`/admin/research-groups/${groupId}`);
     return response;
+  },
+
+  // ─── Advisor APIs ──────────────────────────────────────────────────────
+  getAdvisorGroups: async (status = "PENDING_ADVISOR") => {
+    return await api.get("/research-groups/advisor/my-groups", { params: { status } });
+  },
+
+  advisorApproveGroup: async (groupId) => {
+    return await api.put(`/research-groups/${groupId}/advisor-approve`);
+  },
+
+  advisorRejectGroup: async (groupId, reason) => {
+    return await api.put(`/research-groups/${groupId}/advisor-reject`, null, {
+      params: { reason },
+    });
   },
 
   // Update Google Sheet link

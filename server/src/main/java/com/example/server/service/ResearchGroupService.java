@@ -19,11 +19,20 @@ public interface ResearchGroupService {
     // User tạo nhóm (chờ duyệt)
     ResearchGroupDTO createGroup(Integer userId, CreateResearchGroupRequest request);
 
-    // Admin duyệt nhóm
+    // Admin duyệt nhóm (chỉ áp dụng nhóm đang PENDING_ADMIN hoặc PENDING)
     ResearchGroupDTO approveGroup(Integer groupId);
 
     // Admin từ chối nhóm
     ResearchGroupDTO rejectGroup(Integer groupId, String reason);
+
+    // Giảng viên hướng dẫn duyệt nhóm SV (PENDING_ADVISOR → PENDING_ADMIN)
+    ResearchGroupDTO advisorApproveGroup(Integer groupId, Integer advisorId);
+
+    // Giảng viên từ chối nhóm SV (PENDING_ADVISOR → REJECTED)
+    ResearchGroupDTO advisorRejectGroup(Integer groupId, Integer advisorId, String reason);
+
+    // Giảng viên lấy danh sách nhóm cần duyệt
+    List<ResearchGroupDTO> getGroupsForAdvisor(Integer advisorId, String status);
 
     // Cập nhật thông tin nhóm (Leader hoặc Admin)
     ResearchGroupDTO updateGroup(Integer groupId, Integer userId, UpdateResearchGroupRequest request);
@@ -38,7 +47,7 @@ public interface ResearchGroupService {
     ResearchGroupDTO removeMember(Integer groupId, Integer userId, Integer memberId);
 
     // Lấy danh sách nhóm (có phân trang, filter)
-    Page<ResearchGroupDTO> getAllGroups(String keyword, String status, String type, Pageable pageable);
+    Page<ResearchGroupDTO> getAllGroups(String keyword, String status, String type, java.util.Date startDate, java.util.Date endDate, Pageable pageable);
 
     // Lấy chi tiết nhóm
     ResearchGroupDTO getGroupById(Integer groupId);

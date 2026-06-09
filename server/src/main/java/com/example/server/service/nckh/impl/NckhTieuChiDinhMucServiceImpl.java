@@ -73,6 +73,37 @@ public class NckhTieuChiDinhMucServiceImpl implements NckhTieuChiDinhMucService 
     }
 
     @Override
+    @Transactional
+    public NckhTieuChiDinhMucResponse upsert(NckhTieuChiDinhMucRequest request) {
+        // Xác định year trước khi lookup
+        String year = (request.year != null && !request.year.isBlank())
+                ? request.year
+                : String.valueOf(java.time.Year.now().getValue());
+
+        NckhTieuChiDinhMuc.ChucDanh chucDanh = parseChucDanh(request.chucDanh);
+
+        // Tìm record hiện có theo (tieuChiCode, chucDanh, year, phuongAn)
+        NckhTieuChiDinhMuc entity = null;
+        if (request.tieuChiCode != null && !request.tieuChiCode.isBlank()
+                && chucDanh != null && request.phuongAn != null) {
+            entity = repository.findForUpsert(
+                    request.tieuChiCode.trim(),
+                    chucDanh.name(),
+                    year,
+                    request.phuongAn
+            ).orElse(null);
+        }
+
+        if (entity == null) {
+            entity = new NckhTieuChiDinhMuc();
+        }
+
+        mapRequestToEntity(request, entity);
+        validateEntity(entity);
+        return mapper.toResponse(repository.save(entity));
+    }
+
+    @Override
     public NckhTieuChiDinhMucResponse getById(Long id) {
         NckhTieuChiDinhMuc entity = repository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("Không tìm thấy tiêu chí định mức với id=" + id));

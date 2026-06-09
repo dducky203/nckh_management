@@ -1,5 +1,21 @@
-import { Close, Edit, CheckCircle, Cancel, People } from "@mui/icons-material";
-import { formatDateTime } from "../../../constants";
+import {
+  Close,
+  CheckCircle,
+  Cancel,
+  People,
+  School,
+  Mail,
+  Link,
+  CalendarToday,
+  Update,
+  Home,
+  HourglassTop,
+  AdminPanelSettings,
+  Notes,
+  OpenInNew,
+  BookmarkBorder,
+} from "@mui/icons-material";
+import { formatDateTime, getSemesterFromDate, getResearchGroupStatusBadge } from "../../../constants";
 import Button from "../../../components/common/Button";
 
 const GroupDetailModal = ({
@@ -13,181 +29,532 @@ const GroupDetailModal = ({
 }) => {
   if (!isOpen || !group) return null;
 
-  const statusBadge = getStatusBadge(group.status);
-  const StatusIcon = statusBadge.icon;
+  // Resolve status badge safely
+  const resolveStatusBadge = (status) => {
+    if (typeof getStatusBadge === "function") {
+      const badge = getStatusBadge(status);
+      if (badge) return badge;
+    }
+    return getResearchGroupStatusBadge(status);
+  };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {group.groupName}
-            </h2>
-            <span
-              className={`inline-flex items-center gap-1 px-3 py-1 rounded-md text-sm font-medium ${statusBadge.color}`}
-            >
-              <StatusIcon fontSize="small" />
-              {statusBadge.label}
-            </span>
+  const statusBadge = resolveStatusBadge(group.status);
+  const StatusIcon = statusBadge.icon || HourglassTop;
+
+  // Group members safely
+  const advisor = group.advisor;
+  const leader = group.leader;
+  const membersList = group.members || [];
+  const leaderDetail = membersList.find((m) => m.id === leader?.id) || leader;
+  const regularMembers = membersList.filter((m) => m.id !== leader?.id);
+
+  // Stepper steps configuration
+  const getApprovalSteps = () => {
+    const isStudent = group.type === "student";
+    const status = group.status;
+
+    if (isStudent) {
+      const steps = [
+        {
+          label: "Đăng ký nhóm",
+          status: "completed",
+          icon: CheckCircle,
+          desc: "Đã tạo hồ sơ",
+        },
+        {
+          label: "GVHD duyệt",
+          status: "pending",
+          icon: HourglassTop,
+          desc: "Chờ GVHD xác nhận",
+        },
+        {
+          label: "Admin duyệt",
+          status: "pending",
+          icon: AdminPanelSettings,
+          desc: "Chờ quản trị viên",
+        },
+      ];
+
+      // Update GVHD step (Index 1)
+      if (status === "PENDING_ADVISOR") {
+        steps[1].status = "active";
+        steps[1].desc = "Đang chờ duyệt";
+      } else if (
+        status === "PENDING_ADMIN" ||
+        status === "APPROVED" ||
+        (status === "REJECTED" && !group.rejectionReason?.includes("[GV")) // Just a heuristic
+      ) {
+        steps[1].status = "completed";
+        steps[1].desc = "Đã phê duyệt";
+        steps[1].icon = CheckCircle;
+      }
+
+      // Update Admin step (Index 2)
+      if (status === "PENDING_ADMIN") {
+        steps[2].status = "active";
+        steps[2].desc = "Đang chờ duyệt";
+      } else if (status === "APPROVED") {
+        steps[2].status = "completed";
+        steps[2].desc = "Đã phê duyệt";
+        steps[2].icon = CheckCircle;
+      } else if (status === "PENDING_ADVISOR") {
+        steps[2].status = "pending";
+        steps[2].desc = "Chờ bước trước";
+      } else if (status === "REJECTED") {
+        // Mark active step as failed if rejection matches
+        if (group.rejectionReason && group.rejectionReason.includes("giảng viên")) {
+          steps[1].status = "failed";
+          steps[1].desc = "GV từ chối";
+          steps[1].icon = Cancel;
+          steps[2].status = "pending";
+        } else {
+          steps[2].status = "failed";
+          steps[2].desc = "Admin từ chối";
+          steps[2].icon = Cancel;
+        }
+      }
+
+      return steps;
+    } else {
+      const steps = [
+        {
+          label: "Đăng ký nhóm",
+          status: "completed",
+          icon: CheckCircle,
+          desc: "Đã đăng ký",
+        },
+        {
+          label: "Admin duyệt",
+          status: "pending",
+          icon: AdminPanelSettings,
+          desc: "Chờ Admin phê duyệt",
+        },
+      ];
+
+      if (status === "PENDING") {
+        steps[1].status = "active";
+        steps[1].desc = "Đang chờ duyệt";
+      } else if (status === "APPROVED") {
+        steps[1].status = "completed";
+        steps[1].desc = "Đã phê duyệt";
+        steps[1].icon = CheckCircle;
+      } else if (status === "REJECTED") {
+        steps[1].status = "failed";
+        steps[1].desc = "Bị từ chối";
+        steps[1].icon = Cancel;
+      }
+
+      return steps;
+    }
+  };
+
+  const steps = getApprovalSteps();
+
+  const canAdminApprove = isAdmin && (
+    (group.type === "student" && group.status === "PENDING_ADMIN") ||
+    (group.type === "lecturer" && group.status === "PENDING")
+  );
+
+  const getLecturerGroupTypeName = (type) => {
+    switch (type) {
+      case "NCM":
+        return "Nhóm nghiên cứu mạnh (NCM)";
+      case "XUAT_SAC":
+        return "Nhóm nghiên cứu xuất sắc";
+      case "TINH_HOA":
+        return "Nhóm nghiên cứu tinh hoa";
+      default:
+        return type || "Không phân loại";
+    }
+  };
+
+  const renderMemberCard = (member, isLeaderCard = false) => {
+    const avatarLetter = member.name?.charAt(0)?.toUpperCase() || "?";
+    
+    let cardClass = "bg-white border border-gray-100 hover:border-emerald-200 shadow-sm hover:shadow-md";
+    let avatarClass = "bg-emerald-600 text-white";
+    let roleBadgeClass = "bg-emerald-50 text-emerald-700 border border-emerald-200";
+
+    if (isLeaderCard) {
+      cardClass = "bg-gradient-to-r from-blue-50/40 to-white border border-blue-200 hover:border-blue-300 shadow-sm hover:shadow-md";
+      avatarClass = "bg-blue-600 text-white";
+      roleBadgeClass = "bg-blue-600 text-white";
+    }
+
+    return (
+      <div
+        key={member.id}
+        className={`flex gap-4 p-4 rounded-2xl transition-all duration-300 transform hover:-translate-y-0.5 ${cardClass}`}
+      >
+        <div className="flex items-center justify-center shrink-0">
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg shadow-inner ${avatarClass}`}>
+            {avatarLetter}
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <Close />
-          </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-6">
-          {/* Topic */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Đề tài</h3>
-            <p className="text-gray-900">{group.topicName}</p>
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h4 className="font-extrabold text-gray-800 text-[15px] truncate">
+              {member.name}
+            </h4>
+            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${roleBadgeClass}`}>
+              {isLeaderCard ? "Trưởng nhóm" : (member.role || "Thành viên")}
+            </span>
           </div>
 
-          {/* Description */}
-          {group.description && (
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Mô tả</h3>
-              <p className="text-gray-900 whitespace-pre-wrap">
-                {group.description}
-              </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-gray-600">
+            {member.email && (
+              <div className="flex items-center gap-2 min-w-0">
+                <Mail className="text-gray-400 shrink-0" sx={{ fontSize: 14 }} />
+                <a href={`mailto:${member.email}`} className="hover:text-mainColor truncate">
+                  {member.email}
+                </a>
+              </div>
+            )}
+            
+            {member.title && (
+              <div className="flex items-center gap-2 min-w-0">
+                <School className="text-gray-400 shrink-0" sx={{ fontSize: 14 }} />
+                <span className="truncate">{member.title}</span>
+              </div>
+            )}
+
+            {member.address && (
+              <div className="flex items-center gap-2 col-span-1 sm:col-span-2 min-w-0">
+                <Home className="text-gray-400 shrink-0" sx={{ fontSize: 14 }} />
+                <span className="truncate" title={member.address}>{member.address}</span>
+              </div>
+            )}
+          </div>
+
+          {typeof member.participationRate === "number" && (
+            <div className="pt-2 border-t border-gray-50 flex items-center justify-between gap-3">
+              <span className="text-xs text-gray-500 font-medium">Tỷ lệ đóng góp</span>
+              <div className="flex items-center gap-2 flex-1 max-w-[140px]">
+                <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                  <div 
+                    className={`h-full rounded-full ${isLeaderCard ? 'bg-blue-600' : 'bg-emerald-500'}`} 
+                    style={{ width: `${member.participationRate}%` }}
+                  />
+                </div>
+                <span className={`text-xs font-black shrink-0 ${isLeaderCard ? 'text-blue-600' : 'text-emerald-600'}`}>
+                  {member.participationRate}%
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderAdvisorCard = (adv) => {
+    if (!adv) return null;
+    const avatarLetter = adv.name?.charAt(0)?.toUpperCase() || "?";
+
+    return (
+      <div className="bg-gradient-to-r from-purple-50/40 to-white border border-purple-200 hover:border-purple-300 shadow-sm hover:shadow-md rounded-2xl p-4 flex gap-4 transition-all duration-300 transform hover:-translate-y-0.5">
+        <div className="flex items-center justify-center shrink-0">
+          <div className="w-12 h-12 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold text-lg shadow-inner">
+            {avatarLetter}
+          </div>
+        </div>
+
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h4 className="font-extrabold text-gray-800 text-[15px] truncate">
+              {adv.name}
+            </h4>
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-700 border border-purple-200">
+              Giảng viên hướng dẫn
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-gray-600">
+            {adv.email && (
+              <div className="flex items-center gap-2 min-w-0">
+                <Mail className="text-gray-400 shrink-0" sx={{ fontSize: 14 }} />
+                <a href={`mailto:${adv.email}`} className="hover:text-purple-600 truncate">
+                  {adv.email}
+                </a>
+              </div>
+            )}
+            
+            {adv.title && (
+              <div className="flex items-center gap-2 min-w-0">
+                <School className="text-gray-400 shrink-0" sx={{ fontSize: 14 }} />
+                <span className="truncate">{adv.title}</span>
+              </div>
+            )}
+
+            {adv.address && (
+              <div className="flex items-center gap-2 col-span-1 sm:col-span-2 min-w-0">
+                <Home className="text-gray-400 shrink-0" sx={{ fontSize: 14 }} />
+                <span className="truncate" title={adv.address}>{adv.address}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-3xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-gray-100 transition-all transform scale-100">
+        
+        {/* Header Hero Section */}
+        <div className="relative p-6 md:p-8 bg-gradient-to-r from-mainColor/10 via-mainColor/5 to-transparent border-b border-gray-100 shrink-0">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider shadow-sm ${statusBadge.color}`}>
+                  <StatusIcon sx={{ fontSize: 14 }} />
+                  {statusBadge.label}
+                </span>
+                
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider bg-gray-100 text-gray-700">
+                  {group.type === "student" ? "Sinh viên" : "Giảng viên"}
+                </span>
+
+                {group.type === "lecturer" && group.groupType && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-100">
+                    {getLecturerGroupTypeName(group.groupType)}
+                  </span>
+                )}
+              </div>
+
+              <h2 className="text-xl md:text-2xl font-black text-gray-900 leading-snug tracking-tight">
+                {group.groupName}
+              </h2>
+            </div>
+            
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all shrink-0 shadow-sm bg-white"
+            >
+              <Close />
+            </button>
+          </div>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 custom-scrollbar">
+          
+          {/* Stepper Approval Timeline */}
+          <div className="bg-gray-50/50 border border-gray-100 rounded-3xl p-5 md:p-6 shadow-sm">
+            <h3 className="text-[11px] font-black uppercase tracking-wider text-gray-400 mb-5 text-center">
+              Tiến trình phê duyệt hồ sơ
+            </h3>
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-6 md:gap-4">
+              {steps.map((step, idx) => {
+                const StepIcon = step.icon;
+                
+                let iconColor = "bg-gray-100 text-gray-400 border-gray-200";
+                let textColor = "text-gray-500 font-medium";
+                let descColor = "text-gray-400";
+                let lineColor = "bg-gray-100";
+
+                if (step.status === "completed") {
+                  iconColor = "bg-emerald-50 text-emerald-600 border-emerald-500 ring-4 ring-emerald-100/50";
+                  textColor = "text-emerald-800 font-bold";
+                  descColor = "text-emerald-600";
+                  lineColor = "bg-emerald-500";
+                } else if (step.status === "active") {
+                  iconColor = "bg-amber-50 text-amber-600 border-amber-500 ring-4 ring-amber-100/50 animate-pulse";
+                  textColor = "text-amber-800 font-extrabold";
+                  descColor = "text-amber-600";
+                  lineColor = "bg-amber-300";
+                } else if (step.status === "failed") {
+                  iconColor = "bg-rose-50 text-rose-600 border-rose-500 ring-4 ring-rose-100/50";
+                  textColor = "text-rose-800 font-bold";
+                  descColor = "text-rose-600";
+                  lineColor = "bg-rose-300";
+                }
+
+                return (
+                  <div key={idx} className="flex-1 flex flex-row md:flex-col items-center gap-3 md:gap-2 relative">
+                    {/* Circle */}
+                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center shrink-0 z-10 ${iconColor}`}>
+                      <StepIcon fontSize="small" />
+                    </div>
+                    
+                    {/* Labels */}
+                    <div className="text-left md:text-center min-w-0">
+                      <p className={`text-sm ${textColor} leading-tight`}>{step.label}</p>
+                      <p className={`text-xs ${descColor} mt-0.5`}>{step.desc}</p>
+                    </div>
+
+                    {/* Connecting line (Desktop only) */}
+                    {idx < steps.length - 1 && (
+                      <div className="hidden md:block absolute top-5 left-[calc(50%+28px)] right-[calc(-50%+28px)] h-0.5 z-0 bg-gray-100">
+                        <div className={`h-full transition-all duration-500 ${lineColor}`} />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Rejection Reason Box */}
+          {group.status === "REJECTED" && group.rejectionReason && (
+            <div className="flex gap-3 p-4 bg-rose-50 border-l-4 border-rose-500 text-rose-800 rounded-r-2xl shadow-sm">
+              <Cancel className="text-rose-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-extrabold text-sm uppercase tracking-wide text-rose-900">
+                  Hồ sơ bị từ chối phê duyệt
+                </p>
+                <p className="text-sm mt-1 text-rose-800 leading-relaxed font-medium">
+                  Lý do: {group.rejectionReason.replace(/\[GV.*\]\s*/, "")}
+                </p>
+              </div>
             </div>
           )}
 
-          {/* Leader */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-2">
-              Trưởng nhóm
-            </h3>
-            <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
-                {group.leader?.name?.charAt(0) || "?"}
+          {/* Topic & Description Box */}
+          <div className="grid grid-cols-1 gap-6">
+            <div className="p-5 md:p-6 bg-mainColor/[0.03] border-l-4 border-mainColor rounded-r-2xl space-y-3">
+              <div className="flex items-center gap-2 text-mainColor font-bold">
+                <BookmarkBorder fontSize="small" />
+                <h3 className="text-xs uppercase tracking-wider">Đề tài nghiên cứu khoa học</h3>
               </div>
-              <div>
-                <p className="font-medium text-gray-900">
-                  {group.leader?.name || "N/A"}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {group.leader?.email || ""}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Advisor */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-2">
-              Giảng viên hướng dẫn
-            </h3>
-
-            <div className="flex items-center gap-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-              <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold">
-                {group.advisor.name?.charAt(0) || "?"}
-              </div>
-              <div>
-                <p className="font-medium text-gray-900">
-                  {group.advisor.name}
-                </p>
-                <p className="text-sm text-gray-500">{group.advisor.email}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Members */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-2 flex items-center gap-2">
-              <People fontSize="small" />
-              Thành viên ({group.members?.length || 0})
-            </h3>
-            <div className=" grid grid-cols-2 gap-3">
-              {group.members && group.members.length > 0 ? (
-                group.members.map((member) => (
-                  <div
-                    key={member.id}
-                    className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg"
-                  >
-                    <div className="w-10 h-10 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">
-                      {member.name?.charAt(0) || "?"}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900">
-                        {member.name}
-                        {member.id === group.leader?.id && (
-                          <span className="ml-2 text-xs bg-blue-600 text-white px-2 py-0.5 rounded">
-                            Trưởng nhóm
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-sm text-gray-500">{member.email}</p>
-                    </div>
+              <h4 className="text-lg font-black text-gray-900 leading-snug">
+                {group.topicName}
+              </h4>
+              
+              {group.description && (
+                <div className="pt-3 border-t border-mainColor/10 space-y-2">
+                  <div className="flex items-center gap-2 text-gray-400 font-bold">
+                    <Notes fontSize="small" />
+                    <h5 className="text-[11px] uppercase tracking-wider">Mô tả chi tiết</h5>
                   </div>
-                ))
-              ) : (
-                <p className="text-gray-500 italic">Chưa có thành viên nào</p>
+                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap font-medium">
+                    {group.description}
+                  </p>
+                </div>
               )}
             </div>
           </div>
 
-          {/* Rejection Reason (if rejected) */}
-          {group.status === "REJECTED" && group.rejectionReason && (
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">
-                Lý do từ chối
-              </h3>
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-800">{group.rejectionReason}</p>
+          {/* Google Sheet Link Banner */}
+          {group.googleSheetLink && (
+            <div className="bg-emerald-50/50 border border-emerald-200/60 rounded-3xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all hover:bg-emerald-50">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 bg-emerald-600 text-white rounded-2xl shadow-md shrink-0">
+                  <Link />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-bold text-emerald-800 text-sm">Bảng tính Google Sheet quản lý</p>
+                  <p className="text-xs text-emerald-600 truncate mt-0.5 font-medium max-w-[250px] sm:max-w-md md:max-w-lg">
+                    {group.googleSheetLink}
+                  </p>
+                </div>
               </div>
+              <a
+                href={group.googleSheetLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-md shadow-emerald-600/10 transition-all shrink-0"
+              >
+                <span>Mở sheet</span>
+                <OpenInNew sx={{ fontSize: 14 }} />
+              </a>
             </div>
           )}
 
-          {/* Timestamps */}
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-1">
-                Ngày tạo
-              </h3>
-              <p className="text-gray-900">
-                {group.createdAt ? formatDateTime(group.createdAt) : "N/A"}
+          {/* Info Details Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50/40 rounded-3xl border border-gray-100">
+            <div className="space-y-1">
+              <h5 className="text-[11px] font-black uppercase tracking-wider text-gray-400 flex items-center gap-1">
+                <CalendarToday sx={{ fontSize: 12 }} />
+                {group.type === "student" ? "Học kỳ đăng ký" : "Ngày đăng ký"}
+              </h5>
+              <p className="text-sm font-bold text-gray-800">
+                {group.createdAt ? (
+                  group.type === "student" ? getSemesterFromDate(group.createdAt) : formatDateTime(group.createdAt)
+                ) : "N/A"}
               </p>
             </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-1">
+            
+            <div className="space-y-1">
+              <h5 className="text-[11px] font-black uppercase tracking-wider text-gray-400 flex items-center gap-1">
+                <Update sx={{ fontSize: 12 }} />
                 Cập nhật lần cuối
-              </h3>
-              <p className="text-gray-900">
-                {group.updatedAt ? formatDateTime(group.createdAt) : "N/A"}
+              </h5>
+              <p className="text-sm font-bold text-gray-800 font-medium">
+                {group.updatedAt ? formatDateTime(group.updatedAt) : "N/A"}
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <h5 className="text-[11px] font-black uppercase tracking-wider text-gray-400 flex items-center gap-1">
+                <People sx={{ fontSize: 12 }} />
+                Thành viên
+              </h5>
+              <p className="text-sm font-bold text-gray-800">
+                {membersList.length} thành viên
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <h5 className="text-[11px] font-black uppercase tracking-wider text-gray-400 flex items-center gap-1">
+                <BookmarkBorder sx={{ fontSize: 12 }} />
+                Trạng thái nhóm
+              </h5>
+              <p className="text-sm font-extrabold text-mainColor uppercase tracking-tight">
+                {statusBadge.label}
               </p>
             </div>
           </div>
+
+          {/* Advisor Section */}
+          {group.type === "student" && advisor && (
+            <div className="space-y-4">
+              <h3 className="text-sm font-black uppercase tracking-wider text-gray-700 flex items-center gap-2">
+                <School className="text-purple-600" fontSize="small" />
+                Giảng viên hướng dẫn
+              </h3>
+              {renderAdvisorCard(advisor)}
+            </div>
+          )}
+
+          {/* Members Section */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-black uppercase tracking-wider text-gray-700 flex items-center gap-2">
+              <People className="text-emerald-600" fontSize="small" />
+              Danh sách thành viên ({membersList.length})
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Always display leader first if available */}
+              {leaderDetail && renderMemberCard(leaderDetail, true)}
+              
+              {/* Display other members */}
+              {regularMembers.length > 0 ? (
+                regularMembers.map((member) => renderMemberCard(member, false))
+              ) : (
+                !leaderDetail && (
+                  <p className="text-gray-500 italic text-sm py-2 text-center col-span-2">
+                    Chưa có thành viên nào
+                  </p>
+                )
+              )}
+            </div>
+          </div>
+
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4 p-6 border-t bg-gray-50">
-          {/* {(isAdmin || isLeader) && (
-            <Button
-              onClick={() => {
-                onClose();
-                onEdit(group);
-              }}
-              className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              <Edit fontSize="small" />
-              Chỉnh sửa
-            </Button>
-          )} */}
-
-          {isAdmin && group.status === "PENDING" && (
+        {/* Action Buttons Footer */}
+        <div className="flex items-center gap-3 p-6 bg-gray-50 border-t border-gray-100 shrink-0">
+          {canAdminApprove && (
             <>
               <button
                 onClick={() => {
                   onClose();
                   onApprove(group.id);
                 }}
-                className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-600/10 transition-all"
               >
                 <CheckCircle fontSize="small" />
                 Duyệt nhóm
@@ -197,7 +564,7 @@ const GroupDetailModal = ({
                   onClose();
                   onReject(group.id);
                 }}
-                className="flex items-center gap-2 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                className="flex items-center gap-2 px-6 py-2.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-rose-600/10 transition-all"
               >
                 <Cancel fontSize="small" />
                 Từ chối
@@ -208,11 +575,12 @@ const GroupDetailModal = ({
           <Button
             onClick={onClose}
             variant="outline"
-            className="ml-auto px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100"
+            className="ml-auto px-6 py-2.5 border border-gray-200 text-gray-700 hover:bg-gray-100 rounded-xl text-xs font-black uppercase tracking-wider transition-all"
           >
             Đóng
           </Button>
         </div>
+        
       </div>
     </div>
   );

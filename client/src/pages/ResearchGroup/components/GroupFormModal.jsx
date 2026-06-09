@@ -387,7 +387,7 @@ const GroupFormModal = ({
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="">— Chưa chọn (admin có thể cập nhật sau) —</option>
+                <option value="">----</option>
                 <option value="NCM">NCM — Nhóm nghiên cứu mạnh (PA 1)</option>
                 <option value="XUAT_SAC">Xuất sắc (PA 2)</option>
                 <option value="TINH_HOA">Tinh hoa (PA 3)</option>

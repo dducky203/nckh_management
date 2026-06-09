@@ -13,6 +13,9 @@ public interface NckhTieuChiDinhMucService {
 
     NckhTieuChiDinhMucResponse update(Long id, NckhTieuChiDinhMucRequest request);
 
+    /** Tạo mới nếu chưa tồn tại, cập nhật nếu đã có (tieuChiCode + chucDanh + year + phuongAn). */
+    NckhTieuChiDinhMucResponse upsert(NckhTieuChiDinhMucRequest request);
+
     NckhTieuChiDinhMucResponse getById(Long id);
 
     List<NckhTieuChiDinhMucResponse> getAll(Integer phuongAn, String chucDanh , String year);

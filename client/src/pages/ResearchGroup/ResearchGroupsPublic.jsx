@@ -14,7 +14,7 @@ import { useToast } from "../../context/ToastContext";
 import researchGroupService from "../../services/researchGroupService";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import Pagination from "../../components/common/Pagination";
-import { ERROR_MESSAGES, formatDate, getResearchGroupStatusBadge } from "../../constants";
+import { ERROR_MESSAGES, getSemesterFromDate, getResearchGroupStatusBadge } from "../../constants";
 import GroupFormModal from "./components/GroupFormModal";
 import GroupDetailModal from "./components/GroupDetailModal";
 import { usePagination } from "../../hooks/usePagination";
@@ -27,6 +27,8 @@ const ResearchGroupsPublic = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("student");
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedSemester, setSelectedSemester] = useState("ALL");
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -48,16 +50,36 @@ const ResearchGroupsPublic = () => {
   useEffect(() => {
     fetchGroups();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, activeTab]);
+  }, [currentPage, activeTab, selectedYear, selectedSemester]);
 
   const fetchGroups = async () => {
     try {
       setLoading(true);
+      let startDate = null;
+      let endDate = null;
+
+      if (activeTab === "student" && selectedYear) {
+        const year = parseInt(selectedYear, 10);
+        if (selectedSemester === "1") {
+          startDate = new Date(year, 7, 1).toISOString();
+          endDate = new Date(year + 1, 0, 31, 23, 59, 59).toISOString();
+        } else if (selectedSemester === "2") {
+          startDate = new Date(year + 1, 1, 1).toISOString();
+          endDate = new Date(year + 1, 6, 31, 23, 59, 59).toISOString();
+        } else {
+          // ALL semesters in that year
+          startDate = new Date(year, 7, 1).toISOString();
+          endDate = new Date(year + 1, 6, 31, 23, 59, 59).toISOString();
+        }
+      }
+
       const response = await researchGroupService.getAllGroupPublic(
         searchTerm,
         activeTab,
         currentPage,
         12,
+        startDate,
+        endDate
       );
       const responseData = response.data || response;
       setGroups(responseData?.groups || []);
@@ -121,56 +143,102 @@ const ResearchGroupsPublic = () => {
           </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-8">
-          <div className="flex flex-col lg:flex-row gap-6 justify-between items-center">
-            <div className="flex bg-gray-100 p-1.5 rounded-lg w-full lg:w-auto">
-              <button
-                onClick={() => handleTabChange("student")}
-                className={`flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-md text-sm font-semibold transition-all duration-200 ${
-                  activeTab === "student"
-                    ? "bg-white text-mainColor shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                <School fontSize="small" />
-                Nhóm Sinh viên
-              </button>
-              <button
-                onClick={() => handleTabChange("lecturer")}
-                className={`flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-md text-sm font-semibold transition-all duration-200 ${
-                  activeTab === "lecturer"
-                    ? "bg-white text-mainColor shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                <SupervisorAccount fontSize="small" />
-                Nhóm Giảng viên
-              </button>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-8">
+          <div className="flex flex-col gap-4">
+            {/* Top Row: Tabs and Actions */}
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+              <div className="flex bg-gray-100 p-1.5 rounded-lg w-full lg:w-auto">
+                <button
+                  onClick={() => handleTabChange("student")}
+                  className={`flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-md text-sm font-semibold transition-all duration-200 ${
+                    activeTab === "student"
+                      ? "bg-white text-mainColor shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <School fontSize="small" />
+                  Nhóm Sinh viên
+                </button>
+                <button
+                  onClick={() => handleTabChange("lecturer")}
+                  className={`flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-md text-sm font-semibold transition-all duration-200 ${
+                    activeTab === "lecturer"
+                      ? "bg-white text-mainColor shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <SupervisorAccount fontSize="small" />
+                  Nhóm Giảng viên
+                </button>
+              </div>
+
+              <div className="flex w-full lg:w-auto gap-3 items-center">
+                <form
+                  onSubmit={handleSearch}
+                  className="relative flex-1 sm:w-80 group flex gap-2"
+                >
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-mainColor" />
+                    <input
+                      type="text"
+                      placeholder="Tìm kiếm đề tài..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mainColor focus:border-mainColor focus:bg-white transition-all outline-none text-sm"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-mainColor text-white rounded-lg hover:bg-mainColor/90 transition-colors text-sm font-medium"
+                  >
+                    Tìm kiếm
+                  </button>
+                </form>
+
+                <button
+                  onClick={handleCreateGroup}
+                  className="flex items-center justify-center gap-2 px-5 py-2 bg-mainColor text-white font-medium rounded-lg hover:bg-mainColor/90 active:bg-mainColor transition-colors shadow-sm text-sm whitespace-nowrap"
+                >
+                  <Add fontSize="small" />
+                  <span className="hidden sm:inline">Đăng ký mới</span>
+                </button>
+              </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-3 items-center">
-              <form
-                onSubmit={handleSearch}
-                className="relative w-full sm:w-80 group"
-              >
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-mainColor" />
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm đề tài..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mainColor focus:border-mainColor focus:bg-white transition-all outline-none"
-                />
-              </form>
-
-              <button
-                onClick={handleCreateGroup}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-mainColor text-white font-medium rounded-lg hover:bg-mainColor/90 active:bg-mainColor transition-colors shadow-sm"
-              >
-                <Add />
-                <span>Đăng ký mới</span>
-              </button>
-            </div>
+            {/* Bottom Row: Filters */}
+            {activeTab === "student" && (
+              <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-gray-100">
+                <span className="text-sm font-medium text-gray-500 flex items-center gap-1">
+                  Bộ lọc:
+                </span>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => {
+                    setSelectedYear(e.target.value);
+                    resetPagination();
+                  }}
+                  className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-mainColor focus:border-mainColor focus:bg-white transition-all outline-none"
+                >
+                  {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(year => (
+                    <option key={year} value={year}>
+                      Năm học {year}-{year + 1}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={selectedSemester}
+                  onChange={(e) => {
+                    setSelectedSemester(e.target.value);
+                    resetPagination();
+                  }}
+                  className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-mainColor focus:border-mainColor focus:bg-white transition-all outline-none"
+                >
+                  <option value="ALL">Tất cả học kỳ</option>
+                  <option value="1">Học kỳ 1</option>
+                  <option value="2">Học kỳ 2</option>
+                </select>
+              </div>
+            )}
           </div>
 
           <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500 px-1">
@@ -225,7 +293,7 @@ const ResearchGroupsPublic = () => {
                         {activeTab === "student" ? "Sinh viên" : "Giảng viên"}
                       </div>
                       <span className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded">
-                        {formatDate(group.createdAt)}
+                        {activeTab === "student" ? getSemesterFromDate(group.createdAt) : getSemesterFromDate(group.createdAt)}
                       </span>
                     </div>
 

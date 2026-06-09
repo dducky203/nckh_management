@@ -56,9 +56,11 @@ public class ResearchGroup extends EntityBase {
     // Danh sách thành viên
 
     public enum GroupStatus {
-        PENDING, // Chờ duyệt
-        APPROVED, // Đã duyệt
-        REJECTED // Bị từ chối
+        PENDING,          // Chờ duyệt (cũ - nhóm GV)
+        PENDING_ADVISOR,  // Chờ giảng viên hướng dẫn duyệt (nhóm SV)
+        PENDING_ADMIN,    // Giảng viên đã duyệt, chờ Admin duyệt (nhóm SV)
+        APPROVED,         // Đã duyệt
+        REJECTED          // Bị từ chối
     }
 
     public boolean isLeader(User user) {

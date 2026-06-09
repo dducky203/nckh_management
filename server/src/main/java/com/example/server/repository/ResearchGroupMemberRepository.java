@@ -15,6 +15,8 @@ public interface ResearchGroupMemberRepository
 
     List<ResearchGroupMember> findByGroupId(Integer groupId);
 
+    List<ResearchGroupMember> findByGroupIdIn(List<Integer> groupIds);
+
     Optional<ResearchGroupMember> findByGroupIdAndUserId(Integer groupId, Integer userId);
 
     void deleteByGroupId(Integer groupId);

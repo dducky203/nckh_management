@@ -1,4 +1,4 @@
-import { Pending, CheckCircle, Cancel } from "@mui/icons-material";
+import { Pending, CheckCircle, Cancel, HourglassTop, AdminPanelSettings } from "@mui/icons-material";
 
 /** Trạng thái nhóm NCKH — đồng bộ backend `ResearchGroup.GroupStatus`. */
 export const RESEARCH_GROUP_STATUS = {
@@ -7,6 +7,18 @@ export const RESEARCH_GROUP_STATUS = {
     cls: "bg-amber-50 text-amber-800 border-amber-200",
     color: "bg-yellow-100 text-yellow-800",
     Icon: Pending,
+  },
+  PENDING_ADVISOR: {
+    label: "Chờ GV duyệt",
+    cls: "bg-orange-50 text-orange-800 border-orange-200",
+    color: "bg-orange-100 text-orange-800",
+    Icon: HourglassTop,
+  },
+  PENDING_ADMIN: {
+    label: "Chờ Admin duyệt",
+    cls: "bg-blue-50 text-blue-800 border-blue-200",
+    color: "bg-blue-100 text-blue-800",
+    Icon: AdminPanelSettings,
   },
   APPROVED: {
     label: "Đã duyệt",

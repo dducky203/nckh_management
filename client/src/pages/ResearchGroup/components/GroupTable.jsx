@@ -113,7 +113,9 @@ const GroupTable = ({
                   className="w-full px-6 py-5 flex items-center justify-between transition-all hover:bg-mainColor/5 group/item"
                 >
                   <span className="text-gray-600 font-bold group-hover/item:text-mainColor">
-                    Quản lý sản phẩm & mức độ hoàn thành
+                    {group.type === "student" 
+                      ? "Quản lý sản phẩm" 
+                      : "Quản lý sản phẩm & mức độ hoàn thành"}
                   </span>
                   <ChevronRight
                     fontSize="small"

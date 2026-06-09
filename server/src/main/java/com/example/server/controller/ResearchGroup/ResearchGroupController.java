@@ -44,7 +44,10 @@ public class ResearchGroupController {
         }
 
         ResearchGroupDTO group = researchGroupService.createGroup(userId, request);
-        return ResponseEntity.ok(new SuccessResponseDTO<>(group, "Tạo nhóm thành công! Chờ admin duyệt."));
+        String message = "student".equals(request.getType())
+                ? "Tạo nhóm thành công! Giảng viên hướng dẫn cần xét duyệt trước."
+                : "Tạo nhóm thành công! Chờ admin duyệt.";
+        return ResponseEntity.ok(new SuccessResponseDTO<>(group, message));
     }
     /**
      * Lấy chi tiết nhóm
@@ -55,6 +58,8 @@ public class ResearchGroupController {
     public ResponseEntity<SuccessResponseDTO<Map<String, Object>>> getAllGroupPublic(
             @RequestParam(defaultValue = "") String keyword,
             @RequestParam String type,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.util.Date startDate,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.util.Date endDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -62,7 +67,7 @@ public class ResearchGroupController {
         Sort.Direction direction = sortDir.equalsIgnoreCase("ASC") ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
-        Page<ResearchGroupDTO> groupsPage = researchGroupService.getAllGroups(keyword, "APPROVED", type, pageable);
+        Page<ResearchGroupDTO> groupsPage = researchGroupService.getAllGroups(keyword, "APPROVED", type, startDate, endDate, pageable);
 
         Map<String, Object> response = new HashMap<>();
         response.put("groups", groupsPage.getContent());
@@ -107,6 +112,50 @@ public class ResearchGroupController {
 
         List<ResearchGroupDTO> groups = researchGroupService.getGroupsByUser(userId);
         return ResponseEntity.ok(new SuccessResponseDTO<>(groups, "Lấy danh sách nhóm thành công"));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Endpoints dành cho Giảng Viên Hướng Dẫn
+    // ─────────────────────────────────────────────────────────────────────
+
+    /**
+     * Giảng viên lấy danh sách nhóm SV cần xét duyệt (hoặc tất cả nhóm mình HD)
+     */
+    @GetMapping("/advisor/my-groups")
+    public ResponseEntity<SuccessResponseDTO<List<ResearchGroupDTO>>> getAdvisorGroups(
+            @RequestParam(required = false, defaultValue = "PENDING_ADVISOR") String status) {
+        Integer userId = SecurityUtils.getCurrentUserId();
+        if (userId == null) throw new RuntimeException("Vui lòng đăng nhập");
+
+        List<ResearchGroupDTO> groups = researchGroupService.getGroupsForAdvisor(userId, status);
+        return ResponseEntity.ok(new SuccessResponseDTO<>(groups, "Lấy danh sách nhóm thành công"));
+    }
+
+    /**
+     * Giảng viên chấp thuận nhóm SV (PENDING_ADVISOR → PENDING_ADMIN)
+     */
+    @PutMapping("/{groupId}/advisor-approve")
+    public ResponseEntity<SuccessResponseDTO<ResearchGroupDTO>> advisorApproveGroup(
+            @PathVariable Integer groupId) {
+        Integer userId = SecurityUtils.getCurrentUserId();
+        if (userId == null) throw new RuntimeException("Vui lòng đăng nhập");
+
+        ResearchGroupDTO group = researchGroupService.advisorApproveGroup(groupId, userId);
+        return ResponseEntity.ok(new SuccessResponseDTO<>(group, "Đã chấp thuận nhóm, chờ Admin xét duyệt cuối cùng."));
+    }
+
+    /**
+     * Giảng viên từ chối nhóm SV (PENDING_ADVISOR → REJECTED)
+     */
+    @PutMapping("/{groupId}/advisor-reject")
+    public ResponseEntity<SuccessResponseDTO<ResearchGroupDTO>> advisorRejectGroup(
+            @PathVariable Integer groupId,
+            @RequestParam(required = false) String reason) {
+        Integer userId = SecurityUtils.getCurrentUserId();
+        if (userId == null) throw new RuntimeException("Vui lòng đăng nhập");
+
+        ResearchGroupDTO group = researchGroupService.advisorRejectGroup(groupId, userId, reason);
+        return ResponseEntity.ok(new SuccessResponseDTO<>(group, "Đã từ chối nhóm."));
     }
 
     /**

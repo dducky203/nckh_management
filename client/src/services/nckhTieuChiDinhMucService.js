@@ -53,6 +53,26 @@ const nckhTieuChiDinhMucService = {
     const res = await api.post("/nckh/tieu-chi-dinh-muc/batch-save", rows);
     return res?.data ?? res;
   },
+
+  /**
+   * Cập nhật một tiêu chí định mức theo ID.
+   * @param {number} id
+   * @param {object} data
+   */
+  update: async (id, data) => {
+    const res = await api.put(`/nckh/tieu-chi-dinh-muc/${id}`, data);
+    return res?.data ?? res;
+  },
+
+  /**
+   * Xóa một tiêu chí định mức.
+   * @param {number} id
+   */
+  delete: async (id) => {
+    const res = await api.delete(`/nckh/tieu-chi-dinh-muc/${id}`);
+    return res?.data ?? res;
+  },
 };
+
 
 export default nckhTieuChiDinhMucService;
