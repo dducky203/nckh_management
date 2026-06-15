@@ -341,61 +341,6 @@ const GroupDetailModal = ({
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 custom-scrollbar">
           
-          {/* Stepper Approval Timeline */}
-          <div className="bg-gray-50/50 border border-gray-100 rounded-3xl p-5 md:p-6 shadow-sm">
-            <h3 className="text-[11px] font-black uppercase tracking-wider text-gray-400 mb-5 text-center">
-              Tiến trình phê duyệt hồ sơ
-            </h3>
-            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-6 md:gap-4">
-              {steps.map((step, idx) => {
-                const StepIcon = step.icon;
-                
-                let iconColor = "bg-gray-100 text-gray-400 border-gray-200";
-                let textColor = "text-gray-500 font-medium";
-                let descColor = "text-gray-400";
-                let lineColor = "bg-gray-100";
-
-                if (step.status === "completed") {
-                  iconColor = "bg-emerald-50 text-emerald-600 border-emerald-500 ring-4 ring-emerald-100/50";
-                  textColor = "text-emerald-800 font-bold";
-                  descColor = "text-emerald-600";
-                  lineColor = "bg-emerald-500";
-                } else if (step.status === "active") {
-                  iconColor = "bg-amber-50 text-amber-600 border-amber-500 ring-4 ring-amber-100/50 animate-pulse";
-                  textColor = "text-amber-800 font-extrabold";
-                  descColor = "text-amber-600";
-                  lineColor = "bg-amber-300";
-                } else if (step.status === "failed") {
-                  iconColor = "bg-rose-50 text-rose-600 border-rose-500 ring-4 ring-rose-100/50";
-                  textColor = "text-rose-800 font-bold";
-                  descColor = "text-rose-600";
-                  lineColor = "bg-rose-300";
-                }
-
-                return (
-                  <div key={idx} className="flex-1 flex flex-row md:flex-col items-center gap-3 md:gap-2 relative">
-                    {/* Circle */}
-                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center shrink-0 z-10 ${iconColor}`}>
-                      <StepIcon fontSize="small" />
-                    </div>
-                    
-                    {/* Labels */}
-                    <div className="text-left md:text-center min-w-0">
-                      <p className={`text-sm ${textColor} leading-tight`}>{step.label}</p>
-                      <p className={`text-xs ${descColor} mt-0.5`}>{step.desc}</p>
-                    </div>
-
-                    {/* Connecting line (Desktop only) */}
-                    {idx < steps.length - 1 && (
-                      <div className="hidden md:block absolute top-5 left-[calc(50%+28px)] right-[calc(-50%+28px)] h-0.5 z-0 bg-gray-100">
-                        <div className={`h-full transition-all duration-500 ${lineColor}`} />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
 
           {/* Rejection Reason Box */}
           {group.status === "REJECTED" && group.rejectionReason && (

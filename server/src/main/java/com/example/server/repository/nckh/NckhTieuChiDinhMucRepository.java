@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,5 +56,17 @@ public interface NckhTieuChiDinhMucRepository extends JpaRepository<NckhTieuChiD
             @Param("chucDanh") String chucDanh,
             @Param("year") String year,
             @Param("phuongAn") Integer phuongAn);
+
+    /**
+     * Tổng giờ tối thiểu phải đạt cho một phương án + chức danh + năm.
+     * Dùng để tính % hoàn thành cá nhân và định mức chuẩn nhóm.
+     */
+    @Query(value = "SELECT COALESCE(SUM(tong_gio_toi_thieu), 0) FROM nckh_tieu_chi_dinh_muc " +
+            "WHERE phuong_an = :phuongAn AND chuc_danh = :chucDanh AND year = :year",
+            nativeQuery = true)
+    BigDecimal sumTongGioByPhuongAnAndChucDanh(
+            @Param("phuongAn") Integer phuongAn,
+            @Param("chucDanh") String chucDanh,
+            @Param("year") String year);
 }
 

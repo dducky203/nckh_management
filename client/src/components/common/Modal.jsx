@@ -38,7 +38,9 @@ const Modal = ({
   message = "Bạn có chắc chắn muốn thực hiện hành động này?",
   confirmText = "Xác nhận",
   cancelText = "Hủy",
-  type = "default" // default, logout, delete, warning, info, error, help
+  type = "default", // default, logout, delete, warning, info, error, help, custom
+  children,
+  maxWidth = "xs"
 }) => {
   const theme = useTheme();
 
@@ -72,6 +74,11 @@ const Modal = ({
       icon: <ErrorOutlineOutlined />,
       color: theme.palette.error.main,
       buttonColor: 'error'
+    },
+    custom: {
+      icon: null,
+      color: mainColor,
+      buttonColor: 'primary'
     }
   };
 
@@ -85,7 +92,7 @@ const Modal = ({
       onClose={onClose}
       aria-labelledby="modern-modal-title"
       aria-describedby="modern-modal-description"
-      maxWidth="xs"
+      maxWidth={maxWidth}
       fullWidth
       PaperProps={{
         elevation: 0,
@@ -96,8 +103,16 @@ const Modal = ({
           m: 2 // Margin cho mobile
         }
       }}
+      slotProps={{
+        backdrop: {
+          sx: {
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+          }
+        }
+      }}
     >
-      <Box sx={{ position: 'relative', p: 1 }}>
+      <Box sx={{ position: 'relative', p: 1, display: 'flex', flexDirection: 'column', maxHeight: 'inherit', overflow: 'hidden' }}>
         {/* Nút Đóng (Close Button) */}
         <IconButton
           aria-label="close"
@@ -120,7 +135,7 @@ const Modal = ({
           <CloseOutlined fontSize="small" />
         </IconButton>
 
-        <DialogContent sx={{ p: 3, pt: 4, pb: 2 }}>
+        <DialogContent sx={{ p: 3, pt: 4, pb: 2, overflowY: 'auto' }}>
           <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2.5 }}>
             {/* Icon Container (Squircle Style) */}
             {config.icon && (
@@ -146,7 +161,7 @@ const Modal = ({
             )}
 
             {/* Content Container */}
-            <Box sx={{ pt: 0.5 }}>
+            <Box sx={{ pt: 0.5, flex: 1 }}>
               <Typography
                 id="modern-modal-title"
                 variant="h6"
@@ -160,17 +175,21 @@ const Modal = ({
               >
                 {title}
               </Typography>
-              <Typography
-                id="modern-modal-description"
-                variant="body2"
-                sx={{
-                  color: '#4b5563', // Soft gray
-                  lineHeight: 1.5,
-                  fontSize: '0.95rem'
-                }}
-              >
-                {message}
-              </Typography>
+              {children ? (
+                children
+              ) : (
+                <Typography
+                  id="modern-modal-description"
+                  variant="body2"
+                  sx={{
+                    color: '#4b5563', // Soft gray
+                    lineHeight: 1.5,
+                    fontSize: '0.95rem'
+                  }}
+                >
+                  {message}
+                </Typography>
+              )}
             </Box>
           </Box>
         </DialogContent>
@@ -184,51 +203,55 @@ const Modal = ({
             gap: 1.5
           }}
         >
-          <Button
-            onClick={onClose}
-            disableElevation
-            sx={{
-              color: '#4b5563',
-              backgroundColor: '#f3f4f6', // Nền xám nhạt hiện đại thay vì viền
-              fontWeight: 600,
-              textTransform: 'none',
-              borderRadius: '8px',
-              px: 2.5,
-              py: 1,
-              '&:hover': {
-                backgroundColor: '#e5e7eb',
-                color: '#1f2937'
-              }
-            }}
-          >
-            {cancelText}
-          </Button>
-          <Button
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
-            variant="contained"
-            disableElevation
-            color={config.buttonColor}
-            sx={{
-              fontWeight: 600,
-              textTransform: 'none',
-              borderRadius: '8px',
-              px: 2.5,
-              py: 1,
-              backgroundColor: config.color,
-              '&:hover': {
-                backgroundColor: theme.palette.mode === 'dark'
-                  ? alpha(config.color, 0.9)
-                  : alpha(config.color, 0.85),
-                boxShadow: `0 4px 12px ${alpha(config.color, 0.3)}` // Hiệu ứng nổi nhẹ khi hover
-              }
-            }}
-            autoFocus
-          >
-            {confirmText}
-          </Button>
+          {cancelText && (
+            <Button
+              onClick={onClose}
+              disableElevation
+              sx={{
+                color: '#4b5563',
+                backgroundColor: '#f3f4f6', // Nền xám nhạt hiện đại thay vì viền
+                fontWeight: 600,
+                textTransform: 'none',
+                borderRadius: '8px',
+                px: 2.5,
+                py: 1,
+                '&:hover': {
+                  backgroundColor: '#e5e7eb',
+                  color: '#1f2937'
+                }
+              }}
+            >
+              {cancelText}
+            </Button>
+          )}
+          {onConfirm && confirmText && (
+            <Button
+              onClick={() => {
+                if (onConfirm) onConfirm();
+                onClose();
+              }}
+              variant="contained"
+              disableElevation
+              color={config.buttonColor}
+              sx={{
+                fontWeight: 600,
+                textTransform: 'none',
+                borderRadius: '8px',
+                px: 2.5,
+                py: 1,
+                backgroundColor: config.color,
+                '&:hover': {
+                  backgroundColor: theme.palette.mode === 'dark'
+                    ? alpha(config.color, 0.9)
+                    : alpha(config.color, 0.85),
+                  boxShadow: `0 4px 12px ${alpha(config.color, 0.3)}` // Hiệu ứng nổi nhẹ khi hover
+                }
+              }}
+              autoFocus
+            >
+              {confirmText}
+            </Button>
+          )}
         </DialogActions>
       </Box>
     </Dialog>

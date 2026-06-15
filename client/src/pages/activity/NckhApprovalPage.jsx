@@ -14,6 +14,10 @@ import userService from "../../services/userService";
 import { TYPE_META } from "../../constants/activityConstants";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { getBadgeColorStyles } from "../../utils/helpers";
+import { IconButton } from "@mui/material";
+import { Visibility, Download, Launch } from "@mui/icons-material";
+import Modal from "../../components/common/Modal";
+import ActivityDetailModal from "./components/ActivityDetailModal";
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -32,12 +36,14 @@ function TypeBadge({ type }) {
   );
 }
 
-function PendingCard({ item, creatorName, onApprove, onReject, busy }) {
+
+
+function PendingCard({ item, creatorName, onApprove, onReject, onView, busy }) {
   return (
     <div className="group bg-white rounded-2xl border border-slate-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden relative">
       {/* Indicator line */}
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-mainColor/80 to-blue-400/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      
+
       <div className="p-6 flex-1 flex flex-col">
         <div className="flex items-start justify-between mb-4 gap-3">
           <TypeBadge type={item.activityType} />
@@ -76,12 +82,20 @@ function PendingCard({ item, creatorName, onApprove, onReject, busy }) {
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3 mt-auto pt-2">
+        <div className="flex gap-2 mt-auto pt-2">
+          <button
+            type="button"
+            onClick={() => onView(item)}
+            className="flex items-center justify-center px-3 py-2.5 text-slate-600 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 hover:text-mainColor transition-colors font-bold disabled:opacity-50 shadow-sm"
+            title="Xem chi tiết"
+          >
+            <Visibility sx={{ fontSize: 18 }} />
+          </button>
           <button
             type="button"
             disabled={busy}
             onClick={() => onReject(item)}
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-rose-600 bg-rose-50 border border-rose-100 rounded-xl hover:bg-rose-100 hover:border-rose-200 transition-colors font-bold text-[13px] disabled:opacity-50"
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-rose-600 bg-rose-50 border border-rose-100 rounded-xl hover:bg-rose-100 hover:border-rose-200 transition-colors font-bold text-[13px] disabled:opacity-50 shadow-sm"
           >
             <Cancel sx={{ fontSize: 16 }} />
             Từ chối
@@ -115,51 +129,9 @@ export default function NckhApprovalPage() {
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [keyword, setKeyword] = useState("");
   const [processingId, setProcessingId] = useState(null);
+  const [viewItem, setViewItem] = useState(null);
 
-  const loadUserDirectory = async () => {
-    try {
-      let source = [];
-      try {
-        const res = await userService.getUsers({ page: 0, size: 500 });
-        source =
-          res?.data?.result ||
-          res?.data?.content ||
-          res?.data ||
-          res?.result ||
-          res?.content ||
-          res ||
-          [];
-      } catch {
-        source = [];
-      }
-      if (!source || source.length === 0) {
-        try {
-          const res2 = await userService.getAllUsers({ page: 0, size: 500 });
-          source =
-            res2?.data?.result ||
-            res2?.data?.content ||
-            res2?.data ||
-            res2?.result ||
-            res2?.content ||
-            res2 ||
-            [];
-        } catch {
-          source = [];
-        }
-      }
-      const map = {};
-      if (source && typeof source === "object" && typeof source.length === "number") {
-        source.forEach((it) => {
-          const id = it.id ?? it.userId;
-          if (!id || isNaN(id)) return;
-          map[id] = it.name || it.fullName || it.username || `User #${id}`;
-        });
-      }
-      setUserNameById(map);
-    } catch {
-      /* silent */
-    }
-  };
+  // Đã xóa loadUserDirectory vì quá nặng, thay bằng fetch từng user id cần thiết trong loadPending
 
   const loadPending = async () => {
     setLoading(true);
@@ -168,7 +140,30 @@ export default function NckhApprovalPage() {
         year: selectedYear,
         activityType: typeFilter === "ALL" ? undefined : typeFilter,
       });
-      setPendingItems(res?.data || res || []);
+      const items = res?.data || res || [];
+      setPendingItems(items);
+
+      // Tối ưu: Chỉ fetch những user có trong danh sách chờ duyệt
+      const uniqueIds = [...new Set(items.map(it => it.createdByUserId).filter(Boolean))];
+      if (uniqueIds.length > 0) {
+        // Lấy danh sách ID chưa có trong map
+        const missingIds = uniqueIds.filter(id => !userNameById[id]);
+        if (missingIds.length > 0) {
+          const promises = missingIds.map(id => userService.getUserById(id).catch(() => null));
+          const usersRes = await Promise.all(promises);
+          
+          setUserNameById(prev => {
+            const newMap = { ...prev };
+            usersRes.forEach(r => {
+              const u = r?.data || r;
+              if (u && u.id) {
+                newMap[u.id] = u.name || u.fullName || u.username || `User #${u.id}`;
+              }
+            });
+            return newMap;
+          });
+        }
+      }
     } catch (err) {
       toast.error(err?.message || "Không tải được danh sách chờ duyệt");
     } finally {
@@ -176,9 +171,6 @@ export default function NckhApprovalPage() {
     }
   };
 
-  useEffect(() => {
-    loadUserDirectory();
-  }, []);
   useEffect(() => {
     loadPending();
   }, [selectedYear, typeFilter]);
@@ -229,7 +221,7 @@ export default function NckhApprovalPage() {
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
         <div className="absolute top-0 right-0 -mr-32 -mt-32 w-96 h-96 rounded-full bg-mainColor/30 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 -ml-32 -mb-32 w-80 h-80 rounded-full bg-blue-500/20 blur-3xl"></div>
-        
+
         <div className="relative max-w-7xl mx-auto px-6">
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-bold uppercase tracking-widest mb-4">
@@ -333,12 +325,21 @@ export default function NckhApprovalPage() {
                 creatorName={getName(item.createdByUserId)}
                 onApprove={handleApprove}
                 onReject={handleReject}
+                onView={setViewItem}
                 busy={processingId === item.id}
               />
             ))}
           </div>
         )}
       </section>
+
+      {/* Detail Modal */}
+      <ActivityDetailModal
+        isOpen={!!viewItem}
+        onClose={() => setViewItem(null)}
+        item={viewItem}
+        getName={getName}
+      />
     </div>
   );
 }

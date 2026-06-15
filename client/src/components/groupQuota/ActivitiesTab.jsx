@@ -51,7 +51,7 @@ export default function ActivitiesTab({ stats, loading, academicYear }) {
                 <th className="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase">Hoạt động</th>
                 <th className="text-left px-3 py-3 text-xs font-bold text-slate-500 uppercase">Tiêu chí</th>
                 <th className="text-center px-3 py-3 text-xs font-bold text-slate-500 uppercase">SL gốc</th>
-              <th className="text-center px-3 py-3 text-xs font-bold text-slate-500 uppercase">Vào nhóm (×PA)</th>
+                <th className="text-center px-3 py-3 text-xs font-bold text-slate-500 uppercase">Vào nhóm (×PA)</th>
                 <th className="text-center px-3 py-3 text-xs font-bold text-slate-500 uppercase">Giờ ĐM nhóm</th>
                 <th className="text-center px-3 py-3 text-xs font-bold text-slate-500 uppercase">Ngày</th>
               </tr>

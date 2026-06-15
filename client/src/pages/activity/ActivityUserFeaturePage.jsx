@@ -4,11 +4,20 @@ import HubIcon from "@mui/icons-material/Hub";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import GroupIcon from "@mui/icons-material/Group";
 import CampaignIcon from "@mui/icons-material/Campaign";
+import HistoryEduIcon from "@mui/icons-material/HistoryEdu";
 import { RESEARCH_CATEGORIES } from "../../utils/data";
 import { AuthContext } from "../../context/AuthContext";
 import { canAccessQuotaPages } from "../../utils/permissions";
 
 const ALL_QUICK_CARDS = [
+  {
+    title: "Lịch sử hoạt động",
+    description: "Xem tất cả hoạt động NCKH của bạn theo từng năm học — lọc theo loại, trạng thái.",
+    to: "/activity/history",
+    icon: HistoryEduIcon,
+    tone: "from-mainColor to-blue-600",
+    cta: "Xem lịch sử",
+  },
   {
     title: "Định mức hoạt động",
     description: "Theo dõi đối chiếu định mức và dữ liệu thực tế theo năm học.",

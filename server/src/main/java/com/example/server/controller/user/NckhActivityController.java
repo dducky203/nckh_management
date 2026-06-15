@@ -3,7 +3,7 @@ package com.example.server.controller.user;
 import com.example.server.DTO.nckh.CreateActivityRequest;
 import com.example.server.DTO.nckh.DashboardResponse;
 import com.example.server.DTO.nckh.UpsertContributorsRequest;
-import com.example.server.DTO.nckh.ActivityStatisticsResponse;
+import com.example.server.DTO.nckh.PersonalQuotaSummaryDto;
 import com.example.server.domain.User;
 import com.example.server.domain.nckh.NckhActivity;
 import com.example.server.domain.nckh.NckhActivityContributor;
@@ -112,7 +112,7 @@ public class NckhActivityController {
     }
 
     @GetMapping("/activities/statistics")
-    public List<ActivityStatisticsResponse> getStatistics(
+    public PersonalQuotaSummaryDto getStatistics(
             @RequestParam Integer userId,
             @RequestParam Integer academicYear) {
         User user = userRepository.findById(userId).orElse(null);
@@ -121,3 +121,4 @@ public class NckhActivityController {
     }
 
 }
+

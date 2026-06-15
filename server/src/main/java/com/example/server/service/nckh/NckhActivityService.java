@@ -494,13 +494,16 @@ public class NckhActivityService {
         }
     }
 
-    public List<ActivityStatisticsResponse> getStatistics(Integer userId, Integer academicYear) {
+    public PersonalQuotaSummaryDto getStatistics(Integer userId, Integer academicYear) {
+        PersonalQuotaSummaryDto summary = new PersonalQuotaSummaryDto();
+
         // 1. Get user's plan
         UserPlanYear userPlan = planYearRepo.findByUserIdAndAcademicYear(userId, academicYear)
                 .orElse(null);
 
         if (userPlan == null) {
-            return new ArrayList<>();
+            summary.criteria = new ArrayList<>();
+            return summary;
         }
 
         // 2. Get user's title
@@ -508,56 +511,153 @@ public class NckhActivityService {
                 .orElse(null);
 
         if (user == null || user.getIdTitle() == null || user.getIdTitle().getName() == null) {
-            return new ArrayList<>();
+            summary.criteria = new ArrayList<>();
+            return summary;
         }
 
         String chucDanh = user.getIdTitle().getName();
         Integer phuongAn = userPlan.getPlanId();
+        String yearStr = String.valueOf(academicYear);
+
+        summary.planId = phuongAn;
+        summary.chucDanh = chucDanh;
 
         List<ActivityStatisticsResponse> personal = activityRepo.getStatisticsByUserAndYear(
                 userId, academicYear, phuongAn, chucDanh);
 
         Optional<ResearchGroup> quotaGroup = quotaGroupService.findApprovedQuotaGroup(userId);
-        if (quotaGroup.isEmpty()) {
-            return personal;
-        }
+        if (quotaGroup.isPresent()) {
+            List<Integer> memberIds = groupMemberRepo.findByGroupId(quotaGroup.get().getId()).stream()
+                    .map(ResearchGroupMember::getUserId)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .toList();
+            int memberCount = Math.max(1, memberIds.size());
 
-        List<Integer> memberIds = groupMemberRepo.findByGroupId(quotaGroup.get().getId()).stream()
-                .map(ResearchGroupMember::getUserId)
-                .filter(Objects::nonNull)
-                .distinct()
-                .toList();
-        int memberCount = Math.max(1, memberIds.size());
-        if (memberIds.isEmpty()) {
-            return personal;
-        }
+            if (!memberIds.isEmpty()) {
+                Map<String, ActivityStatisticsDto> byCatalog = new LinkedHashMap<>();
+                for (ActivityStatisticsResponse row : personal) {
+                    byCatalog.put(row.getCatalogCode(), ActivityStatisticsDto.from(row));
+                }
 
-        Map<String, ActivityStatisticsDto> byCatalog = new LinkedHashMap<>();
-        for (ActivityStatisticsResponse row : personal) {
-            byCatalog.put(row.getCatalogCode(), ActivityStatisticsDto.from(row));
-        }
+                for (ActivityStatisticsResponse groupRow : activityRepo.getGroupStatsByYear(memberIds, academicYear)) {
+                    double groupHours = groupRow.getTotalQuotaHours() != null ? groupRow.getTotalQuotaHours() : 0;
+                    if (groupHours <= 0) continue;
+                    String code = groupRow.getCatalogCode();
+                    double myHours = 0;
+                    ActivityStatisticsDto existing = byCatalog.get(code);
+                    if (existing != null) {
+                        myHours = existing.getOwnQuotaHours() != null ? existing.getOwnQuotaHours() : 0;
+                        existing.applyGroupHoursFromTeam(myHours, groupHours, memberCount);
+                    } else {
+                        ActivityStatisticsDto created = ActivityStatisticsDto.fromGroupRow(groupRow, 0);
+                        created.setPlanContext(phuongAn, chucDanh);
+                        created.applyGroupHoursFromTeam(0, groupHours, memberCount);
+                        byCatalog.put(code, created);
+                    }
+                }
 
-        for (ActivityStatisticsResponse groupRow : activityRepo.getGroupStatsByYear(memberIds, academicYear)) {
-            double groupHours = groupRow.getTotalQuotaHours() != null ? groupRow.getTotalQuotaHours() : 0;
-            if (groupHours <= 0) continue;
-            String code = groupRow.getCatalogCode();
-            double myHours = 0;
-            ActivityStatisticsDto existing = byCatalog.get(code);
-            if (existing != null) {
-                myHours = existing.getOwnQuotaHours() != null ? existing.getOwnQuotaHours() : 0;
-                existing.applyGroupHoursFromTeam(myHours, groupHours, memberCount);
-            } else {
-                ActivityStatisticsDto created = ActivityStatisticsDto.fromGroupRow(groupRow, 0);
-                created.setPlanContext(phuongAn, chucDanh);
-                created.applyGroupHoursFromTeam(0, groupHours, memberCount);
-                byCatalog.put(code, created);
+                personal = new ArrayList<>(byCatalog.values());
             }
         }
 
-        List<ActivityStatisticsResponse> result = new ArrayList<>(byCatalog.size());
-        result.addAll(byCatalog.values());
-        return result;
+        summary.criteria = personal;
+
+        // 3. Tính tổng giờ yêu cầu cho phương án + chức danh
+        String chucDanhEnum = mapChucDanhToEnum(chucDanh);
+        java.math.BigDecimal requiredBd = dinhMucRepo.sumTongGioByPhuongAnAndChucDanh(
+                phuongAn, chucDanhEnum, yearStr);
+        double requiredTotalHours = requiredBd != null ? requiredBd.doubleValue() : 0;
+        summary.requiredTotalHours = requiredTotalHours;
+
+        // 4. Tính tổng giờ thực tế
+        double actualTotalHours = 0;
+        for (ActivityStatisticsResponse stat : personal) {
+            actualTotalHours += stat.getTotalQuotaHours() != null ? stat.getTotalQuotaHours() : 0;
+        }
+        summary.actualTotalHours = actualTotalHours;
+
+        // 5. Tính % hoàn thành cá nhân
+        double personalPercent = requiredTotalHours > 0
+                ? Math.min(1.0, actualTotalHours / requiredTotalHours) * 100.0
+                : (actualTotalHours > 0 ? 100.0 : 0);
+        summary.personalCompletionPercent = round2(personalPercent);
+
+        // 6. Tính % nhóm (nếu user thuộc nhóm)
+        if (quotaGroup.isPresent()) {
+            ResearchGroup group = quotaGroup.get();
+            summary.groupName = group.getGroupName();
+
+            List<ResearchGroupMember> members = groupMemberRepo.findByGroupId(group.getId());
+            List<Integer> memberIds = members.stream()
+                    .map(ResearchGroupMember::getUserId)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .toList();
+
+            // Tính định mức chuẩn nhóm = tổng giờ tối thiểu của tất cả thành viên
+            double groupRequired = 0;
+            for (Integer memberId : memberIds) {
+                User memberUser = userRepo.findById(memberId).orElse(null);
+                if (memberUser == null || memberUser.getIdTitle() == null) continue;
+                String memberChucDanh = memberUser.getIdTitle().getName();
+                String memberCdEnum = mapChucDanhToEnum(memberChucDanh);
+
+                UserPlanYear memberPlan = planYearRepo.findByUserIdAndAcademicYear(memberId, academicYear)
+                        .orElse(null);
+                if (memberPlan == null) continue;
+
+                java.math.BigDecimal memberReq = dinhMucRepo.sumTongGioByPhuongAnAndChucDanh(
+                        memberPlan.getPlanId(), memberCdEnum, yearStr);
+                groupRequired += memberReq != null ? memberReq.doubleValue() : 0;
+            }
+            summary.groupRequiredTotalHours = groupRequired;
+
+            // Tính tổng giờ thực tế nhóm
+            double groupActual = 0;
+            if (!memberIds.isEmpty()) {
+                for (ActivityStatisticsResponse groupRow : activityRepo.getGroupStatsByYear(memberIds, academicYear)) {
+                    groupActual += groupRow.getTotalQuotaHours() != null ? groupRow.getTotalQuotaHours() : 0;
+                }
+            }
+            summary.groupActualTotalHours = groupActual;
+
+            // % nhóm
+            double groupPercent = groupRequired > 0
+                    ? Math.min(1.0, groupActual / groupRequired) * 100.0
+                    : (groupActual > 0 ? 100.0 : 0);
+            summary.groupCompletionPercent = round2(groupPercent);
+
+            // % thực tế = min(personal, group)
+            double effectivePercent = Math.min(personalPercent, groupPercent);
+            summary.effectiveCompletionPercent = round2(effectivePercent);
+            summary.overallCompleted = effectivePercent >= 100.0 - 1e-9;
+        } else {
+            // Không thuộc nhóm → % thực tế = % cá nhân
+            summary.groupCompletionPercent = null;
+            summary.groupRequiredTotalHours = null;
+            summary.groupActualTotalHours = null;
+            summary.effectiveCompletionPercent = round2(personalPercent);
+            summary.overallCompleted = personalPercent >= 100.0 - 1e-9;
+        }
+
+        return summary;
+    }
+
+    /** Chuyển tên chức danh từ DB sang enum string cho query. */
+    private String mapChucDanhToEnum(String chucDanh) {
+        if (chucDanh == null) return "KS_CN";
+        String up = chucDanh.toUpperCase().replace(" ", "").replace("/", "_");
+        if (up.contains("GS") || up.contains("PGS")) return "GS_PGS";
+        if (up.contains("TS") || up.contains("TIẾN") || up.contains("TIEN")) return "TS";
+        if (up.contains("THS") || up.contains("THẠC") || up.contains("THAC")) return "THS";
+        return "KS_CN";
+    }
+
+    private static double round2(double v) {
+        return Math.round(v * 100.0) / 100.0;
     }
 
 
 }
+

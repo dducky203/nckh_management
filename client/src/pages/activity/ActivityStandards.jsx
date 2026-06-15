@@ -12,7 +12,6 @@ import { useToast } from "../../context/ToastContext";
 import nckhPlanService from "../../services/nckhPlanService";
 import nckhTieuChiDinhMucService from "../../services/nckhTieuChiDinhMucService";
 import nckhActivityService from "../../services/nckhActivityService";
-import researchGroupService from "../../services/researchGroupService";
 import groupQuotaService from "../../services/groupQuotaService";
 import GroupQuotaPanel from "../../components/groupQuota/GroupQuotaPanel";
 import PlanPA0 from "./components/PlanPA0";
@@ -47,7 +46,8 @@ function round1(x) {
 export default function ActivityStandards() {
   const toast = useToast();
   const { user } = useAuth();
-  const academicYear = new Date().getFullYear();
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(currentYear);
   const toastRef = useRef(toast);
 
   useEffect(() => {
@@ -73,20 +73,25 @@ export default function ActivityStandards() {
   const [planCriteria, setPlanCriteria] = useState([]);
   const [criteriaLoading, setCriteriaLoading] = useState(false);
   const [actualStats, setActualStats] = useState([]);
+  // --- Summary từ API mới (PersonalQuotaSummaryDto) ---
+  const [quotaSummary, setQuotaSummary] = useState(null);
+  // --- Activities chi tiết để hiển thị user & link ---
+  const [activities, setActivities] = useState([]);
+  const [activitiesLoading, setActivitiesLoading] = useState(false);
   const [statsLoading, setStatsLoading] = useState(false);
 
   // --- Nhóm nghiên cứu (NCM / Xuất sắc / Tinh hoa) ---
-  const [groupStats, setGroupStats]         = useState(null);  // stats từ /my-stats
+  const [groupStats, setGroupStats] = useState(null);  // stats từ /my-stats
   const [groupStatsLoading, setGroupStatsLoading] = useState(false);
 
   useEffect(() => {
-    if (!user?.id || !academicYear) return;
+    if (!user?.id || !selectedYear) return;
 
     let cancelled = false;
     (async () => {
       setPlanLoading(true);
       try {
-        const res = await nckhPlanService.getCurrentPlan(user.id, academicYear);
+        const res = await nckhPlanService.getCurrentPlan(user.id, selectedYear);
         const current = res?.data;
 
         if (cancelled) return;
@@ -111,7 +116,7 @@ export default function ActivityStandards() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, academicYear]);
+  }, [user?.id, selectedYear]);
 
   // Fetch criteria from API whenever plan or academic title changes
   useEffect(() => {
@@ -145,7 +150,7 @@ export default function ActivityStandards() {
 
   // Fetch actual statistics
   useEffect(() => {
-    if (!user?.id || !academicYear) return;
+    if (!user?.id || !selectedYear) return;
 
     let cancelled = false;
     (async () => {
@@ -153,10 +158,19 @@ export default function ActivityStandards() {
       try {
         const res = await nckhActivityService.getStatistics(
           user.id,
-          academicYear,
+          selectedYear,
         );
         if (cancelled) return;
-        setActualStats(res?.data ?? res ?? []);
+        const raw = res?.data ?? res;
+        // Nếu API trả về PersonalQuotaSummaryDto (có trường criteria)
+        if (raw && raw.criteria) {
+          setActualStats(raw.criteria ?? []);
+          setQuotaSummary(raw);
+        } else {
+          // Fallback: API cũ trả về array
+          setActualStats(raw ?? []);
+          setQuotaSummary(null);
+        }
       } catch (e) {
         if (cancelled) return;
         toastRef.current?.error(e?.message || "Không thể tải dữ liệu thực tế");
@@ -168,7 +182,29 @@ export default function ActivityStandards() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, academicYear]);
+  }, [user?.id, selectedYear]);
+
+  // --- Fetch chi tiết activities (APPROVED) để hiển thị user & link ---
+  useEffect(() => {
+    if (!user?.id || !selectedYear) return;
+    let cancelled = false;
+    (async () => {
+      setActivitiesLoading(true);
+      try {
+        const res = await nckhActivityService.getMyActivities({
+          userId: user.id,
+          year: selectedYear,
+          status: "APPROVED",
+        });
+        if (!cancelled) setActivities(res?.data ?? res ?? []);
+      } catch (_) {
+        if (!cancelled) setActivities([]);
+      } finally {
+        if (!cancelled) setActivitiesLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, selectedYear]);
 
   // --- Fetch group stats tự động theo user ---
   useEffect(() => {
@@ -177,7 +213,7 @@ export default function ActivityStandards() {
     (async () => {
       setGroupStatsLoading(true);
       try {
-        const data = await groupQuotaService.getMyGroupStats(academicYear);
+        const data = await groupQuotaService.getMyGroupStats(selectedYear);
         if (!cancelled) setGroupStats(data);
       } catch (_) {
         if (!cancelled) setGroupStats(null);
@@ -186,9 +222,7 @@ export default function ActivityStandards() {
       }
     })();
     return () => { cancelled = true; };
-  }, [user?.id, academicYear]);
-
-  console.log({ planCriteria, actualStats });
+  }, [user?.id, selectedYear]);
 
   // --- Logic Helpers ---
   const calcHours = useCallback(
@@ -218,7 +252,7 @@ export default function ActivityStandards() {
 
     // Create map of actual data by tieuChiCode
     const actualMap = {};
-    actualStats.forEach((stat) => {
+    (Array.isArray(actualStats) ? actualStats : []).forEach((stat) => {
       actualMap[stat.catalogCode] = stat;
     });
 
@@ -241,25 +275,35 @@ export default function ActivityStandards() {
       };
     });
 
-    const requiredHoursSum = sortedCriteria.reduce(
+    // Lấy từ quotaSummary nếu có (API mới), fallback tính tổng
+    const requiredHoursSum = quotaSummary?.requiredTotalHours ?? sortedCriteria.reduce(
       (sum, c) => sum + +(c.tongGioToiThieu ?? 0),
       0,
     );
 
-    const actualHoursSum = checks.reduce(
+    const actualHoursSum = quotaSummary?.actualTotalHours ?? checks.reduce(
       (sum, check) => sum + +(check.actualHours ?? 0),
       0,
     );
 
-    const overallOk = checks.every((check) => check.ok);
+    // Logic mới: hoàn thành khi tổng giờ đủ (+ nhóm >= 100% nếu có)
+    const overallOk = quotaSummary != null
+      ? quotaSummary.overallCompleted
+      : actualHoursSum >= requiredHoursSum && requiredHoursSum > 0;
 
     return {
       checks,
       overallOk,
       requiredHours: requiredHoursSum > 0 ? requiredHoursSum : null,
       actualHours: actualHoursSum,
+      personalPercent: quotaSummary?.personalCompletionPercent ?? null,
+      groupPercent: quotaSummary?.groupCompletionPercent ?? null,
+      effectivePercent: quotaSummary?.effectiveCompletionPercent ?? null,
+      groupName: quotaSummary?.groupName ?? null,
+      groupRequiredHours: quotaSummary?.groupRequiredTotalHours ?? null,
+      groupActualHours: quotaSummary?.groupActualTotalHours ?? null,
     };
-  }, [criteriaLoading, planCriteria, actualStats]);
+  }, [criteriaLoading, planCriteria, actualStats, quotaSummary]);
 
   const tableCriteria = useMemo(() => {
     const children = [...planCriteria]
@@ -310,7 +354,7 @@ export default function ActivityStandards() {
     }
   };
 
-  const canSelectPlan = (canManagePlanAndData || planNotSet) && !planLocked;
+  const canSelectPlan = (canManagePlanAndData || planNotSet) && !planLocked && selectedYear >= currentYear;
   const planSelectDisabled = !canSelectPlan || planLoading;
   const isApiLoading = planLoading || criteriaLoading || statsLoading;
 
@@ -325,7 +369,7 @@ export default function ActivityStandards() {
   const ActivePlanComponent = PLAN_COMPONENTS[plan] ?? PlanPA0;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 pb-24 font-sans selection:bg-mainColor selection:text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-800 pb-4 font-sans selection:bg-mainColor selection:text-white">
       {/* 1. Header & Configuration */}
       <div className="bg-white border-b top-0 z-30 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -344,6 +388,27 @@ export default function ActivityStandards() {
             </div>
 
             <div className="flex flex-wrap gap-3 items-end">
+              {/* Chọn năm xem */}
+              <div className="flex-grow md:flex-grow-0">
+                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1.5 ml-1">
+                  Năm học
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min={2020}
+                    max={currentYear + 1}
+                    value={selectedYear}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      if (!isNaN(val) && val >= 2020 && val <= currentYear + 1) {
+                        setSelectedYear(val);
+                      }
+                    }}
+                    className="w-full md:w-28 bg-white hover:bg-slate-50 transition-colors text-sm font-bold text-slate-800 py-2.5 pl-3 pr-3 rounded-xl outline-none border border-slate-200 focus:border-mainColor shadow-sm text-center"
+                  />
+                </div>
+              </div>
               {/* Chọn Phương án */}
               <div className="relative flex-grow md:flex-grow-0">
                 <label className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-slate-400 mb-1.5 ml-1">
@@ -452,7 +517,7 @@ export default function ActivityStandards() {
                   </div>
                   <div>
                     <p className="text-[11px] text-rose-700 font-extrabold">
-                      Năm {academicYear}: Chưa có phương án được thiết lập/khóa.
+                      Năm {selectedYear}: Chưa có phương án được thiết lập/khóa.
                     </p>
                     <p className="text-[11px] text-rose-700/80 font-semibold">
                       Vui lòng liên hệ Trưởng khoa/Admin để thiết lập phương án
@@ -473,8 +538,30 @@ export default function ActivityStandards() {
           </div>
         ) : (
           <>
+            {/* Banner: Đang xem năm quá khứ */}
+            {selectedYear < currentYear && (
+              <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-sm">
+                <span className="text-xl">📅</span>
+                <div>
+                  <p className="text-sm font-extrabold text-amber-800"> 
+                    Đang xem dữ liệu năm {selectedYear}
+                  </p>
+                  <p className="text-xs text-amber-700 mt-0.5">
+                    Dữ liệu này là lịch sử và ở trạng thái chỉ đọc. Thao tác chốt phương án bị vô hiệu hóa.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSelectedYear(currentYear)}
+                  className="ml-auto flex-shrink-0 text-xs font-bold text-amber-800 border border-amber-300 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  Về năm {currentYear}
+                </button>
+              </div>
+            )}
+
             {/* 2. Overview Dashboard */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Card: Tổng giờ */}
               <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] relative overflow-hidden group">
                 <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
@@ -530,6 +617,81 @@ export default function ActivityStandards() {
                 </div>
               </div>
 
+              {/* Card: % hoàn thành cá nhân + nhóm */}
+              <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] relative overflow-hidden">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                  % Hoàn thành phương án
+                </p>
+                <div className="space-y-3">
+                  {/* % Cá nhân */}
+                  <div>
+                    <div className="flex justify-between items-baseline mb-1">
+                      <span className="text-[11px] font-bold text-slate-500 truncate pr-2">Cá nhân</span>
+                      <span className="text-xl font-black text-mainColor shrink-0">
+                        {result.personalPercent != null ? `${round1(result.personalPercent)}%` : "—"}
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                      <div
+                        className="h-full bg-mainColor rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(100, result.personalPercent ?? 0)}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* % Nhóm (nếu có) */}
+                  {result.groupPercent != null && (
+                    <div>
+                      <div className="flex justify-between items-baseline mb-1">
+                        <span
+                          className="text-[11px] font-bold text-violet-600 truncate pr-2"
+                          title={`Nhóm ${result.groupName ? `(${result.groupName})` : ""}`}
+                        >
+                          Nhóm {result.groupName ? `(${result.groupName})` : ""}
+                        </span>
+                        <span className={`text-xl font-black shrink-0 ${result.groupPercent >= 100 ? "text-emerald-600" : "text-violet-600"}`}>
+                          {round1(result.groupPercent)}%
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-violet-100 overflow-hidden">
+                        <div
+                          className="h-full bg-violet-500 rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min(100, result.groupPercent)}%` }}
+                        />
+                      </div>
+                      {result.groupPercent < 100 && (
+                        <p className="text-[10px] text-rose-500 font-semibold mt-1 leading-tight">
+                          ⚠ Nhóm chưa đạt 100% → giới hạn % thực tế của bạn
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* % Thực tế */}
+                  <div className="pt-2 border-t border-slate-100">
+                    <div className="flex justify-between items-baseline mb-1">
+                      <span
+                        className="text-[11px] font-extrabold text-slate-700 truncate pr-2"
+                        title={result.groupPercent != null ? "% Thực tế (min cá nhân, nhóm)" : "% Thực tế"}
+                      >
+                        {result.groupPercent != null ? "% Thực tế (min cá nhân, nhóm)" : "% Thực tế"}
+                      </span>
+                      <span className={`text-2xl font-black shrink-0 ${result.overallOk ? "text-emerald-600" : "text-rose-600"}`}>
+                        {result.effectivePercent != null ? `${round1(result.effectivePercent)}%` : (result.personalPercent != null ? `${round1(result.personalPercent)}%` : "—")}
+                      </span>
+                    </div>
+                    <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${result.overallOk ? "bg-emerald-500" : "bg-rose-400"
+                          }`}
+                        style={{ width: `${Math.min(100, result.effectivePercent ?? result.personalPercent ?? 0)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Checklist */}
               <ActivePlanComponent result={result} />
             </div>
             {/* 3. Activity Data */}
@@ -538,6 +700,7 @@ export default function ActivityStandards() {
               values={values}
               calcHours={calcHours}
               actualStats={actualStats}
+              activities={activities}
             />
 
             {/* 4. Định mức nhóm nghiên cứu */}
@@ -562,8 +725,27 @@ export default function ActivityStandards() {
               {/* Footer total color */}
               <p className="text-2xl font-black leading-none text-mainColor">
                 {round1(actualHoursNum)}
+                {requiredHoursNum != null && (
+                  <span className="text-sm font-bold text-slate-400 ml-1">/ {round1(requiredHoursNum)}</span>
+                )}
               </p>
             </div>
+            <div className="hidden md:block h-8 w-px bg-slate-200"></div>
+            {result.personalPercent != null && (
+              <div className="hidden md:block">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                  % Hoàn thành
+                </p>
+                <p className="text-lg font-black leading-none text-mainColor">
+                  {round1(result.effectivePercent ?? result.personalPercent)}%
+                  {result.groupPercent != null && (
+                    <span className="text-[10px] font-bold text-violet-500 ml-1">
+                      (nhóm {round1(result.groupPercent)}%)
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
             <div className="hidden md:block h-8 w-px bg-slate-200"></div>
             <div>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">

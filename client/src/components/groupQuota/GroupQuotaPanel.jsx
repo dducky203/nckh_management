@@ -80,12 +80,13 @@ export default function GroupQuotaPanel({ stats, loading }) {
             </div>
           )}
 
-          <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-y md:divide-y-0 divide-slate-100 border-b border-slate-100 mt-2">
+          <div className="grid grid-cols-2 md:grid-cols-6 divide-x divide-y md:divide-y-0 divide-slate-100 border-b border-slate-100 mt-2">
             <MiniStat label="Nhóm" value={stats.groupName} isText />
             <MiniStat label="% hoàn thành" value={round2(stats.groupCompletionPercent ?? 0)} suffix="%" highlight />
             <MiniStat label="Giờ cuối" value={round2(stats.myCreditedTotalHours ?? stats.myGroupQuotaHours ?? 0)} suffix="giờ" />
             <MiniStat label="Tổng nhóm" value={round2(stats.totalGroupHours)} suffix="giờ" />
-            <MiniStat label="Nhóm÷TV" value={round2(stats.totalPerMemberHours)} suffix="giờ" />
+            <MiniStat label="ĐM chuẩn nhóm" value={round2(stats.groupRequiredTotalHours ?? 0)} suffix="giờ" />
+            <MiniStat label="% giờ nhóm" value={round2(stats.groupHoursCompletionPercent ?? 0)} suffix="%" highlight />
           </div>
 
           {stats.personalEvaluation?.length > 0 && (
@@ -130,12 +131,20 @@ export default function GroupQuotaPanel({ stats, loading }) {
           </div>
 
           <div className="px-5 py-3 bg-blue-50 border-t border-blue-100 flex justify-between items-center">
-            <p className="text-xs text-blue-700">
-              Nhóm {round2(stats.groupCompletionPercent ?? 0)}% · giờ cuối = chia đều + phần vượt (năm {stats.academicYear}).
-              {stats.myCreditedTotalHours != null && (
-                <> Giờ được tính: <strong>{round2(stats.myCreditedTotalHours)}</strong>.</>
+            <div className="text-xs text-blue-700">
+              <p>
+                Nhóm {round2(stats.groupCompletionPercent ?? 0)}% · Giờ cuối = chia đều + phần vượt (năm {stats.academicYear}).
+                {stats.myCreditedTotalHours != null && (
+                  <> Giờ được tính: <strong>{round2(stats.myCreditedTotalHours)}</strong>.</>)}
+              </p>
+              {stats.groupRequiredTotalHours != null && (
+                <p className="mt-0.5">
+                  Định mức chuẩn nhóm: <strong>{round2(stats.groupRequiredTotalHours)}</strong> giờ · 
+                  Tổng nhóm: <strong>{round2(stats.totalGroupHours)}</strong> giờ · 
+                  % giờ nhóm: <strong>{round2(stats.groupHoursCompletionPercent ?? 0)}%</strong>
+                </p>
               )}
-            </p>
+            </div>
             <Link
               to="/activity/group-quota"
               className="text-xs font-bold text-mainColor whitespace-nowrap ml-2"

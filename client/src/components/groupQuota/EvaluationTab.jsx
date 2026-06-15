@@ -34,8 +34,8 @@ export default function EvaluationTab({
           </div>
           <p className="text-xs text-slate-400 mt-1">
             <strong>% hoàn thành nhóm</strong> = TB tiến độ các chỉ tiêu.{" "}
-            <strong>Giờ cuối</strong> = (giờ nhóm ÷ số TV) + phần bạn vượt tổng nhóm — không cộng chồng giờ đã nằm trong tổng
-            (vd. seminar 10h/4 TV → <strong>2,5h</strong>, không phải 12,5h).
+            <strong>ĐM chuẩn nhóm</strong> = tổng giờ quy đổi phải đạt của tất cả thành viên.{" "}
+            Hoàn thành khi tổng giờ đủ (không cần đạt tất cả tiêu chí).
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -77,20 +77,21 @@ export default function EvaluationTab({
                   : undefined
               }
             />
+            <StatBox
+              label="ĐM chuẩn nhóm"
+              value={stats.groupRequiredTotalHours ?? 0}
+              unit="giờ"
+              sub={`% giờ: ${round2(stats.groupHoursCompletionPercent ?? 0)}%`}
+            />
             <StatBox label="Giờ tự làm" value={stats.myTotalHours} unit="giờ" />
             <StatBox
               label="Giờ cuối (được tính)"
               value={stats.myCreditedTotalHours ?? stats.myGroupQuotaHours}
               unit="giờ"
               accent="main"
+              sub={stats.myRequiredTotalHours ? `yêu cầu: ${round2(stats.myRequiredTotalHours)} giờ` : undefined}
             />
             <StatBox label="Tổng giờ nhóm" value={stats.totalGroupHours} unit="giờ" />
-            <StatBox
-              label="Nhóm ÷ TV"
-              value={stats.totalPerMemberHours}
-              unit="giờ"
-              sub={`${stats.memberCount} thành viên`}
-            />
           </div>
 
           {stats.groupCompletionPercent != null && !isLeader && (

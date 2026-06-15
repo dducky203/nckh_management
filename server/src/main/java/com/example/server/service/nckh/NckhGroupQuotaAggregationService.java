@@ -1,5 +1,6 @@
 package com.example.server.service.nckh;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 import org.springframework.stereotype.Service;
@@ -7,8 +8,11 @@ import org.springframework.stereotype.Service;
 import com.example.server.DTO.nckh.GroupQuotaActivityProjection;
 import com.example.server.domain.ResearchGroup;
 import com.example.server.domain.User;
+import com.example.server.domain.nckh.UserPlanYear;
 import com.example.server.repository.UserRepository;
 import com.example.server.repository.nckh.NckhActivityRepository;
+import com.example.server.repository.nckh.NckhTieuChiDinhMucRepository;
+import com.example.server.repository.nckh.UserPlanYearRepository;
 import com.example.server.service.researchgroup.ResearchGroupQuotaService;
 
 @Service
@@ -17,14 +21,20 @@ public class NckhGroupQuotaAggregationService {
     private final NckhActivityRepository activityRepo;
     private final NckhComputeService computeService;
     private final UserRepository userRepo;
+    private final UserPlanYearRepository planYearRepo;
+    private final NckhTieuChiDinhMucRepository dinhMucRepo;
 
     public NckhGroupQuotaAggregationService(
             NckhActivityRepository activityRepo,
             NckhComputeService computeService,
-            UserRepository userRepo) {
+            UserRepository userRepo,
+            UserPlanYearRepository planYearRepo,
+            NckhTieuChiDinhMucRepository dinhMucRepo) {
         this.activityRepo = activityRepo;
         this.computeService = computeService;
         this.userRepo = userRepo;
+        this.planYearRepo = planYearRepo;
+        this.dinhMucRepo = dinhMucRepo;
     }
 
     /**
@@ -208,6 +218,46 @@ public class NckhGroupQuotaAggregationService {
             evalRow.put("groupCompletionPercent", groupPctDisplay);
         }
 
+        // Tính định mức chuẩn nhóm = tổng giờ quy đổi phải đạt của tất cả thành viên
+        double groupRequiredTotalHours = 0;
+        String yearStr = String.valueOf(academicYear);
+        for (Integer memberId : memberIds) {
+            User memberUser = userRepo.findById(memberId).orElse(null);
+            if (memberUser == null || memberUser.getIdTitle() == null) continue;
+            String memberChucDanh = memberUser.getIdTitle().getName();
+            String memberCdEnum = mapChucDanhToEnum(memberChucDanh);
+            UserPlanYear memberPlan = planYearRepo.findByUserIdAndAcademicYear(memberId, academicYear)
+                    .orElse(null);
+            if (memberPlan == null) continue;
+            BigDecimal memberReq = dinhMucRepo.sumTongGioByPhuongAnAndChucDanh(
+                    memberPlan.getPlanId(), memberCdEnum, yearStr);
+            groupRequiredTotalHours += memberReq != null ? memberReq.doubleValue() : 0;
+        }
+
+        double totalGroupQuotaHours = sumHoursShare(groupActivities);
+        double myTotalHours = sumHoursShare(myActivities);
+
+        // % hoàn thành nhóm theo tổng giờ
+        double groupHoursCompletionPercent = groupRequiredTotalHours > 0
+                ? Math.min(1.0, totalGroupQuotaHours / groupRequiredTotalHours) * 100.0
+                : (totalGroupQuotaHours > 0 ? 100.0 : 0);
+
+        // Đánh giá hoàn thành cá nhân: chỉ cần tổng giờ credited >= giờ yêu cầu
+        // Lấy giờ yêu cầu của cá nhân hiện tại
+        double myRequiredTotalHours = 0;
+        UserPlanYear myPlan = planYearRepo.findByUserIdAndAcademicYear(userId, academicYear).orElse(null);
+        if (myPlan != null) {
+            String myCdEnum = mapChucDanhToEnum(chucDanh);
+            BigDecimal myReq = dinhMucRepo.sumTongGioByPhuongAnAndChucDanh(
+                    myPlan.getPlanId(), myCdEnum, yearStr);
+            myRequiredTotalHours = myReq != null ? myReq.doubleValue() : 0;
+        }
+
+        boolean myHoursAchieved = isLeader || (myRequiredTotalHours > 0 && myCreditedTotalHours >= myRequiredTotalHours - 1e-9);
+        // % nhóm cũng phải >= 100% để cá nhân đạt
+        boolean groupHoursAchieved = groupHoursCompletionPercent >= 100.0 - 1e-9;
+        boolean overallAchieved = myHoursAchieved && groupHoursAchieved;
+
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("groupId", group.getId());
         data.put("groupName", group.getGroupName());
@@ -219,25 +269,28 @@ public class NckhGroupQuotaAggregationService {
         data.put("memberFactor", memberFactor);
         data.put("autoCalculated", true);
         data.put("dataSource", "APPROVED_ACTIVITIES");
-        data.put("evaluationRule", "GROUP_EQUAL_SHARE_HOURS_AND_COMPLETION_PERCENT");
+        data.put("evaluationRule", "GROUP_TOTAL_HOURS_AND_COMPLETION_PERCENT");
         data.put("groupCompletionPercent", round2(groupCompletionPercent * 100));
         data.put("groupCompletionCriteriaCount", groupCompletionRatios.size());
-        double totalGroupQuotaHours = sumHoursShare(groupActivities);
-        double myTotalHours = sumHoursShare(myActivities);
+        data.put("groupRequiredTotalHours", round2(groupRequiredTotalHours));
+        data.put("groupHoursCompletionPercent", round2(groupHoursCompletionPercent));
         data.put("totalGroupHours", round2(totalGroupQuotaHours));
         data.put("totalPerMemberHours", round2(NckhGroupQuotaRules.perMemberGroupHours(totalGroupQuotaHours, memberCount)));
         data.put("myTotalHours", round2(myTotalHours));
         data.put("myCreditedTotalHours", round2(myCreditedTotalHours));
         data.put("myGroupQuotaHours", round2(myCreditedTotalHours));
+        data.put("myRequiredTotalHours", round2(myRequiredTotalHours));
         data.put("criteria", criteriaStats);
         data.put("personalEvaluation", personalEvaluation);
         data.put("activities", activityBreakdown);
-        data.put("overallAchieved", isLeader || (evaluatedCount > 0 && allPersonalAchieved));
+        data.put("overallAchieved", overallAchieved);
         data.put("achievedCount", achievedCount);
         data.put("evaluatedCount", evaluatedCount);
 
         if (ncmGroupQuotas != null) {
             ncmGroupQuotas.put("groupCompletionPercent", round2(groupCompletionPercent * 100));
+            ncmGroupQuotas.put("groupRequiredTotalHours", round2(groupRequiredTotalHours));
+            ncmGroupQuotas.put("groupHoursCompletionPercent", round2(groupHoursCompletionPercent));
             data.put("ncmGroupQuotas", ncmGroupQuotas);
         }
 
@@ -476,5 +529,15 @@ public class NckhGroupQuotaAggregationService {
 
     private static double round2(double v) {
         return Math.round(v * 100.0) / 100.0;
+    }
+
+    /** Chuyển tên chức danh từ DB sang enum string cho query. */
+    private String mapChucDanhToEnum(String chucDanh) {
+        if (chucDanh == null) return "KS_CN";
+        String up = chucDanh.toUpperCase().replace(" ", "").replace("/", "_");
+        if (up.contains("GS") || up.contains("PGS")) return "GS_PGS";
+        if (up.contains("TS") || up.contains("TIẾN") || up.contains("TIEN")) return "TS";
+        if (up.contains("THS") || up.contains("THẠC") || up.contains("THAC")) return "THS";
+        return "KS_CN";
     }
 }

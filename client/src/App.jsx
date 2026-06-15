@@ -58,6 +58,7 @@ import CouncilDeclarationPage from "./pages/activity/declarations/CouncilDeclara
 import ExpertInviteDeclarationPage from "./pages/activity/declarations/ExpertInviteDeclarationPage";
 import OtherActivityDeclarationPage from "./pages/activity/declarations/OtherActivityDeclarationPage";
 import GroupQuotaPage from "./pages/activity/GroupQuotaPage";
+import ActivityHistoryPage from "./pages/activity/ActivityHistoryPage";
 import ChatAnalysisPage from "./pages/Admin/ChatAnalysis/ChatAnalysisPage";
 
 function App() {
@@ -128,6 +129,14 @@ function App() {
                       element={
                         <ProtectedRoute requireQuotaAccess>
                           <GroupQuotaPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/activity/history"
+                      element={
+                        <ProtectedRoute>
+                          <ActivityHistoryPage />
                         </ProtectedRoute>
                       }
                     />

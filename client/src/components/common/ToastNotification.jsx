@@ -1,34 +1,29 @@
 import { useState, useEffect } from 'react';
-import { 
-  Alert, 
+import {
   Snackbar,
-  Box,
   Typography,
   IconButton,
-  Slide
+  Slide,
+  Box
 } from '@mui/material';
-import { 
-  CheckCircleOutlined, 
-  ErrorOutlineOutlined, 
-  InfoOutlined, 
-  WarningAmberOutlined,
-  Close
+import {
+  CheckCircleRounded,
+  ErrorRounded,
+  InfoRounded,
+  WarningRounded,
+  CloseRounded
 } from '@mui/icons-material';
 
-// Main color theme
-const mainColor = '#034657'; // Màu chính của ứng dụng - #034657 (xanh đậm)
-const accentColor = '#ef9d1d'; // Màu phụ - màu cam của FITA
-
-// Slide transition
+// Slide transition - mượt mà hơn
 const SlideTransition = (props) => {
-  return <Slide {...props} direction="up" />;
+  return <Slide {...props} direction="up" timeout={300} />;
 };
 
-const ToastNotification = ({ 
-  message, 
-  type = 'success', 
-  duration = 3000, 
-  onClose, 
+const ToastNotification = ({
+  message,
+  type = 'success',
+  duration = 3500,
+  onClose,
   position = {
     vertical: 'bottom',
     horizontal: 'right',
@@ -37,9 +32,7 @@ const ToastNotification = ({
   const [open, setOpen] = useState(true);
 
   const handleClose = (event, reason) => {
-    if (reason === 'clickaway') {
-      return;
-    }
+    if (reason === 'clickaway') return;
     setOpen(false);
     setTimeout(() => {
       onClose?.();
@@ -53,94 +46,111 @@ const ToastNotification = ({
       }, duration);
       return () => clearTimeout(timer);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [duration]);
 
-  // Custom styling based on type
-  const getAlertStyles = () => {
-    const baseStyle = {
-      borderRadius: '8px',
-      boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
-      padding: '12px 16px',
-      width: '100%',
-      alignItems: 'center'
-     
-    };
-
-    const typeStyles = {
-      success: {
-        backgroundColor: '#10B981',
-        color: 'white',
-        fontWeight: 700,
-        borderLeft: `4px solid green`,
-        '& .MuiAlert-icon': {
-          color: 'white'
-        }
-      },
-      error: {
-        backgroundColor: 'rgba(211, 47, 47)',
-         color: 'white',
-        '& .MuiAlert-icon': {
-          color: '#fff'
-        }
-      },
-      warning: {
-        backgroundColor: 'rgba(237, 108, 2, 0.05)',
-        borderLeft: `4px solid ${accentColor}`,
-        '& .MuiAlert-icon': {
-          color: accentColor
-        }
-      },
-      info: {
-        backgroundColor: '#e1f5fe',
-        borderLeft: `4px solid ${mainColor}`,
-        '& .MuiAlert-icon': {
-          color: mainColor
-        }
-      }
-    };
-
-    return { ...baseStyle, ...typeStyles[type] };
+  // Cấu hình màu sắc tinh tế cho Icon và Progress Bar
+  const typeConfig = {
+    success: { color: '#34d399', icon: <CheckCircleRounded /> },
+    error: { color: '#f87171', icon: <ErrorRounded /> },
+    warning: { color: '#fbbf24', icon: <WarningRounded /> },
+    info: { color: '#38bdf8', icon: <InfoRounded /> }
   };
 
-  // Icons for each type
-  const alertIcon = {
-    success: <CheckCircleOutlined fontSize="inherit" />,
-    error: <ErrorOutlineOutlined fontSize="inherit" />,
-    warning: <WarningAmberOutlined fontSize="inherit" />,
-    info: <InfoOutlined fontSize="inherit" />
-  };
+  const config = typeConfig[type] || typeConfig.info;
 
   return (
     <Snackbar
       anchorOrigin={position}
       open={open}
-      autoHideDuration={duration}
       onClose={handleClose}
       TransitionComponent={SlideTransition}
       sx={{
-        maxWidth: '380px',
-        minWidth: '300px',
+        mb: 2,
+        '& .MuiSnackbar-root': {
+          zIndex: 9999
+        }
       }}
     >
-      <Alert
-        icon={alertIcon[type]}
-        severity={type}
-        sx={getAlertStyles()}
-        action={
-          <IconButton
-            size="small"
-            aria-label="close"
-            color="inherit"
-            onClick={handleClose}
-          >
-            <Close fontSize="small" />
-          </IconButton>
-        }
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          position: 'relative',
+          overflow: 'hidden',
+          minWidth: '320px',
+          maxWidth: '420px',
+          backgroundColor: '#18181b', // Màu nền tối (Zinc 900) cực kỳ sang trọng trên web nền trắng
+          color: '#fafafa', // Chữ trắng sáng
+          borderRadius: '12px',
+          padding: '14px 16px',
+          boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1), 0px 8px 32px rgba(0, 0, 0, 0.15)', // Bóng đổ đa tầng
+          border: '1px solid #27272a', // Viền siêu mờ tạo khối 3D nhẹ
+        }}
       >
-        <Typography variant="body2" sx={{ fontWeight: 500, ml: 0.5 }}>
+        {/* Icon */}
+        <Box
+          sx={{
+            display: 'flex',
+            color: config.color,
+            '& svg': { fontSize: '1.4rem' }
+          }}
+        >
+          {config.icon}
+        </Box>
+
+        {/* Nội dung tin nhắn */}
+        <Typography
+          variant="body2"
+          sx={{
+            fontWeight: 500,
+            fontSize: '0.875rem', // 14px - Kích thước chuẩn cho UI hiện đại
+            flex: 1,
+            lineHeight: 1.4,
+            letterSpacing: '-0.01em'
+          }}
+        >
           {message}
         </Typography>
-      </Alert>
+
+        {/* Nút đóng */}
+        <IconButton
+          size="small"
+          onClick={handleClose}
+          sx={{
+            color: '#a1a1aa', // Zinc 400
+            p: 0.5,
+            mr: -0.5,
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              color: '#fafafa',
+              backgroundColor: 'rgba(255,255,255,0.1)'
+            }
+          }}
+        >
+          <CloseRounded sx={{ fontSize: '1.1rem' }} />
+        </IconButton>
+
+        {/* Progress Bar tinh tế dưới cùng */}
+        {duration && (
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              height: '3px', // Thanh rất mỏng
+              backgroundColor: config.color,
+              opacity: 0.8,
+              animation: `shrink ${duration}ms linear forwards`,
+              '@keyframes shrink': {
+                '0%': { width: '100%' },
+                '100%': { width: '0%' }
+              }
+            }}
+          />
+        )}
+      </Box>
     </Snackbar>
   );
 };
