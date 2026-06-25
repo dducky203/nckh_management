@@ -60,6 +60,18 @@ export default function DeclarationHeaderForm({
     setSubmitting(true);
     try {
       const payload = await buildPayload();
+
+      const duplicateCheck = await nckhActivityService.checkDuplicate(
+        user.id,
+        payload,
+        initialData?.id ?? undefined,
+      );
+      const duplicateResult = duplicateCheck?.data || duplicateCheck;
+      if (duplicateResult?.duplicate) {
+        toast.error(duplicateResult.message || "Hoạt động này đã được khai báo trước đó");
+        return;
+      }
+
       const saved = initialData?.id
         ? await nckhActivityService.updateActivity(
             initialData.id,

@@ -128,23 +128,23 @@ export default function PlanStatisticsPage() {
 
   const goToPage = (page) => {
     setCurrentPage(page - 1);
-   
+
   };
 
   const goToFirstPage = () => {
     setCurrentPage(0);
-  
+
   };
 
   const goToLastPage = () => {
     if (totalPages <= 0) return;
     setCurrentPage(totalPages - 1);
-   
+
   };
 
   const goToPreviousPage = () => {
     setCurrentPage((prev) => Math.max(prev - 1, 0));
-   
+
   };
 
   const goToNextPage = () => {
@@ -272,7 +272,7 @@ export default function PlanStatisticsPage() {
 
             {totalSelectedByPlan === 0 ? (
               <p className="text-sm text-slate-500 italic">
-               Không có dữ liệu .
+                Không có dữ liệu .
               </p>
             ) : (
               <div className="w-full h-[340px]">
@@ -288,7 +288,7 @@ export default function PlanStatisticsPage() {
                       innerRadius={56}
                       labelLine={false}
                       label={({ name, percent }) =>
-                        `${name} ${(percent * 100).toFixed(1)}%`
+                        `${name} ${(percent).toFixed(1)}%`
                       }
                     >
                       {pieData.map((entry) => (
@@ -400,9 +400,9 @@ export default function PlanStatisticsPage() {
                       </td>
                       <td className={`px-3 py-2 border-b border-slate-100 ${row.planId ? 'text-green-600' : 'text-red-500'}`}>
                         {row.planId
-                            ? `Đã chọn ${planLabelById[row.planId] || `PA${row.planId}`}`
-                            : "Chưa chọn"}
-                        </td>
+                          ? `Đã chọn ${planLabelById[row.planId] || `PA${row.planId}`}`
+                          : "Chưa chọn"}
+                      </td>
                     </tr>
                   ))
                 )}
@@ -412,7 +412,7 @@ export default function PlanStatisticsPage() {
 
           {!planStatsLoading && totalItems > 0 && (
             <div className="mt-3 w-full bg-white rounded-md justify-center sm:justify-end">
-                <Pagination
+              <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
                 totalItems={totalItems}
@@ -427,7 +427,7 @@ export default function PlanStatisticsPage() {
                 getPageNumbers={getPageNumbers}
                 itemName="cán bộ"
                 className="px-0"
-                />
+              />
             </div>
           )}
         </section>

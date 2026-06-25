@@ -15,12 +15,14 @@ import com.example.server.domain.User;
 import com.example.server.domain.nckh.*;
 import com.example.server.domain.ResearchGroup;
 import com.example.server.domain.ResearchGroupMember;
+import com.example.server.exception.ErrorException;
 import com.example.server.repository.ResearchGroupMemberRepository;
 import com.example.server.repository.UserRepository;
 import com.example.server.repository.nckh.*;
 import com.example.server.service.researchgroup.ResearchGroupQuotaService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.HttpStatus;
 
 @Service
 public class NckhActivityService {
@@ -228,8 +230,14 @@ public class NckhActivityService {
     }
 
     public List<NckhActivity> listMy(Integer userId, Integer year, String activityType, String status) {
-        List<NckhActivity> base = activityRepo.findByCreatedByUserIdAndAcademicYear(userId, year);
-        return filterActivities(base, activityType, status);
+        Map<Long, NckhActivity> byId = new LinkedHashMap<>();
+        for (NckhActivity activity : activityRepo.findByCreatedByUserIdAndAcademicYear(userId, year)) {
+            byId.put(activity.getId(), activity);
+        }
+        for (NckhActivity activity : activityRepo.findByContributorUserIdAndAcademicYear(userId, year)) {
+            byId.putIfAbsent(activity.getId(), activity);
+        }
+        return filterActivities(new ArrayList<>(byId.values()), activityType, status);
     }
 
     public List<NckhActivity> listPublic(Integer year, String activityType) {
@@ -261,6 +269,7 @@ public class NckhActivityService {
         createActivity(req, a, tieuChiCode, dinhMuc, userId);
         a.setApprovedByUserId(null);
         a.setApprovedAt(null);
+        assertNoDuplicate(a, activityId, userId);
         return activityRepo.save(a);
     }
 
@@ -365,6 +374,8 @@ public class NckhActivityService {
             throw new IllegalStateException("Activity đã được duyệt.");
         }
 
+        assertNoDuplicate(a, activityId, userId);
+
         a.setStatus(NckhActivity.Status.SUBMITTED);
         a.setApprovedByUserId(null);
         a.setApprovedAt(null);
@@ -410,6 +421,152 @@ public class NckhActivityService {
         a.setApprovedByUserId(adminId);
         a.setApprovedAt(LocalDateTime.now());
         return activityRepo.save(a);
+    }
+
+    public DuplicateCheckResult checkDuplicate(CreateActivityRequest req, Long excludeActivityId, Integer userId) {
+        NckhActivity probe = toProbeActivity(req);
+        Optional<NckhActivity> existing = findDuplicate(probe, excludeActivityId);
+        return existing.map(nckhActivity -> DuplicateCheckResult.found(
+                nckhActivity.getId(),
+                buildDuplicateMessage(nckhActivity, userId))).orElseGet(DuplicateCheckResult::ok);
+    }
+
+    private void assertNoDuplicate(NckhActivity activity, Long excludeActivityId, Integer userId) {
+        findDuplicate(activity, excludeActivityId).ifPresent(existing -> {
+            throw new ErrorException(buildDuplicateMessage(existing, userId), HttpStatus.CONFLICT);
+        });
+    }
+
+    private Optional<NckhActivity> findDuplicate(NckhActivity activity, Long excludeActivityId) {
+        if (activity.getAcademicYear() == null) {
+            return Optional.empty();
+        }
+
+        String catalogCode = activity.getCatalogCode();
+        if (catalogCode == null || catalogCode.isBlank()) {
+            return Optional.empty();
+        }
+
+        String normId = normalizeIdentifier(activity.getIdentifierCode());
+        String normLink = normalizeUrl(activity.getExternalLink());
+        String normTitle = normalizeText(activity.getTitle());
+        String normPublication = normalizeText(activity.getPublicationName());
+        LocalDate activityDate = activity.getActivityDate();
+
+        List<NckhActivity> candidates = activityRepo.findActiveByAcademicYearExcluding(
+                activity.getAcademicYear(),
+                excludeActivityId);
+
+        for (NckhActivity other : candidates) {
+            if (isDuplicate(other, catalogCode, normId, normLink, normTitle, normPublication, activityDate)) {
+                return Optional.of(other);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private boolean isDuplicate(
+            NckhActivity other,
+            String catalogCode,
+            String normId,
+            String normLink,
+            String normTitle,
+            String normPublication,
+            LocalDate activityDate) {
+        String otherId = normalizeIdentifier(other.getIdentifierCode());
+        if (!normId.isEmpty() && normId.equals(otherId)) {
+            return true;
+        }
+
+        if (!catalogCode.equals(other.getCatalogCode())) {
+            return false;
+        }
+
+        String otherLink = normalizeUrl(other.getExternalLink());
+        if (!normLink.isEmpty() && normLink.equals(otherLink)) {
+            return true;
+        }
+
+        if (normTitle.isEmpty() || activityDate == null || other.getActivityDate() == null) {
+            return false;
+        }
+
+        if (!normTitle.equals(normalizeText(other.getTitle()))) {
+            return false;
+        }
+
+        if (!activityDate.equals(other.getActivityDate())) {
+            return false;
+        }
+
+        String otherPublication = normalizeText(other.getPublicationName());
+        return normPublication.isEmpty() || otherPublication.isEmpty()
+                || normPublication.equals(otherPublication);
+    }
+
+    private NckhActivity toProbeActivity(CreateActivityRequest req) {
+        NckhActivity probe = new NckhActivity();
+        probe.setAcademicYear(req.academicYear);
+        probe.setCatalogCode(requireTieuChiCode(req));
+        probe.setTitle(req.title);
+        probe.setPublicationName(req.publicationName);
+        probe.setActivityDate(req.activityDate);
+        probe.setIdentifierCode(req.identifierCode);
+        probe.setExternalLink(req.externalLink);
+        return probe;
+    }
+
+    private String buildDuplicateMessage(NckhActivity existing, Integer userId) {
+        boolean alreadyMember = contribRepo.findByActivityId(existing.getId()).stream()
+                .anyMatch(c -> userId != null && userId.equals(c.getUserId()));
+
+        if (alreadyMember) {
+            return String.format(
+                    "Hoạt động này đã được khai báo (mã #%d) và bạn đã nằm trong danh sách tham gia.",
+                    existing.getId());
+        }
+
+        String creatorName = userRepo.findById(existing.getCreatedByUserId())
+                .map(u -> StringUtils.isBlank(u.getName()) ? u.getUsername() : u.getName())
+                .orElse("người khác");
+
+        return String.format(
+                "Hoạt động này đã được khai báo (mã #%d, người tạo: %s). "
+                        + "Vui lòng liên hệ để được thêm vào danh sách tham gia thay vì tạo khai báo mới.",
+                existing.getId(),
+                creatorName);
+    }
+
+    private static String normalizeIdentifier(String value) {
+        if (value == null) {
+            return "";
+        }
+        String normalized = value.trim().toLowerCase(Locale.ROOT);
+        if (normalized.startsWith("https://doi.org/")) {
+            normalized = normalized.substring("https://doi.org/".length());
+        }
+        if (normalized.startsWith("http://doi.org/")) {
+            normalized = normalized.substring("http://doi.org/".length());
+        }
+        return normalized.replaceAll("\\s+", "");
+    }
+
+    private static String normalizeUrl(String value) {
+        if (value == null) {
+            return "";
+        }
+        String normalized = value.trim().toLowerCase(Locale.ROOT);
+        if (normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized;
+    }
+
+    private static String normalizeText(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", " ");
     }
 
     private List<NckhActivity> filterActivities(
@@ -526,6 +683,7 @@ public class NckhActivityService {
                 userId, academicYear, phuongAn, chucDanh);
 
         Optional<ResearchGroup> quotaGroup = quotaGroupService.findApprovedQuotaGroup(userId);
+        summary.inQuotaGroup = quotaGroup.isPresent();
         if (quotaGroup.isPresent()) {
             List<Integer> memberIds = groupMemberRepo.findByGroupId(quotaGroup.get().getId()).stream()
                     .map(ResearchGroupMember::getUserId)
@@ -628,17 +786,18 @@ public class NckhActivityService {
                     : (groupActual > 0 ? 100.0 : 0);
             summary.groupCompletionPercent = round2(groupPercent);
 
-            // % thực tế = min(personal, group)
-            double effectivePercent = Math.min(personalPercent, groupPercent);
+            // % thực tế: nhóm ≥ 100% → 100%; nhóm < 100% → bị giới hạn bởi nhóm
+            double effectivePercent = NckhGroupQuotaRules.effectiveCompletionPercent(personalPercent, groupPercent);
             summary.effectiveCompletionPercent = round2(effectivePercent);
-            summary.overallCompleted = effectivePercent >= 100.0 - 1e-9;
+            summary.overallCompleted = NckhGroupQuotaRules.isPlanOverallCompleted(personalPercent, groupPercent);
         } else {
-            // Không thuộc nhóm → % thực tế = % cá nhân
+            // Không thuộc 3 nhóm NCM/Xuất sắc/Tinh hoa → chỉ tính cá nhân bình thường
+            summary.inQuotaGroup = false;
             summary.groupCompletionPercent = null;
             summary.groupRequiredTotalHours = null;
             summary.groupActualTotalHours = null;
             summary.effectiveCompletionPercent = round2(personalPercent);
-            summary.overallCompleted = personalPercent >= 100.0 - 1e-9;
+            summary.overallCompleted = NckhGroupQuotaRules.isPlanOverallCompleted(personalPercent, null);
         }
 
         return summary;

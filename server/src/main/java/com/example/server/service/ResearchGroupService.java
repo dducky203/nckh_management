@@ -4,6 +4,7 @@ import com.example.server.DTO.request.CreateResearchGroupDocumentRequest;
 import com.example.server.DTO.request.CreateResearchGroupRequest;
 import com.example.server.DTO.request.UpdateResearchGroupRequest;
 import com.example.server.DTO.response.ResearchGroupDocumentDTO;
+import com.example.server.DTO.response.ResearchGroupJoinRequestDTO;
 import com.example.server.DTO.response.ResearchGroupDTO;
 import com.example.server.domain.ResearchGroup;
 
@@ -76,6 +77,17 @@ public interface ResearchGroupService {
     ResearchGroupDocumentDTO createDocument(Integer groupId, Integer userId, CreateResearchGroupDocumentRequest request, MultipartFile file);
     ResearchGroupDocumentDTO updateDocument(Integer groupId, Integer documentId, Integer userId, CreateResearchGroupDocumentRequest request, MultipartFile file);
     void deleteDocument(Integer groupId, Integer documentId, Integer userId);
+
+    // Đăng ký tham gia nhóm (chờ trưởng nhóm duyệt)
+    ResearchGroupJoinRequestDTO requestJoinGroup(Integer groupId, Integer userId, String message);
+
+    List<ResearchGroupJoinRequestDTO> getPendingJoinRequests(Integer groupId, Integer leaderUserId);
+
+    ResearchGroupJoinRequestDTO approveJoinRequest(Long requestId, Integer leaderUserId);
+
+    ResearchGroupJoinRequestDTO rejectJoinRequest(Long requestId, Integer leaderUserId, String reason);
+
+    List<ResearchGroupJoinRequestDTO> getMyJoinRequests(Integer userId);
 
     class GroupStatistics {
         public long totalGroups;

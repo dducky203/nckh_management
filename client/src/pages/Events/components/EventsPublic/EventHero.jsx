@@ -1,9 +1,34 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Add, ArrowForward } from "@mui/icons-material";
 import Button from "../../../../components/common/Button";
-import { isAdmin } from "../../../../utils/permissions";
+import { hasNckhStaffAccess } from "../../../../utils/permissions";
+import researchGroupService from "../../../../services/researchGroupService";
 
 const EventHero = ({ user }) => {
+  const [canCreate, setCanCreate] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      setCanCreate(false);
+      return;
+    }
+    if (hasNckhStaffAccess(user)) {
+      setCanCreate(true);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await researchGroupService.getMyPermissions();
+        if (!cancelled) setCanCreate(!!data?.canCreateSeminar);
+      } catch {
+        if (!cancelled) setCanCreate(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
+
   return (
     <section className="bg-gradient-to-r from-mainColor to-[#154c6e] text-white py-16">
       <div className="container mx-auto px-4">
@@ -15,16 +40,16 @@ const EventHero = ({ user }) => {
             Khám phá và tham gia các sự kiện học thuật, hội thảo, workshop về
             nghiên cứu khoa học
           </p>
-          {user && isAdmin(user) ? (
+          {user && canCreate ? (
             <Link to="/events/create">
               <Button className="bg-white !text-mainColor hover:!bg-gray-100 ">
                 <Add className="mr-2" />
-                Tạo sự kiện mới
+                Tạo seminar / hội thảo
               </Button>
             </Link>
           ) : user ? (
             <p className="text-white/90 text-sm">
-              Bạn có thể đăng ký tham gia tại danh sách bên dưới.
+              Chỉ trưởng nhóm và thư ký nhóm được tạo seminar/hội thảo. Bạn có thể đăng ký tham gia tại danh sách bên dưới.
             </p>
           ) : (
             <Link to="/login">

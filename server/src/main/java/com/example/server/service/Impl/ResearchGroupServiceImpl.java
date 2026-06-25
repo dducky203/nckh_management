@@ -19,10 +19,12 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.server.DTO.request.*;
 import com.example.server.DTO.response.ResearchGroupDTO;
 import com.example.server.DTO.response.ResearchGroupDocumentDTO;
+import com.example.server.DTO.response.ResearchGroupJoinRequestDTO;
 import com.example.server.domain.*;
 import com.example.server.repository.*;
 import com.example.server.service.CloudinaryService;
 import com.example.server.service.ResearchGroupService;
+import com.example.server.utils.ResearchGroupMemberRoles;
 import com.example.server.utils.SecurityUtils;
 
 import lombok.RequiredArgsConstructor;
@@ -35,6 +37,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
     private final ResearchGroupRepository groupRepository;
     private final UserRepository userRepository;
     private final ResearchGroupMemberRepository memberRepository;
+    private final ResearchGroupJoinRequestRepository joinRequestRepository;
     private final ResearchGroupDocumentRepository documentRepository;
     private final CloudinaryService cloudinaryService;
 
@@ -913,5 +916,165 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         if (quotaScheme != null && !lecturer) {
             throw new RuntimeException("groupType chỉ áp dụng cho nhóm giảng viên (type = lecturer)");
         }
+    }
+
+    @Override
+    @Transactional
+    public ResearchGroupJoinRequestDTO requestJoinGroup(Integer groupId, Integer userId, String message) {
+        ResearchGroup group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
+
+        if (group.getStatus() != ResearchGroup.GroupStatus.APPROVED) {
+            throw new RuntimeException("Chỉ có thể đăng ký tham gia nhóm đã được duyệt");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+        if (group.isLeader(user)) {
+            throw new RuntimeException("Bạn đã là trưởng nhóm");
+        }
+
+        if (memberRepository.findByGroupIdAndUserId(groupId, userId).isPresent()) {
+            throw new RuntimeException("Bạn đã là thành viên của nhóm này");
+        }
+
+        if (joinRequestRepository.existsByGroupIdAndUserIdAndStatus(
+                groupId, userId, ResearchGroupJoinRequest.JoinRequestStatus.PENDING)) {
+            throw new RuntimeException("Bạn đã gửi đăng ký tham gia và đang chờ trưởng nhóm duyệt");
+        }
+
+        ResearchGroupJoinRequest request = ResearchGroupJoinRequest.builder()
+                .groupId(groupId)
+                .userId(userId)
+                .message(message)
+                .status(ResearchGroupJoinRequest.JoinRequestStatus.PENDING)
+                .build();
+        return toJoinRequestDto(joinRequestRepository.save(request), group, user);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ResearchGroupJoinRequestDTO> getPendingJoinRequests(Integer groupId, Integer leaderUserId) {
+        assertLeaderOrAdmin(groupId, leaderUserId);
+        ResearchGroup group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
+        return joinRequestRepository
+                .findByGroupIdAndStatus(groupId, ResearchGroupJoinRequest.JoinRequestStatus.PENDING)
+                .stream()
+                .map(req -> toJoinRequestDto(req, group, userRepository.findById(req.getUserId()).orElse(null)))
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public ResearchGroupJoinRequestDTO approveJoinRequest(Long requestId, Integer leaderUserId) {
+        ResearchGroupJoinRequest request = joinRequestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy yêu cầu đăng ký"));
+
+        if (request.getStatus() != ResearchGroupJoinRequest.JoinRequestStatus.PENDING) {
+            throw new RuntimeException("Yêu cầu đã được xử lý");
+        }
+
+        ResearchGroup group = groupRepository.findById(request.getGroupId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
+        assertLeaderOrAdmin(group.getId(), leaderUserId);
+
+        if (memberRepository.findByGroupIdAndUserId(group.getId(), request.getUserId()).isPresent()) {
+            request.setStatus(ResearchGroupJoinRequest.JoinRequestStatus.APPROVED);
+            request.setReviewedByUserId(leaderUserId);
+            request.setReviewedAt(new Date());
+            joinRequestRepository.save(request);
+            User applicant = userRepository.findById(request.getUserId()).orElse(null);
+            return toJoinRequestDto(request, group, applicant);
+        }
+
+        ResearchGroupMember memberInfo = ResearchGroupMember.builder()
+                .groupId(group.getId())
+                .userId(request.getUserId())
+                .role(ResearchGroupMemberRoles.MEMBER)
+                .participationRate(100)
+                .build();
+        memberRepository.save(memberInfo);
+
+        request.setStatus(ResearchGroupJoinRequest.JoinRequestStatus.APPROVED);
+        request.setReviewedByUserId(leaderUserId);
+        request.setReviewedAt(new Date());
+        joinRequestRepository.save(request);
+
+        User applicant = userRepository.findById(request.getUserId()).orElse(null);
+        return toJoinRequestDto(request, group, applicant);
+    }
+
+    @Override
+    @Transactional
+    public ResearchGroupJoinRequestDTO rejectJoinRequest(Long requestId, Integer leaderUserId, String reason) {
+        ResearchGroupJoinRequest request = joinRequestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy yêu cầu đăng ký"));
+
+        if (request.getStatus() != ResearchGroupJoinRequest.JoinRequestStatus.PENDING) {
+            throw new RuntimeException("Yêu cầu đã được xử lý");
+        }
+
+        assertLeaderOrAdmin(request.getGroupId(), leaderUserId);
+
+        ResearchGroup group = groupRepository.findById(request.getGroupId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
+
+        request.setStatus(ResearchGroupJoinRequest.JoinRequestStatus.REJECTED);
+        request.setReviewedByUserId(leaderUserId);
+        request.setReviewedAt(new Date());
+        request.setRejectReason(reason);
+        joinRequestRepository.save(request);
+
+        User applicant = userRepository.findById(request.getUserId()).orElse(null);
+        return toJoinRequestDto(request, group, applicant);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ResearchGroupJoinRequestDTO> getMyJoinRequests(Integer userId) {
+        return joinRequestRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(req -> {
+                    ResearchGroup group = groupRepository.findById(req.getGroupId()).orElse(null);
+                    User applicant = userRepository.findById(req.getUserId()).orElse(null);
+                    return toJoinRequestDto(req, group, applicant);
+                })
+                .toList();
+    }
+
+    private void assertLeaderOrAdmin(Integer groupId, Integer userId) {
+        ResearchGroup group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+        if (!group.isLeader(user) && !SecurityUtils.isAdmin(user)) {
+            throw new RuntimeException("Chỉ trưởng nhóm mới được duyệt đăng ký tham gia");
+        }
+    }
+
+    private ResearchGroupJoinRequestDTO toJoinRequestDto(
+            ResearchGroupJoinRequest request, ResearchGroup group, User applicant) {
+        ResearchGroupJoinRequestDTO dto = new ResearchGroupJoinRequestDTO();
+        dto.id = request.getId();
+        dto.groupId = request.getGroupId();
+        dto.groupName = group != null ? group.getGroupName() : null;
+        dto.userId = request.getUserId();
+        if (applicant != null) {
+            dto.userName = applicant.getName();
+            dto.staffCode = applicant.getUsername();
+            if (applicant.getIdResume() != null) {
+                dto.email = applicant.getIdResume().getEmail();
+            }
+            if (applicant.getIdTitle() != null) {
+                dto.title = applicant.getIdTitle().getName();
+            }
+        }
+        dto.status = request.getStatus() != null ? request.getStatus().name() : null;
+        dto.message = request.getMessage();
+        dto.rejectReason = request.getRejectReason();
+        dto.createdAt = request.getCreatedAt();
+        dto.reviewedAt = request.getReviewedAt();
+        return dto;
     }
 }

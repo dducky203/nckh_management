@@ -69,8 +69,9 @@ function TypeBadge({ type }) {
   );
 }
 
-function ActivityCard({ item, onViewDetail, onEdit, onDelete }) {
-  const editable = canEdit(item.status);
+function ActivityCard({ item, onViewDetail, onEdit, onDelete, currentUserId }) {
+  const isCreator = currentUserId != null && item.createdByUserId === currentUserId;
+  const editable = isCreator && canEdit(item.status);
   const resolvedType = resolveActivityType(item);
 
   return (
@@ -81,7 +82,14 @@ function ActivityCard({ item, onViewDetail, onEdit, onDelete }) {
       <div className="p-6 flex-1 flex flex-col">
         {/* Header with type and status */}
         <div className="flex items-start justify-between mb-4 gap-3">
-          <TypeBadge type={resolvedType} />
+          <div className="flex flex-wrap items-center gap-2">
+            <TypeBadge type={resolvedType} />
+            {!isCreator && (
+              <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-md border bg-violet-50 text-violet-700 border-violet-200 uppercase tracking-wider">
+                Tham gia
+              </span>
+            )}
+          </div>
           <StatusBadge status={item.status} />
         </div>
 
@@ -437,6 +445,7 @@ export default function DeclarationScreen({
                 <ActivityCard
                   key={item.id}
                   item={item}
+                  currentUserId={user?.id}
                   onViewDetail={openDetail}
                   onEdit={openEditForm}
                   onDelete={onDelete}
@@ -454,7 +463,11 @@ export default function DeclarationScreen({
           item={detailItem}
           getName={(id) => userNameById[id]}
           onClose={() => setDetailItem(null)}
-          onEdit={canEdit(detailItem.status) ? openEditForm : undefined}
+          onEdit={
+            detailItem.createdByUserId === user?.id && canEdit(detailItem.status)
+              ? openEditForm
+              : undefined
+          }
         />
       )}
     </div>

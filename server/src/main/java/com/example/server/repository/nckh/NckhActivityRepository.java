@@ -14,7 +14,20 @@ import java.util.List;
 public interface NckhActivityRepository extends JpaRepository<NckhActivity, Long> {
     List<NckhActivity> findByCreatedByUserIdAndAcademicYear(Integer userId, Integer year);
 
+    @Query("SELECT a FROM NckhActivity a WHERE a.academicYear = :academicYear AND a.id IN "
+            + "(SELECT c.activityId FROM NckhActivityContributor c WHERE c.userId = :userId)")
+    List<NckhActivity> findByContributorUserIdAndAcademicYear(
+            @Param("userId") Integer userId,
+            @Param("academicYear") Integer academicYear);
+
     List<NckhActivity> findByAcademicYear(Integer year);
+
+    @Query("SELECT a FROM NckhActivity a WHERE a.academicYear = :year "
+            + "AND a.status <> 'REJECTED' "
+            + "AND (:excludeId IS NULL OR a.id <> :excludeId)")
+    List<NckhActivity> findActiveByAcademicYearExcluding(
+            @Param("year") Integer year,
+            @Param("excludeId") Long excludeId);
 
     @Query(value = "SELECT " +
             "a.catalog_code AS catalogCode, " +

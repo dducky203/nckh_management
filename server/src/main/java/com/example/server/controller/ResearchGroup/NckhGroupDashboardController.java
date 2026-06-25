@@ -502,6 +502,8 @@ public class NckhGroupDashboardController {
         List<Map<String, Object>> memberStats = new ArrayList<>();
         List<Double> completionPercents = new ArrayList<>();
         double totalCreditedHours = 0;
+        Double groupRequiredTotalHours = null;
+        Double groupActualTotalHours = null;
 
         for (Integer memberId : memberIds) {
             User memberUser = userMap.get(memberId);
@@ -512,6 +514,13 @@ public class NckhGroupDashboardController {
 
             double creditedHours = toDouble(raw.get("myCreditedTotalHours"));
             double completion = toDouble(raw.get("groupCompletionPercent"));
+            if (groupRequiredTotalHours == null) {
+                groupRequiredTotalHours = toDouble(raw.get("groupRequiredTotalHours"));
+                groupActualTotalHours = toDouble(raw.get("groupActualTotalHours"));
+                if (groupActualTotalHours == 0) {
+                    groupActualTotalHours = toDouble(raw.get("totalGroupHours"));
+                }
+            }
 
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("userId", memberUser.getId());
@@ -556,6 +565,8 @@ public class NckhGroupDashboardController {
         data.put("academicYear", academicYear);
         data.put("memberCount", memberStats.size());
         data.put("groupCompletionPercent", round2(groupCompletionPercent));
+        data.put("groupRequiredTotalHours", groupRequiredTotalHours != null ? round2(groupRequiredTotalHours) : null);
+        data.put("groupActualTotalHours", groupActualTotalHours != null ? round2(groupActualTotalHours) : null);
         data.put("totalCreditedHours", round2(totalCreditedHours));
         data.put("members", memberStats);
         data.put("viewerIsStaff", staff);

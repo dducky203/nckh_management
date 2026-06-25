@@ -33,9 +33,9 @@ export default function EvaluationTab({
             <h3 className="text-sm font-bold text-slate-800">Đánh giá thực hiện</h3>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            <strong>% hoàn thành nhóm</strong> = TB tiến độ các chỉ tiêu.{" "}
+            <strong>% hoàn thành nhóm</strong> = tổng giờ nhóm ÷ định mức chuẩn nhóm.{" "}
             <strong>ĐM chuẩn nhóm</strong> = tổng giờ quy đổi phải đạt của tất cả thành viên.{" "}
-            Hoàn thành khi tổng giờ đủ (không cần đạt tất cả tiêu chí).
+            Hoàn thành khi đủ tổng giờ (không cần đạt tất cả tiêu chí).
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -68,12 +68,12 @@ export default function EvaluationTab({
           <div className="px-5 py-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <StatBox
               label="% hoàn thành nhóm"
-              value={stats.groupCompletionPercent ?? 0}
+              value={stats.groupCompletionPercent ?? stats.groupHoursCompletionPercent ?? 0}
               unit="%"
               accent="main"
               sub={
-                stats.groupCompletionCriteriaCount != null
-                  ? `${stats.groupCompletionCriteriaCount} chỉ tiêu`
+                stats.groupRequiredTotalHours != null
+                  ? `${round2(stats.totalGroupHours ?? stats.groupActualTotalHours ?? 0)}/${round2(stats.groupRequiredTotalHours)} giờ`
                   : undefined
               }
             />
@@ -81,7 +81,11 @@ export default function EvaluationTab({
               label="ĐM chuẩn nhóm"
               value={stats.groupRequiredTotalHours ?? 0}
               unit="giờ"
-              sub={`% giờ: ${round2(stats.groupHoursCompletionPercent ?? 0)}%`}
+              sub={
+                stats.groupCriteriaCompletionPercent != null
+                  ? `TB tiêu chí: ${round2(stats.groupCriteriaCompletionPercent)}%`
+                  : undefined
+              }
             />
             <StatBox label="Giờ tự làm" value={stats.myTotalHours} unit="giờ" />
             <StatBox
@@ -94,17 +98,19 @@ export default function EvaluationTab({
             <StatBox label="Tổng giờ nhóm" value={stats.totalGroupHours} unit="giờ" />
           </div>
 
-          {stats.groupCompletionPercent != null && !isLeader && (
+          {(stats.groupCompletionPercent != null || stats.groupHoursCompletionPercent != null) && !isLeader && (
             <div className="px-5 pb-2">
               <div className="rounded-xl border border-violet-100 bg-violet-50/60 px-4 py-3">
                 <div className="flex justify-between mb-2">
-                  <p className="text-xs font-bold text-violet-800">Tiến độ tập thể</p>
-                  <p className="text-sm font-black text-violet-700">{round2(stats.groupCompletionPercent)}%</p>
+                  <p className="text-xs font-bold text-violet-800">Tiến độ tập thể (theo tổng giờ)</p>
+                  <p className="text-sm font-black text-violet-700">
+                    {round2(stats.groupCompletionPercent ?? stats.groupHoursCompletionPercent ?? 0)}%
+                  </p>
                 </div>
                 <div className="h-2 rounded-full bg-violet-100 overflow-hidden">
                   <div
                     className="h-full bg-mainColor rounded-full"
-                    style={{ width: `${Math.min(100, stats.groupCompletionPercent)}%` }}
+                    style={{ width: `${Math.min(100, stats.groupCompletionPercent ?? stats.groupHoursCompletionPercent ?? 0)}%` }}
                   />
                 </div>
               </div>
@@ -139,7 +145,13 @@ export default function EvaluationTab({
                     {stats.overallAchieved ? "ĐẠT ĐỊNH MỨC CÁ NHÂN" : "CHƯA ĐẠT ĐỊNH MỨC"}
                   </p>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    {stats.achievedCount}/{stats.evaluatedCount} tiêu chí đạt
+                    Giờ được tính {round2(stats.myCreditedTotalHours ?? 0)}/{round2(stats.myRequiredTotalHours ?? 0)}
+                    {stats.groupCompletionPercent != null && (
+                      <> · Nhóm {round2(stats.groupCompletionPercent)}%</>
+                    )}
+                    {stats.effectiveCompletionPercent != null && (
+                      <> · % thực tế {round2(stats.effectiveCompletionPercent)}%</>
+                    )}
                   </p>
                 </div>
               </div>

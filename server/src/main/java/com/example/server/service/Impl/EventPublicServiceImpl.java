@@ -13,6 +13,7 @@ import com.example.server.DTO.event.*;
 import com.example.server.domain.*;
 import com.example.server.repository.*;
 import com.example.server.service.EventPublicService;
+import com.example.server.service.researchgroup.ResearchGroupPermissionService;
 import com.example.server.utils.SecurityUtils;
 
 @Service
@@ -38,6 +39,9 @@ public class EventPublicServiceImpl implements EventPublicService {
 
     @Autowired
     private GuestRepository guestRepository;
+
+    @Autowired
+    private ResearchGroupPermissionService groupPermissionService;
 
 
     private static final DateTimeFormatter TIME_DETAIL_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
@@ -206,8 +210,12 @@ public class EventPublicServiceImpl implements EventPublicService {
         if (eventData.getCreator() != null) {
             creator = userRepository.findById(eventData.getCreator()).orElse(null);
         }
-        if (!SecurityUtils.hasNckhStaffAccess(creator)) {
-            throw new RuntimeException("Chỉ cán bộ được phân quyền (quản trị hoặc Trợ lí NCKH) mới được tạo sự kiện.");
+        if (creator == null) {
+            throw new RuntimeException("Không xác định được người tạo sự kiện");
+        }
+        if (!groupPermissionService.canCreateSeminarOrConference(creator.getId())) {
+            throw new RuntimeException(
+                    "Chỉ trưởng nhóm, thư ký nhóm hoặc cán bộ NCKH được phép tạo seminar/hội thảo.");
         }
 
         Event event = new Event();

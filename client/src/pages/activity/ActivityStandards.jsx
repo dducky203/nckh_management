@@ -286,22 +286,27 @@ export default function ActivityStandards() {
       0,
     );
 
-    // Logic mới: hoàn thành khi tổng giờ đủ (+ nhóm >= 100% nếu có)
+    // Logic: có nhóm định mức → dùng overallCompleted từ API; không có → chỉ xét tổng giờ cá nhân
     const overallOk = quotaSummary != null
       ? quotaSummary.overallCompleted
       : actualHoursSum >= requiredHoursSum && requiredHoursSum > 0;
 
+    const inQuotaGroup = quotaSummary?.inQuotaGroup === true;
+
     return {
       checks,
       overallOk,
+      inQuotaGroup,
       requiredHours: requiredHoursSum > 0 ? requiredHoursSum : null,
       actualHours: actualHoursSum,
       personalPercent: quotaSummary?.personalCompletionPercent ?? null,
-      groupPercent: quotaSummary?.groupCompletionPercent ?? null,
-      effectivePercent: quotaSummary?.effectiveCompletionPercent ?? null,
-      groupName: quotaSummary?.groupName ?? null,
-      groupRequiredHours: quotaSummary?.groupRequiredTotalHours ?? null,
-      groupActualHours: quotaSummary?.groupActualTotalHours ?? null,
+      groupPercent: inQuotaGroup ? (quotaSummary?.groupCompletionPercent ?? null) : null,
+      effectivePercent: inQuotaGroup
+        ? (quotaSummary?.effectiveCompletionPercent ?? null)
+        : (quotaSummary?.personalCompletionPercent ?? null),
+      groupName: inQuotaGroup ? (quotaSummary?.groupName ?? null) : null,
+      groupRequiredHours: inQuotaGroup ? (quotaSummary?.groupRequiredTotalHours ?? null) : null,
+      groupActualHours: inQuotaGroup ? (quotaSummary?.groupActualTotalHours ?? null) : null,
     };
   }, [criteriaLoading, planCriteria, actualStats, quotaSummary]);
 
@@ -619,9 +624,18 @@ export default function ActivityStandards() {
 
               {/* Card: % hoàn thành cá nhân + nhóm */}
               <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] relative overflow-hidden">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
                   % Hoàn thành phương án
                 </p>
+                {result.inQuotaGroup ? (
+                  <p className="text-[10px] text-violet-600 font-medium mb-3">
+                    Bạn thuộc nhóm định mức — % nhóm ảnh hưởng kết quả phương án.
+                  </p>
+                ) : (
+                  <p className="text-[10px] text-slate-400 font-medium mb-3">
+                    Không thuộc nhóm NCM/Xuất sắc/Tinh hoa — chỉ tính theo % cá nhân.
+                  </p>
+                )}
                 <div className="space-y-3">
                   {/* % Cá nhân */}
                   <div>
@@ -664,17 +678,28 @@ export default function ActivityStandards() {
                           ⚠ Nhóm chưa đạt 100% → giới hạn % thực tế của bạn
                         </p>
                       )}
+                      {result.groupPercent >= 100 && (result.personalPercent ?? 0) < 100 && (
+                        <p className="text-[10px] text-emerald-600 font-semibold mt-1 leading-tight">
+                          ✓ Nhóm đạt 100% → được tính hoàn thành phương án
+                        </p>
+                      )}
+                      {result.groupRequiredHours != null && (
+                        <p className="text-[10px] text-slate-400 mt-0.5">
+                          {round1(result.groupActualHours ?? 0)}/{round1(result.groupRequiredHours)} giờ nhóm
+                        </p>
+                      )}
                     </div>
                   )}
 
-                  {/* % Thực tế */}
+                  {/* % Thực tế — chỉ hiện khi thuộc nhóm định mức */}
+                  {result.inQuotaGroup && (
                   <div className="pt-2 border-t border-slate-100">
                     <div className="flex justify-between items-baseline mb-1">
                       <span
                         className="text-[11px] font-extrabold text-slate-700 truncate pr-2"
-                        title={result.groupPercent != null ? "% Thực tế (min cá nhân, nhóm)" : "% Thực tế"}
+                        title={result.groupPercent != null ? "Nhóm ≥ 100% → 100%; nhóm < 100% → bị giới hạn" : "% Thực tế"}
                       >
-                        {result.groupPercent != null ? "% Thực tế (min cá nhân, nhóm)" : "% Thực tế"}
+                        {result.groupPercent != null ? "% Thực tế (theo nhóm)" : "% Thực tế"}
                       </span>
                       <span className={`text-2xl font-black shrink-0 ${result.overallOk ? "text-emerald-600" : "text-rose-600"}`}>
                         {result.effectivePercent != null ? `${round1(result.effectivePercent)}%` : (result.personalPercent != null ? `${round1(result.personalPercent)}%` : "—")}
@@ -688,6 +713,7 @@ export default function ActivityStandards() {
                       />
                     </div>
                   </div>
+                  )}
                 </div>
               </div>
 
@@ -737,8 +763,8 @@ export default function ActivityStandards() {
                   % Hoàn thành
                 </p>
                 <p className="text-lg font-black leading-none text-mainColor">
-                  {round1(result.effectivePercent ?? result.personalPercent)}%
-                  {result.groupPercent != null && (
+                  {round1(result.inQuotaGroup ? (result.effectivePercent ?? result.personalPercent) : result.personalPercent)}%
+                  {result.inQuotaGroup && result.groupPercent != null && (
                     <span className="text-[10px] font-bold text-violet-500 ml-1">
                       (nhóm {round1(result.groupPercent)}%)
                     </span>

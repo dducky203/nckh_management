@@ -67,6 +67,33 @@ const researchGroupService = {
     return response;
   },
 
+  getMyPermissions: async () => {
+    const response = await api.get("/research-groups/permissions/me");
+    return response?.data ?? response;
+  },
+
+  requestJoinGroup: async (groupId, message = "") => {
+    return await api.post(`/research-groups/${groupId}/join-requests`, { message });
+  },
+
+  getPendingJoinRequests: async (groupId) => {
+    const response = await api.get(`/research-groups/${groupId}/join-requests/pending`);
+    return response?.data ?? response ?? [];
+  },
+
+  approveJoinRequest: async (requestId) => {
+    return await api.put(`/research-groups/join-requests/${requestId}/approve`);
+  },
+
+  rejectJoinRequest: async (requestId, reason = "") => {
+    return await api.put(`/research-groups/join-requests/${requestId}/reject`, { reason });
+  },
+
+  getMyJoinRequests: async () => {
+    const response = await api.get("/research-groups/join-requests/my");
+    return response?.data ?? response ?? [];
+  },
+
   updateGroup: async (groupId, groupData) => {
     const response = await api.put(`/research-groups/${groupId}`, groupData);
     return response;

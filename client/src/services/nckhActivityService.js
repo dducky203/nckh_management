@@ -27,6 +27,12 @@ const nckhActivityService = {
     });
   },
 
+  checkDuplicate: async (userId, payload, excludeActivityId) => {
+    return await api.post("/nckh/activities/check-duplicate", payload, {
+      params: { userId, excludeActivityId },
+    });
+  },
+
   submitActivity: async (activityId, userId) => {
     return await api.post(`/nckh/activities/${activityId}/submit`, null, {
       params: { userId },

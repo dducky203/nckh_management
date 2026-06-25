@@ -243,8 +243,8 @@ const CreateEvent = () => {
             Đăng ký tổ chức sự kiện
           </h1>
           <p className="text-gray-600">
-            Điền thông tin chi tiết về sự kiện của bạn. Sự kiện sẽ được xem xét
-            và phê duyệt bởi quản trị viên.
+            Chỉ trưởng nhóm và thư ký nhóm (hoặc cán bộ NCKH) được đăng ký tổ chức seminar/hội thảo.
+            Sự kiện sẽ được xem xét và phê duyệt bởi quản trị viên.
           </p>
         </div>
 

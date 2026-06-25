@@ -2,6 +2,7 @@ package com.example.server.controller.user;
 
 import com.example.server.DTO.nckh.CreateActivityRequest;
 import com.example.server.DTO.nckh.DashboardResponse;
+import com.example.server.DTO.nckh.DuplicateCheckResult;
 import com.example.server.DTO.nckh.UpsertContributorsRequest;
 import com.example.server.DTO.nckh.PersonalQuotaSummaryDto;
 import com.example.server.domain.User;
@@ -66,6 +67,14 @@ public class NckhActivityController {
     @GetMapping("/activities/{id}/contributors")
     public List<NckhActivityContributor> getContributors(@PathVariable Long id) {
         return activityService.getContributors(id);
+    }
+
+    @PostMapping("/activities/check-duplicate")
+    public DuplicateCheckResult checkDuplicate(
+            @RequestBody CreateActivityRequest req,
+            @RequestParam Integer userId,
+            @RequestParam(required = false) Long excludeActivityId) {
+        return activityService.checkDuplicate(req, excludeActivityId, userId);
     }
 
     @PostMapping("/activities/{id}/submit")

@@ -136,10 +136,11 @@ export default function AdminGroupQuotaStatsPage() {
 
         {!loadingStats && stats && (
           <>
-            <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-4">
+            <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-5">
               <MetricCard label="Nhóm" value={stats.groupName} icon={<GroupIcon />} />
               <MetricCard label="% hoàn thành nhóm" value={formatPct(stats.groupCompletionPercent)} />
-              <MetricCard label="Tổng giờ đóng góp" value={formatHours(stats.totalCreditedHours)} />
+              <MetricCard label="ĐM chuẩn nhóm" value={formatHours(stats.groupRequiredTotalHours)} />
+              <MetricCard label="Tổng giờ nhóm" value={formatHours(stats.groupActualTotalHours)} />
               <MetricCard label="Số thành viên" value={stats.memberCount} />
             </div>
 
@@ -152,8 +153,8 @@ export default function AdminGroupQuotaStatsPage() {
                       <th className="px-3 py-2 text-left">Chức danh</th>
                       <th className="px-3 py-2 text-right">Giờ đóng góp</th>
                       <th className="px-3 py-2 text-right">% tham gia nhóm</th>
-                      <th className="px-3 py-2 text-right">% hoàn thành</th>
-                      <th className="px-3 py-2 text-right">Đạt / đánh giá</th>
+                      <th className="px-3 py-2 text-right">% hoàn thành nhóm</th>
+                      <th className="px-3 py-2 text-right">Đạt định mức</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -169,7 +170,11 @@ export default function AdminGroupQuotaStatsPage() {
                         </td>
                         <td className="px-3 py-2 text-right">{formatPct(m.groupCompletionPercent)}</td>
                         <td className="px-3 py-2 text-right">
-                          {m.achievedCount ?? 0}/{m.evaluatedCount ?? 0}
+                          {m.overallAchieved ? (
+                            <span className="font-semibold text-emerald-600">Đạt</span>
+                          ) : (
+                            <span className="text-rose-500">Chưa đạt</span>
+                          )}
                         </td>
                       </tr>
                     ))}

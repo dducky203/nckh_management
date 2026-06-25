@@ -61,7 +61,7 @@ export default function GroupQuotaPanel({ stats, loading }) {
 
       {!loading && stats && (
         <>
-          {!stats.isLeader && stats.evaluatedCount > 0 && (
+          {!stats.isLeader && (
             <div
               className={`mx-6 mt-4 rounded-xl px-4 py-3 flex items-center gap-2 border text-sm font-bold
                 ${stats.overallAchieved
@@ -73,20 +73,22 @@ export default function GroupQuotaPanel({ stats, loading }) {
               ) : (
                 <CancelIcon sx={{ fontSize: 18 }} />
               )}
-              {stats.overallAchieved ? "Đạt định mức nhóm" : "Chưa đạt định mức nhóm"}
+              {stats.overallAchieved ? "Đạt định mức" : "Chưa đạt định mức"}
               <span className="font-normal text-slate-500 ml-1">
-                ({stats.achievedCount}/{stats.evaluatedCount} tiêu chí)
+                · Giờ được tính {round2(stats.myCreditedTotalHours ?? 0)}/{round2(stats.myRequiredTotalHours ?? 0)}
+                {stats.groupRequiredTotalHours != null && (
+                  <> · Nhóm {round2(stats.groupCompletionPercent ?? stats.groupHoursCompletionPercent ?? 0)}%</>
+                )}
               </span>
             </div>
           )}
 
-          <div className="grid grid-cols-2 md:grid-cols-6 divide-x divide-y md:divide-y-0 divide-slate-100 border-b border-slate-100 mt-2">
+          <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-y md:divide-y-0 divide-slate-100 border-b border-slate-100 mt-2">
             <MiniStat label="Nhóm" value={stats.groupName} isText />
-            <MiniStat label="% hoàn thành" value={round2(stats.groupCompletionPercent ?? 0)} suffix="%" highlight />
+            <MiniStat label="% hoàn thành nhóm" value={round2(stats.groupCompletionPercent ?? stats.groupHoursCompletionPercent ?? 0)} suffix="%" highlight />
             <MiniStat label="Giờ cuối" value={round2(stats.myCreditedTotalHours ?? stats.myGroupQuotaHours ?? 0)} suffix="giờ" />
-            <MiniStat label="Tổng nhóm" value={round2(stats.totalGroupHours)} suffix="giờ" />
+            <MiniStat label="Tổng giờ nhóm" value={round2(stats.totalGroupHours ?? stats.groupActualTotalHours ?? 0)} suffix="giờ" />
             <MiniStat label="ĐM chuẩn nhóm" value={round2(stats.groupRequiredTotalHours ?? 0)} suffix="giờ" />
-            <MiniStat label="% giờ nhóm" value={round2(stats.groupHoursCompletionPercent ?? 0)} suffix="%" highlight />
           </div>
 
           {stats.personalEvaluation?.length > 0 && (
@@ -133,15 +135,15 @@ export default function GroupQuotaPanel({ stats, loading }) {
           <div className="px-5 py-3 bg-blue-50 border-t border-blue-100 flex justify-between items-center">
             <div className="text-xs text-blue-700">
               <p>
-                Nhóm {round2(stats.groupCompletionPercent ?? 0)}% · Giờ cuối = chia đều + phần vượt (năm {stats.academicYear}).
+                Nhóm {round2(stats.groupCompletionPercent ?? stats.groupHoursCompletionPercent ?? 0)}% · Giờ cuối = chia đều + phần vượt (năm {stats.academicYear}).
                 {stats.myCreditedTotalHours != null && (
                   <> Giờ được tính: <strong>{round2(stats.myCreditedTotalHours)}</strong>.</>)}
               </p>
               {stats.groupRequiredTotalHours != null && (
                 <p className="mt-0.5">
-                  Định mức chuẩn nhóm: <strong>{round2(stats.groupRequiredTotalHours)}</strong> giờ · 
-                  Tổng nhóm: <strong>{round2(stats.totalGroupHours)}</strong> giờ · 
-                  % giờ nhóm: <strong>{round2(stats.groupHoursCompletionPercent ?? 0)}%</strong>
+                  Định mức chuẩn nhóm: <strong>{round2(stats.groupRequiredTotalHours)}</strong> giờ ·
+                  Tổng giờ nhóm: <strong>{round2(stats.totalGroupHours ?? stats.groupActualTotalHours ?? 0)}</strong> giờ ·
+                  Hoàn thành khi đủ tổng giờ (không cần đạt từng tiêu chí).
                 </p>
               )}
             </div>

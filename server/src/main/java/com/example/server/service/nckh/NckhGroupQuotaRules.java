@@ -472,4 +472,31 @@ public final class NckhGroupQuotaRules {
         }
         return sum / criterionRatios.size();
     }
+
+    private static final double COMPLETION_EPS = 1e-9;
+
+    /**
+     * % thực tế — chỉ áp dụng quy tắc nhóm khi {@code groupPercent != null}
+     * (user thuộc NCM / Xuất sắc / Tinh hoa). Không có nhóm → trả về % cá nhân.
+     */
+    public static double effectiveCompletionPercent(double personalPercent, Double groupPercent) {
+        if (groupPercent == null) {
+            return personalPercent;
+        }
+        if (groupPercent >= 100.0 - COMPLETION_EPS) {
+            return 100.0;
+        }
+        return Math.min(personalPercent, groupPercent);
+    }
+
+    /** Không thuộc 3 nhóm định mức → chỉ xét % cá nhân ≥ 100%. */
+    public static boolean isPlanOverallCompleted(double personalPercent, Double groupPercent) {
+        if (groupPercent == null) {
+            return personalPercent >= 100.0 - COMPLETION_EPS;
+        }
+        if (groupPercent >= 100.0 - COMPLETION_EPS) {
+            return true;
+        }
+        return Math.min(personalPercent, groupPercent) >= 100.0 - COMPLETION_EPS;
+    }
 }

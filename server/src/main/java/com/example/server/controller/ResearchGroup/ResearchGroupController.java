@@ -15,10 +15,12 @@ import com.example.server.DTO.response.SuccessResponseDTO;
 import com.example.server.DTO.request.*;
 import com.example.server.DTO.response.ResearchGroupDTO;
 import com.example.server.DTO.response.ResearchGroupDocumentDTO;
+import com.example.server.DTO.response.ResearchGroupJoinRequestDTO;
 import com.example.server.domain.ResearchGroupMember;
 import com.example.server.exception.ExcelValidationException;
 import com.example.server.repository.ResearchGroupMemberRepository;
 import com.example.server.service.ResearchGroupService;
+import com.example.server.service.researchgroup.ResearchGroupPermissionService;
 import com.example.server.utils.SecurityUtils;
 
 import jakarta.validation.Valid;
@@ -31,6 +33,7 @@ public class ResearchGroupController {
 
     private final ResearchGroupService researchGroupService;
     private final ResearchGroupMemberRepository researchGroupMemberRepository;
+    private final ResearchGroupPermissionService groupPermissionService;
 
     /**
      * User tạo nhóm mới (chờ duyệt)
@@ -112,6 +115,78 @@ public class ResearchGroupController {
 
         List<ResearchGroupDTO> groups = researchGroupService.getGroupsByUser(userId);
         return ResponseEntity.ok(new SuccessResponseDTO<>(groups, "Lấy danh sách nhóm thành công"));
+    }
+
+    /** Quyền liên quan nhóm: tạo seminar/hội thảo, v.v. */
+    @GetMapping("/permissions/me")
+    public ResponseEntity<SuccessResponseDTO<Map<String, Object>>> getMyGroupPermissions() {
+        Integer userId = SecurityUtils.getCurrentUserId();
+        if (userId == null) {
+            throw new RuntimeException("Vui lòng đăng nhập");
+        }
+        return ResponseEntity.ok(new SuccessResponseDTO<>(
+                groupPermissionService.getMyPermissions(userId),
+                "Lấy quyền nhóm thành công"));
+    }
+
+    /** Đăng ký tham gia nhóm — chờ trưởng nhóm duyệt */
+    @PostMapping("/{groupId}/join-requests")
+    public ResponseEntity<SuccessResponseDTO<ResearchGroupJoinRequestDTO>> requestJoinGroup(
+            @PathVariable Integer groupId,
+            @RequestBody(required = false) Map<String, String> body) {
+        Integer userId = SecurityUtils.getCurrentUserId();
+        if (userId == null) {
+            throw new RuntimeException("Vui lòng đăng nhập");
+        }
+        String message = body != null ? body.get("message") : null;
+        ResearchGroupJoinRequestDTO dto = researchGroupService.requestJoinGroup(groupId, userId, message);
+        return ResponseEntity.ok(new SuccessResponseDTO<>(dto, "Đã gửi đăng ký tham gia nhóm. Chờ trưởng nhóm duyệt."));
+    }
+
+    @GetMapping("/{groupId}/join-requests/pending")
+    public ResponseEntity<SuccessResponseDTO<List<ResearchGroupJoinRequestDTO>>> getPendingJoinRequests(
+            @PathVariable Integer groupId) {
+        Integer userId = SecurityUtils.getCurrentUserId();
+        if (userId == null) {
+            throw new RuntimeException("Vui lòng đăng nhập");
+        }
+        List<ResearchGroupJoinRequestDTO> rows = researchGroupService.getPendingJoinRequests(groupId, userId);
+        return ResponseEntity.ok(new SuccessResponseDTO<>(rows, "Lấy danh sách đăng ký chờ duyệt thành công"));
+    }
+
+    @PutMapping("/join-requests/{requestId}/approve")
+    public ResponseEntity<SuccessResponseDTO<ResearchGroupJoinRequestDTO>> approveJoinRequest(
+            @PathVariable Long requestId) {
+        Integer userId = SecurityUtils.getCurrentUserId();
+        if (userId == null) {
+            throw new RuntimeException("Vui lòng đăng nhập");
+        }
+        ResearchGroupJoinRequestDTO dto = researchGroupService.approveJoinRequest(requestId, userId);
+        return ResponseEntity.ok(new SuccessResponseDTO<>(dto, "Đã duyệt đăng ký tham gia nhóm"));
+    }
+
+    @PutMapping("/join-requests/{requestId}/reject")
+    public ResponseEntity<SuccessResponseDTO<ResearchGroupJoinRequestDTO>> rejectJoinRequest(
+            @PathVariable Long requestId,
+            @RequestBody(required = false) Map<String, String> body) {
+        Integer userId = SecurityUtils.getCurrentUserId();
+        if (userId == null) {
+            throw new RuntimeException("Vui lòng đăng nhập");
+        }
+        String reason = body != null ? body.get("reason") : null;
+        ResearchGroupJoinRequestDTO dto = researchGroupService.rejectJoinRequest(requestId, userId, reason);
+        return ResponseEntity.ok(new SuccessResponseDTO<>(dto, "Đã từ chối đăng ký tham gia nhóm"));
+    }
+
+    @GetMapping("/join-requests/my")
+    public ResponseEntity<SuccessResponseDTO<List<ResearchGroupJoinRequestDTO>>> getMyJoinRequests() {
+        Integer userId = SecurityUtils.getCurrentUserId();
+        if (userId == null) {
+            throw new RuntimeException("Vui lòng đăng nhập");
+        }
+        return ResponseEntity.ok(new SuccessResponseDTO<>(
+                researchGroupService.getMyJoinRequests(userId),
+                "Lấy danh sách đăng ký của bạn thành công"));
     }
 
     // ─────────────────────────────────────────────────────────────────────

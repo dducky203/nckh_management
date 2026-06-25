@@ -95,7 +95,7 @@ function App() {
                     <Route
                       path="/events/create"
                       element={
-                        <ProtectedRoute requiredPower="nckhStaff">
+                        <ProtectedRoute requiredPower="seminarCreator">
                           <CreateEvent />
                         </ProtectedRoute>
                       }

@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Close,
   CheckCircle,
@@ -14,19 +15,46 @@ import {
   Notes,
   OpenInNew,
   BookmarkBorder,
+  PersonAdd,
 } from "@mui/icons-material";
 import { formatDateTime, getSemesterFromDate, getResearchGroupStatusBadge } from "../../../constants";
 import Button from "../../../components/common/Button";
+import researchGroupService from "../../../services/researchGroupService";
+import { useToast } from "../../../context/ToastContext";
 
 const GroupDetailModal = ({
   isOpen,
   onClose,
   group,
   isAdmin,
+  currentUserId,
   onApprove,
   onReject,
   getStatusBadge,
 }) => {
+  const toast = useToast();
+  const [joinLoading, setJoinLoading] = useState(false);
+  const [myJoinStatus, setMyJoinStatus] = useState(null);
+
+  useEffect(() => {
+    if (!isOpen || !currentUserId || !group?.id) {
+      setMyJoinStatus(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const rows = await researchGroupService.getMyJoinRequests();
+        const list = Array.isArray(rows) ? rows : [];
+        const found = list.find((r) => r.groupId === group.id);
+        if (!cancelled) setMyJoinStatus(found?.status ?? null);
+      } catch {
+        if (!cancelled) setMyJoinStatus(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen, currentUserId, group?.id]);
+
   if (!isOpen || !group) return null;
 
   // Resolve status badge safely
@@ -47,6 +75,24 @@ const GroupDetailModal = ({
   const membersList = group.members || [];
   const leaderDetail = membersList.find((m) => m.id === leader?.id) || leader;
   const regularMembers = membersList.filter((m) => m.id !== leader?.id);
+
+  const isMember = currentUserId && membersList.some((m) => m.id === currentUserId);
+  const isLeader = currentUserId && leader?.id === currentUserId;
+  const canRequestJoin = currentUserId && group.status === "APPROVED" && !isMember && !isLeader;
+
+  const handleRequestJoin = async () => {
+    if (!group?.id) return;
+    try {
+      setJoinLoading(true);
+      await researchGroupService.requestJoinGroup(group.id);
+      setMyJoinStatus("PENDING");
+      toast.success("Đã gửi đăng ký tham gia nhóm. Chờ trưởng nhóm duyệt.");
+    } catch (e) {
+      toast.error(e?.message || "Không thể gửi đăng ký tham gia");
+    } finally {
+      setJoinLoading(false);
+    }
+  };
 
   // Stepper steps configuration
   const getApprovalSteps = () => {
@@ -492,6 +538,22 @@ const GroupDetailModal = ({
 
         {/* Action Buttons Footer */}
         <div className="flex items-center gap-3 p-6 bg-gray-50 border-t border-gray-100 shrink-0">
+          {canRequestJoin && (
+            <button
+              type="button"
+              onClick={handleRequestJoin}
+              disabled={joinLoading || myJoinStatus === "PENDING"}
+              className="flex items-center gap-2 px-6 py-2.5 bg-mainColor hover:brightness-110 active:scale-95 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-lg transition-all disabled:opacity-60"
+            >
+              <PersonAdd fontSize="small" />
+              {myJoinStatus === "PENDING"
+                ? "Đang chờ trưởng nhóm duyệt"
+                : joinLoading
+                  ? "Đang gửi..."
+                  : "Đăng ký tham gia nhóm"}
+            </button>
+          )}
+
           {canAdminApprove && (
             <>
               <button

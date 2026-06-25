@@ -41,8 +41,9 @@ public class NckhGroupQuotaAggregationService {
      * Tổng hợp định mức nhóm từ hoạt động APPROVED.
      * - Đóng góp vào nhóm: equiv_qty × hệ số PA (0,8 với NCM/Tinh hoa).
      * - Giờ cá nhân (TV nhóm): chia đều tổng nhóm + phần vượt (không cộng chồng giờ trong tổng).
-     * - % hoàn thành nhóm: trung bình tiến độ các chỉ tiêu.
-     * - Đánh giá SL: chia đều ≥ định mức hoặc tự làm đủ.
+     * - % hoàn thành nhóm: tổng giờ nhóm / định mức chuẩn nhóm (tổng giờ yêu cầu của TV).
+     * - Hoàn thành phương án: đủ tổng giờ tối thiểu (không cần đạt từng tiêu chí).
+     * - Tiến độ từng tiêu chí (groupCriteriaCompletionPercent) chỉ để tham khảo.
      */
     public Map<String, Object> buildMemberStats(
             ResearchGroup group,
@@ -209,14 +210,8 @@ public class NckhGroupQuotaAggregationService {
             ncmGroupQuotas = NckhGroupQuotaRules.buildNcmGroupQuotasWithEvaluation(groupActivities, memberCount);
             appendTable2CompletionRatios(groupCompletionRatios, ncmGroupQuotas);
         }
-        double groupCompletionPercent = NckhGroupQuotaRules.averageGroupCompletionPercent(groupCompletionRatios);
-        double groupPctDisplay = round2(groupCompletionPercent * 100);
-        for (Map<String, Object> row : criteriaStats) {
-            row.put("groupCompletionPercent", groupPctDisplay);
-        }
-        for (Map<String, Object> evalRow : personalEvaluation) {
-            evalRow.put("groupCompletionPercent", groupPctDisplay);
-        }
+        double groupCriteriaCompletionRatio = NckhGroupQuotaRules.averageGroupCompletionPercent(groupCompletionRatios);
+        double groupCriteriaPctDisplay = round2(groupCriteriaCompletionRatio * 100);
 
         // Tính định mức chuẩn nhóm = tổng giờ quy đổi phải đạt của tất cả thành viên
         double groupRequiredTotalHours = 0;
@@ -253,10 +248,24 @@ public class NckhGroupQuotaAggregationService {
             myRequiredTotalHours = myReq != null ? myReq.doubleValue() : 0;
         }
 
-        boolean myHoursAchieved = isLeader || (myRequiredTotalHours > 0 && myCreditedTotalHours >= myRequiredTotalHours - 1e-9);
-        // % nhóm cũng phải >= 100% để cá nhân đạt
         boolean groupHoursAchieved = groupHoursCompletionPercent >= 100.0 - 1e-9;
-        boolean overallAchieved = myHoursAchieved && groupHoursAchieved;
+        boolean overallAchieved = isLeader || groupHoursAchieved;
+
+        double groupHoursPctDisplay = round2(groupHoursCompletionPercent);
+        double myPersonalCompletionPercent = myRequiredTotalHours > 0
+                ? round2(Math.min(1.0, myCreditedTotalHours / myRequiredTotalHours) * 100.0)
+                : (myCreditedTotalHours > 0 ? 100.0 : 0);
+        double effectiveCompletionPercent = round2(
+                NckhGroupQuotaRules.effectiveCompletionPercent(myPersonalCompletionPercent, groupHoursPctDisplay));
+
+        for (Map<String, Object> row : criteriaStats) {
+            row.put("groupCompletionPercent", groupHoursPctDisplay);
+            row.put("groupCriteriaCompletionPercent", groupCriteriaPctDisplay);
+        }
+        for (Map<String, Object> evalRow : personalEvaluation) {
+            evalRow.put("groupCompletionPercent", groupHoursPctDisplay);
+            evalRow.put("groupCriteriaCompletionPercent", groupCriteriaPctDisplay);
+        }
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("groupId", group.getId());
@@ -269,11 +278,15 @@ public class NckhGroupQuotaAggregationService {
         data.put("memberFactor", memberFactor);
         data.put("autoCalculated", true);
         data.put("dataSource", "APPROVED_ACTIVITIES");
-        data.put("evaluationRule", "GROUP_TOTAL_HOURS_AND_COMPLETION_PERCENT");
-        data.put("groupCompletionPercent", round2(groupCompletionPercent * 100));
+        data.put("evaluationRule", "TOTAL_HOURS_COMPLETION");
+        data.put("groupCompletionPercent", groupHoursPctDisplay);
+        data.put("groupHoursCompletionPercent", groupHoursPctDisplay);
+        data.put("groupCriteriaCompletionPercent", groupCriteriaPctDisplay);
         data.put("groupCompletionCriteriaCount", groupCompletionRatios.size());
         data.put("groupRequiredTotalHours", round2(groupRequiredTotalHours));
-        data.put("groupHoursCompletionPercent", round2(groupHoursCompletionPercent));
+        data.put("groupActualTotalHours", round2(totalGroupQuotaHours));
+        data.put("myPersonalCompletionPercent", myPersonalCompletionPercent);
+        data.put("effectiveCompletionPercent", effectiveCompletionPercent);
         data.put("totalGroupHours", round2(totalGroupQuotaHours));
         data.put("totalPerMemberHours", round2(NckhGroupQuotaRules.perMemberGroupHours(totalGroupQuotaHours, memberCount)));
         data.put("myTotalHours", round2(myTotalHours));
@@ -288,9 +301,10 @@ public class NckhGroupQuotaAggregationService {
         data.put("evaluatedCount", evaluatedCount);
 
         if (ncmGroupQuotas != null) {
-            ncmGroupQuotas.put("groupCompletionPercent", round2(groupCompletionPercent * 100));
+            ncmGroupQuotas.put("groupCompletionPercent", groupHoursPctDisplay);
+            ncmGroupQuotas.put("groupCriteriaCompletionPercent", groupCriteriaPctDisplay);
             ncmGroupQuotas.put("groupRequiredTotalHours", round2(groupRequiredTotalHours));
-            ncmGroupQuotas.put("groupHoursCompletionPercent", round2(groupHoursCompletionPercent));
+            ncmGroupQuotas.put("groupHoursCompletionPercent", groupHoursPctDisplay);
             data.put("ncmGroupQuotas", ncmGroupQuotas);
         }
 

@@ -4,10 +4,9 @@ import java.util.List;
 
 /**
  * Bao bọc kết quả thống kê cá nhân với % hoàn thành và thông tin nhóm.
- * - personalCompletionPercent: % hoàn thành cá nhân (tổng giờ thực / tổng giờ yêu cầu)
- * - groupCompletionPercent: % hoàn thành nhóm (null nếu không thuộc nhóm)
- * - effectiveCompletionPercent: % thực tế = min(personal, group) — bị giới hạn bởi nhóm
- * - overallCompleted: true nếu effectivePercent >= 100
+ * <p>
+ * Quy tắc nhóm chỉ áp dụng khi {@link #inQuotaGroup} = true (NCM / Xuất sắc / Tinh hoa đã duyệt).
+ * Nếu không thuộc 3 nhóm đó: chỉ tính % cá nhân, đạt khi cá nhân ≥ 100%.
  */
 public class PersonalQuotaSummaryDto {
 
@@ -23,13 +22,13 @@ public class PersonalQuotaSummaryDto {
     /** % hoàn thành cá nhân = min(actualTotalHours / requiredTotalHours, 1.0) × 100. */
     public double personalCompletionPercent;
 
-    /** % hoàn thành nhóm (null nếu user không thuộc nhóm NCM/Xuất sắc/Tinh hoa). */
+    /** % hoàn thành nhóm = min(tổng giờ nhóm / định mức chuẩn nhóm, 1.0) × 100. */
     public Double groupCompletionPercent;
 
-    /** % thực tế = min(personalCompletionPercent, groupCompletionPercent). */
+    /** % thực tế: nhóm ≥ 100% → 100%; nhóm &lt; 100% → min(cá nhân, nhóm). */
     public double effectiveCompletionPercent;
 
-    /** Hoàn thành phương án: effectivePercent >= 100. */
+    /** Hoàn thành phương án theo quy tắc nhóm (xem NckhGroupQuotaRules.isPlanOverallCompleted). */
     public boolean overallCompleted;
 
     /** Tên nhóm mà user đang tham gia (null nếu không thuộc nhóm). */
@@ -46,4 +45,7 @@ public class PersonalQuotaSummaryDto {
 
     /** Chức danh. */
     public String chucDanh;
+
+    /** true nếu user thuộc 1 trong 3 nhóm định mức (NCM / Xuất sắc / Tinh hoa) đã duyệt. */
+    public boolean inQuotaGroup;
 }

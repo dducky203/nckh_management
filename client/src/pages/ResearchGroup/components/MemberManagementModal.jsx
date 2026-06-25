@@ -48,15 +48,57 @@ const MemberManagementModal = ({
   const [editingMember, setEditingMember] = useState(null);
   const [editRole, setEditRole] = useState("");
   const [editParticipationRate, setEditParticipationRate] = useState(100);
+  const [pendingJoinRequests, setPendingJoinRequests] = useState([]);
+  const [joinRequestsLoading, setJoinRequestsLoading] = useState(false);
   const fileInputRef = useRef(null);
   const searchContainerRef = useRef(null);
 
   useEffect(() => {
     if (isOpen && group) {
       fetchMembers();
+      if (group.leader?.id === currentUserId) {
+        fetchPendingJoinRequests();
+      } else {
+        setPendingJoinRequests([]);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, group]);
+  }, [isOpen, group, currentUserId]);
+
+  const fetchPendingJoinRequests = async () => {
+    if (!group?.id) return;
+    try {
+      setJoinRequestsLoading(true);
+      const rows = await researchGroupService.getPendingJoinRequests(group.id);
+      setPendingJoinRequests(Array.isArray(rows) ? rows : []);
+    } catch (error) {
+      console.error("Error fetching join requests:", error);
+    } finally {
+      setJoinRequestsLoading(false);
+    }
+  };
+
+  const handleApproveJoin = async (requestId) => {
+    try {
+      await researchGroupService.approveJoinRequest(requestId);
+      toast.success("Đã duyệt đăng ký tham gia nhóm");
+      fetchPendingJoinRequests();
+      fetchMembers();
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      toast.error(error.message || "Không thể duyệt đăng ký");
+    }
+  };
+
+  const handleRejectJoin = async (requestId) => {
+    try {
+      await researchGroupService.rejectJoinRequest(requestId, "Trưởng nhóm từ chối");
+      toast.success("Đã từ chối đăng ký");
+      fetchPendingJoinRequests();
+    } catch (error) {
+      toast.error(error.message || "Không thể từ chối đăng ký");
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -332,6 +374,52 @@ const MemberManagementModal = ({
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
             <div className="max-w-full mx-auto">
+              {group.leader?.id === currentUserId && (
+                <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50/60 p-4">
+                  <h3 className="text-sm font-bold text-amber-900 mb-2">
+                    Đăng ký tham gia chờ duyệt ({pendingJoinRequests.length})
+                  </h3>
+                  {joinRequestsLoading ? (
+                    <LoadingSpinner size="sm" />
+                  ) : pendingJoinRequests.length === 0 ? (
+                    <p className="text-xs text-amber-800/80">Không có đăng ký mới.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {pendingJoinRequests.map((req) => (
+                        <div
+                          key={req.id}
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white border border-amber-100 px-3 py-2"
+                        >
+                          <div>
+                            <p className="text-sm font-semibold text-gray-800">{req.userName}</p>
+                            <p className="text-xs text-gray-500">
+                              {req.staffCode || req.email || req.title || "—"}
+                              {req.message ? ` · ${req.message}` : ""}
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleApproveJoin(req.id)}
+                              className="px-3 py-1 text-xs font-bold rounded-md bg-emerald-600 text-white hover:bg-emerald-700"
+                            >
+                              Duyệt
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRejectJoin(req.id)}
+                              className="px-3 py-1 text-xs font-bold rounded-md bg-rose-100 text-rose-700 hover:bg-rose-200"
+                            >
+                              Từ chối
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Add Member Section */}
               <div className="mb-4 flex gap-2">
                 <button

@@ -38,6 +38,10 @@ export const isLeadership = (user) => {
   return user.title && leadershipTitles.includes(user.title);
 };
 
+/** Trưởng nhóm / thư ký nhóm (role trong nhóm) hoặc cán bộ NCKH — tạo seminar/hội thảo. */
+export const canCreateSeminarEvent = (permissions) =>
+  !!permissions?.canCreateSeminar;
+
 export const isGroupLeader = (user, group) => {
   if (!user || !group) return false;
   return group.leaderId === user.id;

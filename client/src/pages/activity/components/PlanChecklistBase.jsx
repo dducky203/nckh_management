@@ -61,6 +61,9 @@ export default function PlanChecklistBase({ planLabel, result }) {
             <h3 className="font-bold text-slate-700 text-sm">
               Phương án {planLabel}
             </h3>
+            <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+              Tiến độ từng tiêu chí (tham khảo). Kết quả phương án theo tổng giờ tối thiểu.
+            </p>
           </div>
         </div>
         {hasEvaluable ? (
