@@ -19,6 +19,7 @@ import {
   AdminPanelSettings,
   SupervisorAccount,
   Psychology,
+  School,
 } from "@mui/icons-material";
 
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../constants";
@@ -29,6 +30,7 @@ import {
   canAccessQuotaPages,
   hasNckhStaffAccess,
   isAssistantRole,
+  isStudent,
   normalizeRoleName,
 } from "../../utils/permissions";
 import Modal from "../common/Modal";
@@ -78,6 +80,8 @@ const Header = () => {
   const userNckhStaff = hasNckhStaffAccess(user);
   const userIsAssistant = isAssistantRole(user);
   const userCanAccessQuota = canAccessQuotaPages(user);
+  const userIsStudent = isStudent(user);
+  const showNckhActivityMenu = !userIsStudent;
 
   const toggleDropdown = (dropdownName) => {
     const nextDropdown = activeDropdown === dropdownName ? null : dropdownName;
@@ -136,32 +140,29 @@ const Header = () => {
                       <img
                         src={user?.avatar || noAvatarImg}
                         alt={user.name}
-                        className={`${
-                          normalizeRoleName(user.role) === "admin"
+                        className={`${normalizeRoleName(user.role) === "admin"
                             ? "border-green-400"
                             : normalizeRoleName(user.role) === "assistant"
                               ? "border-sky-400"
                               : "border-[#ef9d1d]"
-                        } w-8 h-8 md:w-10 md:h-10 p-[2px] border-2 rounded-full`}
+                          } w-8 h-8 md:w-10 md:h-10 p-[2px] border-2 rounded-full`}
                       />
                       <div className="hidden lg:flex items-center">
                         <span className="font-medium text-sm whitespace-nowrap">
                           Xin chào, {user.name}
                         </span>
                         <KeyboardArrowDown
-                          className={`w-4 h-4 ml-1 transition-transform duration-200 ${
-                            activeDropdown === "user-menu" ? "rotate-180" : ""
-                          }`}
+                          className={`w-4 h-4 ml-1 transition-transform duration-200 ${activeDropdown === "user-menu" ? "rotate-180" : ""
+                            }`}
                         />
                       </div>
                     </button>
 
                     <div
-                      className={`absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-xl z-50 transition-all duration-200 ${
-                        activeDropdown === "user-menu"
+                      className={`absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-xl z-50 transition-all duration-200 ${activeDropdown === "user-menu"
                           ? "opacity-100 visible translate-y-0"
                           : "opacity-0 invisible translate-y-2"
-                      }`}
+                        }`}
                     >
                       <div className="py-2 px-4 border-b border-gray-100">
                         <div className="flex items-center justify-between">
@@ -192,6 +193,16 @@ const Header = () => {
                           <AccountCircle className="w-4 h-4 mr-2 text-gray-400" />
                           <span>Hồ sơ</span>
                         </Link>
+                        {userIsStudent && (
+                          <Link
+                            to="/research-groups"
+                            className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
+                            onClick={closeUserMenu}
+                          >
+                            <School className="w-4 h-4 mr-2 text-gray-400" />
+                            <span>Nhóm NCKH</span>
+                          </Link>
+                        )}
                         {userNckhStaff && (
                           <>
                             <Link
@@ -200,7 +211,7 @@ const Header = () => {
                               onClick={closeUserMenu}
                             >
                               <Settings className="w-4 h-4 mr-2 text-gray-400" />
-                              <span>Cấu hình NCKH</span>
+                              <span>Cấu hình Chức năng</span>
                             </Link>
                           </>
                         )}
@@ -224,12 +235,22 @@ const Header = () => {
                         </Link>
                         {userCanAccessQuota && (
                           <Link
+                            to="/research-groups/manager"
+                            className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
+                            onClick={closeUserMenu}
+                          >
+                            <Group className="w-4 h-4 mr-2 text-gray-400" />
+                            <span>Quản lý nhóm NCKH</span>
+                          </Link>
+                        )}
+                        {userCanAccessQuota && (
+                          <Link
                             to="/research-groups/advisor-approval"
                             className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
                             onClick={closeUserMenu}
                           >
                             <Psychology className="w-4 h-4 mr-2 text-gray-400" />
-                            <span>Duyệt nhóm NCKH</span>
+                            <span>Duyệt nhóm NCKH của SV</span>
                           </Link>
                         )}
                       </div>
@@ -303,9 +324,8 @@ const Header = () => {
           <li>
             <Link
               to="/"
-              className={`flex items-center text-sm hover:text-mainColor transition-colors px-3 py-1.5 rounded-md hover:bg-purple-100 ${
-                isActive("/") ? "text-mainColor bg-purple-100" : "text-gray-700"
-              }`}
+              className={`flex items-center text-sm hover:text-mainColor transition-colors px-3 py-1.5 rounded-md hover:bg-purple-100 ${isActive("/") ? "text-mainColor bg-purple-100" : "text-gray-700"
+                }`}
             >
               <Home className="w-4 h-4 mr-1" />
               <span>Trang chủ</span>
@@ -314,9 +334,8 @@ const Header = () => {
           <li>
             <Link
               to="/about"
-              className={`flex items-center text-sm hover:text-mainColor transition-colors px-3 py-1.5 rounded-md hover:bg-purple-100 ${
-                isActive("/about") ? "text-mainColor bg-purple-100" : "text-gray-700"
-              }`}
+              className={`flex items-center text-sm hover:text-mainColor transition-colors px-3 py-1.5 rounded-md hover:bg-purple-100 ${isActive("/about") ? "text-mainColor bg-purple-100" : "text-gray-700"
+                }`}
             >
               <span>Giới thiệu</span>
             </Link>
@@ -324,35 +343,48 @@ const Header = () => {
           <li>
             <Link
               to="/news"
-              className={`flex items-center text-sm hover:text-mainColor transition-colors px-3 py-1.5 rounded-md hover:bg-purple-100 ${
-                isActive("/news") ? "text-mainColor bg-purple-100" : "text-gray-700"
-              }`}
+              className={`flex items-center text-sm hover:text-mainColor transition-colors px-3 py-1.5 rounded-md hover:bg-purple-100 ${isActive("/news") ? "text-mainColor bg-purple-100" : "text-gray-700"
+                }`}
             >
               <span>Tin tức</span>
             </Link>
           </li>
 
+          {(!user || userIsStudent) && (
+            <li>
+              <Link
+                to="/research-groups"
+                className={`flex items-center text-sm hover:text-mainColor transition-colors px-3 py-1.5 rounded-md hover:bg-purple-100 ${
+                  location.pathname.startsWith("/research-groups")
+                    ? "text-mainColor bg-purple-100"
+                    : "text-gray-700"
+                }`}
+              >
+                <School className="w-4 h-4 mr-1" />
+                <span>Nhóm NCKH</span>
+              </Link>
+            </li>
+          )}
+
+          {showNckhActivityMenu && (
           <li className="relative">
             <button
-              className={`flex items-center text-sm hover:text-mainColor transition-colors px-3 py-1.5 rounded-md hover:bg-purple-100 ${
-                activeDropdown === "research" ? "text-mainColor bg-purple-100" : "text-gray-700"
-              }`}
+              className={`flex items-center text-sm hover:text-mainColor transition-colors px-3 py-1.5 rounded-md hover:bg-purple-100 ${activeDropdown === "research" ? "text-mainColor bg-purple-100" : "text-gray-700"
+                }`}
               onClick={() => toggleDropdown("research")}
             >
               <span>Hoạt động NCKH</span>
               <KeyboardArrowDown
-                className={`ml-1 h-3 w-3 transition-transform duration-200 ${
-                  activeDropdown === "research" ? "rotate-180" : ""
-                }`}
+                className={`ml-1 h-3 w-3 transition-transform duration-200 ${activeDropdown === "research" ? "rotate-180" : ""
+                  }`}
                 fontSize="small"
               />
             </button>
             <div
-              className={`absolute left-0 mt-1 w-64 lg:w-[15vw] h-auto max-h-[40vh] overflow-auto bg-white rounded-lg shadow-lg z-50 transition-all duration-300 border border-gray-200 ${
-                activeDropdown === "research"
+              className={`absolute left-0 mt-1 w-64 lg:w-[15vw] h-auto max-h-[40vh] overflow-auto bg-white rounded-lg shadow-lg z-50 transition-all duration-300 border border-gray-200 ${activeDropdown === "research"
                   ? "opacity-100 visible translate-y-0"
                   : "opacity-0 invisible translate-y-2"
-              } scrollbar-hide`}
+                } scrollbar-hide`}
             >
               <div className="py-1">
                 {RESEARCH_CATEGORIES.map((item) => (
@@ -370,12 +402,12 @@ const Header = () => {
               </div>
             </div>
           </li>
+          )}
 
           <li className="relative">
             <button
-              className={`flex items-center text-sm hover:text-mainColor transition-colors px-3 py-1.5 rounded-md hover:bg-purple-100 ${
-                activeDropdown === "events" ? "text-mainColor bg-purple-100" : "text-gray-700"
-              }`}
+              className={`flex items-center text-sm hover:text-mainColor transition-colors px-3 py-1.5 rounded-md hover:bg-purple-100 ${activeDropdown === "events" ? "text-mainColor bg-purple-100" : "text-gray-700"
+                }`}
               onClick={() => toggleDropdown("events")}
             >
               <span>Các sự kiện</span>
@@ -385,11 +417,10 @@ const Header = () => {
               />
             </button>
             <div
-              className={`absolute left-0 mt-1 w-64 lg:w-[15vw] h-auto max-h-[40vh] overflow-auto bg-white rounded-lg shadow-lg z-50 transition-all duration-300 border border-gray-200 ${
-                activeDropdown === "events"
+              className={`absolute left-0 mt-1 w-64 lg:w-[15vw] h-auto max-h-[40vh] overflow-auto bg-white rounded-lg shadow-lg z-50 transition-all duration-300 border border-gray-200 ${activeDropdown === "events"
                   ? "opacity-100 visible translate-y-0"
                   : "opacity-0 invisible translate-y-2"
-              } scrollbar-hide`}
+                } scrollbar-hide`}
             >
               <div className="py-1">
                 {EVENT_CATEGORIES.map((item) => (
@@ -438,6 +469,23 @@ const Header = () => {
               <span>Tin tức</span>
             </Link>
 
+            {(!user || userIsStudent) && (
+            <Link
+              to="/research-groups"
+              className={`flex items-center px-4 py-2 text-sm hover:bg-purple-50 hover:text-mainColor transition-colors ${
+                isActive("/research-groups") ? "text-mainColor bg-purple-50" : "text-gray-700"
+              }`}
+              onClick={() => {
+                setIsMenuOpen(false);
+                setActiveDropdown(null);
+              }}
+            >
+              <School className="w-4 h-4 mr-2" />
+              <span>Nhóm NCKH</span>
+            </Link>
+            )}
+
+            {showNckhActivityMenu && (
             <div className="px-4 py-2">
               <button
                 className="flex items-center justify-between w-full text-left text-sm text-gray-700"
@@ -448,9 +496,8 @@ const Header = () => {
                   <span>Hoạt động NCKH</span>
                 </div>
                 <KeyboardArrowDown
-                  className={`h-4 w-4 transition-transform ${
-                    activeDropdown === "mobile-research" ? "rotate-180" : ""
-                  }`}
+                  className={`h-4 w-4 transition-transform ${activeDropdown === "mobile-research" ? "rotate-180" : ""
+                    }`}
                 />
               </button>
               {activeDropdown === "mobile-research" && (
@@ -472,20 +519,7 @@ const Header = () => {
                 </div>
               )}
             </div>
-
-            <Link
-              to="/research-groups"
-              className={`flex items-center px-4 py-2 text-sm hover:bg-purple-50 hover:text-mainColor transition-colors ${
-                isActive("/research-groups") ? "text-mainColor bg-purple-50" : "text-gray-700"
-              }`}
-              onClick={() => {
-                setIsMenuOpen(false);
-                setActiveDropdown(null);
-              }}
-            >
-              <Group className="w-4 h-4 mr-2" />
-              <span>Nhóm NCKH</span>
-            </Link>
+            )}
 
             <div className="px-4 py-2">
               <button
@@ -497,9 +531,8 @@ const Header = () => {
                   <span>Các sự kiện</span>
                 </div>
                 <KeyboardArrowDown
-                  className={`h-4 w-4 transition-transform ${
-                    activeDropdown === "mobile-events" ? "rotate-180" : ""
-                  }`}
+                  className={`h-4 w-4 transition-transform ${activeDropdown === "mobile-events" ? "rotate-180" : ""
+                    }`}
                 />
               </button>
               {activeDropdown === "mobile-events" && (
@@ -533,6 +566,26 @@ const Header = () => {
                   <AccountCircle className="w-4 h-4 mr-2" />
                   Hồ sơ
                 </Link>
+                {userIsStudent && (
+                  <Link
+                    to="/research-groups"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-mainColor"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <School className="w-4 h-4 mr-2" />
+                    Nhóm NCKH
+                  </Link>
+                )}
+                {userIsStudent && (
+                  <Link
+                    to="/research-groups/profile"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-mainColor"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Group className="w-4 h-4 mr-2" />
+                    Hồ sơ nhóm
+                  </Link>
+                )}
                 {userNckhStaff && (
                   <>
                     <Link
@@ -541,7 +594,7 @@ const Header = () => {
                       onClick={() => setIsMenuOpen(false)}
                     >
                       <Settings className="w-4 h-4 mr-2" />
-                      Cấu hình NCKH
+                      Cấu hình chức năng
                     </Link>
                   </>
                 )}
@@ -552,7 +605,7 @@ const Header = () => {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Psychology className="w-4 h-4 mr-2" />
-                    Duyệt nhóm NCKH
+                    Duyệt nhóm NCKH của Sinh viên
                   </Link>
                 )}
                 <button

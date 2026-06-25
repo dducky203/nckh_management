@@ -6,6 +6,7 @@ import {
   Download,
   Edit,
   Groups,
+  ManageAccounts,
   Topic,
 } from "@mui/icons-material";
 import { useCallback, useContext, useEffect, useState } from "react";
@@ -23,10 +24,11 @@ import {
 } from "../../constants";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
-import { canAccessQuotaPages } from "../../utils/permissions";
+import { canAccessQuotaPages, canEditGroup } from "../../utils/permissions";
 import researchGroupService from "../../services/researchGroupService";
 import DocumentFormModal from "./components/DocumentFormModal";
 import ResearchGroupProfileHeader from "./components/ResearchGroupProfileHeader";
+import MemberManagementModal from "./components/MemberManagementModal";
 
 function unwrapList(payload) {
   if (Array.isArray(payload)) return payload;
@@ -47,6 +49,7 @@ const ResearchGroupProfile = () => {
   const [loading, setLoading] = useState(true);
   const [groupsLoading, setGroupsLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [memberModalOpen, setMemberModalOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState(null);
@@ -227,6 +230,7 @@ const ResearchGroupProfile = () => {
 
   const status = getResearchGroupStatus(currentGroup.status);
   const memberCount = currentGroup.members?.length ?? 0;
+  const userCanManageMembers = canEditGroup(user, currentGroup);
 
   return (
     <div className="min-h-screen bg-slate-50 pb-16 font-sans">
@@ -296,6 +300,16 @@ const ResearchGroupProfile = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+              {userCanManageMembers && (
+                <Button
+                  variant="secondary"
+                  onClick={() => setMemberModalOpen(true)}
+                  className="flex items-center gap-1"
+                >
+                  <ManageAccounts fontSize="small" />
+                  Quản lý thành viên
+                </Button>
+              )}
               <div className="text-right text-xs text-slate-400">
                 <span className="block font-bold text-slate-500 uppercase mb-1">Văn bản</span>
                 <span className="text-2xl font-black text-mainColor">{documents.length}</span>
@@ -417,6 +431,16 @@ const ResearchGroupProfile = () => {
         selectedDocument={selectedDocument}
         saving={saving}
       />
+
+      {memberModalOpen && currentGroup && (
+        <MemberManagementModal
+          isOpen={memberModalOpen}
+          onClose={() => setMemberModalOpen(false)}
+          group={currentGroup}
+          currentUserId={user?.id}
+          onRefresh={fetchMyGroups}
+        />
+      )}
 
       <Modal
         isOpen={deleteModalOpen}

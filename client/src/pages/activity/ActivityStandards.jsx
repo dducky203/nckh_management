@@ -270,7 +270,9 @@ export default function ActivityStandards() {
         unit: c.donViTinh,
         hasActual,
         ok,
-        actualHours: actual ? +(actual.totalQuotaHours ?? 0) : 0,
+        actualHours: actual
+          ? +(actual.ownQuotaHours ?? actual.totalQuotaHours ?? 0)
+          : 0,
         participationCount: actual ? +(actual.participationCount ?? 0) : 0,
       };
     });
@@ -576,7 +578,7 @@ export default function ActivityStandards() {
                   </div>
                 </div>
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                  Tổng giờ quy đổi
+                  Giờ cá nhân được tính
                 </p>
                 {requiredHoursNum !== null ? (
                   <div className="flex items-baseline gap-2 flex-wrap">

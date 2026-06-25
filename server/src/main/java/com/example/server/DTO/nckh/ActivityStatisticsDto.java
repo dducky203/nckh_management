@@ -20,6 +20,8 @@ public class ActivityStatisticsDto implements ActivityStatisticsResponse {
     private Double ownQuotaHours;
     /** Giờ nhóm chia đều cho tiêu chí (= tổng nhóm ÷ số TV). */
     private Double groupHoursCredit;
+    /** Giờ được tính sau khi cộng phần nhóm (dùng cho xét đạt, không hiển thị là giờ tự làm). */
+    private Double creditedQuotaHours;
 
     public static ActivityStatisticsDto from(ActivityStatisticsResponse src) {
         ActivityStatisticsDto d = new ActivityStatisticsDto();
@@ -46,18 +48,20 @@ public class ActivityStatisticsDto implements ActivityStatisticsResponse {
         d.totalQty = 0.0;
         d.ownQuotaHours = 0.0;
         d.groupHoursCredit = groupHoursCredit;
-        d.totalQuotaHours = groupHoursCredit;
+        d.creditedQuotaHours = groupHoursCredit;
+        d.totalQuotaHours = 0.0;
         d.avgParticipantsN = groupRow.getAvgParticipantsN();
         d.phuongAn = groupRow.getPhuongAn();
         d.chucDanh = groupRow.getChucDanh();
         return d;
     }
 
-    /** Áp giờ cuối = chia đều nhóm + phần cá nhân vượt tổng nhóm (không cộng chồng giờ trong tổng). */
+    /** Giờ hiển thị cá nhân = tự làm; creditedQuotaHours = tự làm + phần nhóm (nếu có). */
     public void applyGroupHoursFromTeam(double myHours, double groupHours, int memberCount) {
         ownQuotaHours = myHours;
         groupHoursCredit = NckhGroupQuotaRules.perMemberGroupHours(groupHours, memberCount);
-        totalQuotaHours = NckhGroupQuotaRules.creditedHoursForGroupMember(myHours, groupHours, memberCount);
+        creditedQuotaHours = NckhGroupQuotaRules.creditedHoursForGroupMember(myHours, groupHours, memberCount);
+        totalQuotaHours = myHours;
     }
 
     @Override
@@ -111,6 +115,10 @@ public class ActivityStatisticsDto implements ActivityStatisticsResponse {
 
     public Double getGroupHoursCredit() {
         return groupHoursCredit;
+    }
+
+    public Double getCreditedQuotaHours() {
+        return creditedQuotaHours;
     }
 
     public void setPlanContext(Integer phuongAn, String chucDanh) {

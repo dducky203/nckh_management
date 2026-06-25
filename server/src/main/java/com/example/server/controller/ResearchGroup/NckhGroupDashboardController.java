@@ -17,6 +17,7 @@ import com.example.server.repository.UserRepository;
 import com.example.server.service.nckh.NckhComputeService;
 import com.example.server.service.nckh.NckhGroupQuotaAggregationService;
 import com.example.server.service.nckh.NckhGroupQuotaRules;
+import com.example.server.service.nckh.NckhMemberRequiredHoursService;
 import com.example.server.service.researchgroup.ResearchGroupQuotaService;
 import com.example.server.utils.SecurityUtils;
 
@@ -38,6 +39,7 @@ public class NckhGroupDashboardController {
     private final NckhComputeService computeService;
     private final NckhGroupQuotaAggregationService aggregationService;
     private final ResearchGroupQuotaService quotaGroupService;
+    private final NckhMemberRequiredHoursService memberRequiredHoursService;
 
     // -------------------------------------------------------------------
     // Bảng tiêu chí
@@ -209,9 +211,7 @@ public class NckhGroupDashboardController {
 
         User currentUser = userRepo.findById(userId).orElseThrow();
         List<ResearchGroupMember> members = memberRepo.findByGroupId(group.getId());
-        List<Integer> memberIds = members.stream()
-                .map(ResearchGroupMember::getUserId)
-                .collect(java.util.stream.Collectors.toList());
+        List<Integer> memberIds = memberRequiredHoursService.collectQuotaMemberUserIds(group, members);
 
         Map<String, Object> data = aggregationService.buildMemberStats(
                 group,
@@ -484,91 +484,19 @@ public class NckhGroupDashboardController {
 
         int academicYear = (year != null) ? year : java.time.LocalDate.now().getYear();
         List<ResearchGroupMember> members = memberRepo.findByGroupId(group.getId());
-        LinkedHashSet<Integer> memberIdSet = new LinkedHashSet<>();
-        for (ResearchGroupMember m : members) memberIdSet.add(m.getUserId());
-        if (group.getLeader() != null && group.getLeader().getId() != null) {
-            memberIdSet.add(group.getLeader().getId());
-        }
-        List<Integer> memberIds = new ArrayList<>(memberIdSet);
+        List<Integer> memberIds = memberRequiredHoursService.collectQuotaMemberUserIds(group, members);
         if (memberIds.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nhóm chưa có thành viên");
         }
 
         List<User> memberUsers = userRepo.findAllById(memberIds);
         Map<Integer, User> userMap = new HashMap<>();
-        for (User u : memberUsers) userMap.put(u.getId(), u);
-
-        List<Map<String, Object>> criteriaDefs = getCriteriaForType(group.getGroupType());
-        List<Map<String, Object>> memberStats = new ArrayList<>();
-        List<Double> completionPercents = new ArrayList<>();
-        double totalCreditedHours = 0;
-        Double groupRequiredTotalHours = null;
-        Double groupActualTotalHours = null;
-
-        for (Integer memberId : memberIds) {
-            User memberUser = userMap.get(memberId);
-            if (memberUser == null) continue;
-
-            Map<String, Object> raw = aggregationService.buildMemberStats(
-                    group, memberUser, memberIds, academicYear, criteriaDefs);
-
-            double creditedHours = toDouble(raw.get("myCreditedTotalHours"));
-            double completion = toDouble(raw.get("groupCompletionPercent"));
-            if (groupRequiredTotalHours == null) {
-                groupRequiredTotalHours = toDouble(raw.get("groupRequiredTotalHours"));
-                groupActualTotalHours = toDouble(raw.get("groupActualTotalHours"));
-                if (groupActualTotalHours == 0) {
-                    groupActualTotalHours = toDouble(raw.get("totalGroupHours"));
-                }
-            }
-
-            Map<String, Object> row = new LinkedHashMap<>();
-            row.put("userId", memberUser.getId());
-            row.put("name", memberUser.getName());
-            row.put("chucDanh", memberUser.getIdTitle() != null ? memberUser.getIdTitle().getName() : "KS/CN");
-            row.put("isLeader", group.isLeader(memberUser));
-            row.put("creditedHours", round2(creditedHours));
-            row.put("groupCompletionPercent", round2(completion));
-            row.put("overallAchieved", raw.get("overallAchieved"));
-            row.put("achievedCount", raw.get("achievedCount"));
-            row.put("evaluatedCount", raw.get("evaluatedCount"));
-            memberStats.add(row);
-
-            completionPercents.add(completion);
-            totalCreditedHours += creditedHours;
+        for (User u : memberUsers) {
+            userMap.put(u.getId(), u);
         }
 
-        for (Map<String, Object> row : memberStats) {
-            double creditedHours = toDouble(row.get("creditedHours"));
-            double participation = totalCreditedHours > 0
-                    ? (creditedHours / totalCreditedHours) * 100.0
-                    : 0;
-            row.put("participationPercent", round2(participation));
-        }
-
-        memberStats.sort((a, b) -> {
-            boolean al = Boolean.TRUE.equals(a.get("isLeader"));
-            boolean bl = Boolean.TRUE.equals(b.get("isLeader"));
-            if (al != bl) return al ? -1 : 1;
-            return Double.compare(toDouble(b.get("participationPercent")), toDouble(a.get("participationPercent")));
-        });
-
-        double groupCompletionPercent = completionPercents.stream()
-                .mapToDouble(Double::doubleValue)
-                .average()
-                .orElse(0);
-
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("groupId", group.getId());
-        data.put("groupName", group.getGroupName());
-        data.put("groupType", group.getGroupType());
-        data.put("academicYear", academicYear);
-        data.put("memberCount", memberStats.size());
-        data.put("groupCompletionPercent", round2(groupCompletionPercent));
-        data.put("groupRequiredTotalHours", groupRequiredTotalHours != null ? round2(groupRequiredTotalHours) : null);
-        data.put("groupActualTotalHours", groupActualTotalHours != null ? round2(groupActualTotalHours) : null);
-        data.put("totalCreditedHours", round2(totalCreditedHours));
-        data.put("members", memberStats);
+        Map<String, Object> data = aggregationService.buildAdminGroupStats(
+                group, memberIds, academicYear, userMap);
         data.put("viewerIsStaff", staff);
         data.put("viewerIsLeader", leader);
 

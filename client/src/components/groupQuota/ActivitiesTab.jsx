@@ -82,10 +82,10 @@ export default function ActivitiesTab({ stats, loading, academicYear }) {
             <tfoot>
               <tr className="bg-mainColor/5 border-t border-slate-200">
                 <td colSpan={4} className="px-4 py-3 text-sm font-bold text-slate-700">
-                  Tổng giờ định mức nhóm (bạn)
+                  Tổng giờ tự làm
                 </td>
                 <td className="px-3 py-3 text-center text-lg font-black text-mainColor">
-                  {round2(stats?.myGroupQuotaHours ?? 0)}
+                  {round2(stats?.myTotalHours ?? 0)}
                 </td>
                 <td />
               </tr>

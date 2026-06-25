@@ -54,7 +54,13 @@ export const resolveCatalogCode = (data, generatedTypeCodes = {}) => {
     case "SEMINAR":
       return "SEMINAR_TRINH_BAY";
     case "CONFERENCE":
-      return data?.conferenceRole === "ORG" ? "HT_THAM_GIA" : "HT_THAM_LUAN";
+      if (data?.conferenceRole === "ORG") {
+        const lvl = (data?.conferenceLevel || "").toUpperCase();
+        if (lvl === "INTL") return "HT_TC_QUOCTE";
+        if (lvl === "NAT")  return "HT_TC_QUOCGIA";
+        return "HT_TC_HV";
+      }
+      return "HT_THAM_LUAN";
     case "INTL_PAPER":
       if (data?.intlPaperCategory === "ENG_ACAD") return "BB_TA_HOCVIEN";
       if (data?.intlPaperCategory === "SCOPUS") return "BB_SCOPUS";

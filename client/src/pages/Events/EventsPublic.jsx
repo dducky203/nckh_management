@@ -160,27 +160,24 @@ const EventsPublic = () => {
   };
 
   const handleViewDetail = async (event) => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-
     try {
-      // Gọi API song song: lấy chi tiết event và kiểm tra đã đăng ký chưa
-      const [eventResponse, registrationResponse] = await Promise.all([
-        eventService.getEventById(event.id),
-        eventService.checkRegistration(event.id, user.id),
-      ]);
-
-      // Backend trả về {data: {data: eventDTO, message: ...}}
+      const eventResponse = await eventService.getEventById(event.id);
       const eventData = eventResponse.data?.data || eventResponse.data;
-      const isUserRegistered = registrationResponse?.data ?? false;
+
+      let isUserRegistered = false;
+      if (user) {
+        const registrationResponse = await eventService.checkRegistration(
+          event.id,
+          user.id,
+        );
+        isUserRegistered = registrationResponse?.data ?? false;
+      }
 
       setSelectedEvent(eventData);
       setIsRegistered(isUserRegistered);
       setDetailModalOpen(true);
 
-      if (isAdmin(user) || eventData?.creator === user.id) {
+      if (user && (isAdmin(user) || eventData?.creator === user.id)) {
         setRegistrationsLoading(true);
         try {
           const regResponse = await eventService.getEventRegistrations(

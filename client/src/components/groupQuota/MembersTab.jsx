@@ -2,6 +2,7 @@ import { useState } from "react";
 import PeopleIcon from "@mui/icons-material/People";
 import PersonIcon from "@mui/icons-material/Person";
 import StarIcon from "@mui/icons-material/Star";
+import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 
 function MemberCard({ member, isCurrentUser }) {
   const [expanded, setExpanded] = useState(false);
@@ -79,7 +80,13 @@ function MemberCard({ member, isCurrentUser }) {
   );
 }
 
-export default function MembersTab({ membersData, quota }) {
+export default function MembersTab({
+  membersData,
+  quota,
+  isLeader = false,
+  onManageMembers,
+  manageLoading = false,
+}) {
   if (!membersData?.members?.length) {
     return (
       <div className="p-8 text-center text-slate-400 text-sm">Không có dữ liệu thành viên</div>
@@ -89,13 +96,33 @@ export default function MembersTab({ membersData, quota }) {
   return (
     <div className="divide-y divide-slate-100">
       <div className="px-5 py-4 bg-slate-50/50">
-        <div className="flex items-center gap-2">
-          <PeopleIcon sx={{ fontSize: 18 }} className="text-mainColor" />
-          <h3 className="text-sm font-bold text-slate-800">
-            Thành viên ({membersData.members.length})
-          </h3>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <PeopleIcon sx={{ fontSize: 18 }} className="text-mainColor" />
+              <h3 className="text-sm font-bold text-slate-800">
+                Thành viên ({membersData.members.length})
+              </h3>
+            </div>
+            <p className="text-xs text-slate-400 mt-1">Định mức cá nhân theo chức danh từng người</p>
+          </div>
+          {isLeader && onManageMembers && (
+            <button
+              type="button"
+              onClick={onManageMembers}
+              disabled={manageLoading}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-mainColor text-white hover:brightness-110 disabled:opacity-60 shrink-0"
+            >
+              <ManageAccountsIcon sx={{ fontSize: 16 }} />
+              {manageLoading ? "Đang mở..." : "Quản lý & duyệt thành viên"}
+            </button>
+          )}
         </div>
-        <p className="text-xs text-slate-400 mt-1">Định mức cá nhân theo chức danh từng người</p>
+        {isLeader && (
+          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mt-3">
+            Trưởng nhóm: thêm/xóa thành viên và duyệt đăng ký tham gia nhóm tại mục trên.
+          </p>
+        )}
       </div>
       <div className="divide-y divide-slate-100">
         {membersData.members.map((member) => (

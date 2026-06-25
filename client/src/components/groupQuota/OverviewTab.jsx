@@ -44,12 +44,14 @@ export default function OverviewTab({ quota, stats, onNavigateTab }) {
               </span>
             </p>
             <p className="text-xs text-slate-500">
-              Giờ được tính {round2(stats.myCreditedTotalHours ?? 0)}/{round2(stats.myRequiredTotalHours ?? 0)}
               {stats.groupCompletionPercent != null && (
-                <> · Nhóm <strong>{round2(stats.groupCompletionPercent)}%</strong></>
+                <>Nhóm <strong>{round2(stats.groupCompletionPercent)}%</strong></>
               )}
               {stats.effectiveCompletionPercent != null && (
-                <> · % thực tế <strong>{round2(stats.effectiveCompletionPercent)}%</strong></>
+                <>
+                  {stats.groupCompletionPercent != null ? " · " : ""}
+                  % thực tế <strong>{round2(stats.effectiveCompletionPercent)}%</strong>
+                </>
               )}
             </p>
           </div>
@@ -80,9 +82,8 @@ export default function OverviewTab({ quota, stats, onNavigateTab }) {
       </div>
 
       <p className="text-xs text-slate-500 bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">
-        <strong>% hoàn thành nhóm</strong> = tổng giờ nhóm ÷ định mức chuẩn nhóm (tổng giờ yêu cầu của thành viên).{" "}
-        <strong>Giờ cuối</strong> = (giờ nhóm ÷ {quota.memberCount} TV) + phần vượt tổng nhóm — không cộng chồng
-        (seminar 10h, 4 TV → 2,5h mỗi người). Hoàn thành khi đủ tổng giờ, không cần đạt từng tiêu chí.
+        <strong>% hoàn thành nhóm</strong> = tổng giờ nhóm ÷ định mức chuẩn nhóm (tổng giờ yêu cầu của thành viên).
+        Hoàn thành khi đủ tổng giờ, không cần đạt từng tiêu chí.
       </p>
 
       {!quota.isLeader && personalCriteria.length > 0 && (

@@ -245,7 +245,7 @@ export default function ActivityDataTable({ criteria, actualStats = [], activiti
       g.children.forEach((c) => {
         const actual = actualMap[c.id];
         if (actual) {
-          total += actual.totalQuotaHours || 0;
+          total += actual.ownQuotaHours ?? actual.totalQuotaHours ?? 0;
         }
       });
       map[g.id] = total;
@@ -324,9 +324,9 @@ export default function ActivityDataTable({ criteria, actualStats = [], activiti
                             : 0;
                           const qty = participationCount;
                           const hours = actual
-                            ? actual.totalQuotaHours || 0
+                            ? (actual.ownQuotaHours ?? actual.totalQuotaHours ?? 0)
                             : 0;
-                          const ownH = actual?.ownQuotaHours ?? hours;
+                          const ownH = hours;
                           const teamH = actual?.groupHoursCredit ?? 0;
                           const participants = actual
                             ? Math.round(actual.avgParticipantsN || 0)
@@ -409,10 +409,7 @@ export default function ActivityDataTable({ criteria, actualStats = [], activiti
                                 </span>
                                 {teamH > 0 && (
                                   <span className="block text-[10px] text-blue-600 font-medium">
-                                    gồm {round1(teamH)}h nhóm
-                                    {ownH > hours + 0.01
-                                      ? ` · tự làm ${round1(ownH)}`
-                                      : ""}
+                                    +{round1(teamH)}h từ nhóm
                                   </span>
                                 )}
                               </td>

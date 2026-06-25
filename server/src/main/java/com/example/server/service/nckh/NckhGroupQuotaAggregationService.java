@@ -1,18 +1,15 @@
 package com.example.server.service.nckh;
 
-import java.math.BigDecimal;
 import java.util.*;
 
 import org.springframework.stereotype.Service;
 
 import com.example.server.DTO.nckh.GroupQuotaActivityProjection;
+import com.example.server.DTO.nckh.UserHoursSumProjection;
 import com.example.server.domain.ResearchGroup;
 import com.example.server.domain.User;
-import com.example.server.domain.nckh.UserPlanYear;
 import com.example.server.repository.UserRepository;
 import com.example.server.repository.nckh.NckhActivityRepository;
-import com.example.server.repository.nckh.NckhTieuChiDinhMucRepository;
-import com.example.server.repository.nckh.UserPlanYearRepository;
 import com.example.server.service.researchgroup.ResearchGroupQuotaService;
 
 @Service
@@ -21,20 +18,17 @@ public class NckhGroupQuotaAggregationService {
     private final NckhActivityRepository activityRepo;
     private final NckhComputeService computeService;
     private final UserRepository userRepo;
-    private final UserPlanYearRepository planYearRepo;
-    private final NckhTieuChiDinhMucRepository dinhMucRepo;
+    private final NckhMemberRequiredHoursService memberRequiredHoursService;
 
     public NckhGroupQuotaAggregationService(
             NckhActivityRepository activityRepo,
             NckhComputeService computeService,
             UserRepository userRepo,
-            UserPlanYearRepository planYearRepo,
-            NckhTieuChiDinhMucRepository dinhMucRepo) {
+            NckhMemberRequiredHoursService memberRequiredHoursService) {
         this.activityRepo = activityRepo;
         this.computeService = computeService;
         this.userRepo = userRepo;
-        this.planYearRepo = planYearRepo;
-        this.dinhMucRepo = dinhMucRepo;
+        this.memberRequiredHoursService = memberRequiredHoursService;
     }
 
     /**
@@ -213,21 +207,9 @@ public class NckhGroupQuotaAggregationService {
         double groupCriteriaCompletionRatio = NckhGroupQuotaRules.averageGroupCompletionPercent(groupCompletionRatios);
         double groupCriteriaPctDisplay = round2(groupCriteriaCompletionRatio * 100);
 
-        // Tính định mức chuẩn nhóm = tổng giờ quy đổi phải đạt của tất cả thành viên
-        double groupRequiredTotalHours = 0;
-        String yearStr = String.valueOf(academicYear);
-        for (Integer memberId : memberIds) {
-            User memberUser = userRepo.findById(memberId).orElse(null);
-            if (memberUser == null || memberUser.getIdTitle() == null) continue;
-            String memberChucDanh = memberUser.getIdTitle().getName();
-            String memberCdEnum = mapChucDanhToEnum(memberChucDanh);
-            UserPlanYear memberPlan = planYearRepo.findByUserIdAndAcademicYear(memberId, academicYear)
-                    .orElse(null);
-            if (memberPlan == null) continue;
-            BigDecimal memberReq = dinhMucRepo.sumTongGioByPhuongAnAndChucDanh(
-                    memberPlan.getPlanId(), memberCdEnum, yearStr);
-            groupRequiredTotalHours += memberReq != null ? memberReq.doubleValue() : 0;
-        }
+        // Định mức chuẩn nhóm = tổng giờ yêu cầu của từng TV (theo PA đã chọn)
+        double groupRequiredTotalHours = memberRequiredHoursService.sumRequiredHoursForMembers(
+                memberIds, academicYear);
 
         double totalGroupQuotaHours = sumHoursShare(groupActivities);
         double myTotalHours = sumHoursShare(myActivities);
@@ -237,16 +219,7 @@ public class NckhGroupQuotaAggregationService {
                 ? Math.min(1.0, totalGroupQuotaHours / groupRequiredTotalHours) * 100.0
                 : (totalGroupQuotaHours > 0 ? 100.0 : 0);
 
-        // Đánh giá hoàn thành cá nhân: chỉ cần tổng giờ credited >= giờ yêu cầu
-        // Lấy giờ yêu cầu của cá nhân hiện tại
-        double myRequiredTotalHours = 0;
-        UserPlanYear myPlan = planYearRepo.findByUserIdAndAcademicYear(userId, academicYear).orElse(null);
-        if (myPlan != null) {
-            String myCdEnum = mapChucDanhToEnum(chucDanh);
-            BigDecimal myReq = dinhMucRepo.sumTongGioByPhuongAnAndChucDanh(
-                    myPlan.getPlanId(), myCdEnum, yearStr);
-            myRequiredTotalHours = myReq != null ? myReq.doubleValue() : 0;
-        }
+        double myRequiredTotalHours = memberRequiredHoursService.requiredHoursForUser(userId, academicYear);
 
         boolean groupHoursAchieved = groupHoursCompletionPercent >= 100.0 - 1e-9;
         boolean overallAchieved = isLeader || groupHoursAchieved;
@@ -541,17 +514,87 @@ public class NckhGroupQuotaAggregationService {
         return ResearchGroupQuotaService.sumQtyForCriterion(qtyByCatalog, criterionCode);
     }
 
-    private static double round2(double v) {
-        return Math.round(v * 100.0) / 100.0;
+    /**
+     * Thống kê admin/leader: một lần query tổng giờ nhóm + giờ từng TV (không gọi buildMemberStats N lần).
+     */
+    public Map<String, Object> buildAdminGroupStats(
+            ResearchGroup group,
+            List<Integer> memberIds,
+            int academicYear,
+            Map<Integer, User> userMap) {
+
+        java.math.BigDecimal totalBd = activityRepo.sumApprovedHoursShareForUsers(memberIds, academicYear);
+        double totalGroupHours = totalBd != null ? totalBd.doubleValue() : 0;
+
+        Map<Integer, Double> hoursByUser = new HashMap<>();
+        for (UserHoursSumProjection row : activityRepo.sumApprovedHoursShareGroupedByUser(memberIds, academicYear)) {
+            if (row.getUserId() != null) {
+                hoursByUser.put(row.getUserId(), row.getTotalHours() != null ? row.getTotalHours() : 0);
+            }
+        }
+
+        double groupRequiredTotalHours = memberRequiredHoursService.sumRequiredHoursForMembers(
+                memberIds, academicYear);
+        double groupCompletionPercent = groupRequiredTotalHours > 0
+                ? Math.min(1.0, totalGroupHours / groupRequiredTotalHours) * 100.0
+                : (totalGroupHours > 0 ? 100.0 : 0);
+        boolean groupQuotaAchieved = groupCompletionPercent >= 100.0 - 1e-9;
+
+        List<Map<String, Object>> memberStats = new ArrayList<>();
+        double totalContributedHours = 0;
+        for (Integer memberId : memberIds) {
+            User memberUser = userMap.get(memberId);
+            if (memberUser == null) continue;
+            double contributed = hoursByUser.getOrDefault(memberId, 0.0);
+            totalContributedHours += contributed;
+
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("userId", memberUser.getId());
+            row.put("name", memberUser.getName());
+            String titleRaw = memberUser.getIdTitle() != null ? memberUser.getIdTitle().getName() : null;
+            row.put("chucDanh", titleRaw != null ? NckhChucDanhUtils.toEnumKey(titleRaw) : "KS_CN");
+            row.put("isLeader", group.isLeader(memberUser));
+            row.put("contributedHours", round2(contributed));
+            row.put("creditedHours", round2(contributed));
+            row.put("overallAchieved", groupQuotaAchieved);
+            memberStats.add(row);
+        }
+
+        for (Map<String, Object> row : memberStats) {
+            double contributed = toDouble(row.get("contributedHours"));
+            double participation = totalContributedHours > 0
+                    ? (contributed / totalContributedHours) * 100.0
+                    : 0;
+            row.put("participationPercent", round2(participation));
+        }
+
+        memberStats.sort((a, b) -> {
+            boolean al = Boolean.TRUE.equals(a.get("isLeader"));
+            boolean bl = Boolean.TRUE.equals(b.get("isLeader"));
+            if (al != bl) return al ? -1 : 1;
+            return Double.compare(toDouble(b.get("participationPercent")), toDouble(a.get("participationPercent")));
+        });
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("groupId", group.getId());
+        data.put("groupName", group.getGroupName());
+        data.put("groupType", group.getGroupType());
+        data.put("academicYear", academicYear);
+        data.put("memberCount", memberStats.size());
+        data.put("groupCompletionPercent", round2(groupCompletionPercent));
+        data.put("groupRequiredTotalHours", round2(groupRequiredTotalHours));
+        data.put("groupActualTotalHours", round2(totalGroupHours));
+        data.put("totalContributedHours", round2(totalContributedHours));
+        data.put("groupQuotaAchieved", groupQuotaAchieved);
+        data.put("members", memberStats);
+        return data;
     }
 
-    /** Chuyển tên chức danh từ DB sang enum string cho query. */
-    private String mapChucDanhToEnum(String chucDanh) {
-        if (chucDanh == null) return "KS_CN";
-        String up = chucDanh.toUpperCase().replace(" ", "").replace("/", "_");
-        if (up.contains("GS") || up.contains("PGS")) return "GS_PGS";
-        if (up.contains("TS") || up.contains("TIẾN") || up.contains("TIEN")) return "TS";
-        if (up.contains("THS") || up.contains("THẠC") || up.contains("THAC")) return "THS";
-        return "KS_CN";
+    private static double toDouble(Object v) {
+        return v instanceof Number n ? n.doubleValue() : 0;
+    }
+
+    private static double round2(double v) {
+        return Math.round(v * 100.0) / 100.0;
     }
 }

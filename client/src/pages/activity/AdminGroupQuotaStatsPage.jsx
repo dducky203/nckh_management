@@ -73,7 +73,7 @@ export default function AdminGroupQuotaStatsPage() {
             <div>
               <h1 className="text-xl font-extrabold text-slate-800">Thống kê hoàn thành định mức nhóm</h1>
               <p className="mt-1 text-sm font-medium text-slate-500">
-                Dành cho admin/assistant và leader nhóm để theo dõi % hoàn thành và mức độ tham gia của thành viên.
+                Theo dõi % hoàn thành tập thể và mức độ đóng góp giờ NCKH của từng thành viên.
               </p>
             </div>
           </div>
@@ -153,24 +153,24 @@ export default function AdminGroupQuotaStatsPage() {
                       <th className="px-3 py-2 text-left">Chức danh</th>
                       <th className="px-3 py-2 text-right">Giờ đóng góp</th>
                       <th className="px-3 py-2 text-right">% tham gia nhóm</th>
-                      <th className="px-3 py-2 text-right">% hoàn thành nhóm</th>
-                      <th className="px-3 py-2 text-right">Đạt định mức</th>
+                      <th className="px-3 py-2 text-right">Nhóm đạt định mức</th>
                     </tr>
                   </thead>
                   <tbody>
                     {stats.members?.map((m) => (
                       <tr key={m.userId} className="border-t border-slate-100">
                         <td className="px-3 py-2 font-semibold text-slate-800">
-                          {m.name} {m.isLeader ? <span className="text-xs text-mainColor">(Leader)</span> : null}
+                          {m.name} {m.isLeader ? <span className="text-xs text-mainColor">(Trưởng nhóm)</span> : null}
                         </td>
                         <td className="px-3 py-2 text-slate-600">{m.chucDanh || "-"}</td>
-                        <td className="px-3 py-2 text-right text-slate-700">{formatHours(m.creditedHours)}</td>
+                        <td className="px-3 py-2 text-right text-slate-700">
+                          {formatHours(m.contributedHours ?? m.creditedHours)}
+                        </td>
                         <td className="px-3 py-2 text-right font-semibold text-indigo-600">
                           {formatPct(m.participationPercent)}
                         </td>
-                        <td className="px-3 py-2 text-right">{formatPct(m.groupCompletionPercent)}</td>
                         <td className="px-3 py-2 text-right">
-                          {m.overallAchieved ? (
+                          {(stats.groupQuotaAchieved ?? m.overallAchieved) ? (
                             <span className="font-semibold text-emerald-600">Đạt</span>
                           ) : (
                             <span className="text-rose-500">Chưa đạt</span>

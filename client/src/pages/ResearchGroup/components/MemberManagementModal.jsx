@@ -52,6 +52,7 @@ const MemberManagementModal = ({
   const [joinRequestsLoading, setJoinRequestsLoading] = useState(false);
   const fileInputRef = useRef(null);
   const searchContainerRef = useRef(null);
+  const isLecturerGroup = group?.type === "lecturer";
 
   useEffect(() => {
     if (isOpen && group) {
@@ -379,6 +380,12 @@ const MemberManagementModal = ({
                   <h3 className="text-sm font-bold text-amber-900 mb-2">
                     Đăng ký tham gia chờ duyệt ({pendingJoinRequests.length})
                   </h3>
+                  {isLecturerGroup && (
+                    <p className="text-xs text-amber-800/90 mb-2">
+                      Nhóm giảng viên: thành viên mới phải đăng ký tại trang Nhóm NCKH → tab Nhóm Giảng viên.
+                      Bạn duyệt tại đây — không thêm trực tiếp.
+                    </p>
+                  )}
                   {joinRequestsLoading ? (
                     <LoadingSpinner size="sm" />
                   ) : pendingJoinRequests.length === 0 ? (
@@ -420,7 +427,8 @@ const MemberManagementModal = ({
                 </div>
               )}
 
-              {/* Add Member Section */}
+              {!isLecturerGroup && (
+              <>
               <div className="mb-4 flex gap-2">
                 <button
                   onClick={() => setShowAddMember(!showAddMember)}
@@ -537,7 +545,8 @@ const MemberManagementModal = ({
                   )}
                 </div>
               )}
-            </div>
+              </>
+              )}
 
             {/* Members List - Table Format */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -727,6 +736,7 @@ const MemberManagementModal = ({
           </div>
         </div>
       </div>
+    </div>
 
       {/* Delete Confirmation Modal */}
       <Modal

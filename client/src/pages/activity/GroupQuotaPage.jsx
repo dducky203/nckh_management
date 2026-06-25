@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import TableChartIcon from "@mui/icons-material/TableChart";
@@ -8,8 +8,10 @@ import ListAltIcon from "@mui/icons-material/ListAlt";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 
 import groupQuotaService from "../../services/groupQuotaService";
+import researchGroupService from "../../services/researchGroupService";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useToast } from "../../context/ToastContext";
+import { AuthContext } from "../../context/AuthContext";
 import PageHeader from "../../components/groupQuota/PageHeader";
 import EmptyGroupQuota from "../../components/groupQuota/EmptyGroupQuota";
 import GroupInfoCard from "../../components/groupQuota/GroupInfoCard";
@@ -19,6 +21,7 @@ import MatrixTab from "../../components/groupQuota/MatrixTab";
 import EvaluationTab from "../../components/groupQuota/EvaluationTab";
 import MembersTab from "../../components/groupQuota/MembersTab";
 import ActivitiesTab from "../../components/groupQuota/ActivitiesTab";
+import MemberManagementModal from "../ResearchGroup/components/MemberManagementModal";
 import { getTypeConfig, mapChucDanhToKey } from "../../components/groupQuota/utils";
 
 const TABS = [
@@ -32,6 +35,7 @@ const TABS = [
 export default function GroupQuotaPage() {
   const toast = useToast();
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
 
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
@@ -43,6 +47,43 @@ export default function GroupQuotaPage() {
   const [stats, setStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
   const [academicYear, setAcademicYear] = useState(new Date().getFullYear());
+
+  const [memberModalOpen, setMemberModalOpen] = useState(false);
+  const [managementGroup, setManagementGroup] = useState(null);
+  const [managementLoading, setManagementLoading] = useState(false);
+
+  const reloadMembersData = useCallback(async () => {
+    try {
+      const membersRes = await groupQuotaService.getGroupMembers();
+      setMembersData(membersRes);
+    } catch (e) {
+      toast.error(e?.message || "Không tải lại danh sách thành viên");
+    }
+  }, [toast]);
+
+  const openMemberManagement = useCallback(async () => {
+    if (!quota?.groupId) return;
+    setManagementLoading(true);
+    try {
+      const response = await researchGroupService.getMyGroups();
+      const groups = response?.data ?? response ?? [];
+      let group = groups.find((g) => Number(g.id) === Number(quota.groupId));
+      if (!group) {
+        const detail = await researchGroupService.getGroupById(quota.groupId);
+        group = detail?.data ?? detail;
+      }
+      if (!group) {
+        toast.error("Không tìm thấy thông tin nhóm");
+        return;
+      }
+      setManagementGroup(group);
+      setMemberModalOpen(true);
+    } catch (e) {
+      toast.error(e?.message || "Không mở được quản lý thành viên");
+    } finally {
+      setManagementLoading(false);
+    }
+  }, [quota?.groupId, toast]);
 
   const loadStats = useCallback(
     async (year) => {
@@ -106,7 +147,12 @@ export default function GroupQuotaPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24 font-sans">
-      <PageHeader onBack={() => navigate(-1)} />
+      <PageHeader
+        onBack={() => navigate(-1)}
+        isLeader={quota.isLeader}
+        onManageMembers={quota.isLeader ? openMemberManagement : undefined}
+        manageLoading={managementLoading}
+      />
 
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -187,11 +233,30 @@ export default function GroupQuotaPage() {
               <MatrixTab matrix={matrix} typeConfig={typeConfig} myChucDanhKey={myChucDanhKey} />
             )}
             {activeTab === "members" && (
-              <MembersTab membersData={membersData} quota={quota} />
+              <MembersTab
+                membersData={membersData}
+                quota={quota}
+                isLeader={quota.isLeader}
+                onManageMembers={quota.isLeader ? openMemberManagement : undefined}
+                manageLoading={managementLoading}
+              />
             )}
           </div>
         </div>
       </div>
+
+      {memberModalOpen && managementGroup && (
+        <MemberManagementModal
+          isOpen={memberModalOpen}
+          onClose={() => {
+            setMemberModalOpen(false);
+            setManagementGroup(null);
+          }}
+          group={managementGroup}
+          currentUserId={user?.id}
+          onRefresh={reloadMembersData}
+        />
+      )}
     </div>
   );
 }

@@ -16,7 +16,13 @@ public class PersonalQuotaSummaryDto {
     /** Tổng giờ tối thiểu phải đạt theo phương án + chức danh. */
     public double requiredTotalHours;
 
-    /** Tổng giờ thực tế đã đạt (APPROVED). */
+    /** Tổng giờ tự làm (chỉ hoạt động cá nhân, không cộng phần nhóm chia sang). */
+    public double ownActualTotalHours;
+
+    /** Tổng giờ được tính sau khi cộng phần nhóm (dùng xét đạt khi cần). */
+    public Double creditedActualTotalHours;
+
+    /** Tổng giờ thực tế đã đạt — bằng {@link #ownActualTotalHours} (giờ tự làm). */
     public double actualTotalHours;
 
     /** % hoàn thành cá nhân = min(actualTotalHours / requiredTotalHours, 1.0) × 100. */

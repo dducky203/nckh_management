@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Add, ArrowForward } from "@mui/icons-material";
+import { Add, ArrowForward, Login } from "@mui/icons-material";
 import Button from "../../../../components/common/Button";
 import { hasNckhStaffAccess } from "../../../../utils/permissions";
 import researchGroupService from "../../../../services/researchGroupService";
@@ -49,15 +49,21 @@ const EventHero = ({ user }) => {
             </Link>
           ) : user ? (
             <p className="text-white/90 text-sm">
-              Chỉ trưởng nhóm và thư ký nhóm được tạo seminar/hội thảo. Bạn có thể đăng ký tham gia tại danh sách bên dưới.
+              Xem danh sách sự kiện bên dưới và bấm <strong>Đăng ký</strong> để tham gia.
             </p>
           ) : (
-            <Link to="/login">
-              <Button className="bg-white !text-mainColor hover:!bg-gray-100 ">
-                Đăng nhập để tham gia sự kiện
-                <ArrowForward className="ml-2" fontSize="small" />
-              </Button>
-            </Link>
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-white/90 text-sm">
+                Mọi người đều có thể xem sự kiện. Đăng nhập để đăng ký tham gia.
+              </p>
+              <Link to="/login">
+                <Button className="bg-white !text-mainColor hover:!bg-gray-100 ">
+                  <Login className="mr-2" fontSize="small" />
+                  Đăng nhập
+                  <ArrowForward className="ml-2" fontSize="small" />
+                </Button>
+              </Link>
+            </div>
           )}
         </div>
       </div>

@@ -17,6 +17,7 @@ import com.example.server.DTO.response.ResearchGroupDTO;
 import com.example.server.DTO.response.ResearchGroupDocumentDTO;
 import com.example.server.DTO.response.ResearchGroupJoinRequestDTO;
 import com.example.server.domain.ResearchGroupMember;
+import com.example.server.domain.User;
 import com.example.server.exception.ExcelValidationException;
 import com.example.server.repository.ResearchGroupMemberRepository;
 import com.example.server.service.ResearchGroupService;
@@ -45,6 +46,10 @@ public class ResearchGroupController {
         if (userId == null) {
             throw new RuntimeException("Vui lòng đăng nhập");
         }
+        if ("lecturer".equalsIgnoreCase(request.getType())) {
+            User user = SecurityUtils.getCurrentUser();
+            SecurityUtils.assertCanViewLecturerResearchGroups(user);
+        }
 
         ResearchGroupDTO group = researchGroupService.createGroup(userId, request);
         String message = "student".equals(request.getType())
@@ -67,6 +72,9 @@ public class ResearchGroupController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") String sortDir) {
+        if ("lecturer".equalsIgnoreCase(type)) {
+            SecurityUtils.assertCurrentUserCanViewLecturerResearchGroups();
+        }
         Sort.Direction direction = sortDir.equalsIgnoreCase("ASC") ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
@@ -88,6 +96,11 @@ public class ResearchGroupController {
     public ResponseEntity<SuccessResponseDTO<ResearchGroupDTO>> getGroupById(
             @PathVariable Integer groupId) {
         ResearchGroupDTO group = researchGroupService.getGroupById(groupId);
+        User currentUser = SecurityUtils.getCurrentUser();
+        if (currentUser != null
+                && "lecturer".equalsIgnoreCase(group.getType())) {
+            SecurityUtils.assertCanViewLecturerResearchGroups(currentUser);
+        }
         return ResponseEntity.ok(new SuccessResponseDTO<>(group, "Lấy chi tiết nhóm thành công"));
     }
 
@@ -114,6 +127,12 @@ public class ResearchGroupController {
         }
 
         List<ResearchGroupDTO> groups = researchGroupService.getGroupsByUser(userId);
+        User currentUser = SecurityUtils.getCurrentUser();
+        if (SecurityUtils.isStudent(currentUser)) {
+            groups = groups.stream()
+                    .filter(g -> g.getType() == null || !"lecturer".equalsIgnoreCase(g.getType()))
+                    .toList();
+        }
         return ResponseEntity.ok(new SuccessResponseDTO<>(groups, "Lấy danh sách nhóm thành công"));
     }
 
@@ -137,6 +156,12 @@ public class ResearchGroupController {
         Integer userId = SecurityUtils.getCurrentUserId();
         if (userId == null) {
             throw new RuntimeException("Vui lòng đăng nhập");
+        }
+        ResearchGroupDTO groupDto = researchGroupService.getGroupById(groupId);
+        User currentUser = SecurityUtils.getCurrentUser();
+        if (currentUser != null && groupDto != null
+                && "lecturer".equalsIgnoreCase(groupDto.getType())) {
+            SecurityUtils.assertCanViewLecturerResearchGroups(currentUser);
         }
         String message = body != null ? body.get("message") : null;
         ResearchGroupJoinRequestDTO dto = researchGroupService.requestJoinGroup(groupId, userId, message);

@@ -37,6 +37,7 @@ public class NckhActivityService {
     private final UserRepository userRepo;
     private final ResearchGroupQuotaService quotaGroupService;
     private final ResearchGroupMemberRepository groupMemberRepo;
+    private final NckhMemberRequiredHoursService memberRequiredHoursService;
 
     public NckhActivityService(
             NckhActivityRepository activityRepo,
@@ -46,7 +47,8 @@ public class NckhActivityService {
             NckhTieuChiDinhMucRepository dinhMucRepo,
             UserRepository userRepo,
             ResearchGroupQuotaService quotaGroupService,
-            ResearchGroupMemberRepository groupMemberRepo) {
+            ResearchGroupMemberRepository groupMemberRepo,
+            NckhMemberRequiredHoursService memberRequiredHoursService) {
         this.activityRepo = activityRepo;
         this.dinhMucRepo = dinhMucRepo;
         this.contribRepo = contribRepo;
@@ -55,6 +57,7 @@ public class NckhActivityService {
         this.userRepo = userRepo;
         this.quotaGroupService = quotaGroupService;
         this.groupMemberRepo = groupMemberRepo;
+        this.memberRequiredHoursService = memberRequiredHoursService;
     }
 
     @Transactional
@@ -102,9 +105,11 @@ public class NckhActivityService {
 
         Map<String, String> generatedTypeCodes = new LinkedHashMap<>();
         generatedTypeCodes.put("SEMINAR", "SEMINAR_TRINH_BAY");
-        generatedTypeCodes.put("CONFERENCE.ORG.INTL", "HT_THAM_GIA");
-        generatedTypeCodes.put("CONFERENCE.ORG.NAT", "HT_THAM_GIA");
-        generatedTypeCodes.put("CONFERENCE.ORG.ACAD", "HT_THAM_GIA");
+        // ORG = Tổ chức hội thảo → catalog Bảng 2 NCM (HT_TC_*)
+        generatedTypeCodes.put("CONFERENCE.ORG.INTL", "HT_TC_QUOCTE");
+        generatedTypeCodes.put("CONFERENCE.ORG.NAT",  "HT_TC_QUOCGIA");
+        generatedTypeCodes.put("CONFERENCE.ORG.ACAD", "HT_TC_HV");
+        // PRES = Trình bày tham luận
         generatedTypeCodes.put("CONFERENCE.PRES.INTL", "HT_THAM_LUAN");
         generatedTypeCodes.put("CONFERENCE.PRES.NAT", "HT_THAM_LUAN");
         generatedTypeCodes.put("CONFERENCE.PRES.ACAD", "HT_THAM_LUAN");
@@ -425,69 +430,44 @@ public class NckhActivityService {
 
     public DuplicateCheckResult checkDuplicate(CreateActivityRequest req, Long excludeActivityId, Integer userId) {
         NckhActivity probe = toProbeActivity(req);
-        Optional<NckhActivity> existing = findDuplicate(probe, excludeActivityId);
+        Optional<NckhActivity> existing = findDuplicate(probe, excludeActivityId, userId);
         return existing.map(nckhActivity -> DuplicateCheckResult.found(
                 nckhActivity.getId(),
                 buildDuplicateMessage(nckhActivity, userId))).orElseGet(DuplicateCheckResult::ok);
     }
 
     private void assertNoDuplicate(NckhActivity activity, Long excludeActivityId, Integer userId) {
-        findDuplicate(activity, excludeActivityId).ifPresent(existing -> {
+        findDuplicate(activity, excludeActivityId, userId).ifPresent(existing -> {
             throw new ErrorException(buildDuplicateMessage(existing, userId), HttpStatus.CONFLICT);
         });
     }
 
-    private Optional<NckhActivity> findDuplicate(NckhActivity activity, Long excludeActivityId) {
+    private Optional<NckhActivity> findDuplicate(NckhActivity activity, Long excludeActivityId, Integer userId) {
         if (activity.getAcademicYear() == null) {
             return Optional.empty();
         }
 
-        String catalogCode = activity.getCatalogCode();
-        if (catalogCode == null || catalogCode.isBlank()) {
+        String normTitle = normalizeText(activity.getTitle());
+        LocalDate activityDate = activity.getActivityDate();
+
+        if (normTitle.isEmpty() || activityDate == null) {
             return Optional.empty();
         }
-
-        String normId = normalizeIdentifier(activity.getIdentifierCode());
-        String normLink = normalizeUrl(activity.getExternalLink());
-        String normTitle = normalizeText(activity.getTitle());
-        String normPublication = normalizeText(activity.getPublicationName());
-        LocalDate activityDate = activity.getActivityDate();
 
         List<NckhActivity> candidates = activityRepo.findActiveByAcademicYearExcluding(
                 activity.getAcademicYear(),
                 excludeActivityId);
 
         for (NckhActivity other : candidates) {
-            if (isDuplicate(other, catalogCode, normId, normLink, normTitle, normPublication, activityDate)) {
+            if (isDuplicate(other, normTitle, activityDate, userId)) {
                 return Optional.of(other);
             }
         }
         return Optional.empty();
     }
 
-    private boolean isDuplicate(
-            NckhActivity other,
-            String catalogCode,
-            String normId,
-            String normLink,
-            String normTitle,
-            String normPublication,
-            LocalDate activityDate) {
-        String otherId = normalizeIdentifier(other.getIdentifierCode());
-        if (!normId.isEmpty() && normId.equals(otherId)) {
-            return true;
-        }
-
-        if (!catalogCode.equals(other.getCatalogCode())) {
-            return false;
-        }
-
-        String otherLink = normalizeUrl(other.getExternalLink());
-        if (!normLink.isEmpty() && normLink.equals(otherLink)) {
-            return true;
-        }
-
-        if (normTitle.isEmpty() || activityDate == null || other.getActivityDate() == null) {
+    private boolean isDuplicate(NckhActivity other, String normTitle, LocalDate activityDate, Integer userId) {
+        if (other.getActivityDate() == null) {
             return false;
         }
 
@@ -499,9 +479,12 @@ public class NckhActivityService {
             return false;
         }
 
-        String otherPublication = normalizeText(other.getPublicationName());
-        return normPublication.isEmpty() || otherPublication.isEmpty()
-                || normPublication.equals(otherPublication);
+        boolean isMember = contribRepo.findByActivityId(other.getId()).stream()
+                .anyMatch(c -> userId != null && userId.equals(c.getUserId()));
+                
+        boolean isCreator = userId != null && userId.equals(other.getCreatedByUserId());
+
+        return isMember || isCreator;
     }
 
     private NckhActivity toProbeActivity(CreateActivityRequest req) {
@@ -522,8 +505,7 @@ public class NckhActivityService {
 
         if (alreadyMember) {
             return String.format(
-                    "Hoạt động này đã được khai báo (mã #%d) và bạn đã nằm trong danh sách tham gia.",
-                    existing.getId());
+                    "Hoạt động này đã được khai báo.");
         }
 
         String creatorName = userRepo.findById(existing.getCreatedByUserId())
@@ -675,21 +657,25 @@ public class NckhActivityService {
         String chucDanh = user.getIdTitle().getName();
         Integer phuongAn = userPlan.getPlanId();
         String yearStr = String.valueOf(academicYear);
+        String chucDanhEnum = NckhChucDanhUtils.toEnumKey(chucDanh);
 
         summary.planId = phuongAn;
         summary.chucDanh = chucDanh;
 
         List<ActivityStatisticsResponse> personal = activityRepo.getStatisticsByUserAndYear(
-                userId, academicYear, phuongAn, chucDanh);
+                userId, academicYear, phuongAn, chucDanhEnum);
+
+        double ownActualTotalHours = 0;
+        for (ActivityStatisticsResponse row : personal) {
+            ownActualTotalHours += row.getTotalQuotaHours() != null ? row.getTotalQuotaHours() : 0;
+        }
 
         Optional<ResearchGroup> quotaGroup = quotaGroupService.findApprovedQuotaGroup(userId);
         summary.inQuotaGroup = quotaGroup.isPresent();
         if (quotaGroup.isPresent()) {
-            List<Integer> memberIds = groupMemberRepo.findByGroupId(quotaGroup.get().getId()).stream()
-                    .map(ResearchGroupMember::getUserId)
-                    .filter(Objects::nonNull)
-                    .distinct()
-                    .toList();
+            ResearchGroup group = quotaGroup.get();
+            List<ResearchGroupMember> groupMembers = groupMemberRepo.findByGroupId(group.getId());
+            List<Integer> memberIds = memberRequiredHoursService.collectQuotaMemberUserIds(group, groupMembers);
             int memberCount = Math.max(1, memberIds.size());
 
             if (!memberIds.isEmpty()) {
@@ -702,17 +688,12 @@ public class NckhActivityService {
                     double groupHours = groupRow.getTotalQuotaHours() != null ? groupRow.getTotalQuotaHours() : 0;
                     if (groupHours <= 0) continue;
                     String code = groupRow.getCatalogCode();
-                    double myHours = 0;
                     ActivityStatisticsDto existing = byCatalog.get(code);
-                    if (existing != null) {
-                        myHours = existing.getOwnQuotaHours() != null ? existing.getOwnQuotaHours() : 0;
-                        existing.applyGroupHoursFromTeam(myHours, groupHours, memberCount);
-                    } else {
-                        ActivityStatisticsDto created = ActivityStatisticsDto.fromGroupRow(groupRow, 0);
-                        created.setPlanContext(phuongAn, chucDanh);
-                        created.applyGroupHoursFromTeam(0, groupHours, memberCount);
-                        byCatalog.put(code, created);
+                    if (existing == null) {
+                        continue;
                     }
+                    double myHours = existing.getOwnQuotaHours() != null ? existing.getOwnQuotaHours() : 0;
+                    existing.applyGroupHoursFromTeam(myHours, groupHours, memberCount);
                 }
 
                 personal = new ArrayList<>(byCatalog.values());
@@ -722,23 +703,30 @@ public class NckhActivityService {
         summary.criteria = personal;
 
         // 3. Tính tổng giờ yêu cầu cho phương án + chức danh
-        String chucDanhEnum = mapChucDanhToEnum(chucDanh);
         java.math.BigDecimal requiredBd = dinhMucRepo.sumTongGioByPhuongAnAndChucDanh(
                 phuongAn, chucDanhEnum, yearStr);
         double requiredTotalHours = requiredBd != null ? requiredBd.doubleValue() : 0;
         summary.requiredTotalHours = requiredTotalHours;
 
-        // 4. Tính tổng giờ thực tế
-        double actualTotalHours = 0;
+        double creditedActualTotalHours = 0;
         for (ActivityStatisticsResponse stat : personal) {
-            actualTotalHours += stat.getTotalQuotaHours() != null ? stat.getTotalQuotaHours() : 0;
+            if (stat instanceof ActivityStatisticsDto dto
+                    && dto.getCreditedQuotaHours() != null) {
+                creditedActualTotalHours += dto.getCreditedQuotaHours();
+            } else {
+                creditedActualTotalHours += stat.getTotalQuotaHours() != null ? stat.getTotalQuotaHours() : 0;
+            }
         }
-        summary.actualTotalHours = actualTotalHours;
 
-        // 5. Tính % hoàn thành cá nhân
+        summary.ownActualTotalHours = round2(ownActualTotalHours);
+        summary.actualTotalHours = summary.ownActualTotalHours;
+        summary.creditedActualTotalHours = quotaGroup.isPresent()
+                ? round2(creditedActualTotalHours) : null;
+
+        // 5. Tính % hoàn thành cá nhân (theo giờ tự làm)
         double personalPercent = requiredTotalHours > 0
-                ? Math.min(1.0, actualTotalHours / requiredTotalHours) * 100.0
-                : (actualTotalHours > 0 ? 100.0 : 0);
+                ? Math.min(1.0, ownActualTotalHours / requiredTotalHours) * 100.0
+                : (ownActualTotalHours > 0 ? 100.0 : 0);
         summary.personalCompletionPercent = round2(personalPercent);
 
         // 6. Tính % nhóm (nếu user thuộc nhóm)
@@ -746,29 +734,10 @@ public class NckhActivityService {
             ResearchGroup group = quotaGroup.get();
             summary.groupName = group.getGroupName();
 
-            List<ResearchGroupMember> members = groupMemberRepo.findByGroupId(group.getId());
-            List<Integer> memberIds = members.stream()
-                    .map(ResearchGroupMember::getUserId)
-                    .filter(Objects::nonNull)
-                    .distinct()
-                    .toList();
+            List<ResearchGroupMember> groupMembers = groupMemberRepo.findByGroupId(group.getId());
+            List<Integer> memberIds = memberRequiredHoursService.collectQuotaMemberUserIds(group, groupMembers);
 
-            // Tính định mức chuẩn nhóm = tổng giờ tối thiểu của tất cả thành viên
-            double groupRequired = 0;
-            for (Integer memberId : memberIds) {
-                User memberUser = userRepo.findById(memberId).orElse(null);
-                if (memberUser == null || memberUser.getIdTitle() == null) continue;
-                String memberChucDanh = memberUser.getIdTitle().getName();
-                String memberCdEnum = mapChucDanhToEnum(memberChucDanh);
-
-                UserPlanYear memberPlan = planYearRepo.findByUserIdAndAcademicYear(memberId, academicYear)
-                        .orElse(null);
-                if (memberPlan == null) continue;
-
-                java.math.BigDecimal memberReq = dinhMucRepo.sumTongGioByPhuongAnAndChucDanh(
-                        memberPlan.getPlanId(), memberCdEnum, yearStr);
-                groupRequired += memberReq != null ? memberReq.doubleValue() : 0;
-            }
+            double groupRequired = memberRequiredHoursService.sumRequiredHoursForMembers(memberIds, academicYear);
             summary.groupRequiredTotalHours = groupRequired;
 
             // Tính tổng giờ thực tế nhóm
@@ -803,14 +772,9 @@ public class NckhActivityService {
         return summary;
     }
 
-    /** Chuyển tên chức danh từ DB sang enum string cho query. */
+    /** @deprecated dùng {@link NckhChucDanhUtils#toEnumKey(String)} */
     private String mapChucDanhToEnum(String chucDanh) {
-        if (chucDanh == null) return "KS_CN";
-        String up = chucDanh.toUpperCase().replace(" ", "").replace("/", "_");
-        if (up.contains("GS") || up.contains("PGS")) return "GS_PGS";
-        if (up.contains("TS") || up.contains("TIẾN") || up.contains("TIEN")) return "TS";
-        if (up.contains("THS") || up.contains("THẠC") || up.contains("THAC")) return "THS";
-        return "KS_CN";
+        return NckhChucDanhUtils.toEnumKey(chucDanh);
     }
 
     private static double round2(double v) {

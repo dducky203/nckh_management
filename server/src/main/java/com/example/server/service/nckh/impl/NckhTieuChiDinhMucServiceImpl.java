@@ -115,7 +115,9 @@ public class NckhTieuChiDinhMucServiceImpl implements NckhTieuChiDinhMucService 
         if (phuongAn == null || chucDanh == null) {
             return mapper.toResponseList(repository.findAllByYear(year));
         }
-        return mapper.toResponseList(repository.findByPhuongAnAndChucDanh(phuongAn, chucDanh, year));
+        NckhTieuChiDinhMuc.ChucDanh parsed = parseChucDanh(chucDanh);
+        String chucDanhKey = parsed != null ? parsed.name() : chucDanh.trim();
+        return mapper.toResponseList(repository.findByPhuongAnAndChucDanh(phuongAn, chucDanhKey, year));
     }
 
     @Override

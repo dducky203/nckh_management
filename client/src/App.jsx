@@ -103,7 +103,7 @@ function App() {
                     <Route
                       path="/activity"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <Navigate to="/activity/user" replace />
                         </ProtectedRoute>
                       }
@@ -111,7 +111,7 @@ function App() {
                     <Route
                       path="/activity/user"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <ActivityUserFeaturePage />
                         </ProtectedRoute>
                       }
@@ -135,7 +135,7 @@ function App() {
                     <Route
                       path="/activity/history"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <ActivityHistoryPage />
                         </ProtectedRoute>
                       }
@@ -183,7 +183,7 @@ function App() {
                     <Route
                       path="/activity/admin/group-quota"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <AdminGroupQuotaStatsPage />
                         </ProtectedRoute>
                       }
@@ -191,7 +191,7 @@ function App() {
                     <Route
                       path="/activity/declarations/seminar"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <SeminarDeclarationPage />
                         </ProtectedRoute>
                       }
@@ -199,7 +199,7 @@ function App() {
                     <Route
                       path="/activity/declarations/conference"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <ConferenceDeclarationPage />
                         </ProtectedRoute>
                       }
@@ -207,7 +207,7 @@ function App() {
                     <Route
                       path="/activity/declarations/international-paper"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <InternationalPaperDeclarationPage />
                         </ProtectedRoute>
                       }
@@ -215,7 +215,7 @@ function App() {
                     <Route
                       path="/activity/declarations/vietnamese-paper"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <VietnamesePaperDeclarationPage />
                         </ProtectedRoute>
                       }
@@ -223,7 +223,7 @@ function App() {
                     <Route
                       path="/activity/declarations/proceeding"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <ProceedingDeclarationPage />
                         </ProtectedRoute>
                       }
@@ -231,7 +231,7 @@ function App() {
                     <Route
                       path="/activity/declarations/review-paper"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <ReviewPaperDeclarationPage />
                         </ProtectedRoute>
                       }
@@ -239,7 +239,7 @@ function App() {
                     <Route
                       path="/activity/declarations/tech-consult"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <TechConsultDeclarationPage />
                         </ProtectedRoute>
                       }
@@ -247,7 +247,7 @@ function App() {
                     <Route
                       path="/activity/declarations/tech-procedure"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <TechProcedureDeclarationPage />
                         </ProtectedRoute>
                       }
@@ -255,7 +255,7 @@ function App() {
                     <Route
                       path="/activity/declarations/proposal"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <ProposalDeclarationPage />
                         </ProtectedRoute>
                       }
@@ -263,7 +263,7 @@ function App() {
                     <Route
                       path="/activity/declarations/approved-task"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <ApprovedTaskDeclarationPage />
                         </ProtectedRoute>
                       }
@@ -271,7 +271,7 @@ function App() {
                     <Route
                       path="/activity/declarations/council"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <CouncilDeclarationPage />
                         </ProtectedRoute>
                       }
@@ -279,7 +279,7 @@ function App() {
                     <Route
                       path="/activity/declarations/expert-invite"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <ExpertInviteDeclarationPage />
                         </ProtectedRoute>
                       }
@@ -287,7 +287,7 @@ function App() {
                     <Route
                       path="/activity/declarations/other-activity"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <OtherActivityDeclarationPage />
                         </ProtectedRoute>
                       }
@@ -342,7 +342,7 @@ function App() {
                     <Route
                       path="/research-groups/advisor-approval"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <AdvisorGroupApprovalPage />
                         </ProtectedRoute>
                       }
@@ -358,7 +358,7 @@ function App() {
                     <Route
                       path="/research/projects"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <ResearchProjects />
                         </ProtectedRoute>
                       }
@@ -366,7 +366,7 @@ function App() {
                     <Route
                       path="/research/publications"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <div className="p-8 text-center">
                             Trang công bố khoa học
                           </div>
@@ -376,7 +376,7 @@ function App() {
                     <Route
                       path="/research/conferences"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <div className="p-8 text-center">
                             Trang hội nghị khoa học
                           </div>
@@ -386,7 +386,7 @@ function App() {
                     <Route
                       path="/research/competitions"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <div className="p-8 text-center">
                             Trang cuộc thi khoa học
                           </div>
@@ -396,7 +396,7 @@ function App() {
                     <Route
                       path="/research/seminars"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requireQuotaAccess>
                           <div className="p-8 text-center">
                             Trang seminar & workshop
                           </div>

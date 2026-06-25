@@ -2,6 +2,7 @@ package com.example.server.repository.nckh;
 
 import com.example.server.DTO.nckh.ActivityStatisticsResponse;
 import com.example.server.DTO.nckh.GroupQuotaActivityProjection;
+import com.example.server.DTO.nckh.UserHoursSumProjection;
 import com.example.server.domain.nckh.NckhActivity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -146,6 +147,24 @@ public interface NckhActivityRepository extends JpaRepository<NckhActivity, Long
             "ORDER BY a.activity_date DESC, a.id DESC",
             nativeQuery = true)
     List<GroupQuotaActivityProjection> findApprovedActivitiesForUsers(
+            @Param("userIds") List<Integer> userIds,
+            @Param("academicYear") Integer academicYear);
+
+    @Query(value = "SELECT COALESCE(SUM(b.hours_share), 0) FROM nckh_activity a " +
+            "INNER JOIN nckh_activity_contributor b ON a.id = b.activity_id " +
+            "WHERE b.user_id IN (:userIds) AND a.academic_year = :academicYear AND a.status = 'APPROVED'",
+            nativeQuery = true)
+    java.math.BigDecimal sumApprovedHoursShareForUsers(
+            @Param("userIds") List<Integer> userIds,
+            @Param("academicYear") Integer academicYear);
+
+    @Query(value = "SELECT b.user_id AS userId, COALESCE(SUM(b.hours_share), 0) AS totalHours " +
+            "FROM nckh_activity a " +
+            "INNER JOIN nckh_activity_contributor b ON a.id = b.activity_id " +
+            "WHERE b.user_id IN (:userIds) AND a.academic_year = :academicYear AND a.status = 'APPROVED' " +
+            "GROUP BY b.user_id",
+            nativeQuery = true)
+    List<UserHoursSumProjection> sumApprovedHoursShareGroupedByUser(
             @Param("userIds") List<Integer> userIds,
             @Param("academicYear") Integer academicYear);
 }

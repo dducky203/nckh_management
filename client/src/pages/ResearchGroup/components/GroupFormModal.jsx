@@ -254,7 +254,24 @@ const GroupFormModal = ({
         setAdvisorSearchResults([]);
         setAdvisorPage(0);
         setAdvisorHasMore(false);
-        setFormData({ ...formData, type: value, advisorId: null });
+        const leaderOnly = selectedMembers.filter((m) => m.id === currentUserId);
+        if (leaderOnly.length === 0 && currentUserId) {
+          setSelectedMembers([{ id: currentUserId }]);
+          setFormData({
+            ...formData,
+            type: value,
+            advisorId: null,
+            memberIds: [currentUserId],
+          });
+        } else {
+          setSelectedMembers(leaderOnly);
+          setFormData({
+            ...formData,
+            type: value,
+            advisorId: null,
+            memberIds: leaderOnly.map((m) => m.id),
+          });
+        }
       } else {
         setFormData({ ...formData, type: value, groupType: "" });
       }
@@ -282,7 +299,11 @@ const GroupFormModal = ({
       newErrors.topicName = "Tên đề tài không được để trống";
     }
 
-    if (selectedMembers.length < 2) {
+    if (formData.type === "lecturer") {
+      if (selectedMembers.length < 1) {
+        newErrors.members = "Cần có trưởng nhóm";
+      }
+    } else if (selectedMembers.length < 2) {
       newErrors.members = "Nhóm phải có ít nhất 2 thành viên";
     }
 
@@ -299,7 +320,15 @@ const GroupFormModal = ({
 
     setLoading(true);
     try {
-      await onSave(formData);
+      const payload =
+        formData.type === "lecturer"
+          ? {
+              ...formData,
+              advisorId: currentUserId,
+              memberIds: [currentUserId],
+            }
+          : formData;
+      await onSave(payload);
     } catch (error) {
       console.error("Error saving group:", error);
     } finally {
@@ -549,8 +578,20 @@ const GroupFormModal = ({
           {/* Members Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Thành viên <span className="text-red-500">*</span> (tối thiểu 2)
+              {formData.type === "lecturer" ? (
+                <>Trưởng nhóm</>
+              ) : (
+                <>
+                  Thành viên <span className="text-red-500">*</span> (tối thiểu 2)
+                </>
+              )}
             </label>
+            {formData.type === "lecturer" && (
+              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-3">
+                Nhóm giảng viên chỉ tạo với trưởng nhóm. Giảng viên khác đăng ký tham gia tại mục{" "}
+                <strong>Nhóm Giảng viên</strong> và chờ bạn duyệt sau khi admin duyệt nhóm.
+              </p>
+            )}
 
             {/* Selected Members */}
             <div className="space-y-2 mb-4">
@@ -568,7 +609,10 @@ const GroupFormModal = ({
                   <button
                     type="button"
                     onClick={() => handleRemoveMember(member.id)}
-                    className="text-red-500 hover:text-red-700"
+                    disabled={
+                      formData.type === "lecturer" && member.id === currentUserId
+                    }
+                    className="text-red-500 hover:text-red-700 disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <Delete />
                   </button>
@@ -576,6 +620,8 @@ const GroupFormModal = ({
               ))}
             </div>
 
+            {formData.type !== "lecturer" && (
+              <>
             {/* Search to Add Members */}
             <div className="flex gap-2 mb-2">
               <input
@@ -644,6 +690,8 @@ const GroupFormModal = ({
               >
                 {searchingMember ? "Đang tải..." : "Xem thêm"}
               </button>
+            )}
+              </>
             )}
 
             {errors.members && (

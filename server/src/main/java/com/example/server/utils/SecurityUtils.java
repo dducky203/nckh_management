@@ -112,4 +112,20 @@ public class SecurityUtils {
         }
         assertCanAccessQuota(user);
     }
+
+    /** Sinh viên không được xem danh sách / chi tiết nhóm giảng viên. */
+    public static void assertCanViewLecturerResearchGroups(User user) {
+        if (isStudent(user)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Sinh viên không được xem nhóm nghiên cứu giảng viên.");
+        }
+    }
+
+    public static void assertCurrentUserCanViewLecturerResearchGroups() {
+        User user = getCurrentUser();
+        if (user != null) {
+            assertCanViewLecturerResearchGroups(user);
+        }
+    }
 }

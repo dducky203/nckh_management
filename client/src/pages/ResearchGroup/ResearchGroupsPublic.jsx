@@ -15,6 +15,7 @@ import researchGroupService from "../../services/researchGroupService";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import Pagination from "../../components/common/Pagination";
 import { ERROR_MESSAGES, getSemesterFromDate, getResearchGroupStatusBadge } from "../../constants";
+import { isStudent } from "../../utils/permissions";
 import GroupFormModal from "./components/GroupFormModal";
 import GroupDetailModal from "./components/GroupDetailModal";
 import { usePagination } from "../../hooks/usePagination";
@@ -23,6 +24,7 @@ import Button from "../../components/common/Button";
 const ResearchGroupsPublic = () => {
   const { user } = useContext(AuthContext);
   const toast = useToast();
+  const userIsStudent = isStudent(user);
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,6 +48,14 @@ const ResearchGroupsPublic = () => {
     updatePaginationData,
     resetPagination,
   } = usePagination(0, 12);
+
+  useEffect(() => {
+    if (userIsStudent && activeTab === "lecturer") {
+      setActiveTab("student");
+      resetPagination();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userIsStudent, activeTab]);
 
   useEffect(() => {
     fetchGroups();
@@ -99,6 +109,7 @@ const ResearchGroupsPublic = () => {
   };
 
   const handleTabChange = (tab) => {
+    if (userIsStudent && tab === "lecturer") return;
     setActiveTab(tab);
     resetPagination();
   };
@@ -159,6 +170,7 @@ const ResearchGroupsPublic = () => {
                   <School fontSize="small" />
                   Nhóm Sinh viên
                 </button>
+                {!userIsStudent && (
                 <button
                   onClick={() => handleTabChange("lecturer")}
                   className={`flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-md text-sm font-semibold transition-all duration-200 ${
@@ -170,6 +182,7 @@ const ResearchGroupsPublic = () => {
                   <SupervisorAccount fontSize="small" />
                   Nhóm Giảng viên
                 </button>
+                )}
               </div>
 
               <div className="flex w-full lg:w-auto gap-3 items-center">
@@ -204,6 +217,15 @@ const ResearchGroupsPublic = () => {
                 </button>
               </div>
             </div>
+
+            {activeTab === "lecturer" && (
+              <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-gray-100">
+                <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                  Giảng viên tham gia nhóm bằng cách bấm <strong>Đăng ký tham gia</strong> trên từng nhóm.
+                  Trưởng nhóm duyệt trong mục <strong>Quản lý nhóm NCKH</strong>.
+                </p>
+              </div>
+            )}
 
             {/* Bottom Row: Filters */}
             {activeTab === "student" && (
@@ -394,7 +416,7 @@ const ResearchGroupsPublic = () => {
           onSave={handleSaveGroup}
           group={null}
           currentUserId={user?.id}
-          defaultType={activeTab}
+          defaultType={userIsStudent ? "student" : activeTab}
         />
       )}
       {detailModalOpen && selectedGroup && (
@@ -408,6 +430,7 @@ const ResearchGroupsPublic = () => {
           onReject={() => {}}
           onEdit={() => {}}
           getStatusBadge={() => getResearchGroupStatusBadge("APPROVED")}
+          userIsStudent={userIsStudent}
         />
       )}
     </div>

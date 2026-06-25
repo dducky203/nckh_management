@@ -142,6 +142,7 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
 
   /* ── CONFERENCE ── */
   if (form.activityType === "CONFERENCE") {
+    const isOrg = form.conferenceRole === "ORG";
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <SectionTitle>Thông tin Hội thảo</SectionTitle>
@@ -162,6 +163,12 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
           />
         </Field>
 
+        {isOrg && (
+          <div className="col-span-full rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-700 font-semibold">
+            Khai báo tổ chức hội thảo — sẽ tính vào <strong>Bảng 2 định mức nhóm NCM</strong>. Chỉ trưởng nhóm / thư ký nhóm được tạo sự kiện này.
+          </div>
+        )}
+
         <Field label="Tên hội thảo" colSpan={2}>
           <TextInput value={form.publicationName} onChange={(v) => onFormChange("publicationName", v)} placeholder="Tên đầy đủ của hội thảo" />
         </Field>
@@ -170,8 +177,8 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
           <TextInput value={form.venue} onChange={(v) => onFormChange("venue", v)} placeholder="Thành phố, quốc gia..." />
         </Field>
 
-        <Field label="Số / Mã giấy chứng nhận">
-          <TextInput value={form.identifierCode} onChange={(v) => onFormChange("identifierCode", v)} placeholder="Số chứng nhận tham dự" />
+        <Field label={isOrg ? "Số / Mã quyết định tổ chức" : "Số / Mã giấy chứng nhận"}>
+          <TextInput value={form.identifierCode} onChange={(v) => onFormChange("identifierCode", v)} placeholder={isOrg ? "Số QĐ tổ chức hội thảo" : "Số chứng nhận tham dự"} />
         </Field>
 
         <Field label="Link hội thảo" colSpan={2}>

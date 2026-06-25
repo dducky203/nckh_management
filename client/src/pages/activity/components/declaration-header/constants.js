@@ -15,8 +15,8 @@ export const TYPE_LABELS = {
 };
 
 export const CONFERENCE_ROLE_LABELS = {
-  ORG: "Tổ chức",
-  PRES: "Trình bày",
+  ORG: "Tổ chức hội thảo (Ban tổ chức)",
+  PRES: "Trình bày tham luận",
 };
 
 export const LEVEL_LABELS = {

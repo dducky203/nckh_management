@@ -44,7 +44,8 @@ export const canCreateSeminarEvent = (permissions) =>
 
 export const isGroupLeader = (user, group) => {
   if (!user || !group) return false;
-  return group.leaderId === user.id;
+  const leaderId = group.leaderId ?? group.leader?.id;
+  return leaderId != null && Number(leaderId) === Number(user.id);
 };
 
 export const canEditGroup = (user, group) => {

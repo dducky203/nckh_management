@@ -55,20 +55,23 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         User advisor = userRepository.findById(request.getAdvisorId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người hướng dẫn"));
 
-        // Validate: phải có ít nhất 2 thành viên (bao gồm leader)
-        if (request.getMemberIds() == null || request.getMemberIds().size() < 1) {
-            throw new RuntimeException("Nhóm phải có ít nhất 2 thành viên (bao gồm trưởng nhóm)");
-        }
-
-        // Validate member IDs tồn tại
-        for (Integer memberId : request.getMemberIds()) {
-            userRepository.findById(memberId)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy thành viên với ID: " + memberId));
-        }
-
         String groupCategory = request.getType() != null ? request.getType() : "student";
         String quotaScheme = normalizeGroupType(request.getGroupType());
         validateGroupTypePair(groupCategory, quotaScheme);
+
+        // Nhóm SV: tối thiểu 2 người (gồm trưởng). Nhóm GV: chỉ tạo trưởng nhóm; TV khác đăng ký & chờ duyệt.
+        if ("student".equals(groupCategory)) {
+            if (request.getMemberIds() == null || request.getMemberIds().size() < 1) {
+                throw new RuntimeException("Nhóm phải có ít nhất 2 thành viên (bao gồm trưởng nhóm)");
+            }
+        }
+
+        if (request.getMemberIds() != null) {
+            for (Integer memberId : request.getMemberIds()) {
+                userRepository.findById(memberId)
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy thành viên với ID: " + memberId));
+            }
+        }
 
         // Nhóm SV → chờ giảng viên duyệt trước; Nhóm GV → chờ Admin duyệt
         ResearchGroup.GroupStatus initialStatus = "student".equals(groupCategory)
@@ -89,18 +92,25 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
 
         ResearchGroup savedGroup = groupRepository.save(group);
 
-        // Tạo ResearchGroupMember cho tất cả members (bao gồm leader)
-        Set<Integer> allMemberIds = new HashSet<>(request.getMemberIds());
-        allMemberIds.add(leader.getId());
-
-        for (Integer memberId : allMemberIds) {
-            ResearchGroupMember memberInfo = ResearchGroupMember.builder()
-                .groupId(savedGroup.getId())
-                .userId(memberId)
-                .role(memberId.equals(leader.getId()) ? "Trưởng nhóm" : "Thành viên")
-                .participationRate(100)
-                .build();
-            memberRepository.save(memberInfo);
+        // Nhóm GV: chỉ ghi nhận trưởng nhóm; thành viên khác phải đăng ký và được duyệt.
+        if ("lecturer".equalsIgnoreCase(groupCategory)) {
+            memberRepository.save(ResearchGroupMember.builder()
+                    .groupId(savedGroup.getId())
+                    .userId(leader.getId())
+                    .role("Trưởng nhóm")
+                    .participationRate(100)
+                    .build());
+        } else {
+            Set<Integer> allMemberIds = new HashSet<>(request.getMemberIds());
+            allMemberIds.add(leader.getId());
+            for (Integer memberId : allMemberIds) {
+                memberRepository.save(ResearchGroupMember.builder()
+                        .groupId(savedGroup.getId())
+                        .userId(memberId)
+                        .role(memberId.equals(leader.getId()) ? "Trưởng nhóm" : "Thành viên")
+                        .participationRate(100)
+                        .build());
+            }
         }
 
         return getGroupById(savedGroup.getId());
@@ -265,9 +275,13 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                 }
             }
 
-            // Add new members
+            // Add new members (nhóm GV: chỉ duyệt qua join-request)
             for (Integer desiredMemberId : desiredMemberIds) {
                 if (!currentMemberIds.contains(desiredMemberId)) {
+                    if (isLecturerGroup(group) && !desiredMemberId.equals(group.getLeader().getId())) {
+                        throw new RuntimeException(
+                                "Nhóm giảng viên: không thêm thành viên trực tiếp. Họ cần đăng ký tham gia và được trưởng nhóm duyệt.");
+                    }
                     memberRepository.save(ResearchGroupMember.builder()
                             .groupId(groupId)
                             .userId(desiredMemberId)
@@ -326,6 +340,11 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
 
         if (memberRepository.findByGroupIdAndUserId(groupId, memberId).isPresent()) {
             throw new RuntimeException("Thành viên đã tồn tại trong nhóm");
+        }
+
+        if (isLecturerGroup(group)) {
+            throw new RuntimeException(
+                    "Nhóm giảng viên: thành viên phải đăng ký tham gia và được trưởng nhóm duyệt");
         }
 
         // Tạo ResearchGroupMember với role và participationRate mặc định
@@ -535,6 +554,11 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         // Kiểm tra quyền: chỉ leader hoặc admin mới được import
         if (!group.isLeader(user) && !SecurityUtils.isAdmin(user)) {
             throw new RuntimeException("Bạn không có quyền import thành viên");
+        }
+
+        if (isLecturerGroup(group)) {
+            throw new RuntimeException(
+                    "Nhóm giảng viên: thành viên phải đăng ký tham gia và được trưởng nhóm duyệt (không import trực tiếp)");
         }
 
         String filename = file.getOriginalFilename();
@@ -918,6 +942,11 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         }
     }
 
+    private static boolean isLecturerGroup(ResearchGroup group) {
+        return group != null && group.getType() != null
+                && "lecturer".equalsIgnoreCase(group.getType().trim());
+    }
+
     @Override
     @Transactional
     public ResearchGroupJoinRequestDTO requestJoinGroup(Integer groupId, Integer userId, String message) {
@@ -930,6 +959,10 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+        if (isLecturerGroup(group) && SecurityUtils.isStudent(user)) {
+            throw new RuntimeException("Sinh viên không thể tham gia nhóm giảng viên");
+        }
 
         if (group.isLeader(user)) {
             throw new RuntimeException("Bạn đã là trưởng nhóm");

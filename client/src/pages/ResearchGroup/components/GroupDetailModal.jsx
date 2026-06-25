@@ -31,6 +31,7 @@ const GroupDetailModal = ({
   onApprove,
   onReject,
   getStatusBadge,
+  userIsStudent = false,
 }) => {
   const toast = useToast();
   const [joinLoading, setJoinLoading] = useState(false);
@@ -78,7 +79,12 @@ const GroupDetailModal = ({
 
   const isMember = currentUserId && membersList.some((m) => m.id === currentUserId);
   const isLeader = currentUserId && leader?.id === currentUserId;
-  const canRequestJoin = currentUserId && group.status === "APPROVED" && !isMember && !isLeader;
+  const canRequestJoin =
+    currentUserId &&
+    group.status === "APPROVED" &&
+    !isMember &&
+    !isLeader &&
+    !(group.type === "lecturer" && userIsStudent);
 
   const handleRequestJoin = async () => {
     if (!group?.id) return;
