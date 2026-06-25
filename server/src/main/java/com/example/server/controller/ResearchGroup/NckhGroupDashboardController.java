@@ -421,26 +421,7 @@ public class NckhGroupDashboardController {
         User currentUser = requireCurrentUser();
         boolean staff = SecurityUtils.hasNckhStaffAccess(currentUser);
 
-        List<ResearchGroup> groups;
-        if (staff) {
-            groups = groupRepo.findAll().stream()
-                    .filter(ResearchGroupQuotaService::qualifiesForQuota)
-                    .toList();
-        } else {
-            LinkedHashSet<ResearchGroup> leaderAndMemberGroups = new LinkedHashSet<>();
-            // Trưởng nhóm có thể không có bản ghi trong research_group_member,
-            // nên phải lấy thêm theo leader_id để không bỏ sót quyền xem.
-            leaderAndMemberGroups.addAll(groupRepo.findByLeader(currentUser));
-            memberRepo.findAllByUserId(currentUser.getId()).stream()
-                    .map(m -> groupRepo.findById(m.getGroupId()).orElse(null))
-                    .filter(Objects::nonNull)
-                    .forEach(leaderAndMemberGroups::add);
-
-            groups = leaderAndMemberGroups.stream()
-                    .filter(ResearchGroupQuotaService::qualifiesForQuota)
-                    .filter(g -> g.isLeader(currentUser))
-                    .toList();
-        }
+        List<ResearchGroup> groups = resolveManageableQuotaGroups(currentUser, staff);
 
         List<Map<String, Object>> rows = groups.stream()
                 .map(g -> {
@@ -504,8 +485,61 @@ public class NckhGroupDashboardController {
     }
 
     // -------------------------------------------------------------------
+    // GET /research-groups/quota/admin-scheme-comparison?year=2026
+    // So sánh 3 phương án nhóm: số thành viên & % hoàn thành (biểu đồ tổng hợp)
+    // -------------------------------------------------------------------
+    @GetMapping("/admin-scheme-comparison")
+    public ResponseEntity<SuccessResponseDTO<Map<String, Object>>> getAdminSchemeComparison(
+            @RequestParam(required = false) Integer year) {
+        SecurityUtils.assertCurrentUserCanAccessQuota();
+        User currentUser = requireCurrentUser();
+        boolean staff = SecurityUtils.hasNckhStaffAccess(currentUser);
+        int academicYear = (year != null) ? year : java.time.LocalDate.now().getYear();
+
+        List<ResearchGroup> groups = resolveManageableQuotaGroups(currentUser, staff);
+        Map<Integer, List<Integer>> groupMemberIds = new LinkedHashMap<>();
+        for (ResearchGroup group : groups) {
+            List<ResearchGroupMember> members = memberRepo.findByGroupId(group.getId());
+            groupMemberIds.put(
+                    group.getId(),
+                    memberRequiredHoursService.collectQuotaMemberUserIds(group, members));
+        }
+
+        List<Map<String, Object>> schemes = aggregationService.buildSchemeComparisonStats(
+                groups, groupMemberIds, academicYear);
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("academicYear", academicYear);
+        data.put("schemes", schemes);
+        data.put("asStaff", staff);
+        data.put("groupCount", groups.size());
+        return ResponseEntity.ok(new SuccessResponseDTO<>(data, "Lấy thống kê so sánh phương án nhóm thành công"));
+    }
+
+    // -------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------
+    private List<ResearchGroup> resolveManageableQuotaGroups(User currentUser, boolean staff) {
+        List<ResearchGroup> groups;
+        if (staff) {
+            groups = groupRepo.findAll().stream()
+                    .filter(ResearchGroupQuotaService::qualifiesForQuota)
+                    .toList();
+        } else {
+            LinkedHashSet<ResearchGroup> leaderGroups = new LinkedHashSet<>();
+            leaderGroups.addAll(groupRepo.findByLeader(currentUser));
+            memberRepo.findAllByUserId(currentUser.getId()).stream()
+                    .map(m -> groupRepo.findById(m.getGroupId()).orElse(null))
+                    .filter(Objects::nonNull)
+                    .forEach(leaderGroups::add);
+            groups = leaderGroups.stream()
+                    .filter(ResearchGroupQuotaService::qualifiesForQuota)
+                    .filter(g -> g.isLeader(currentUser))
+                    .toList();
+        }
+        return groups;
+    }
+
     private boolean isQuotaGroup(String type) {
         return ResearchGroupQuotaService.isQuotaGroupType(type);
     }

@@ -17,9 +17,14 @@ export const isAdmin = (user) => {
   return false;
 };
 
-/** Role hệ thống Trợ lí NCKH — cao hơn user thường, chỉ sau admin. */
+/** Trợ lí NCKH (assistant) hoặc idRole = 3. */
 export const isAssistantRole = (user) =>
-  !!user && normalizeRoleName(user.role) === "assistant";
+  !!user &&
+  (normalizeRoleName(user.role) === "assistant" || Number(user.idRole) === 3);
+
+/** Xem thống kê định mức nhóm (admin / trợ lí NCKH / trưởng nhóm GV). */
+export const canViewAdminGroupQuotaStats = (user) =>
+  hasNckhStaffAccess(user) || canAccessQuotaPages(user);
 
 /** Truy cập các màn vận hành NCKH (duyệt, định mức năm, thống kê PA, tạo SK admin…). */
 export const hasNckhStaffAccess = (user) =>
@@ -52,9 +57,7 @@ export const canEditGroup = (user, group) => {
   return isAdmin(user) || isGroupLeader(user, group);
 };
 
-export const canViewAllGroups = (user) => {
-  return isAdmin(user);
-};
+export const canViewAllGroups = (user) => hasNckhStaffAccess(user);
 
 /** Sinh viên: power = 4 hoặc chức danh "Sinh viên" (đồng bộ backend). */
 export const isStudent = (user) => {

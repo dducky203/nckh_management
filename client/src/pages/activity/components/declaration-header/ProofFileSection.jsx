@@ -39,7 +39,7 @@ export default function ProofFileSection({
           className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 text-sm text-slate-500 hover:border-mainColor hover:text-mainColor transition-colors"
         >
           <AttachFile sx={{ fontSize: 16 }} />
-          Chọn file (nhiều file)
+          Chọn file 
         </button>
         <input
           ref={fileInputRef}
@@ -83,7 +83,7 @@ export default function ProofFileSection({
           className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 text-sm text-slate-500 hover:border-mainColor hover:text-mainColor transition-colors"
         >
           <Image sx={{ fontSize: 16 }} />
-          Chọn ảnh (nhiều ảnh)
+          Chọn ảnh
         </button>
         <input
           ref={imageInputRef}

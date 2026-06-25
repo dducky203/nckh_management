@@ -407,11 +407,6 @@ export default function ActivityDataTable({ criteria, actualStats = [], activiti
                                 >
                                   {hours > 0 ? round1(hours) : "0"}
                                 </span>
-                                {teamH > 0 && (
-                                  <span className="block text-[10px] text-blue-600 font-medium">
-                                    +{round1(teamH)}h từ nhóm
-                                  </span>
-                                )}
                               </td>
                             </tr>
                           );

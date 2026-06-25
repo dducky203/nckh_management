@@ -63,6 +63,14 @@ const groupQuotaService = {
         },
       })
     ),
+
+  /** So sánh 3 phương án nhóm (NCM / Xuất sắc / Tinh hoa) */
+  getAdminSchemeComparison: async (year) =>
+    unwrap(
+      await api.get("/research-groups/quota/admin-scheme-comparison", {
+        params: year ? { year } : {},
+      })
+    ),
 };
 
 export default groupQuotaService;

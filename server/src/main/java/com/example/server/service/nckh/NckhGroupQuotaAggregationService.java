@@ -590,6 +590,100 @@ public class NckhGroupQuotaAggregationService {
         return data;
     }
 
+    /**
+     * So sánh 3 phương án nhóm (NCM / Xuất sắc / Tinh hoa): số thành viên & % hoàn thành tập thể.
+     */
+    public List<Map<String, Object>> buildSchemeComparisonStats(
+            List<ResearchGroup> quotaGroups,
+            Map<Integer, List<Integer>> groupMemberIds,
+            int academicYear) {
+
+        final List<String> schemes = List.of("NCM", "XUAT_SAC", "TINH_HOA");
+        Map<String, String> labels = Map.of(
+                "NCM", "PA 1 — NCM",
+                "XUAT_SAC", "PA 2 — Xuất sắc",
+                "TINH_HOA", "PA 3 — Tinh hoa");
+
+        Map<String, Integer> memberCountByScheme = new LinkedHashMap<>();
+        Map<String, Integer> groupCountByScheme = new LinkedHashMap<>();
+        Map<String, Double> requiredByScheme = new LinkedHashMap<>();
+        Map<String, Set<Integer>> membersByScheme = new LinkedHashMap<>();
+
+        for (String scheme : schemes) {
+            memberCountByScheme.put(scheme, 0);
+            groupCountByScheme.put(scheme, 0);
+            requiredByScheme.put(scheme, 0.0);
+            membersByScheme.put(scheme, new LinkedHashSet<>());
+        }
+
+        Set<Integer> allMemberIds = new LinkedHashSet<>();
+        for (ResearchGroup group : quotaGroups) {
+            String kind = NckhGroupQuotaRules.resolveGroupKind(group.getGroupType());
+            if (kind == null || !memberCountByScheme.containsKey(kind)) {
+                continue;
+            }
+            List<Integer> memberIds = groupMemberIds.getOrDefault(group.getId(), List.of());
+            groupCountByScheme.merge(kind, 1, Integer::sum);
+            memberCountByScheme.merge(kind, memberIds.size(), Integer::sum);
+            membersByScheme.get(kind).addAll(memberIds);
+            allMemberIds.addAll(memberIds);
+            double required = memberRequiredHoursService.sumRequiredHoursForMembers(memberIds, academicYear);
+            requiredByScheme.merge(kind, required, Double::sum);
+        }
+
+        Map<Integer, Double> hoursByUser = new HashMap<>();
+        if (!allMemberIds.isEmpty()) {
+            for (UserHoursSumProjection row : activityRepo.sumApprovedHoursShareGroupedByUser(
+                    new ArrayList<>(allMemberIds), academicYear)) {
+                if (row.getUserId() != null) {
+                    hoursByUser.put(row.getUserId(), row.getTotalHours() != null ? row.getTotalHours() : 0.0);
+                }
+            }
+        }
+
+        Map<String, Double> actualByScheme = new LinkedHashMap<>();
+        Map<String, Integer> participatingByScheme = new LinkedHashMap<>();
+        for (String scheme : schemes) {
+            actualByScheme.put(scheme, 0.0);
+            participatingByScheme.put(scheme, 0);
+        }
+
+        for (String scheme : schemes) {
+            double actual = 0;
+            int participating = 0;
+            for (Integer memberId : membersByScheme.get(scheme)) {
+                double hours = hoursByUser.getOrDefault(memberId, 0.0);
+                actual += hours;
+                if (hours > 0) {
+                    participating++;
+                }
+            }
+            actualByScheme.put(scheme, actual);
+            participatingByScheme.put(scheme, participating);
+        }
+
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (String scheme : schemes) {
+            double required = requiredByScheme.get(scheme);
+            double actual = actualByScheme.get(scheme);
+            double completionPercent = required > 0
+                    ? Math.min(100.0, (actual / required) * 100.0)
+                    : (actual > 0 ? 100.0 : 0.0);
+
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("scheme", scheme);
+            row.put("schemeLabel", labels.get(scheme));
+            row.put("groupCount", groupCountByScheme.get(scheme));
+            row.put("memberCount", memberCountByScheme.get(scheme));
+            row.put("participatingMemberCount", participatingByScheme.get(scheme));
+            row.put("completionPercent", round2(completionPercent));
+            row.put("groupRequiredTotalHours", round2(required));
+            row.put("groupActualTotalHours", round2(actual));
+            rows.add(row);
+        }
+        return rows;
+    }
+
     private static double toDouble(Object v) {
         return v instanceof Number n ? n.doubleValue() : 0;
     }

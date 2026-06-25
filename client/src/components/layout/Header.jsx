@@ -213,6 +213,14 @@ const Header = () => {
                               <Settings className="w-4 h-4 mr-2 text-gray-400" />
                               <span>Cấu hình Chức năng</span>
                             </Link>
+                            <Link
+                              to="/activity/admin/group-quota"
+                              className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
+                              onClick={closeUserMenu}
+                            >
+                              <BarChart className="w-4 h-4 mr-2 text-gray-400" />
+                              <span>Thống kê định mức nhóm</span>
+                            </Link>
                           </>
                         )}
                         {userCanAccessQuota && (
@@ -595,6 +603,14 @@ const Header = () => {
                     >
                       <Settings className="w-4 h-4 mr-2" />
                       Cấu hình chức năng
+                    </Link>
+                    <Link
+                      to="/activity/admin/group-quota"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-mainColor"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <BarChart className="w-4 h-4 mr-2" />
+                      Thống kê định mức nhóm
                     </Link>
                   </>
                 )}

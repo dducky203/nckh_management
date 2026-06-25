@@ -19,7 +19,7 @@ import {
   RESEARCH_GROUP_STATUS_FILTER_OPTIONS,
 } from "../../constants";
 import GroupTable from "./components/GroupTable";
-import { isAdmin as checkIsAdmin } from "../../utils/permissions";
+import { canViewAllGroups } from "../../utils/permissions";
 import GroupFormModal from "./components/GroupFormModal";
 import GroupDetailModal from "./components/GroupDetailModal";
 import MemberManagementModal from "./components/MemberManagementModal";
@@ -70,7 +70,7 @@ const ResearchGroupManagement = () => {
     resetPagination,
   } = usePagination(0, 9);
 
-  const isAdmin = checkIsAdmin(user);
+  const isAdmin = canViewAllGroups(user);
 
   useEffect(() => {
     if (!isAdmin && activeTab !== "my-groups") {

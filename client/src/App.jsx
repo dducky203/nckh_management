@@ -183,7 +183,7 @@ function App() {
                     <Route
                       path="/activity/admin/group-quota"
                       element={
-                        <ProtectedRoute requireQuotaAccess>
+                        <ProtectedRoute requireGroupQuotaStats>
                           <AdminGroupQuotaStatsPage />
                         </ProtectedRoute>
                       }

@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import GroupIcon from "@mui/icons-material/Group";
 import InsightsIcon from "@mui/icons-material/Insights";
+import BarChartIcon from "@mui/icons-material/BarChart";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import groupQuotaService from "../../services/groupQuotaService";
+import SchemeComparisonChart from "./components/SchemeComparisonChart";
 
 const currentYear = new Date().getFullYear();
 
@@ -15,7 +17,9 @@ export default function AdminGroupQuotaStatsPage() {
   const [year, setYear] = useState(currentYear);
   const [loadingGroups, setLoadingGroups] = useState(false);
   const [loadingStats, setLoadingStats] = useState(false);
+  const [loadingScheme, setLoadingScheme] = useState(false);
   const [stats, setStats] = useState(null);
+  const [schemeComparison, setSchemeComparison] = useState(null);
   const [error, setError] = useState("");
 
   const selectedGroup = useMemo(
@@ -39,6 +43,19 @@ export default function AdminGroupQuotaStatsPage() {
     }
   }, []);
 
+  const loadSchemeComparison = useCallback(async () => {
+    try {
+      setLoadingScheme(true);
+      const data = await groupQuotaService.getAdminSchemeComparison(Number(year));
+      setSchemeComparison(data);
+    } catch (e) {
+      setSchemeComparison(null);
+      console.error("Scheme comparison error:", e);
+    } finally {
+      setLoadingScheme(false);
+    }
+  }, [year]);
+
   const loadStats = useCallback(async () => {
     if (!selectedGroupId) return;
     try {
@@ -54,9 +71,18 @@ export default function AdminGroupQuotaStatsPage() {
     }
   }, [selectedGroupId, year]);
 
+  const loadAll = useCallback(() => {
+    loadSchemeComparison();
+    loadStats();
+  }, [loadSchemeComparison, loadStats]);
+
   useEffect(() => {
     loadGroups();
   }, [loadGroups]);
+
+  useEffect(() => {
+    loadSchemeComparison();
+  }, [loadSchemeComparison]);
 
   useEffect(() => {
     if (selectedGroupId) loadStats();
@@ -73,12 +99,68 @@ export default function AdminGroupQuotaStatsPage() {
             <div>
               <h1 className="text-xl font-extrabold text-slate-800">Thống kê hoàn thành định mức nhóm</h1>
               <p className="mt-1 text-sm font-medium text-slate-500">
-                Theo dõi % hoàn thành tập thể và mức độ đóng góp giờ NCKH của từng thành viên.
+                So sánh 3 phương án nhóm (NCM / Xuất sắc / Tinh hoa) và theo dõi đóng góp từng thành viên.
               </p>
             </div>
           </div>
         </div>
 
+
+
+        {error && (
+          <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            {error}
+          </div>
+        )}
+
+        {(loadingGroups || loadingStats) && (
+          <div className="mt-6 flex justify-center">
+            <LoadingSpinner />
+          </div>
+        )}
+
+        {!loadingGroups && groups.length === 0 && (
+          <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-6 text-center text-sm text-amber-800">
+            Bạn chưa có quyền xem thống kê nhóm nào.
+          </div>
+        )}
+
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-center gap-2">
+            <BarChartIcon className="text-mainColor" />
+            <div>
+              <h2 className="text-base font-bold text-slate-800">
+                So sánh 3 phương án nhóm — năm {schemeComparison?.academicYear ?? year}
+              </h2>
+              <p className="text-xs text-slate-500">
+                Cột: số thành viên tham gia · Đường: % hoàn thành định mức tập thể
+                {schemeComparison?.asStaff
+                  ? " (toàn khoa)"
+                  : " (các nhóm bạn quản lý)"}
+              </p>
+            </div>
+          </div>
+          <SchemeComparisonChart
+            data={schemeComparison?.schemes || []}
+            loading={loadingScheme}
+          />
+          {schemeComparison?.schemes?.length > 0 && (
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {schemeComparison.schemes.map((row) => (
+                <div
+                  key={row.scheme}
+                  className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm"
+                >
+                  <p className="font-bold text-slate-800">{row.schemeLabel}</p>
+                  <p className="mt-1 text-slate-600">{row.memberCount} thành viên</p>
+                  <p className="mt-1 font-semibold text-amber-600">
+                    {formatPct(row.completionPercent)} hoàn thành
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex flex-wrap items-end gap-3">
             <div className="min-w-[260px]">
@@ -107,32 +189,14 @@ export default function AdminGroupQuotaStatsPage() {
             </div>
             <button
               type="button"
-              onClick={loadStats}
-              disabled={!selectedGroupId || loadingStats}
+              onClick={loadAll}
+              disabled={!selectedGroupId || loadingStats || loadingScheme}
               className="rounded-lg bg-mainColor px-4 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50"
             >
               Xem thống kê
             </button>
           </div>
         </div>
-
-        {error && (
-          <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            {error}
-          </div>
-        )}
-
-        {(loadingGroups || loadingStats) && (
-          <div className="mt-6 flex justify-center">
-            <LoadingSpinner />
-          </div>
-        )}
-
-        {!loadingGroups && groups.length === 0 && (
-          <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-6 text-center text-sm text-amber-800">
-            Bạn chưa có quyền xem thống kê nhóm nào.
-          </div>
-        )}
 
         {!loadingStats && stats && (
           <>
@@ -145,6 +209,11 @@ export default function AdminGroupQuotaStatsPage() {
             </div>
 
             <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="border-b border-slate-100 px-4 py-3">
+                <h3 className="text-sm font-bold text-slate-700">
+                  Chi tiết thành viên — {stats.groupName}
+                </h3>
+              </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
                   <thead className="bg-slate-100 text-slate-700">
@@ -160,7 +229,10 @@ export default function AdminGroupQuotaStatsPage() {
                     {stats.members?.map((m) => (
                       <tr key={m.userId} className="border-t border-slate-100">
                         <td className="px-3 py-2 font-semibold text-slate-800">
-                          {m.name} {m.isLeader ? <span className="text-xs text-mainColor">(Trưởng nhóm)</span> : null}
+                          {m.name}{" "}
+                          {m.isLeader ? (
+                            <span className="text-xs text-mainColor">(Trưởng nhóm)</span>
+                          ) : null}
                         </td>
                         <td className="px-3 py-2 text-slate-600">{m.chucDanh || "-"}</td>
                         <td className="px-3 py-2 text-right text-slate-700">
@@ -187,7 +259,7 @@ export default function AdminGroupQuotaStatsPage() {
 
         {!loadingStats && !stats && selectedGroup && !error && (
           <div className="mt-6 rounded-xl border border-slate-200 bg-white px-4 py-6 text-center text-sm text-slate-500">
-            Chọn nhóm và nhấn "Xem thống kê" để tải dữ liệu.
+            Chọn nhóm và nhấn &quot;Xem thống kê&quot; để tải dữ liệu chi tiết.
           </div>
         )}
       </div>

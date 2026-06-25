@@ -55,10 +55,15 @@ public class SecurityUtils {
 
     /** Role hệ thống Trợ lí NCKH: quyền nghiệp vụ cao hơn user, chỉ sau admin. */
     public static boolean isAssistant(User user) {
-        if (user == null || user.getIdRole() == null || user.getIdRole().getName() == null) {
+        if (user == null) {
             return false;
         }
-        return "assistant".equalsIgnoreCase(user.getIdRole().getName().trim());
+        if (user.getIdRole() != null && user.getIdRole().getName() != null) {
+            if ("assistant".equalsIgnoreCase(user.getIdRole().getName().trim())) {
+                return true;
+            }
+        }
+        return user.getIdRole() != null && Integer.valueOf(3).equals(user.getIdRole().getId());
     }
 
     /** Được thao tác các chức năng vận hành NCKH (duyệt, định mức năm, …): admin/lãnh đạo hoặc Trợ lí NCKH. */
@@ -98,6 +103,9 @@ public class SecurityUtils {
     }
 
     public static void assertCanAccessQuota(User user) {
+        if (user != null && hasNckhStaffAccess(user)) {
+            return;
+        }
         if (isStudent(user)) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,

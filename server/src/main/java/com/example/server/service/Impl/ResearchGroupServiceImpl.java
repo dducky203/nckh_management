@@ -228,7 +228,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
         // Kiểm tra quyền: chỉ leader hoặc admin mới được cập nhật
-        if (!group.isLeader(user) && !SecurityUtils.isAdmin(user)) {
+        if (!group.isLeader(user) && !SecurityUtils.hasNckhStaffAccess(user)) {
             throw new RuntimeException("Bạn không có quyền cập nhật nhóm này");
         }
 
@@ -331,7 +331,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
         // Kiểm tra quyền
-        if (!group.isLeader(user) && !SecurityUtils.isAdmin(user)) {
+        if (!group.isLeader(user) && !SecurityUtils.hasNckhStaffAccess(user)) {
             throw new RuntimeException("Chỉ trưởng nhóm hoặc admin mới có thể thêm thành viên");
         }
 
@@ -369,7 +369,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
         // Kiểm tra quyền
-        if (!group.isLeader(user) && !SecurityUtils.isAdmin(user)) {
+        if (!group.isLeader(user) && !SecurityUtils.hasNckhStaffAccess(user)) {
             throw new RuntimeException("Chỉ trưởng nhóm hoặc admin mới có thể xóa thành viên");
         }
 
@@ -471,7 +471,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         boolean isLeader = group.isLeader(user);
         boolean isAdvisor = group.getAdvisor() != null && group.getAdvisor().getId().equals(userId);
         boolean isMember = memberRepository.findByGroupIdAndUserId(groupId, userId).isPresent();
-        boolean isAdmin = SecurityUtils.isAdmin(user);
+        boolean isAdmin = SecurityUtils.hasNckhStaffAccess(user);
 
         if (!isLeader && !isAdvisor && !isMember && !isAdmin) {
             throw new RuntimeException("Chỉ thành viên nhóm mới có quyền cập nhật link Google Sheet");
@@ -493,7 +493,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
         // Kiểm tra quyền: chỉ leader hoặc admin mới được cập nhật
-        if (!group.isLeader(user) && !SecurityUtils.isAdmin(user)) {
+        if (!group.isLeader(user) && !SecurityUtils.hasNckhStaffAccess(user)) {
             throw new RuntimeException("Bạn không có quyền cập nhật thông tin thành viên");
         }
 
@@ -552,7 +552,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
         // Kiểm tra quyền: chỉ leader hoặc admin mới được import
-        if (!group.isLeader(user) && !SecurityUtils.isAdmin(user)) {
+        if (!group.isLeader(user) && !SecurityUtils.hasNckhStaffAccess(user)) {
             throw new RuntimeException("Bạn không có quyền import thành viên");
         }
 
@@ -772,7 +772,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         boolean isLeader = group.isLeader(user);
         boolean isAdvisor = group.getAdvisor() != null && group.getAdvisor().getId().equals(userId);
         boolean isMember = memberRepository.findByGroupIdAndUserId(groupId, userId).isPresent();
-        boolean isAdmin = SecurityUtils.isAdmin(user);
+        boolean isAdmin = SecurityUtils.hasNckhStaffAccess(user);
 
         if (!isLeader && !isAdvisor && !isMember && !isAdmin) {
             throw new RuntimeException("Chỉ thành viên nhóm mới có quyền xem documents");
@@ -798,7 +798,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         boolean isLeader = group.isLeader(user);
         boolean isAdvisor = group.getAdvisor() != null && group.getAdvisor().getId().equals(userId);
         boolean isMember = memberRepository.findByGroupIdAndUserId(groupId, userId).isPresent();
-        boolean isAdmin = SecurityUtils.isAdmin(user);
+        boolean isAdmin = SecurityUtils.hasNckhStaffAccess(user);
 
         if (!isLeader && !isAdvisor && !isMember && !isAdmin) {
             throw new RuntimeException("Chỉ thành viên nhóm mới có quyền upload documents");
@@ -848,7 +848,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         boolean isLeader = group.isLeader(user);
         boolean isAdvisor = group.getAdvisor() != null && group.getAdvisor().getId().equals(userId);
         boolean isMember = memberRepository.findByGroupIdAndUserId(groupId, userId).isPresent();
-        boolean isAdmin = SecurityUtils.isAdmin(user);
+        boolean isAdmin = SecurityUtils.hasNckhStaffAccess(user);
 
         if (!isLeader && !isAdvisor && !isMember && !isAdmin) {
             throw new RuntimeException("Chỉ thành viên nhóm mới có quyền cập nhật documents");
@@ -899,7 +899,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
         boolean isLeader = group.isLeader(user);
         boolean isAdvisor = group.getAdvisor() != null && group.getAdvisor().getId().equals(userId);
         boolean isMember = memberRepository.findByGroupIdAndUserId(groupId, userId).isPresent();
-        boolean isAdmin = SecurityUtils.isAdmin(user);
+        boolean isAdmin = SecurityUtils.hasNckhStaffAccess(user);
 
         if (!isLeader && !isAdvisor && !isMember && !isAdmin) {
             throw new RuntimeException("Chỉ thành viên nhóm mới có quyền xóa documents");
@@ -1081,7 +1081,7 @@ public class ResearchGroupServiceImpl implements ResearchGroupService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
-        if (!group.isLeader(user) && !SecurityUtils.isAdmin(user)) {
+        if (!group.isLeader(user) && !SecurityUtils.hasNckhStaffAccess(user)) {
             throw new RuntimeException("Chỉ trưởng nhóm mới được duyệt đăng ký tham gia");
         }
     }

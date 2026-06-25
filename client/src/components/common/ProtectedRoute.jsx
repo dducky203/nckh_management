@@ -4,13 +4,19 @@ import { AuthContext } from "../../context/AuthContext";
 import {
   canAccessQuotaPages,
   canCreateSeminarEvent,
+  canViewAdminGroupQuotaStats,
   hasNckhStaffAccess,
   isStrictAdminPortalUser,
 } from "../../utils/permissions";
 import researchGroupService from "../../services/researchGroupService";
 import LoadingSpinner from "../common/LoadingSpinner";
 
-const ProtectedRoute = ({ children, requiredPower = null, requireQuotaAccess = false }) => {
+const ProtectedRoute = ({
+  children,
+  requiredPower = null,
+  requireQuotaAccess = false,
+  requireGroupQuotaStats = false,
+}) => {
   const { user, isInitializing } = useContext(AuthContext);
   const [seminarPermissions, setSeminarPermissions] = useState(null);
 
@@ -65,6 +71,10 @@ const ProtectedRoute = ({ children, requiredPower = null, requireQuotaAccess = f
   }
 
   if (requireQuotaAccess && !canAccessQuotaPages(user)) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  if (requireGroupQuotaStats && !canViewAdminGroupQuotaStats(user)) {
     return <Navigate to="/unauthorized" replace />;
   }
 
