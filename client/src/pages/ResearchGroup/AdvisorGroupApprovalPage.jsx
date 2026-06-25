@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useContext } from "react";
 import {
   CheckCircle,
   Cancel,
@@ -10,9 +10,13 @@ import {
   Person,
   CalendarMonth,
   Info,
+  Visibility,
 } from "@mui/icons-material";
 import researchGroupService from "../../services/researchGroupService";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import GroupDetailModal from "./components/GroupDetailModal";
+import { getResearchGroupStatusBadge } from "../../constants";
+import { AuthContext } from "../../context/AuthContext";
 import noAvatarImg from "../../assets/no-avatar-user.png";
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
@@ -98,10 +102,26 @@ const RejectDialog = ({ group, onConfirm, onCancel, loading }) => {
   );
 };
 
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+
+const normalizeGroupForModal = (group) => ({
+  ...group,
+  members: Array.isArray(group?.members)
+    ? group.members
+    : group?.members
+      ? Object.values(group.members)
+      : [],
+});
+
 // ─── Group Card ────────────────────────────────────────────────────────────────
 
-const GroupCard = ({ group, onApprove, onReject, actionLoading }) => {
-  const leader = group.members?.find((m) => m.role === "Trưởng nhóm");
+const GroupCard = ({ group, onApprove, onReject, onViewDetail, actionLoading }) => {
+  const members = Array.isArray(group.members)
+    ? group.members
+    : group.members
+      ? Object.values(group.members)
+      : [];
+  const leader = members.find((m) => m.role === "Trưởng nhóm") || group.leader;
   const createdAt = group.createdAt
     ? new Date(group.createdAt).toLocaleDateString("vi-VN")
     : "—";
@@ -145,7 +165,7 @@ const GroupCard = ({ group, onApprove, onReject, actionLoading }) => {
                 />
               </div>
               <div>
-                <p className="text-[12px] font-bold text-slate-700">{leader.fullName}</p>
+                <p className="text-[12px] font-bold text-slate-700">{leader.name || leader.fullName}</p>
                 <p className="text-[11px] text-slate-400">Trưởng nhóm</p>
               </div>
             </div>
@@ -154,7 +174,7 @@ const GroupCard = ({ group, onApprove, onReject, actionLoading }) => {
           <div className="flex items-center gap-4 text-[12px] text-slate-500 font-medium pt-1 border-t border-slate-50">
             <span className="flex items-center gap-1">
               <Groups sx={{ fontSize: 14 }} />
-              {group.members?.length || 0} thành viên
+              {members.length || 0} thành viên
             </span>
             <span className="flex items-center gap-1">
               <CalendarMonth sx={{ fontSize: 14 }} />
@@ -171,37 +191,48 @@ const GroupCard = ({ group, onApprove, onReject, actionLoading }) => {
         )}
 
         {/* Actions */}
-        {isPending ? (
-          <div className="flex gap-2.5">
-            <button
-              id={`approve-group-${group.id}`}
-              onClick={() => onApprove(group.id)}
-              disabled={actionLoading === group.id}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-mainColor text-white font-bold text-sm shadow-[0_4px_15px_rgb(0,0,0,0.1)] hover:brightness-110 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:transform-none"
-            >
-              <CheckCircle sx={{ fontSize: 17 }} />
-              {actionLoading === group.id ? "Đang xử lý..." : "Chấp thuận"}
-            </button>
-            <button
-              id={`reject-group-${group.id}`}
-              onClick={() => onReject(group)}
-              disabled={actionLoading === group.id}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-red-200 bg-red-50 text-red-700 font-bold text-sm hover:bg-red-100 transition-colors disabled:opacity-50"
-            >
-              <Cancel sx={{ fontSize: 17 }} />
-              Từ chối
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 text-[12px] text-slate-400 font-medium">
-            <Info sx={{ fontSize: 14 }} />
-            {group.status === "PENDING_ADMIN"
-              ? "Bạn đã chấp thuận — đang chờ Admin duyệt cuối."
-              : group.status === "APPROVED"
-              ? "Nhóm đã được Admin phê duyệt."
-              : "Nhóm đã bị từ chối."}
-          </div>
-        )}
+        <div className="flex flex-col gap-2.5">
+          <button
+            id={`view-group-${group.id}`}
+            onClick={() => onViewDetail(group)}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold text-sm hover:bg-slate-50 hover:border-mainColor/40 transition-colors"
+          >
+            <Visibility sx={{ fontSize: 17 }} />
+            Xem chi tiết
+          </button>
+
+          {isPending ? (
+            <div className="flex gap-2.5">
+              <button
+                id={`approve-group-${group.id}`}
+                onClick={() => onApprove(group.id)}
+                disabled={actionLoading === group.id}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-mainColor text-white font-bold text-sm shadow-[0_4px_15px_rgb(0,0,0,0.1)] hover:brightness-110 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:transform-none"
+              >
+                <CheckCircle sx={{ fontSize: 17 }} />
+                {actionLoading === group.id ? "Đang xử lý..." : "Chấp thuận"}
+              </button>
+              <button
+                id={`reject-group-${group.id}`}
+                onClick={() => onReject(group)}
+                disabled={actionLoading === group.id}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-red-200 bg-red-50 text-red-700 font-bold text-sm hover:bg-red-100 transition-colors disabled:opacity-50"
+              >
+                <Cancel sx={{ fontSize: 17 }} />
+                Từ chối
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-[12px] text-slate-400 font-medium px-1">
+              <Info sx={{ fontSize: 14 }} />
+              {group.status === "PENDING_ADMIN"
+                ? "Bạn đã chấp thuận — đang chờ Admin duyệt cuối."
+                : group.status === "APPROVED"
+                ? "Nhóm đã được Admin phê duyệt."
+                : "Nhóm đã bị từ chối."}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -210,6 +241,7 @@ const GroupCard = ({ group, onApprove, onReject, actionLoading }) => {
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 
 const AdvisorGroupApprovalPage = () => {
+  const { user } = useContext(AuthContext);
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null); // groupId đang xử lý
@@ -217,6 +249,9 @@ const AdvisorGroupApprovalPage = () => {
   const [rejectTarget, setRejectTarget] = useState(null);
   const [rejectLoading, setRejectLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -259,12 +294,40 @@ const AdvisorGroupApprovalPage = () => {
       await researchGroupService.advisorRejectGroup(groupId, reason);
       showToast("Đã từ chối nhóm.");
       setRejectTarget(null);
+      setDetailModalOpen(false);
       fetchGroups();
     } catch (err) {
       showToast(err?.response?.data?.message || "Có lỗi xảy ra, thử lại sau.", "error");
     } finally {
       setRejectLoading(false);
     }
+  };
+
+  const handleViewDetail = async (group) => {
+    try {
+      setDetailLoading(true);
+      const res = await researchGroupService.getGroupById(group.id);
+      const fullGroup = res?.data ?? res;
+      setSelectedGroup(normalizeGroupForModal(fullGroup));
+      setDetailModalOpen(true);
+    } catch (err) {
+      console.error("Error loading group detail:", err);
+      setSelectedGroup(normalizeGroupForModal(group));
+      setDetailModalOpen(true);
+      showToast("Không tải được đầy đủ chi tiết, hiển thị thông tin cơ bản.", "error");
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const handleApproveFromDetail = async (groupId) => {
+    setDetailModalOpen(false);
+    await handleApprove(groupId);
+  };
+
+  const handleRejectFromDetail = (group) => {
+    setDetailModalOpen(false);
+    setRejectTarget(group);
   };
 
   const filterOptions = [
@@ -379,9 +442,33 @@ const AdvisorGroupApprovalPage = () => {
               group={group}
               onApprove={handleApprove}
               onReject={setRejectTarget}
+              onViewDetail={handleViewDetail}
               actionLoading={actionLoading}
             />
           ))}
+        </div>
+      )}
+
+      {detailModalOpen && selectedGroup && (
+        <GroupDetailModal
+          isOpen={detailModalOpen}
+          onClose={() => {
+            setDetailModalOpen(false);
+            setSelectedGroup(null);
+          }}
+          group={selectedGroup}
+          isAdmin={false}
+          canAdvisorApprove={selectedGroup.status === "PENDING_ADVISOR"}
+          currentUserId={user?.id}
+          onApprove={handleApproveFromDetail}
+          onReject={handleRejectFromDetail}
+          getStatusBadge={getResearchGroupStatusBadge}
+        />
+      )}
+
+      {detailLoading && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
+          <LoadingSpinner size="lg" />
         </div>
       )}
     </div>

@@ -113,6 +113,12 @@ public class ResearchGroupController {
             ResearchGroupDTO group = researchGroupService.getGroupById(dto.getGroupId());
             groups.add(group);
         }
+        User currentUser = SecurityUtils.getCurrentUser();
+        if (SecurityUtils.isStudent(currentUser)) {
+            groups = groups.stream()
+                    .filter(g -> g.getType() == null || !"lecturer".equalsIgnoreCase(g.getType()))
+                    .toList();
+        }
         return ResponseEntity.ok(new SuccessResponseDTO<>(groups, "Lấy danh sách nhóm thành công"));
     }
 

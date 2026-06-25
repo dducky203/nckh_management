@@ -19,7 +19,7 @@ import {
   RESEARCH_GROUP_STATUS_FILTER_OPTIONS,
 } from "../../constants";
 import GroupTable from "./components/GroupTable";
-import { canViewAllGroups } from "../../utils/permissions";
+import { canViewAllGroups, canAccessQuotaPages } from "../../utils/permissions";
 import GroupFormModal from "./components/GroupFormModal";
 import GroupDetailModal from "./components/GroupDetailModal";
 import MemberManagementModal from "./components/MemberManagementModal";
@@ -71,13 +71,14 @@ const ResearchGroupManagement = () => {
   } = usePagination(0, 9);
 
   const isAdmin = canViewAllGroups(user);
+  const canBrowseCatalog = canAccessQuotaPages(user);
 
   useEffect(() => {
-    if (!isAdmin && activeTab !== "my-groups") {
+    if (!canBrowseCatalog && activeTab !== "my-groups") {
       setActiveTab("my-groups");
       resetPagination();
     }
-  }, [isAdmin, activeTab, resetPagination]);
+  }, [canBrowseCatalog, activeTab, resetPagination]);
 
   useEffect(() => {
     fetchGroups();
@@ -123,19 +124,33 @@ const ResearchGroupManagement = () => {
           }
         }
 
-        // Call admin getAllGroups API for student/lecturer tabs
-        const response = await researchGroupService.getAllGroups(
-          searchTerm,
-          statusFilter,
-          activeTab,
-          currentPage,
-          9,
-          startDate,
-          endDate
-        );
-        const responseData = response.data || response;
-        setGroups(responseData?.groups || []);
-        updatePaginationData(responseData);
+        // Admin: mọi trạng thái. Cán bộ/GV: chỉ nhóm đã duyệt (API công khai).
+        if (isAdmin) {
+          const response = await researchGroupService.getAllGroups(
+            searchTerm,
+            statusFilter,
+            activeTab,
+            currentPage,
+            9,
+            startDate,
+            endDate
+          );
+          const responseData = response.data || response;
+          setGroups(responseData?.groups || []);
+          updatePaginationData(responseData);
+        } else {
+          const response = await researchGroupService.getAllGroupPublic(
+            searchTerm,
+            activeTab,
+            currentPage,
+            9,
+            startDate,
+            endDate
+          );
+          const responseData = response.data || response;
+          setGroups(responseData?.groups || []);
+          updatePaginationData(responseData);
+        }
       }
     } catch (error) {
       console.error("Error fetching groups:", error);
@@ -274,7 +289,7 @@ const ResearchGroupManagement = () => {
 
         <div className="flex gap-3">
           {/* Sidebar Navigation */}
-          {isAdmin && (
+          {canBrowseCatalog && (
             <div
               className={`bg-white rounded-lg shadow-sm transition-all duration-300 ${
                 sidebarOpen ? "w-48" : "w-0 overflow-hidden"
@@ -340,7 +355,7 @@ const ResearchGroupManagement = () => {
           {/* Main Content */}
           <div className="flex-1">
             {/* Toggle Button when sidebar is closed */}
-            {isAdmin && !sidebarOpen && (
+            {canBrowseCatalog && !sidebarOpen && (
               <button
                 onClick={() => setSidebarOpen(true)}
                 className="mb-4 p-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow text-gray-600 hover:text-gray-900"

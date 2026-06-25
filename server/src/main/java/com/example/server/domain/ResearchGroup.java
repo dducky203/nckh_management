@@ -40,7 +40,7 @@ public class ResearchGroup extends EntityBase {
     private String groupType;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private GroupStatus status = GroupStatus.PENDING;
 
     // Trưởng nhóm

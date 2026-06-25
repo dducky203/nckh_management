@@ -55,16 +55,16 @@ public class UserPlanYearService {
         if (year == null) year = LocalDate.now().getYear();
 
         // Kiểm tra cửa sổ thời gian
-        if (PlanSelectionWindowUtil.isPastDeadline()) {
-            throw new IllegalStateException(
-                    "Đã hết thời hạn đăng ký phương án (02/01–16/01). " +
-                    "Hệ thống đã tự động xếp bạn vào Phương án 1 (PA1).");
-        }
-        if (!PlanSelectionWindowUtil.isOpen()) {
-            throw new IllegalStateException(
-                    "Chưa đến thời gian đăng ký phương án. " +
-                    "Thời gian đăng ký: 02/01–16/01 hàng năm.");
-        }
+        // if (PlanSelectionWindowUtil.isPastDeadline()) {
+        //     throw new IllegalStateException(
+        //             "Đã hết thời hạn đăng ký phương án (02/01–16/01). " +
+        //             "Hệ thống đã tự động xếp bạn vào Phương án 1 (PA1).");
+        // }
+        // if (!PlanSelectionWindowUtil.isOpen()) {
+        //     throw new IllegalStateException(
+        //             "Chưa đến thời gian đăng ký phương án. " +
+        //             "Thời gian đăng ký: 02/01–16/01 hàng năm.");
+        // }
 
         if (repo.existsByUserIdAndAcademicYear(userId, year)) {
             throw new IllegalStateException("Bạn đã chọn phương án cho năm này và đã bị khóa.");

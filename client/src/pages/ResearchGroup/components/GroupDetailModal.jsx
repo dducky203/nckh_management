@@ -27,6 +27,7 @@ const GroupDetailModal = ({
   onClose,
   group,
   isAdmin,
+  canAdvisorApprove = false,
   currentUserId,
   onApprove,
   onReject,
@@ -73,7 +74,11 @@ const GroupDetailModal = ({
   // Group members safely
   const advisor = group.advisor;
   const leader = group.leader;
-  const membersList = group.members || [];
+  const membersList = Array.isArray(group.members)
+    ? group.members
+    : group.members
+      ? Object.values(group.members)
+      : [];
   const leaderDetail = membersList.find((m) => m.id === leader?.id) || leader;
   const regularMembers = membersList.filter((m) => m.id !== leader?.id);
 
@@ -207,6 +212,11 @@ const GroupDetailModal = ({
     (group.type === "lecturer" && group.status === "PENDING")
   );
 
+  const canAdvisorApproveAction =
+    canAdvisorApprove &&
+    group.type === "student" &&
+    group.status === "PENDING_ADVISOR";
+
   const getLecturerGroupTypeName = (type) => {
     switch (type) {
       case "NCM":
@@ -279,7 +289,7 @@ const GroupDetailModal = ({
             )}
           </div>
 
-          {typeof member.participationRate === "number" && (
+          {/* {typeof member.participationRate === "number" && (
             <div className="pt-2 border-t border-gray-50 flex items-center justify-between gap-3">
               <span className="text-xs text-gray-500 font-medium">Tỷ lệ đóng góp</span>
               <div className="flex items-center gap-2 flex-1 max-w-[140px]">
@@ -294,7 +304,7 @@ const GroupDetailModal = ({
                 </span>
               </div>
             </div>
-          )}
+          )} */}
         </div>
       </div>
     );
@@ -558,6 +568,25 @@ const GroupDetailModal = ({
                   ? "Đang gửi..."
                   : "Đăng ký tham gia nhóm"}
             </button>
+          )}
+
+          {canAdvisorApproveAction && (
+            <>
+              <button
+                onClick={() => onApprove(group.id)}
+                className="flex items-center gap-2 px-6 py-2.5 bg-mainColor hover:brightness-110 active:scale-95 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-lg transition-all"
+              >
+                <CheckCircle fontSize="small" />
+                Chấp thuận
+              </button>
+              <button
+                onClick={() => onReject(group)}
+                className="flex items-center gap-2 px-6 py-2.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-rose-600/10 transition-all"
+              >
+                <Cancel fontSize="small" />
+                Từ chối
+              </button>
+            </>
           )}
 
           {canAdminApprove && (

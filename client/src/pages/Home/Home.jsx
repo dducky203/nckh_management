@@ -18,6 +18,7 @@ import Button from "../../components/common/Button";
 import Slideshow from "./components/Slideshow";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { formatDateTime } from "../../constants";
+import { isStudent } from "../../utils/permissions";
 import bannerImg from "../../assets/Banner.png";
 import logoFitaImg from "../../assets/logo_fita.png";
 import banner2 from "../../assets/gt.jpg";
@@ -73,6 +74,7 @@ const getEventTypeColor = (type) => {
 
 const Home = () => {
   const { user } = useContext(AuthContext);
+  const userIsStudent = isStudent(user);
 
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [researchActivities, setResearchActivities] = useState([]);
@@ -121,13 +123,20 @@ const Home = () => {
       try {
         setLoading(true);
 
-        const [eventsRes, studentGroupsRes, teacherGroupsRes, newsRes] =
-          await Promise.all([
-            eventService.getPublicEvents("upcoming", 0, 6),
-            researchGroupService.getAllGroupPublic("", "student", 0, 3),
-            researchGroupService.getAllGroupPublic("", "lecturer", 0, 3),
-            newsService.getNews("", 0, 4),
-          ]);
+        const requests = [
+          eventService.getPublicEvents("upcoming", 0, 6),
+          researchGroupService.getAllGroupPublic("", "student", 0, 3),
+          newsService.getNews("", 0, 4),
+        ];
+        if (!userIsStudent) {
+          requests.splice(2, 0, researchGroupService.getAllGroupPublic("", "lecturer", 0, 3));
+        }
+
+        const results = await Promise.all(requests);
+        const eventsRes = results[0];
+        const studentGroupsRes = results[1];
+        const teacherGroupsRes = userIsStudent ? null : results[2];
+        const newsRes = userIsStudent ? results[2] : results[3];
 
         const eventsData = eventsRes?.data || eventsRes;
         setUpcomingEvents(eventsData?.events || []);
@@ -135,8 +144,12 @@ const Home = () => {
         const studentGroupsData = studentGroupsRes?.data || studentGroupsRes;
         setResearchActivities(studentGroupsData?.groups || []);
 
-        const teacherGroupsData = teacherGroupsRes?.data || teacherGroupsRes;
-        setTeacherResearchActivities(teacherGroupsData?.groups || []);
+        if (teacherGroupsRes) {
+          const teacherGroupsData = teacherGroupsRes?.data || teacherGroupsRes;
+          setTeacherResearchActivities(teacherGroupsData?.groups || []);
+        } else {
+          setTeacherResearchActivities([]);
+        }
 
         const newsData = newsRes?.data || newsRes;
         setLatestNews(newsData?.news || []);
@@ -148,7 +161,7 @@ const Home = () => {
     };
 
     fetchData();
-  }, []);
+  }, [user]);
 
   if (loading) {
     return <LoadingSpinner size="md" />;
@@ -437,6 +450,7 @@ const Home = () => {
       </section>
 
       {/* --- RESEARCH SECTION - GIẢNG VIÊN --- */}
+      {!userIsStudent && (
       <section className="py-20 bg-slate-50">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="flex flex-col md:flex-row items-end justify-between mb-12 gap-4">
@@ -531,8 +545,8 @@ const Home = () => {
           </div>
         </div>
       </section>
-
-      {/* --- NEWS SECTION (TÁCH RIÊNG) --- */}
+      )}
+      {/* --- NEWS SECTION --- */}
       <section className="py-20 bg-slate-50">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="flex items-center justify-between mb-12 pb-4 border-b border-slate-200">

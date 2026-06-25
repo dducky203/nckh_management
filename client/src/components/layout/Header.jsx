@@ -193,16 +193,14 @@ const Header = () => {
                           <AccountCircle className="w-4 h-4 mr-2 text-gray-400" />
                           <span>Hồ sơ</span>
                         </Link>
-                        {userIsStudent && (
-                          <Link
-                            to="/research-groups"
-                            className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                            onClick={closeUserMenu}
-                          >
-                            <School className="w-4 h-4 mr-2 text-gray-400" />
-                            <span>Nhóm NCKH</span>
-                          </Link>
-                        )}
+                        <Link
+                          to="/research-groups"
+                          className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
+                          onClick={closeUserMenu}
+                        >
+                          <School className="w-4 h-4 mr-2 text-gray-400" />
+                          <span>Nhóm NCKH</span>
+                        </Link>
                         {userNckhStaff && (
                           <>
                             <Link
@@ -358,21 +356,19 @@ const Header = () => {
             </Link>
           </li>
 
-          {(!user || userIsStudent) && (
-            <li>
-              <Link
-                to="/research-groups"
-                className={`flex items-center text-sm hover:text-mainColor transition-colors px-3 py-1.5 rounded-md hover:bg-purple-100 ${
+          <li>
+            <Link
+              to="/research-groups"
+              className={`flex items-center text-sm hover:text-mainColor transition-colors px-3 py-1.5 rounded-md hover:bg-purple-100 ${
                   location.pathname.startsWith("/research-groups")
                     ? "text-mainColor bg-purple-100"
                     : "text-gray-700"
                 }`}
-              >
-                <School className="w-4 h-4 mr-1" />
-                <span>Nhóm NCKH</span>
-              </Link>
-            </li>
-          )}
+            >
+              <School className="w-4 h-4 mr-1" />
+              <span>Nhóm NCKH</span>
+            </Link>
+          </li>
 
           {showNckhActivityMenu && (
           <li className="relative">
@@ -477,7 +473,6 @@ const Header = () => {
               <span>Tin tức</span>
             </Link>
 
-            {(!user || userIsStudent) && (
             <Link
               to="/research-groups"
               className={`flex items-center px-4 py-2 text-sm hover:bg-purple-50 hover:text-mainColor transition-colors ${
@@ -491,7 +486,6 @@ const Header = () => {
               <School className="w-4 h-4 mr-2" />
               <span>Nhóm NCKH</span>
             </Link>
-            )}
 
             {showNckhActivityMenu && (
             <div className="px-4 py-2">
@@ -574,26 +568,22 @@ const Header = () => {
                   <AccountCircle className="w-4 h-4 mr-2" />
                   Hồ sơ
                 </Link>
-                {userIsStudent && (
-                  <Link
-                    to="/research-groups"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-mainColor"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <School className="w-4 h-4 mr-2" />
-                    Nhóm NCKH
-                  </Link>
-                )}
-                {userIsStudent && (
-                  <Link
-                    to="/research-groups/profile"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-mainColor"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Group className="w-4 h-4 mr-2" />
-                    Hồ sơ nhóm
-                  </Link>
-                )}
+                <Link
+                  to="/research-groups"
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-mainColor"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <School className="w-4 h-4 mr-2" />
+                  Nhóm NCKH
+                </Link>
+                <Link
+                  to="/research-groups/profile"
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-mainColor"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Group className="w-4 h-4 mr-2" />
+                  Hồ sơ nhóm
+                </Link>
                 {userNckhStaff && (
                   <>
                     <Link
