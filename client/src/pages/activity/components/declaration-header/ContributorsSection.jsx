@@ -7,6 +7,7 @@ export default function ContributorsSection({
   addContributor,
   removeContributor,
   loadUsersIfNeeded,
+  error,
 }) {
   const [searchTerms, setSearchTerms] = useState({});
   const [openIndex, setOpenIndex] = useState(null);
@@ -84,7 +85,7 @@ export default function ContributorsSection({
   };
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3">
+    <div className={`rounded-lg border bg-white p-3 ${error ? "border-red-400" : "border-slate-200"}`}>
       <div className="flex items-center justify-between mb-2">
         <h4 className="text-xs font-extrabold text-slate-700">
           Người tham gia
@@ -181,6 +182,7 @@ export default function ContributorsSection({
           </div>
         ))}
       </div>
+      {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
     </div>
   );
 }

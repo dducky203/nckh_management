@@ -35,6 +35,9 @@ public class UserRequest {
     @NotNull(message = "Title không được bỏ trống")
     private Title idTitle;
     private String address;
+    private String provinceCode;
+    private String wardCode;
+    private String addressDetail;
     private Boolean inActive;
     private LocalDate birthday;
     private String phone;

@@ -23,6 +23,8 @@ import noAvatarImg from "../../assets/no-avatar-user.png";
 import { AuthContext } from "../../context/AuthContext";
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../constants";
 import Modal from "../../components/common/Modal";
+import AddressSelector from "../../components/common/AddressSelector";
+import AddressDisplay from "../../components/common/AddressDisplay";
 import ChangePassword from "./components/ChangPassword.jsx";
 
 const Profile = () => {
@@ -41,6 +43,9 @@ const Profile = () => {
     avatar: user.avatar || "",
     phone: user.phone || "",
     address: user.address || "",
+    provinceCode: user.provinceCode || "",
+    wardCode: user.wardCode || "",
+    addressDetail: user.addressDetail || "",
     birthday: user.birthday ? user.birthday.split("T")[0] : "",
     power: user.power || "",
     inActive: user.inActive,
@@ -132,6 +137,14 @@ const Profile = () => {
           ...user,
           ...userData,
         });
+
+        setProfileData((prev) => ({
+          ...prev,
+          ...userData,
+          birthday: userData.birthday
+            ? userData.birthday.split("T")[0]
+            : prev.birthday,
+        }));
 
         toast.success(SUCCESS_MESSAGES.UPDATE_PROFILE);
         setIsEditing(false);
@@ -399,27 +412,39 @@ const Profile = () => {
                       </div>
 
                       <div>
-                        <label
-                          htmlFor="address"
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                           Địa chỉ
                         </label>
-                        <div className="flex items-start border border-gray-300 rounded-md overflow-hidden">
-                          <span className="border-r border-gray-300 px-3 py-2 bg-gray-100">
-                            <LocationOn className=" text-gray-500" />
-                          </span>
-                          <textarea
-                            id="address"
-                            name="address"
-                            value={profileData.address}
-                            onChange={handleProfileChange}
-                            disabled={!isEditing}
-                            rows={3}
-                            className="w-full py-2 border-0 px-3 outline-none disabled:bg-gray-50 resize-none"
-                            placeholder="Địa chỉ"
+                        {isEditing ? (
+                          <AddressSelector
+                            variant="profile"
+                            provinceCode={profileData.provinceCode}
+                            wardCode={profileData.wardCode}
+                            addressDetail={profileData.addressDetail}
+                            onChange={({ provinceCode, wardCode, addressDetail }) =>
+                              setProfileData((prev) => ({
+                                ...prev,
+                                provinceCode,
+                                wardCode,
+                                addressDetail,
+                              }))
+                            }
                           />
-                        </div>
+                        ) : (
+                          <div className="flex items-start border border-gray-300 rounded-md overflow-hidden">
+                            <span className="px-3 py-2 border-r border-gray-300 bg-gray-100">
+                              <LocationOn className="text-gray-500" />
+                            </span>
+                            <div className="py-2 px-3 bg-gray-50 w-full">
+                              <AddressDisplay
+                                provinceCode={profileData.provinceCode}
+                                wardCode={profileData.wardCode}
+                                addressDetail={profileData.addressDetail}
+                                fallbackAddress={profileData.address}
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {isEditing && (

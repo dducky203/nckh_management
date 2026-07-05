@@ -41,6 +41,7 @@ export default function DeclarationHeaderForm({
     validateForm,
     buildPayload,
     resetAfterSubmit,
+    errors,
   } = useDeclarationHeaderState({
     user,
     toast,
@@ -132,6 +133,7 @@ export default function DeclarationHeaderForm({
             options={options}
             lockActivityType={lockActivityType}
             onFormChange={onFormChange}
+            errors={errors}
           />
 
           <ActivityTypeFields
@@ -139,6 +141,7 @@ export default function DeclarationHeaderForm({
             options={options}
             onFormChange={onFormChange}
             onExtraDetailChange={onExtraDetailChange}
+            errors={errors}
           />
 
           <ProofFileSection
@@ -149,6 +152,7 @@ export default function DeclarationHeaderForm({
             proofImages={proofImages}
             addProofImages={addProofImages}
             removeProofImage={removeProofImage}
+            error={errors.proofFiles}
           />
 
           <ContributorsSection
@@ -158,6 +162,7 @@ export default function DeclarationHeaderForm({
             addContributor={addContributor}
             removeContributor={removeContributor}
             loadUsersIfNeeded={loadUsersIfNeeded}
+            error={errors.contributors}
           />
 
           <div className="flex justify-end">

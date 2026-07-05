@@ -9,6 +9,7 @@ export default function ProofFileSection({
   proofImages,
   addProofImages,
   removeProofImage,
+  error,
 }) {
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -36,7 +37,11 @@ export default function ProofFileSection({
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 text-sm text-slate-500 hover:border-mainColor hover:text-mainColor transition-colors"
+          className={`flex items-center gap-2 h-10 rounded-lg border border-dashed px-3 text-sm transition-colors ${
+            error
+              ? "border-red-400 bg-red-50 text-red-600 hover:border-red-500"
+              : "border-slate-300 bg-slate-50 text-slate-500 hover:border-mainColor hover:text-mainColor"
+          }`}
         >
           <AttachFile sx={{ fontSize: 16 }} />
           Chọn file 
@@ -71,6 +76,7 @@ export default function ProofFileSection({
             ))}
           </ul>
         )}
+        {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
       </div>
 
       {/* Hình minh chứng */}

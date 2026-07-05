@@ -30,59 +30,69 @@ const OTHER_ACTIVITY_TYPE_LABELS = {
 };
 
 /* ─── Reusable field primitives ─── */
-function Field({ label, required, children, colSpan }) {
+function Field({ label, required, children, colSpan, error }) {
   return (
     <label className={`flex flex-col gap-1${colSpan ? ` md:col-span-${colSpan}` : ""}`}>
       <span className="text-xs font-bold text-slate-500">
         {label} {required && <span className="text-red-400">*</span>}
       </span>
       {children}
+      {error && <span className="text-xs text-red-500">{error}</span>}
     </label>
   );
 }
 
-const inputCls = "h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:border-mainColor";
-const selectCls = "h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:border-mainColor";
+const inputCls =
+  "h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:border-mainColor";
+const selectCls =
+  "h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:border-mainColor";
 
-function TextInput({ value, onChange, placeholder }) {
+const withError = (baseClass, error) =>
+  `${baseClass} ${error ? "border-red-400 focus:border-red-400" : ""}`;
+
+function TextInput({ value, onChange, placeholder, error }) {
   return (
     <input
       value={value || ""}
       onChange={(e) => onChange(e.target.value)}
-      className={inputCls}
+      className={withError(inputCls, error)}
       placeholder={placeholder}
     />
   );
 }
 
-function NumberInput({ value, onChange, placeholder, min }) {
+function NumberInput({ value, onChange, placeholder, min, error }) {
   return (
     <input
       type="number"
       value={value || ""}
       min={min}
       onChange={(e) => onChange(e.target.value)}
-      className={inputCls}
+      className={withError(inputCls, error)}
       placeholder={placeholder}
     />
   );
 }
 
-function UrlInput({ value, onChange, placeholder }) {
+function UrlInput({ value, onChange, placeholder, error }) {
   return (
     <input
       type="url"
       value={value || ""}
       onChange={(e) => onChange(e.target.value)}
-      className={inputCls}
+      className={withError(inputCls, error)}
       placeholder={placeholder || "https://..."}
     />
   );
 }
 
-function SelectInput({ value, onChange, options }) {
+function SelectInput({ value, onChange, options, error }) {
   return (
-    <select value={value || ""} onChange={(e) => onChange(e.target.value)} className={selectCls}>
+    <select
+      value={value || ""}
+      onChange={(e) => onChange(e.target.value)}
+      className={withError(selectCls, error)}
+    >
       {options.map(([val, label]) => (
         <option key={val} value={val}>
           {label}
@@ -107,7 +117,13 @@ function SectionTitle({ children }) {
 /* ================================================================
    Main component
 ================================================================ */
-export default function ActivityTypeFields({ form, options, onFormChange, onExtraDetailChange }) {
+export default function ActivityTypeFields({
+  form,
+  options,
+  onFormChange,
+  onExtraDetailChange,
+  errors = {},
+}) {
   const ex = form.extraDetails || {};
   const onEx = onExtraDetailChange;
 
@@ -133,8 +149,8 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
           <NumberInput value={ex.attendeeCount} onChange={(v) => onEx("attendeeCount", v)} placeholder="Số người" min={1} />
         </Field>
 
-        <Field label="Link slide / tài liệu" colSpan={2}>
-          <UrlInput value={form.externalLink} onChange={(v) => onFormChange("externalLink", v)} />
+        <Field label="Link slide / tài liệu" colSpan={2} error={errors.externalLink}>
+          <UrlInput value={form.externalLink} onChange={(v) => onFormChange("externalLink", v)} error={errors.externalLink} />
         </Field>
       </div>
     );
@@ -147,18 +163,20 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <SectionTitle>Thông tin Hội thảo</SectionTitle>
 
-        <Field label="Vai trò" required>
+        <Field label="Vai trò" required error={errors.conferenceRole}>
           <SelectInput
             value={form.conferenceRole}
             onChange={(v) => onFormChange("conferenceRole", v)}
+            error={errors.conferenceRole}
             options={(options.conferenceRoles || []).map((it) => [it, CONFERENCE_ROLE_LABELS[it] || it])}
           />
         </Field>
 
-        <Field label="Cấp độ hội thảo" required>
+        <Field label="Cấp độ hội thảo" required error={errors.conferenceLevel}>
           <SelectInput
             value={form.conferenceLevel}
             onChange={(v) => onFormChange("conferenceLevel", v)}
+            error={errors.conferenceLevel}
             options={(options.conferenceLevels || []).map((it) => [it, LEVEL_LABELS[it] || it])}
           />
         </Field>
@@ -169,20 +187,20 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
           </div>
         )}
 
-        <Field label="Tên hội thảo" colSpan={2}>
-          <TextInput value={form.publicationName} onChange={(v) => onFormChange("publicationName", v)} placeholder="Tên đầy đủ của hội thảo" />
+        <Field label="Tên hội thảo" colSpan={2} required error={errors.publicationName}>
+          <TextInput value={form.publicationName} onChange={(v) => onFormChange("publicationName", v)} placeholder="Tên đầy đủ của hội thảo" error={errors.publicationName} />
         </Field>
 
         <Field label="Nơi tổ chức">
           <TextInput value={form.venue} onChange={(v) => onFormChange("venue", v)} placeholder="Thành phố, quốc gia..." />
         </Field>
 
-        <Field label={isOrg ? "Số / Mã quyết định tổ chức" : "Số / Mã giấy chứng nhận"}>
-          <TextInput value={form.identifierCode} onChange={(v) => onFormChange("identifierCode", v)} placeholder={isOrg ? "Số QĐ tổ chức hội thảo" : "Số chứng nhận tham dự"} />
+        <Field label={isOrg ? "Số / Mã quyết định tổ chức" : "Số / Mã giấy chứng nhận"} required error={errors.identifierCode}>
+          <TextInput value={form.identifierCode} onChange={(v) => onFormChange("identifierCode", v)} placeholder={isOrg ? "Số QĐ tổ chức hội thảo" : "Số chứng nhận tham dự"} error={errors.identifierCode} />
         </Field>
 
-        <Field label="Link hội thảo" colSpan={2}>
-          <UrlInput value={form.externalLink} onChange={(v) => onFormChange("externalLink", v)} placeholder="https://conference..." />
+        <Field label="Link hội thảo" colSpan={2} error={errors.externalLink}>
+          <UrlInput value={form.externalLink} onChange={(v) => onFormChange("externalLink", v)} placeholder="https://conference..." error={errors.externalLink} />
         </Field>
       </div>
     );
@@ -194,16 +212,17 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <SectionTitle>Thông tin Bài báo Quốc tế</SectionTitle>
 
-        <Field label="Danh mục" required>
+        <Field label="Danh mục" required error={errors.intlPaperCategory}>
           <SelectInput
             value={form.intlPaperCategory}
             onChange={(v) => onFormChange("intlPaperCategory", v)}
+            error={errors.intlPaperCategory}
             options={(options.intlPaperCategories || []).map((it) => [it, INTL_CATEGORY_LABELS[it] || it])}
           />
         </Field>
 
-        <Field label="Tên tạp chí">
-          <TextInput value={form.publicationName} onChange={(v) => onFormChange("publicationName", v)} placeholder="Journal of ..." />
+        <Field label="Tên tạp chí" required error={errors.publicationName}>
+          <TextInput value={form.publicationName} onChange={(v) => onFormChange("publicationName", v)} placeholder="Journal of ..." error={errors.publicationName} />
         </Field>
 
         <Field label="Tập / Số (Volume / Issue)">
@@ -214,16 +233,16 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
           <TextInput value={ex.pages} onChange={(v) => onEx("pages", v)} placeholder="123–145" />
         </Field>
 
-        <Field label="DOI">
-          <TextInput value={form.identifierCode} onChange={(v) => onFormChange("identifierCode", v)} placeholder="10.xxxx/xxxxx" />
+        <Field label="DOI" required error={errors.identifierCode}>
+          <TextInput value={form.identifierCode} onChange={(v) => onFormChange("identifierCode", v)} placeholder="10.xxxx/xxxxx" error={errors.identifierCode} />
         </Field>
 
         <Field label="Impact Factor / Điểm Q">
           <TextInput value={ex.impactFactor} onChange={(v) => onEx("impactFactor", v)} placeholder="Ví dụ: IF=3.2, Q1" />
         </Field>
 
-        <Field label="Link bài báo" colSpan={2}>
-          <UrlInput value={form.externalLink} onChange={(v) => onFormChange("externalLink", v)} />
+        <Field label="Link bài báo" colSpan={2} error={errors.externalLink}>
+          <UrlInput value={form.externalLink} onChange={(v) => onFormChange("externalLink", v)} error={errors.externalLink} />
         </Field>
       </div>
     );
@@ -235,28 +254,29 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <SectionTitle>Thông tin Bài báo Tiếng Việt</SectionTitle>
 
-        <Field label="Danh mục" required>
+        <Field label="Danh mục" required error={errors.vnPaperCategory}>
           <SelectInput
             value={form.vnPaperCategory}
             onChange={(v) => onFormChange("vnPaperCategory", v)}
+            error={errors.vnPaperCategory}
             options={(options.vnPaperCategories || []).map((it) => [it, VN_CATEGORY_LABELS[it] || it])}
           />
         </Field>
 
-        <Field label="Tên tạp chí">
-          <TextInput value={form.publicationName} onChange={(v) => onFormChange("publicationName", v)} placeholder="Tạp chí Khoa học và Công nghệ..." />
+        <Field label="Tên tạp chí" required error={errors.publicationName}>
+          <TextInput value={form.publicationName} onChange={(v) => onFormChange("publicationName", v)} placeholder="Tạp chí Khoa học và Công nghệ..." error={errors.publicationName} />
         </Field>
 
         <Field label="Tập / Số / Năm phát hành">
           <TextInput value={ex.volumeIssue} onChange={(v) => onEx("volumeIssue", v)} placeholder="Tập 10, Số 2 (2025)" />
         </Field>
 
-        <Field label="ISSN">
-          <TextInput value={form.identifierCode} onChange={(v) => onFormChange("identifierCode", v)} placeholder="xxxx-xxxx" />
+        <Field label="ISSN" required error={errors.identifierCode}>
+          <TextInput value={form.identifierCode} onChange={(v) => onFormChange("identifierCode", v)} placeholder="xxxx-xxxx" error={errors.identifierCode} />
         </Field>
 
-        <Field label="Link bài báo" colSpan={2}>
-          <UrlInput value={form.externalLink} onChange={(v) => onFormChange("externalLink", v)} />
+        <Field label="Link bài báo" colSpan={2} error={errors.externalLink}>
+          <UrlInput value={form.externalLink} onChange={(v) => onFormChange("externalLink", v)} error={errors.externalLink} />
         </Field>
       </div>
     );
@@ -268,16 +288,17 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <SectionTitle>Thông tin Bài tham luận kỷ yếu</SectionTitle>
 
-        <Field label="Cấp độ" required>
+        <Field label="Cấp độ" required error={errors.proceedingLevel}>
           <SelectInput
             value={form.proceedingLevel}
             onChange={(v) => onFormChange("proceedingLevel", v)}
+            error={errors.proceedingLevel}
             options={(options.proceedingLevels || []).map((it) => [it, LEVEL_LABELS[it] || it])}
           />
         </Field>
 
-        <Field label="Tên kỷ yếu / Hội thảo">
-          <TextInput value={form.publicationName} onChange={(v) => onFormChange("publicationName", v)} placeholder="Tên kỷ yếu hoặc hội thảo" />
+        <Field label="Tên kỷ yếu / Hội thảo" required error={errors.publicationName}>
+          <TextInput value={form.publicationName} onChange={(v) => onFormChange("publicationName", v)} placeholder="Tên kỷ yếu hoặc hội thảo" error={errors.publicationName} />
         </Field>
 
         <Field label="Nơi tổ chức">
@@ -292,8 +313,8 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
           <TextInput value={form.identifierCode} onChange={(v) => onFormChange("identifierCode", v)} placeholder="978-xxx-xxx" />
         </Field>
 
-        <Field label="Link tài liệu">
-          <UrlInput value={form.externalLink} onChange={(v) => onFormChange("externalLink", v)} />
+        <Field label="Link tài liệu" error={errors.externalLink}>
+          <UrlInput value={form.externalLink} onChange={(v) => onFormChange("externalLink", v)} error={errors.externalLink} />
         </Field>
       </div>
     );
@@ -305,12 +326,12 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <SectionTitle>Thông tin Bài tổng quan lĩnh vực</SectionTitle>
 
-        <Field label="Lĩnh vực tổng quan" colSpan={2}>
-          <TextInput value={ex.reviewField} onChange={(v) => onEx("reviewField", v)} placeholder="Ví dụ: Trí tuệ nhân tạo, Nông nghiệp công nghệ cao..." />
+        <Field label="Lĩnh vực tổng quan" colSpan={2} required error={errors.reviewField}>
+          <TextInput value={ex.reviewField} onChange={(v) => onEx("reviewField", v)} placeholder="Ví dụ: Trí tuệ nhân tạo, Nông nghiệp công nghệ cao..." error={errors.reviewField} />
         </Field>
 
-        <Field label="Đầu sách / Tạp chí đăng">
-          <TextInput value={form.publicationName} onChange={(v) => onFormChange("publicationName", v)} placeholder="Tên tạp chí hoặc đầu sách" />
+        <Field label="Đầu sách / Tạp chí đăng" required error={errors.publicationName}>
+          <TextInput value={form.publicationName} onChange={(v) => onFormChange("publicationName", v)} placeholder="Tên tạp chí hoặc đầu sách" error={errors.publicationName} />
         </Field>
 
         <Field label="Số tài liệu tham khảo">
@@ -348,24 +369,24 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
           />
         </Field>
 
-        <Field label="Tên đề tài / Dự án">
-          <TextInput value={form.publicationName} onChange={(v) => onFormChange("publicationName", v)} placeholder="Tên đề tài hoặc dự án tư vấn" />
+        <Field label="Tên đề tài / Dự án" required error={errors.publicationName}>
+          <TextInput value={form.publicationName} onChange={(v) => onFormChange("publicationName", v)} placeholder="Tên đề tài hoặc dự án tư vấn" error={errors.publicationName} />
         </Field>
 
         <Field label="Đơn vị thụ hưởng">
           <TextInput value={form.venue} onChange={(v) => onFormChange("venue", v)} placeholder="Tên tổ chức / đơn vị nhận tư vấn" />
         </Field>
 
-        <Field label="Số hợp đồng / Văn bản">
-          <TextInput value={form.identifierCode} onChange={(v) => onFormChange("identifierCode", v)} placeholder="Số HĐ hoặc số văn bản" />
+        <Field label="Số hợp đồng / Văn bản" required error={errors.identifierCode}>
+          <TextInput value={form.identifierCode} onChange={(v) => onFormChange("identifierCode", v)} placeholder="Số HĐ hoặc số văn bản" error={errors.identifierCode} />
         </Field>
 
         <Field label="Thời gian thực hiện">
           <TextInput value={ex.consultPeriod} onChange={(v) => onEx("consultPeriod", v)} placeholder="Ví dụ: T3/2025 – T9/2025" />
         </Field>
 
-        <Field label="Link tài liệu">
-          <UrlInput value={form.externalLink} onChange={(v) => onFormChange("externalLink", v)} />
+        <Field label="Link tài liệu" error={errors.externalLink}>
+          <UrlInput value={form.externalLink} onChange={(v) => onFormChange("externalLink", v)} error={errors.externalLink} />
         </Field>
       </div>
     );
@@ -377,12 +398,12 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <SectionTitle>Thông tin Quy trình / Tiến bộ kỹ thuật</SectionTitle>
 
-        <Field label="Tên tiến bộ kỹ thuật / Quy trình" colSpan={2}>
-          <TextInput value={form.publicationName} onChange={(v) => onFormChange("publicationName", v)} placeholder="Tên đầy đủ của quy trình / tiến bộ kỹ thuật" />
+        <Field label="Tên tiến bộ kỹ thuật / Quy trình" colSpan={2} required error={errors.publicationName}>
+          <TextInput value={form.publicationName} onChange={(v) => onFormChange("publicationName", v)} placeholder="Tên đầy đủ của quy trình / tiến bộ kỹ thuật" error={errors.publicationName} />
         </Field>
 
-        <Field label="Mã / Số quyết định">
-          <TextInput value={form.identifierCode} onChange={(v) => onFormChange("identifierCode", v)} placeholder="Số QĐ công nhận" />
+        <Field label="Mã / Số quyết định" required error={errors.identifierCode}>
+          <TextInput value={form.identifierCode} onChange={(v) => onFormChange("identifierCode", v)} placeholder="Số QĐ công nhận" error={errors.identifierCode} />
         </Field>
 
         <Field label="Đơn vị công nhận / Cấp phép">
@@ -410,10 +431,11 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <SectionTitle>Thông tin Đề xuất vào danh mục tuyển chọn</SectionTitle>
 
-        <Field label="Cấp độ" required>
+        <Field label="Cấp độ" required error={errors.proposalLevel}>
           <SelectInput
             value={form.proposalLevel}
             onChange={(v) => onFormChange("proposalLevel", v)}
+            error={errors.proposalLevel}
             options={[
               ["NAT", PROPOSAL_LEVEL_LABELS["NAT"]],
               ["MINISTRY", PROPOSAL_LEVEL_LABELS["MINISTRY"]],
@@ -421,16 +443,16 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
           />
         </Field>
 
-        <Field label="Tên đề tài đề xuất">
-          <TextInput value={form.publicationName} onChange={(v) => onFormChange("publicationName", v)} placeholder="Tên đề tài / nhiệm vụ" />
+        <Field label="Tên đề tài đề xuất" required error={errors.publicationName}>
+          <TextInput value={form.publicationName} onChange={(v) => onFormChange("publicationName", v)} placeholder="Tên đề tài / nhiệm vụ" error={errors.publicationName} />
         </Field>
 
         <Field label="Cơ quan tài trợ / Đặt hàng">
           <TextInput value={form.venue} onChange={(v) => onFormChange("venue", v)} placeholder="Bộ KH&CN, Bộ NN&PTNT..." />
         </Field>
 
-        <Field label="Số quyết định / Văn bản">
-          <TextInput value={form.identifierCode} onChange={(v) => onFormChange("identifierCode", v)} placeholder="Số QĐ hoặc mã đề tài" />
+        <Field label="Số quyết định / Văn bản" required error={errors.identifierCode}>
+          <TextInput value={form.identifierCode} onChange={(v) => onFormChange("identifierCode", v)} placeholder="Số QĐ hoặc mã đề tài" error={errors.identifierCode} />
         </Field>
 
         <Field label="Kinh phí đề xuất (triệu đồng)">
@@ -454,27 +476,30 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <SectionTitle>Thông tin Nhiệm vụ KH&CN được phê duyệt</SectionTitle>
 
-        <Field label="Cấp nhiệm vụ" required>
+        <Field label="Cấp nhiệm vụ" required error={errors.taskLevel}>
           <SelectInput
             value={form.taskLevel}
             onChange={(v) => onFormChange("taskLevel", v)}
+            error={errors.taskLevel}
             options={Object.entries(TASK_LEVEL_LABELS)}
           />
         </Field>
 
-        <Field label="Vai trò" required>
+        <Field label="Vai trò" required error={errors.taskRole}>
           <SelectInput
             value={form.taskRole}
             onChange={(v) => onFormChange("taskRole", v)}
+            error={errors.taskRole}
             options={Object.entries(TASK_ROLE_LABELS)}
           />
         </Field>
 
-        <Field label="Tên đề tài / Nhiệm vụ" colSpan={2}>
+        <Field label="Tên đề tài / Nhiệm vụ" colSpan={2} required error={errors.publicationName}>
           <TextInput
             value={form.publicationName}
             onChange={(v) => onFormChange("publicationName", v)}
             placeholder="Tên đầy đủ đề tài / nhiệm vụ nghiên cứu"
+            error={errors.publicationName}
           />
         </Field>
 
@@ -486,11 +511,12 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
           />
         </Field>
 
-        <Field label="Mã số đề tài / Số hợp đồng">
+        <Field label="Mã số đề tài / Số hợp đồng" required error={errors.identifierCode}>
           <TextInput
             value={form.identifierCode}
             onChange={(v) => onFormChange("identifierCode", v)}
             placeholder="Mã số đề tài theo quyết định"
+            error={errors.identifierCode}
           />
         </Field>
 
@@ -511,8 +537,8 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
           />
         </Field>
 
-        <Field label="Link quyết định / Tài liệu" colSpan={2}>
-          <UrlInput value={form.externalLink} onChange={(v) => onFormChange("externalLink", v)} />
+        <Field label="Link quyết định / Tài liệu" colSpan={2} error={errors.externalLink}>
+          <UrlInput value={form.externalLink} onChange={(v) => onFormChange("externalLink", v)} error={errors.externalLink} />
         </Field>
       </div>
     );
@@ -552,19 +578,21 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
           />
         </Field>
 
-        <Field label="Đơn vị tổ chức" colSpan={2}>
+        <Field label="Đơn vị tổ chức" colSpan={2} required error={errors.venue}>
           <TextInput
             value={form.venue}
             onChange={(v) => onFormChange("venue", v)}
             placeholder="VD: Bộ KH&CN, Học viện Nông nghiệp..."
+            error={errors.venue}
           />
         </Field>
 
-        <Field label="Số quyết định thành lập HĐ">
+        <Field label="Số quyết định thành lập HĐ" required error={errors.identifierCode}>
           <TextInput
             value={form.identifierCode}
             onChange={(v) => onFormChange("identifierCode", v)}
             placeholder="Số QĐ..."
+            error={errors.identifierCode}
           />
         </Field>
 
@@ -590,11 +618,12 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <SectionTitle>Thông tin Mời chuyên gia Seminar / Chuyên đề</SectionTitle>
 
-        <Field label="Họ tên chuyên gia" colSpan={2}>
+        <Field label="Họ tên chuyên gia" colSpan={2} required error={errors.expertName}>
           <TextInput
             value={ex.expertName}
             onChange={(v) => onEx("expertName", v)}
             placeholder="Họ và tên chuyên gia được mời"
+            error={errors.expertName}
           />
         </Field>
 
@@ -614,11 +643,12 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
           />
         </Field>
 
-        <Field label="Nơi tổ chức">
+        <Field label="Nơi tổ chức" required error={errors.venue}>
           <TextInput
             value={form.venue}
             onChange={(v) => onFormChange("venue", v)}
             placeholder="Địa điểm / Phòng học"
+            error={errors.venue}
           />
         </Field>
 
@@ -644,37 +674,41 @@ export default function ActivityTypeFields({ form, options, onFormChange, onExtr
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <SectionTitle>Thông tin Hoạt động KH&CN khác</SectionTitle>
 
-        <Field label="Loại sản phẩm / hoạt động" required colSpan={2}>
+        <Field label="Loại sản phẩm / hoạt động" required colSpan={2} error={errors.otherActivityType}>
           <SelectInput
             value={form.otherActivityType}
             onChange={(v) => onFormChange("otherActivityType", v)}
+            error={errors.otherActivityType}
             options={Object.entries(OTHER_ACTIVITY_TYPE_LABELS)}
           />
         </Field>
 
-        <Field label="Nhà xuất bản / Đơn vị phát hành">
+        <Field label="Nhà xuất bản / Đơn vị phát hành" required error={errors.publicationName}>
           <TextInput
             value={form.publicationName}
             onChange={(v) => onFormChange("publicationName", v)}
             placeholder="Tên nhà xuất bản / đơn vị"
+            error={errors.publicationName}
           />
         </Field>
 
-        <Field label="ISBN / Mã số / Số hợp đồng">
+        <Field label="ISBN / Mã số / Số hợp đồng" required error={errors.identifierCode}>
           <TextInput
             value={form.identifierCode}
             onChange={(v) => onFormChange("identifierCode", v)}
             placeholder="ISBN / Số hợp đồng / Mã định danh"
+            error={errors.identifierCode}
           />
         </Field>
 
         {form.otherActivityType === "HOP_DONG_KHCN" && (
-          <Field label="Giá trị hợp đồng (triệu đồng)">
+          <Field label="Giá trị hợp đồng (triệu đồng)" required error={errors.contractValue}>
             <NumberInput
               value={ex.contractValue}
               onChange={(v) => onEx("contractValue", v)}
               placeholder="Giá trị (triệu đồng)"
               min={0}
+              error={errors.contractValue}
             />
           </Field>
         )}

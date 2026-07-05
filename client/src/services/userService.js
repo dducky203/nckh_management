@@ -54,6 +54,9 @@ const userService = {
     if (data.email) formData.append('email', data.email);
     if (data.title) formData.append('title', data.title);
     if (data.phone) formData.append('phone', data.phone);
+    if (data.provinceCode) formData.append('provinceCode', data.provinceCode);
+    if (data.wardCode) formData.append('wardCode', data.wardCode);
+    if (data.addressDetail) formData.append('addressDetail', data.addressDetail);
     if (data.address) formData.append('address', data.address);
     if (data.birthday) formData.append('birthday', data.birthday);
     

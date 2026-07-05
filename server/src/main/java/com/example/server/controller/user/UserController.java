@@ -17,6 +17,7 @@ import com.example.server.exception.ErrorException;
 import com.example.server.mapper.UserMapper;
 import com.example.server.repository.ResumeRepository;
 import com.example.server.repository.UserRepository;
+import com.example.server.service.AddressService;
 import com.example.server.service.CloudinaryService;
 import com.example.server.service.UserService;
 
@@ -28,12 +29,15 @@ public class UserController {
 
     private final UserMapper userMapper;
     private final CloudinaryService cloudinaryService;
+    private final AddressService addressService;
 
-    public UserController(UserService userService, UserRepository userRepository, UserMapper userMapper, CloudinaryService cloudinaryService) {
+    public UserController(UserService userService, UserRepository userRepository, UserMapper userMapper,
+                          CloudinaryService cloudinaryService, AddressService addressService) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.cloudinaryService = cloudinaryService;
+        this.addressService = addressService;
     }
 
     @GetMapping("/profile")
@@ -58,6 +62,9 @@ public class UserController {
             @RequestParam(value = "title", required = false) String title,
             @RequestParam(value = "phone", required = false) String phone,
             @RequestParam(value = "address", required = false) String address,
+            @RequestParam(value = "provinceCode", required = false) String provinceCode,
+            @RequestParam(value = "wardCode", required = false) String wardCode,
+            @RequestParam(value = "addressDetail", required = false) String addressDetail,
             @RequestParam(value = "birthday", required = false) LocalDate birthday) {
 
         try {
@@ -71,8 +78,13 @@ public class UserController {
             if (email != null && !email.isEmpty()) user.getIdResume().setEmail(email);
             if (title != null && !title.isEmpty()) user.getIdTitle().setName(title);
             if (phone != null && !phone.isEmpty()) user.getIdResume().setPhone(phone);
-            if (address != null && !address.isEmpty()) user.getIdResume().setAddress(address);
             if (birthday != null ) user.getIdResume().setBirthday(birthday);
+            addressService.applyAddressToResume(
+                    user.getIdResume(),
+                    provinceCode,
+                    wardCode,
+                    addressDetail,
+                    address);
 
             // Upload avatar if provided
             if (avatarFile != null && !avatarFile.isEmpty()) {

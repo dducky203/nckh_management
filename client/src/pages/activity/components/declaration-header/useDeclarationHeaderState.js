@@ -10,6 +10,10 @@ import {
   normalizeContributors,
   resolveCatalogCode,
 } from "./utils";
+import {
+  clearDeclarationError,
+  validateDeclarationForm,
+} from "./validateDeclarationForm";
 
 const getTodayString = () => {
   const now = new Date();
@@ -17,6 +21,17 @@ const getTodayString = () => {
   const mm = String(now.getMonth() + 1).padStart(2, "0");
   const dd = String(now.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
+};
+
+const parseProofUrls = (value) => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.filter(Boolean);
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter(Boolean) : [value];
+  } catch {
+    return [value];
+  }
 };
 
 export default function useDeclarationHeaderState({
@@ -38,8 +53,11 @@ export default function useDeclarationHeaderState({
   const [usersLoaded, setUsersLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
   const [proofFiles, setProofFiles] = useState([]);
   const [proofImages, setProofImages] = useState([]);
+  const [existingProofFileUrls, setExistingProofFileUrls] = useState([]);
+  const [existingProofImageUrls, setExistingProofImageUrls] = useState([]);
   const [form, setForm] = useState(getInitialForm(initialActivityType));
   const [contributors, setContributors] = useState([
     { userId: user?.id ?? "", role: "MAIN" },
@@ -70,6 +88,8 @@ export default function useDeclarationHeaderState({
       detailsJson: initialData.detailsJson || "",
       extraDetails,
     }));
+    setExistingProofFileUrls(parseProofUrls(initialData.proofFileUrl));
+    setExistingProofImageUrls(parseProofUrls(initialData.proofImageUrl));
   }, [initialData]);
 
   useEffect(() => {
@@ -169,6 +189,7 @@ export default function useDeclarationHeaderState({
 
   const addProofFiles = (newFiles) => {
     setProofFiles((prev) => [...prev, ...newFiles]);
+    setErrors((prev) => clearDeclarationError(prev, "proofFiles"));
   };
 
   const removeProofFile = (index) => {
@@ -190,6 +211,7 @@ export default function useDeclarationHeaderState({
 
   const onFormChange = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+    setErrors((prev) => clearDeclarationError(prev, key));
   };
 
   const onExtraDetailChange = (key, value) => {
@@ -197,12 +219,14 @@ export default function useDeclarationHeaderState({
       ...prev,
       extraDetails: { ...prev.extraDetails, [key]: value },
     }));
+    setErrors((prev) => clearDeclarationError(prev, key));
   };
 
   const onContributorChange = (index, key, value) => {
     setContributors((prev) =>
       prev.map((row, i) => (i === index ? { ...row, [key]: value } : row)),
     );
+    setErrors((prev) => clearDeclarationError(prev, "contributors"));
   };
 
   const addContributor = async () => {
@@ -212,48 +236,36 @@ export default function useDeclarationHeaderState({
 
   const removeContributor = (index) => {
     setContributors((prev) => prev.filter((_, i) => i !== index));
+    setErrors((prev) => clearDeclarationError(prev, "contributors"));
   };
 
   const validateForm = () => {
-    const resolvedCatalogCode = resolveCatalogCode(
+    const result = validateDeclarationForm({
       form,
-      options.generatedTypeCodes,
-    );
+      options,
+      proofFiles,
+      existingProofFileUrls,
+      contributors,
+      user,
+      getTodayString,
+    });
 
-    if (!user?.id) return "Không xác định được người dùng";
-    if (!form.title?.trim()) return "Vui lòng nhập tên hoạt động";
-    if (!form.activityDate) return "Vui lòng chọn thời gian hoạt động";
-    if (form.activityDate >= getTodayString()) {
-      return "Ngày xuất bản/ nghiệm thu phải là ngày trong quá khứ";
-    }
-    if (!resolvedCatalogCode) {
-      return "Không xác định được tieuChiCode để lưu catalog_code";
-    }
-    if (requiresProofFile && proofFiles.length === 0) {
-      return "Hoạt động này bắt buộc có file minh chứng";
+    if (result) {
+      setErrors(result.errors);
+      return result.message;
     }
 
-    const normalizedContributors = normalizeContributors(contributors);
-    if (normalizedContributors.length === 0) {
-      return "Vui lòng thêm ít nhất 1 người tham gia";
-    }
-
-    if (!normalizedContributors.some((row) => row.role === "MAIN")) {
-      return "Cần có đúng 1 tác giả chính (MAIN)";
-    }
-
-    const mainCount = normalizedContributors.filter((row) => row.role === "MAIN").length;
-    if (mainCount > 1) {
-      return "Chỉ được phép có 1 tác giả chính (MAIN) trong nhóm";
-    }
-
+    setErrors({});
     return null;
   };
 
   const buildPayload = async () => {
     const catalogCode = resolveCatalogCode(form, options.generatedTypeCodes);
     const hasExtraDetails =
-      form.extraDetails && Object.keys(form.extraDetails).some((k) => form.extraDetails[k] !== "" && form.extraDetails[k] != null);
+      form.extraDetails &&
+      Object.keys(form.extraDetails).some(
+        (k) => form.extraDetails[k] !== "" && form.extraDetails[k] != null,
+      );
     const detailsJson = hasExtraDetails
       ? JSON.stringify(form.extraDetails)
       : form.detailsJson?.trim() || null;
@@ -266,6 +278,15 @@ export default function useDeclarationHeaderState({
         proofImages.map((f) => uploadToCloudinary(f, "nckh/proof-images")),
       ),
     ]);
+
+    const mergedProofFileUrls = [
+      ...existingProofFileUrls,
+      ...uploadedFileUrls,
+    ];
+    const mergedProofImageUrls = [
+      ...existingProofImageUrls,
+      ...uploadedImageUrls,
+    ];
 
     return {
       academicYear: form.academicYear,
@@ -285,8 +306,8 @@ export default function useDeclarationHeaderState({
       venue: form.venue?.trim() || null,
       identifierCode: form.identifierCode?.trim() || null,
       externalLink: form.externalLink?.trim() || null,
-      proofFileUrls: uploadedFileUrls.length > 0 ? uploadedFileUrls : null,
-      proofImageUrls: uploadedImageUrls.length > 0 ? uploadedImageUrls : null,
+      proofFileUrls: mergedProofFileUrls.length > 0 ? mergedProofFileUrls : null,
+      proofImageUrls: mergedProofImageUrls.length > 0 ? mergedProofImageUrls : null,
       detailsJson,
     };
   };
@@ -298,9 +319,10 @@ export default function useDeclarationHeaderState({
     }));
     setProofFiles([]);
     setProofImages([]);
-    setContributors([
-      { userId: user?.id ?? "", role: "MAIN" },
-    ]);
+    setExistingProofFileUrls([]);
+    setExistingProofImageUrls([]);
+    setErrors({});
+    setContributors([{ userId: user?.id ?? "", role: "MAIN" }]);
   };
 
   return {
@@ -309,6 +331,7 @@ export default function useDeclarationHeaderState({
     submitting,
     setSubmitting,
     form,
+    errors,
     onFormChange,
     onExtraDetailChange,
     proofFiles,
@@ -317,6 +340,7 @@ export default function useDeclarationHeaderState({
     proofImages,
     addProofImages,
     removeProofImage,
+    existingProofFileUrls,
     contributors,
     contributorOptions,
     onContributorChange,

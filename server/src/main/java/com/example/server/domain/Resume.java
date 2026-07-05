@@ -31,6 +31,15 @@ public class Resume extends EntityBase implements Serializable {
     @Column(name = "address", nullable = false, length = 250)
     private String address;
 
+    @Column(name = "province_code", length = 20)
+    private String provinceCode;
+
+    @Column(name = "ward_code", length = 20)
+    private String wardCode;
+
+    @Column(name = "address_detail", length = 250)
+    private String addressDetail;
+
     @Column(name = "birthday", nullable = false)
     private LocalDate birthday;
 

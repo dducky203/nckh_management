@@ -43,6 +43,8 @@ public class UserService implements UserDetailsService {
     UserMapper userMapper;
     @Autowired
     ResumeMapper resumeMapper;
+    @Autowired
+    AddressService addressService;
 
     public UserService(GuestRepository guestRepository, MemberRepository memberRepository) {
         this.guestRepository = guestRepository;
@@ -55,7 +57,14 @@ public class UserService implements UserDetailsService {
         // Validate user data
         validateUserForCreate(request);
 
-        Resume resumeSaved = resumeRepository.save(resumeMapper.toEntity(request));
+        Resume resumeSaved = resumeMapper.toEntity(request);
+        addressService.applyAddressToResume(
+                resumeSaved,
+                request.getProvinceCode(),
+                request.getWardCode(),
+                request.getAddressDetail(),
+                request.getAddress());
+        resumeSaved = resumeRepository.save(resumeSaved);
 
         User userSaved = userMapper.toEntity(request);
         userSaved.setPassword(SHA_256_password.GM_SHA_password(DateTimeConstant.toDate(request.getBirthday())));
@@ -92,8 +101,13 @@ public class UserService implements UserDetailsService {
             if (existingResume != null) {
                 existingResume.setEmail(request.getEmail());
                 existingResume.setPhone(request.getPhone());
-                existingResume.setAddress(request.getAddress());
                 existingResume.setBirthday(request.getBirthday());
+                addressService.applyAddressToResume(
+                        existingResume,
+                        request.getProvinceCode(),
+                        request.getWardCode(),
+                        request.getAddressDetail(),
+                        request.getAddress());
                 resumeRepository.save(existingResume);
 
             }

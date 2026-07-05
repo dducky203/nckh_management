@@ -7,11 +7,19 @@ const formatDateInput = (value) => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
+const fieldClass = (error) =>
+  `h-10 rounded-lg border px-3 text-sm focus:outline-none ${
+    error
+      ? "border-red-400 focus:border-red-400"
+      : "border-slate-200 focus:border-mainColor"
+  }`;
+
 export default function BasicDeclarationFields({
   form,
   options,
   lockActivityType,
   onFormChange,
+  errors = {},
 }) {
   const cfg = getBasicFieldConfig(form.activityType);
   const maxActivityDate = (() => {
@@ -38,7 +46,7 @@ export default function BasicDeclarationFields({
             <select
               value={form.activityType}
               onChange={(e) => onFormChange("activityType", e.target.value)}
-              className="h-10 rounded-lg border border-slate-200 px-3 text-sm"
+              className={fieldClass(errors.catalogCode)}
             >
               {(options.activityTypes || []).map((type) => (
                 <option key={type} value={type}>
@@ -50,46 +58,58 @@ export default function BasicDeclarationFields({
         )}
 
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-bold text-slate-500">Năm học</span>
+          <span className="text-xs font-bold text-slate-500">Năm học *</span>
           <input
             type="number"
             value={form.academicYear}
             onChange={(e) => onFormChange("academicYear", e.target.value)}
-            className="h-10 rounded-lg border border-slate-200 px-3 text-sm"
+            className={fieldClass(errors.academicYear)}
           />
+          {errors.academicYear && (
+            <span className="text-xs text-red-500">{errors.academicYear}</span>
+          )}
         </label>
 
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-bold text-slate-500">{cfg.qtyLabel}</span>
+          <span className="text-xs font-bold text-slate-500">{cfg.qtyLabel} *</span>
           <input
             type="number"
             min="1"
             value={form.qty}
             onChange={(e) => onFormChange("qty", e.target.value)}
-            className="h-10 rounded-lg border border-slate-200 px-3 text-sm"
+            className={fieldClass(errors.qty)}
           />
+          {errors.qty && <span className="text-xs text-red-500">{errors.qty}</span>}
         </label>
 
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-bold text-slate-500">{cfg.dateLabel}</span>
+          <span className="text-xs font-bold text-slate-500">{cfg.dateLabel} *</span>
           <input
             type="date"
             value={form.activityDate}
             onChange={(e) => onFormChange("activityDate", e.target.value)}
             max={maxActivityDate}
-            className="h-10 rounded-lg border border-slate-200 px-3 text-sm"
+            className={fieldClass(errors.activityDate)}
           />
+          {errors.activityDate && (
+            <span className="text-xs text-red-500">{errors.activityDate}</span>
+          )}
         </label>
       </div>
+
+      {errors.catalogCode && (
+        <p className="text-xs text-red-500">{errors.catalogCode}</p>
+      )}
 
       <label className="flex flex-col gap-1">
         <span className="text-xs font-bold text-slate-500">{cfg.titleLabel} *</span>
         <input
           value={form.title}
           onChange={(e) => onFormChange("title", e.target.value)}
-          className="h-10 rounded-lg border border-slate-200 px-3 text-sm"
+          className={fieldClass(errors.title)}
           placeholder={cfg.titlePlaceholder}
         />
+        {errors.title && <span className="text-xs text-red-500">{errors.title}</span>}
       </label>
 
       <label className="flex flex-col gap-1">
@@ -98,11 +118,10 @@ export default function BasicDeclarationFields({
           value={form.description}
           onChange={(e) => onFormChange("description", e.target.value)}
           rows={2}
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-mainColor"
           placeholder={cfg.descPlaceholder}
         />
       </label>
     </>
   );
 }
-

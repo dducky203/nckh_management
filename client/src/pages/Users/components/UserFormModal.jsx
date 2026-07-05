@@ -11,6 +11,7 @@ import { roleStringToInt, titleStringToInt } from "../../../utils/helpers";
 import { formatDateForInput } from "../../../utils/dateHelpers";
 import userService from "../../../services/userService";
 import Modal from "../../../components/common/Modal";
+import AddressSelector from "../../../components/common/AddressSelector";
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../../constants";
 
 const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
@@ -24,6 +25,9 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
     phone: "",
     birthday: "",
     address: "",
+    provinceCode: "",
+    wardCode: "",
+    addressDetail: "",
     power: 4,
     idRole: 2,
     idTitle: 5,
@@ -94,6 +98,9 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
           phone: user.phone || "",
           birthday: formatDateForInput(user.birthday),
           address: user.address || "",
+          provinceCode: user.provinceCode || "",
+          wardCode: user.wardCode || "",
+          addressDetail: user.addressDetail || "",
           power: user.power,
           idRole: roleStringToInt(user.role, roles),
           idTitle: titleStringToInt(user.title),
@@ -107,6 +114,9 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
           phone: "",
           birthday: "",
           address: "",
+          provinceCode: "",
+          wardCode: "",
+          addressDetail: "",
           power: 4,
           idRole: defaultUserId,
           idTitle: 5,
@@ -370,14 +380,18 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 Địa chỉ
               </label>
-              <input
-                type="text"
-                value={formData.address}
-                onChange={(e) =>
-                  setFormData({ ...formData, address: e.target.value })
+              <AddressSelector
+                provinceCode={formData.provinceCode}
+                wardCode={formData.wardCode}
+                addressDetail={formData.addressDetail}
+                onChange={({ provinceCode, wardCode, addressDetail }) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    provinceCode,
+                    wardCode,
+                    addressDetail,
+                  }))
                 }
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor"
-                placeholder="Nhập địa chỉ"
               />
             </div>
           </div>

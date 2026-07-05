@@ -20,6 +20,9 @@ public class UserDetailsDTO {
     private Boolean inActive;
     private Boolean isDeleted;
     private String address;
+    private String provinceCode;
+    private String wardCode;
+    private String addressDetail;
     private String avatar;
     private Date birthday;
     private String phone;
