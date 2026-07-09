@@ -2,7 +2,6 @@ package com.example.server.repository;
 
 import com.example.server.domain.Event;
 
-import com.example.server.utils.SQL;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,7 +15,6 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     @Query("""
                 SELECT e FROM Event e
                 WHERE e.isDelete = 1
-                 AND (:typeId IS NULL OR e.typeId.id = :typeId)
                   AND (
                        (:status = 'upcoming'
                             AND e.status = 'upcoming'
@@ -32,10 +30,7 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
                             AND e.dateOfEvent = CURRENT_DATE)
                   )
             """)
-    List<Event> findByStatusAndType(
-            @Param("status") String status,
-            @Param("typeId") Integer typeId
-    );
+    List<Event> findByStatus(@Param("status") String status);
 
 
 }

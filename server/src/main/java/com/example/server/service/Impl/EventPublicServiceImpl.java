@@ -29,15 +29,6 @@ public class EventPublicServiceImpl implements EventPublicService {
     private RoomRepository roomRepository;
 
     @Autowired
-    private ConferenceRepository conferenceRepository;
-
-    @Autowired
-    private SeminarRepository seminarRepository;
-
-    @Autowired
-    private TypeOfCriterionRepository typeOfCriterionRepository;
-
-    @Autowired
     private GuestRepository guestRepository;
 
     @Autowired
@@ -48,13 +39,9 @@ public class EventPublicServiceImpl implements EventPublicService {
 
     @Override
     public List<EventPublicDTO> getPublicEvents(String status) {
-
-        Integer typeId = 1;
-        List<Event> events = eventRepository.findByStatusAndType(
-                status != null ? status.toLowerCase() : null,
-                typeId
+        List<Event> events = eventRepository.findByStatus(
+                status != null ? status.toLowerCase() : null
         );
-        
         return convertToDTOsBatch(events);
     }
 
@@ -71,14 +58,8 @@ public class EventPublicServiceImpl implements EventPublicService {
     }
 
     @Override
-    public List<EventPublicDTO> searchAndFilterEvents(String status, String type, String searchTerm) {
+    public List<EventPublicDTO> searchAndFilterEvents(String status, String searchTerm) {
         List<EventPublicDTO> events = getPublicEvents(status);
-
-        if (type != null && !type.equals("all") && !type.isEmpty()) {
-            events = events.stream()
-                    .filter(e -> type.equalsIgnoreCase(e.getType()))
-                    .collect(Collectors.toList());
-        }
 
         if (searchTerm != null && !searchTerm.isBlank()) {
             String searchLower = searchTerm.toLowerCase();
@@ -236,34 +217,7 @@ public class EventPublicServiceImpl implements EventPublicService {
             }
         }
 
-        // Set typeId nếu có
-        if (eventData.getTypeId() != null) {
-            TypeOfCriterion typeOfCriterion = typeOfCriterionRepository.findById(eventData.getTypeId()).orElse(null);
-            if (typeOfCriterion != null) {
-                event.setTypeId(typeOfCriterion);
-            }
-        }
-
-        Event savedEvent = eventRepository.save(event);
-
-
-        if ("conference".equalsIgnoreCase(eventData.getType())) {
-            Conference conference = new Conference();
-            conference.setIdEvent(savedEvent.getId());
-            conference.setImage(eventData.getImage());
-            conference.setPaperTitle(eventData.getDescription());
-            conference.setArticleLink(eventData.getArticleLink());
-            conferenceRepository.save(conference);
-        } else {
-            Seminar seminar = new Seminar();
-            seminar.setIdEvent(savedEvent.getId());
-            seminar.setSeminarPhoto(eventData.getImage());
-            seminar.setMainAuthor(eventData.getOrganizer());
-            seminar.setArticleLink(eventData.getArticleLink());
-            seminarRepository.save(seminar);
-        }
-
-        return convertToDTO(savedEvent);
+        return convertToDTO(eventRepository.save(event));
     }
 
     @Override
@@ -287,29 +241,6 @@ public class EventPublicServiceImpl implements EventPublicService {
             event.setBannerImg(eventData.getBannerImg());
         }
 
-        // Update related tables used for description/image in DTO
-        Conference conference = conferenceRepository.findByIdEvent(eventId);
-        if (conference != null) {
-            if (eventData.getImage() != null && !eventData.getImage().isEmpty()) {
-                conference.setImage(eventData.getImage());
-            }
-            if (eventData.getDescription() != null) {
-                conference.setPaperTitle(eventData.getDescription());
-            }
-            conferenceRepository.save(conference);
-        }
-
-        Seminar seminar = seminarRepository.findByIdEvent(eventId);
-        if (seminar != null) {
-            if (eventData.getImage() != null && !eventData.getImage().isEmpty()) {
-                seminar.setSeminarPhoto(eventData.getImage());
-            }
-            if (eventData.getDescription() != null) {
-                // Current DTO maps Seminar.mainAuthor -> description
-                seminar.setMainAuthor(eventData.getDescription());
-            }
-            seminarRepository.save(seminar);
-        }
 
         Event savedEvent = eventRepository.save(event);
         return convertToDTO(savedEvent);
@@ -321,14 +252,6 @@ public class EventPublicServiceImpl implements EventPublicService {
 
         // Batch load conferences, seminars và rooms
         List<Integer> eventIds = events.stream().map(Event::getId).toList();
-        
-        Map<Integer, Conference> conferenceMap = conferenceRepository.findAll().stream()
-                .filter(c -> eventIds.contains(c.getIdEvent()))
-                .collect(Collectors.toMap(Conference::getIdEvent, c -> c));
-        
-        Map<Integer, Seminar> seminarMap = seminarRepository.findAll().stream()
-                .filter(s -> eventIds.contains(s.getIdEvent()))
-                .collect(Collectors.toMap(Seminar::getIdEvent, s -> s));
 
         // Batch load rooms
         Set<Integer> roomIds = events.stream()
@@ -341,12 +264,12 @@ public class EventPublicServiceImpl implements EventPublicService {
                 .collect(Collectors.toMap(Room::getId, r -> r));
 
         return events.stream()
-                .map(event -> convertToDTOBatch(event, conferenceMap, seminarMap, roomMap))
+                .map(event -> convertToDTOBatch(event, roomMap))
                 .collect(Collectors.toList());
     }
 
     // Convert với batch data
-    private EventPublicDTO convertToDTOBatch(Event event, Map<Integer, Conference> conferenceMap, Map<Integer, Seminar> seminarMap, Map<Integer, Room> roomMap) {
+    private EventPublicDTO convertToDTOBatch(Event event, Map<Integer, Room> roomMap) {
         EventPublicDTO dto = new EventPublicDTO();
         
         // Basic info
@@ -362,7 +285,6 @@ public class EventPublicServiceImpl implements EventPublicService {
         dto.setUpdatedAt(event.getUpdatedAt());
         dto.setBannerImg(event.getBannerImg());
         dto.setCreator(event.getCreator());
-        dto.setType(event.getTypeId().getName());
 
         // Get room info
         String location = "VNUA"; // default
@@ -391,32 +313,6 @@ public class EventPublicServiceImpl implements EventPublicService {
         dto.setContactEmail("contact@vnua.edu.vn");
         dto.setContactPhone("0243.827.6346");
         dto.setMaxParticipants(100);
-//        dto.setType("other");
-
-        // Get type from TypeOfCriterion
-        if (event.getTypeId() != null) {
-            dto.setTypeId(event.getTypeId().getId());
-            dto.setType(event.getTypeId().getName());
-        }
-
-        // Conference info
-        Conference conference = conferenceMap.get(event.getId());
-        if (conference != null) {
-            dto.setImage(conference.getImage());
-            dto.setDescription(conference.getPaperTitle());
-            dto.setArticleLink(conference.getArticleLink());
-//            dto.setType("conference");
-        }
-
-        // Seminar info
-        Seminar seminar = seminarMap.get(event.getId());
-        if (seminar != null) {
-            dto.setImage(seminar.getSeminarPhoto());
-            dto.setDescription(seminar.getMainAuthor());
-            dto.setArticleLink(seminar.getArticleLink());
-//            dto.setType("seminar");
-        }
-
         // Fallback image
 //        if (dto.getImage() == null || dto.getImage().isEmpty()) {
 //            dto.setImage(dto.getBannerImg() != null ? dto.getBannerImg() : "/file/default-event.jpg");
@@ -467,32 +363,8 @@ public class EventPublicServiceImpl implements EventPublicService {
         dto.setContactEmail("contact@vnua.edu.vn");
         dto.setContactPhone("0243.827.6346");
         dto.setMaxParticipants(100);
-        dto.setType("other");
         dto.setImage("/file/default-event.jpg");
 
-        // Get type from TypeOfCriterion
-        if (event.getTypeId() != null) {
-            dto.setTypeId(event.getTypeId().getId());
-            dto.setType(event.getTypeId().getName());
-        }
-
-        // Check conference
-        Conference conference = conferenceRepository.findByIdEvent(event.getId());
-        if (conference != null) {
-            dto.setImage(conference.getImage());
-            dto.setDescription(conference.getPaperTitle());
-            dto.setArticleLink(conference.getArticleLink());
-            dto.setType("conference");
-        }
-
-        // Check seminar
-        Seminar seminar = seminarRepository.findByIdEvent(event.getId());
-        if (seminar != null) {
-            dto.setImage(seminar.getSeminarPhoto());
-            dto.setDescription(seminar.getMainAuthor());
-            dto.setArticleLink(seminar.getArticleLink());
-            dto.setType("seminar");
-        }
 
         return dto;
     }

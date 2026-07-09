@@ -3,7 +3,6 @@ import EventCard from "./EventCard";
 import {
   Add,
   Search,
-  FilterList,
   Event as EventIcon,
   PendingActions,
 } from "@mui/icons-material";
@@ -23,19 +22,13 @@ const EventList = ({
   isAdmin = false, // Admin có quyền approve/reject/delete
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("all");
 
-  // Filter events
   const filteredEvents = events.filter((event) => {
     const matchesSearch =
       event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       event.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === "all" || event.type === filterType;
-    return matchesSearch && matchesType;
+    return matchesSearch;
   });
-
-  // Get unique event types for filter
-  const eventTypes = [...new Set(events.map((e) => e.type))];
 
   const EmptyState = () => (
     <div className="text-center py-12">
@@ -45,14 +38,14 @@ const EventList = ({
         <EventIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
       )}
       <h3 className="text-lg font-medium text-gray-900 mb-2">
-        {filteredEvents.length === 0 && (searchTerm || filterType !== "all")
+        {filteredEvents.length === 0 && searchTerm
           ? "Không tìm thấy sự kiện phù hợp"
           : `Không có ${
               type === "pending" ? "sự kiện chờ duyệt" : "sự kiện đã duyệt"
             }`}
       </h3>
       <p className="text-gray-500">
-        {filteredEvents.length === 0 && (searchTerm || filterType !== "all")
+        {filteredEvents.length === 0 && searchTerm
           ? "Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc"
           : `${
               type === "pending"
@@ -88,40 +81,17 @@ const EventList = ({
         )}
       </div>
 
-      {/* Search and Filter */}
+      {/* Search */}
       <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <div className="flex flex-col sm:flex-row gap-4">
-          {/* Search */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm theo tên sự kiện hoặc địa điểm..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-
-          {/* Filter */}
-          <div className="sm:w-48">
-            <div className="relative">
-              <FilterList className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
-              >
-                <option value="all">Tất cả loại</option>
-                {eventTypes.map((eventType) => (
-                  <option key={eventType} value={eventType}>
-                    {eventType}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Tìm kiếm theo tên sự kiện hoặc địa điểm..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
         </div>
 
         {/* Results count */}

@@ -2,13 +2,11 @@ import { useState, useEffect } from "react";
 
 export const useEventFilters = (events) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("all");
   const [filteredEvents, setFilteredEvents] = useState([]);
 
   useEffect(() => {
     let filtered = [...events];
 
-    // Search filter
     if (searchTerm.trim()) {
       filtered = filtered.filter(
         (event) =>
@@ -18,19 +16,12 @@ export const useEventFilters = (events) => {
       );
     }
 
-    // Type filter
-    if (filterType !== "all") {
-      filtered = filtered.filter((event) => event.type === filterType);
-    }
-
     setFilteredEvents(filtered);
-  }, [searchTerm, filterType, events]);
+  }, [searchTerm, events]);
 
   return {
     searchTerm,
     setSearchTerm,
-    filterType,
-    setFilterType,
     filteredEvents,
   };
 };

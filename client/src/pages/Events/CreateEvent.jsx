@@ -4,8 +4,6 @@ import {
   Event,
   CalendarMonth,
   LocationOn,
-  Description,
-  Category,
   ArrowBack,
   CloudUpload,
   AccessTime,
@@ -22,7 +20,6 @@ import {
 } from "../../utils/roomsData";
 import eventService from "../../services/eventService";
 import Button from "../../components/common/Button";
-import { EVENT_CATEGORIES } from "../../utils";
 import { ERROR_MESSAGES } from "../../constants";
 
 const CreateEvent = () => {
@@ -32,7 +29,6 @@ const CreateEvent = () => {
   const [loading, setLoading] = useState(false);
   const [roomsLoading, setRoomsLoading] = useState(false);
   const [rooms, setRooms] = useState([]);
-  const [eventTypes, setEventTypes] = useState([]);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [formData, setFormData] = useState({
@@ -42,26 +38,18 @@ const CreateEvent = () => {
     startTime: "",
     endTime: "",
     roomId: "",
-    typeId: "",
-    type: "",
   });
 
   // Quill config with Cloudinary upload
   const quillModules = getQuillModules();
 
-  // Fetch rooms và event types khi component mount
+  // Fetch rooms khi component mount
   useEffect(() => {
     const loadData = async () => {
       try {
         setRoomsLoading(true);
         await fetchRoomsData();
         setRooms(getRoomsDataSync());
-
-        // Fetch event types
-        const typesResponse = await eventService.getEventTypes();
-        if (typesResponse?.data) {
-          setEventTypes(typesResponse.data);
-        }
       } catch (error) {
         console.error("Error loading data:", error);
         toast.error(ERROR_MESSAGES.LOAD_ROOM_ERROR);
@@ -77,21 +65,10 @@ const CreateEvent = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    // Nếu chọn typeId, cần update cả type (tên)
-    if (name === "typeId") {
-      const selectedType = eventTypes.find((t) => t.id === parseInt(value));
-      setFormData((prev) => ({
-        ...prev,
-        typeId: value,
-        type: selectedType ? selectedType.name : "",
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
 
     // Clear error when user types
     if (errors[name]) {
@@ -153,10 +130,6 @@ const CreateEvent = () => {
       newErrors.location = "Địa điểm là bắt buộc";
     }
 
-    if (!formData.type) {
-      newErrors.type = "Loại sự kiện là bắt buộc";
-    }
-
     if (!formData.startTime) {
       newErrors.startTime = "Giờ bắt đầu là bắt buộc";
     }
@@ -204,8 +177,6 @@ const CreateEvent = () => {
       submitData.append("startTime", formData.startTime);
       submitData.append("endTime", formData.endTime);
       submitData.append("roomId", formData.roomId);
-      submitData.append("typeId", formData.typeId);
-      submitData.append("type", formData.type);
       submitData.append("description", formData.description);
       submitData.append("creator", user?.id);
 
@@ -278,38 +249,6 @@ const CreateEvent = () => {
               </div>
               {errors.eventName && (
                 <p className="text-red-500 text-sm mt-1">{errors.eventName}</p>
-              )}
-            </div>
-
-            {/* Event Type */}
-            <div>
-              <label
-                htmlFor="typeId"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Loại sự kiện <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Category className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <select
-                  id="typeId"
-                  name="typeId"
-                  value={formData.typeId}
-                  onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mainColor ${
-                    errors.type ? "border-red-500" : "border-gray-300"
-                  }`}
-                >
-                  <option value="">Chọn loại sự kiện</option>
-                  {eventTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {errors.type && (
-                <p className="text-red-500 text-sm mt-1">{errors.type}</p>
               )}
             </div>
 

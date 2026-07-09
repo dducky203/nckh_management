@@ -55,12 +55,11 @@ const eventService = {
     return await api.get(`/events/${eventId}`);
   },
 
-  // Tìm kiếm và lọc sự kiện công khai
-  searchPublicEvents: async (status, type, searchTerm) => {
+  // Tìm kiếm sự kiện công khai
+  searchPublicEvents: async (status, searchTerm) => {
     return await api.get(`/events/search`, {
       params: {
         status: status || "upcoming",
-        type: type || "all",
         search: searchTerm || "",
       },
     });
@@ -98,11 +97,6 @@ const eventService = {
     return await api.get(`/events/${eventId}/registrations`, {
       params: { userId },
     });
-  },
-
-  // Lấy danh sách loại sự kiện
-  getEventTypes: async () => {
-    return await api.get("/events/get-types");
   },
 };
 

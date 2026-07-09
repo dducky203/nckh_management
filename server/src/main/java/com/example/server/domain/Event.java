@@ -33,17 +33,10 @@ public class Event extends EntityBase implements Serializable {
     @Column(name = "end_time")
     private LocalDateTime endTime;
 
-    // @ManyToOne(fetch = FetchType.LAZY)
-    @Column(name = "id_operating_standard_2")
-    private Integer idOperatingStandard2;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_room")
     private Room idRoom;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "type_id")
-    private TypeOfCriterion typeId;
 
     @Column(name = "status")
     private String status; // upcoming, pending, completed, rejected

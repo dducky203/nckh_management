@@ -47,8 +47,6 @@ const EventsPublic = () => {
   const {
     searchTerm,
     setSearchTerm,
-    filterType,
-    setFilterType,
     filteredEvents,
   } = useEventFilters(events);
 
@@ -153,10 +151,6 @@ const EventsPublic = () => {
 
   const handleSearchChange = (value) => {
     setSearchTerm(value);
-  };
-
-  const handleFilterChange = (value) => {
-    setFilterType(value);
   };
 
   const handleViewDetail = async (event) => {
@@ -270,8 +264,6 @@ const EventsPublic = () => {
           <EventFilters
             searchTerm={searchTerm}
             setSearchTerm={handleSearchChange}
-            filterType={filterType}
-            setFilterType={handleFilterChange}
           />
         </div>
 

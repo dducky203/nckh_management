@@ -5,13 +5,12 @@ import {
   Delete,
   Search,
   Person,
-  Email,
-  School,
   People,
   Edit,
   Save,
   UploadFile,
   Download,
+  BarChart,
 } from "@mui/icons-material";
 import researchGroupService from "../../../services/researchGroupService";
 import userService from "../../../services/userService";
@@ -21,6 +20,7 @@ import { downloadFileFromResponse } from "../../../utils";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import Modal from "../../../components/common/Modal";
 import Button from "../../../components/common/Button";
+import GroupLeaderStatsModal from "./GroupLeaderStatsModal";
 
 const MemberManagementModal = ({
   isOpen,
@@ -50,6 +50,7 @@ const MemberManagementModal = ({
   const [editParticipationRate, setEditParticipationRate] = useState(100);
   const [pendingJoinRequests, setPendingJoinRequests] = useState([]);
   const [joinRequestsLoading, setJoinRequestsLoading] = useState(false);
+  const [statsModalOpen, setStatsModalOpen] = useState(false);
   const fileInputRef = useRef(null);
   const searchContainerRef = useRef(null);
   const isLecturerGroup = group?.type === "lecturer";
@@ -362,14 +363,27 @@ const MemberManagementModal = ({
                 </span>
               </p>
             </div>
-            <Button
-              variant="danger"
-              onClick={onClose}
-              className=" transition-colors !px-2 !py-1  !rounded-lg"
-              aria-label="Đóng"
-            >
-              <Close />
-            </Button>
+            <div className="flex items-center gap-2">
+              {group.leader?.id === currentUserId && (
+                <button
+                  type="button"
+                  onClick={() => setStatsModalOpen(true)}
+                  className="flex items-center gap-1.5 rounded-lg bg-mainColor px-3 py-1.5 text-sm font-bold text-white hover:brightness-110 transition-all"
+                  title="Xem thống kê hoạt động và xuất Word"
+                >
+                  <BarChart sx={{ fontSize: 18 }} />
+                  Thống kê & Xuất Word
+                </button>
+              )}
+              <Button
+                variant="danger"
+                onClick={onClose}
+                className="transition-colors !px-2 !py-1 !rounded-lg"
+                aria-label="Đóng"
+              >
+                <Close />
+              </Button>
+            </div>
           </div>
 
           {/* Content */}
@@ -751,6 +765,16 @@ const MemberManagementModal = ({
         cancelText="Hủy"
         type="delete"
       />
+
+      {/* Leader Stats & Export Word Modal */}
+      {statsModalOpen && (
+        <GroupLeaderStatsModal
+          isOpen={statsModalOpen}
+          onClose={() => setStatsModalOpen(false)}
+          group={group}
+          currentUserId={currentUserId}
+        />
+      )}
     </>
   );
 };

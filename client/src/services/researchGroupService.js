@@ -255,6 +255,24 @@ const researchGroupService = {
     );
     return response.data;
   },
+
+  // Leader: xem thống kê hoạt động từng thành viên
+  getLeaderMemberStats: async (groupId, year) => {
+    const params = { groupId };
+    if (year) params.year = year;
+    const response = await api.get("/research-groups/quota/leader-member-stats", { params });
+    return response.data;
+  },
+
+  // Xuất Word danh sách thành viên + định mức
+  exportMemberWord: async (groupId, year) => {
+    const params = { groupId };
+    if (year) params.year = year;
+    return await api.get("/research-groups/quota/export-word", {
+      params,
+      responseType: "blob",
+    });
+  },
 };
 
 export default researchGroupService;

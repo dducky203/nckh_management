@@ -45,6 +45,8 @@ public class UserService implements UserDetailsService {
     ResumeMapper resumeMapper;
     @Autowired
     AddressService addressService;
+    @Autowired
+    PasswordService passwordService;
 
     public UserService(GuestRepository guestRepository, MemberRepository memberRepository) {
         this.guestRepository = guestRepository;
@@ -67,7 +69,7 @@ public class UserService implements UserDetailsService {
         resumeSaved = resumeRepository.save(resumeSaved);
 
         User userSaved = userMapper.toEntity(request);
-        userSaved.setPassword(SHA_256_password.GM_SHA_password(DateTimeConstant.toDate(request.getBirthday())));
+        userSaved.setPassword(passwordService.encode(DateTimeConstant.toDate(request.getBirthday())));
         if (request.getIdRole() == null)
             userSaved.setIdRole(new Role(2));
         else
@@ -137,11 +139,11 @@ public class UserService implements UserDetailsService {
     public void changePassword(String username, String currentPassword, String newPassword, Boolean forgotPassword) {
         User existingUser = userRepository.findByUsername(username);
         if (existingUser != null) {
-            if (SHA_256_password.comparePassword(currentPassword, existingUser.getPassword()) && !forgotPassword) {
-                existingUser.setPassword(SHA_256_password.GM_SHA_password(newPassword));
+            if (passwordService.matches(currentPassword, existingUser.getPassword()) && !forgotPassword) {
+                existingUser.setPassword(passwordService.encode(newPassword));
                 userRepository.save(existingUser);
             } else if (forgotPassword && currentPassword == null) {
-                existingUser.setPassword(SHA_256_password.GM_SHA_password(newPassword));
+                existingUser.setPassword(passwordService.encode(newPassword));
                 userRepository.save(existingUser);
             } else
                 throw new ErrorException("Mật khẩu hiện tại không chính xác !", HttpStatus.BAD_REQUEST);
@@ -155,7 +157,7 @@ public class UserService implements UserDetailsService {
     public void resetPassword(String username) {
         User existingUser = userRepository.findByUsername(username);
         if (existingUser != null) {
-            existingUser.setPassword(SHA_256_password.GM_SHA_password(passwordDefault));
+            existingUser.setPassword(passwordService.encode(passwordDefault));
             userRepository.save(existingUser);
         } else {
             throw new ErrorException("Tài khoản không tồn tại", HttpStatus.NOT_FOUND);

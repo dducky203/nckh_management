@@ -31,7 +31,7 @@ const DashboardOverview = ({
             Tổng quan thống kê
           </h2>
           <p className="text-gray-600">
-            Phân tích dữ liệu sự kiện theo năm và loại
+            Phân tích dữ liệu sự kiện theo năm
           </p>
         </div>
         <div className="flex items-center space-x-4">

@@ -70,9 +70,6 @@ const EventApprovalModal = ({
             <h4 className="font-semibold text-gray-900 mb-2">{event.title}</h4>
             <div className="text-sm text-gray-600 space-y-1">
               <p>
-                <span className="font-medium">Loại:</span> {event.type}
-              </p>
-              <p>
                 <span className="font-medium">Ngày:</span> {event.date}
               </p>
               <p>

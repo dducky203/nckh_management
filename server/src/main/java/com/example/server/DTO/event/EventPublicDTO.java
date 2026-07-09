@@ -23,8 +23,6 @@ public class EventPublicDTO {
     private Integer roomId; // ID của room được chọn
     private String organizer; // from User (creator)
     private Integer creator; // User ID của người tạo
-    private String type; // from TypeOfCriterion - tên loại sự kiện
-    private Integer typeId; // ID của TypeOfCriterion
     private String image; // from Conference/Seminar - banner URL
     private String description; // from Conference/Seminar
     private String status; // upcoming, pending, completed, rejected

@@ -37,7 +37,9 @@ public class ManagerUserController {
     private final EmailService emailService;
     private final ExcelService excelService;
 
-    public ManagerUserController(UserRepository userRepository, RoleRepository roleRepository, EmailController emailController, TypeOfCriterionRepository typeOfCriterionRepository, GroupRepository groupRepository, UserMapper userMapper, UserService userService, EmailService emailService, ExcelService excelService) {
+    public ManagerUserController(UserRepository userRepository, RoleRepository roleRepository, EmailController emailController,
+                                 GroupRepository groupRepository, UserMapper userMapper, UserService userService, EmailService emailService,
+                                 ExcelService excelService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.emailController = emailController;

@@ -41,14 +41,7 @@ const EventDashboard = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [editingEvent, setEditingEvent] = useState(null);
 
-  const EVENT_TYPES = useMemo(
-    () => ["Hội thảo", "Workshop", "Cuộc thi", "Seminar", "Khác"],
-    []
-  );
   const YEARS = useMemo(() => [2023, 2024, 2025, 2026], []);
-
-  // Colors for charts
-  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
   // Remove mock data - using real API now
 
@@ -76,7 +69,6 @@ const EventDashboard = () => {
         return {
           id: event.id,
           title: event.eventName,
-          type: event.type || "Khác",
           date: event.dateOfEvent,
           time: `${event.startTimeDetail || ""} - ${event.endTimeDetail || ""}`,
           location: event.location,
@@ -198,7 +190,6 @@ const EventDashboard = () => {
         submitData.append("dateOfEvent", formData.date);
         submitData.append("startTime", formData.startTime);
         submitData.append("endTime", formData.endTime);
-        submitData.append("type", formData.type);
         submitData.append("description", formData.description);
 
         if (formData.image) {
@@ -230,7 +221,6 @@ const EventDashboard = () => {
         submitData.append("startTime", formData.startTime);
         submitData.append("endTime", formData.endTime);
         submitData.append("location", formData.location);
-        submitData.append("type", formData.type);
         submitData.append("description", formData.description);
         submitData.append("creator", user.id);
         
@@ -282,8 +272,6 @@ const EventDashboard = () => {
               selectedYear={selectedYear}
               setSelectedYear={setSelectedYear}
               years={YEARS}
-              eventTypes={EVENT_TYPES}
-              colors={COLORS}
               setEditingEvent={setEditingEvent}
               setFormModalOpen={setFormModalOpen}
               onViewDetails={handleViewDetails}

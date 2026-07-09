@@ -38,7 +38,6 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
 
   const [formData, setFormData] = useState({
     title: "",
-    type: "Hội thảo",
     date: "",
     startTime: "08:00",
     endTime: "10:00",
@@ -53,13 +52,10 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
   // Quill config with Cloudinary upload
   const quillModules = getQuillModules();
 
-  const EVENT_TYPES = ["Hội thảo", "Workshop", "Cuộc thi", "Seminar", "Khác"];
-
   useEffect(() => {
     if (event) {
       setFormData({
         title: event.title || "",
-        type: event.type || "Hội thảo",
         date: event.date || "",
         startTime: toTimeInputValue(event.startTime) || "08:00",
         endTime: toTimeInputValue(event.endTime) || "10:00",
@@ -70,7 +66,6 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
     } else {
       setFormData({
         title: "",
-        type: "Hội thảo",
         date: "",
         startTime: "08:00",
         endTime: "10:00",
@@ -208,25 +203,6 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
               {errors.title && (
                 <p className="text-red-500 text-sm mt-1">{errors.title}</p>
               )}
-            </div>
-
-            {/* Loại sự kiện */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Loại sự kiện <span className="text-red-500">*</span>
-              </label>
-              <select
-                name="type"
-                value={formData.type}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {EVENT_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
             </div>
 
             {/* Ngày tổ chức */}

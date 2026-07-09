@@ -38,12 +38,21 @@ public class LoginController {
 
     private final UserRepository userRepository;
 
-    public LoginController(LoginService loginService, UserMapper userMapper, JwtService jwtService, ManagerUserController managerUserController, UserRepository userRepository) {
+    private final PasswordService passwordService;
+
+    public LoginController(
+            LoginService loginService,
+            UserMapper userMapper,
+            JwtService jwtService,
+            ManagerUserController managerUserController,
+            UserRepository userRepository,
+            PasswordService passwordService) {
         this.loginService = loginService;
         this.userMapper = userMapper;
         this.jwtService = jwtService;
         this.managerUserController = managerUserController;
         this.userRepository = userRepository;
+        this.passwordService = passwordService;
     }
 
     @PostMapping(value = "/login")
@@ -193,7 +202,7 @@ public class LoginController {
             }
 
             // 6. Hash và lưu mật khẩu mới
-            user.setPassword(SHA_256_password.GM_SHA_password(newPassword));
+            user.setPassword(passwordService.encode(newPassword));
             userRepository.save(user);
             return ResponseEntity.ok(new SuccessResponseDTO<>("Mật khẩu đã được đặt lại thành công! Bạn có thể đăng nhập với mật khẩu mới."));
 

@@ -92,9 +92,6 @@ const EventDetailModal = ({
 
           <div className="mb-6">
             <div className="flex flex-wrap items-center gap-2 mb-3">
-              <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full uppercase">
-                {event.type}
-              </span>
               <span
                 className={`px-3 py-1 text-xs font-semibold rounded-full uppercase ${statusInfo.className}`}
               >

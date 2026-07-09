@@ -32,46 +32,6 @@ const stripHtml = (html) => {
   return tmp.textContent || tmp.innerText || "";
 };
 
-// Helper function để lấy màu tag cho event type
-const getEventTypeColor = (type) => {
-  if (!type) return "bg-slate-100 text-slate-700";
-
-  const lowerType = type.toLowerCase();
-
-  if (lowerType.includes("seminar") || lowerType.includes("hội thảo")) {
-    return "bg-blue-100 text-blue-700";
-  } else if (
-    lowerType.includes("hội nghị") ||
-    lowerType.includes("conference")
-  ) {
-    return "bg-green-100 text-green-700";
-  } else if (
-    lowerType.includes("bài báo quốc tế") ||
-    lowerType.includes("international")
-  ) {
-    return "bg-purple-100 text-purple-700";
-  } else if (
-    lowerType.includes("bài báo tiếng việt") ||
-    lowerType.includes("vietnamese")
-  ) {
-    return "bg-orange-100 text-orange-700";
-  } else if (
-    lowerType.includes("workshop") ||
-    lowerType.includes("chuyên đề")
-  ) {
-    return "bg-pink-100 text-pink-700";
-  } else if (lowerType.includes("tham dự") || lowerType.includes("advisory")) {
-    return "bg-indigo-100 text-indigo-700";
-  } else if (
-    lowerType.includes("tổng quan") ||
-    lowerType.includes("overview")
-  ) {
-    return "bg-teal-100 text-teal-700";
-  } else {
-    return "bg-slate-100 text-slate-700";
-  }
-};
-
 const Home = () => {
   const { user } = useContext(AuthContext);
   const userIsStudent = isStudent(user);
@@ -287,11 +247,6 @@ const Home = () => {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
-                    <div
-                      className={`absolute top-4 right-4 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold shadow-sm uppercase tracking-wide ${getEventTypeColor(event.type)}`}
-                    >
-                      {event.type || "Sự kiện"}
-                    </div>
                   </div>
 
                   <div className="p-6 flex-1 flex flex-col">

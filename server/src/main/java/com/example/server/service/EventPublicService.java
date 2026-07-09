@@ -18,7 +18,7 @@ public interface EventPublicService {
 
     EventPublicDTO getEventById(Integer eventId);
 
-    List<EventPublicDTO> searchAndFilterEvents(String status, String type, String searchTerm);
+    List<EventPublicDTO> searchAndFilterEvents(String status, String searchTerm);
 
     String registerEvent(Integer eventId, Integer userId, EventRegistrationDTO registrationData);
 

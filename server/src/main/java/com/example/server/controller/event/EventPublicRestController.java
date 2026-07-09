@@ -14,7 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.server.DTO.response.SuccessResponseDTO;
 import com.example.server.DTO.event.EventPublicDTO;
 import com.example.server.DTO.event.EventRegistrationDTO;
-import com.example.server.DTO.typeOfCriteria.TypeOfCriteriaDto;
 import com.example.server.service.*;
 
 @RestController
@@ -27,22 +26,6 @@ public class EventPublicRestController {
     
     @Autowired
     private CloudinaryService cloudinaryService;
-
-    @Autowired
-    private TypeOfCriterionService typeOfCriterionService;
-
-    @GetMapping("/get-types")
-    public ResponseEntity<?> getEventTypes() {
-        try {
-            List<TypeOfCriteriaDto> allTypes = typeOfCriterionService.findAllTypeEvent();
-
-            return ResponseEntity.ok(
-                    new SuccessResponseDTO<>(allTypes, "Lấy danh sách loại sự kiện thành công"));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Có lỗi xảy ra: " + e.getMessage());
-        }
-    }
 
     @GetMapping
     public ResponseEntity<?> getPublicEvents(
@@ -77,12 +60,10 @@ public class EventPublicRestController {
     @GetMapping("/search")
     public ResponseEntity<?> searchEvents(
             @RequestParam(defaultValue = "upcoming") String status,
-            @RequestParam(required = false) String type,
             @RequestParam(required = false) String search) {
         try {
             List<EventPublicDTO> events = eventPublicService.searchAndFilterEvents(
                     status,
-                    type != null ? type : "all",
                     search != null ? search : "");
             return ResponseEntity.ok(
                     new SuccessResponseDTO<>(events, "Tìm kiếm sự kiện thành công"));
@@ -180,8 +161,6 @@ public class EventPublicRestController {
             @RequestParam("startTime") String startTime,
             @RequestParam("endTime") String endTime,
             @RequestParam(value = "roomId", required = false) Integer roomId,
-            @RequestParam(value = "typeId", required = false) Integer typeId,
-            @RequestParam("type") String type,
             @RequestParam("description") String description,
             @RequestParam("creator") Integer creator) {
         try {
@@ -206,8 +185,6 @@ public class EventPublicRestController {
             eventData.setStartTime(eventDate.atTime(startLocalTime));
             eventData.setEndTime(eventDate.atTime(endLocalTime));
             eventData.setRoomId(roomId);
-            eventData.setTypeId(typeId);
-            eventData.setType(type);
             eventData.setDescription(description);
             eventData.setCreator(creator);
             eventData.setBannerImg(bannerUrl);
@@ -238,8 +215,6 @@ public class EventPublicRestController {
             @RequestParam("startTime") String startTime,
             @RequestParam("endTime") String endTime,
             @RequestParam(value = "roomId", required = false) Integer roomId,
-            @RequestParam(value = "typeId", required = false) Integer typeId,
-            @RequestParam("type") String type,
             @RequestParam("description") String description,
             @RequestParam(value = "creator", required = false) Integer creator) {
         try {
@@ -262,8 +237,6 @@ public class EventPublicRestController {
             eventData.setStartTime(eventDate.atTime(startLocalTime));
             eventData.setEndTime(eventDate.atTime(endLocalTime));
             eventData.setRoomId(roomId);
-            eventData.setTypeId(typeId);
-            eventData.setType(type);
             eventData.setDescription(description);
             if (creator != null) {
                 eventData.setCreator(creator);
