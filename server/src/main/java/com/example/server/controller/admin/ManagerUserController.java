@@ -22,6 +22,7 @@ import com.example.server.domain.Role;
 import com.example.server.mapper.UserMapper;
 import com.example.server.repository.*;
 import com.example.server.service.*;
+import com.example.server.utils.SecurityUtils;
 
 import jakarta.validation.Valid;
 
@@ -52,6 +53,7 @@ public class ManagerUserController {
     @GetMapping("/roles")
     @ResponseBody
     public ResponseEntity<?> getRoles() {
+        SecurityUtils.assertStrictAdmin();
         List<Role> roles = roleRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
         return ResponseEntity.ok(new SuccessResponseDTO<>(roles, "Danh sách role"));
     }
@@ -67,6 +69,7 @@ public class ManagerUserController {
             @RequestParam(required = false) Integer power,
             @RequestParam(required = false) String status) {
 
+        SecurityUtils.assertStrictAdmin();
         try {
             // Tạo Sort object
             Sort sort = sortDirection.equalsIgnoreCase("desc")
@@ -130,12 +133,14 @@ public class ManagerUserController {
 
     @PostMapping("/create")
     public ResponseEntity<?> createUser(@Valid @RequestBody UserRequest request) {
+        SecurityUtils.assertStrictAdmin();
         userService.createUser(request);
         return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Tạo mới user thành công!"));
     }
 
     @PostMapping("/update")
     public ResponseEntity<?> updateUser(@Valid @RequestBody UserRequest request) {
+        SecurityUtils.assertStrictAdmin();
         userService.updateUser(request);
         return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Cập nhật user thành công!"));
     }
@@ -144,6 +149,7 @@ public class ManagerUserController {
     public ResponseEntity<?> deleteUser(
             @RequestParam(value = "username") String username,
             @RequestParam(value = "force", defaultValue = "false") Boolean force) {
+        SecurityUtils.assertStrictAdmin();
         userService.deleteUser(username, force);
         return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Xóa user thành công!"));
     }
@@ -151,6 +157,7 @@ public class ManagerUserController {
     @PatchMapping("reset-password")
     public ResponseEntity<?> resetPassword(@RequestParam(value = "username") String username) {
         try {
+            SecurityUtils.assertStrictAdmin();
             userService.resetPassword(username);
             return ResponseEntity.ok(new SuccessResponseDTO<>(null, "Reset password thành công!"));
         } catch (Exception e) {

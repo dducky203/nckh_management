@@ -60,7 +60,7 @@ public class FileController {
     /**
      * Upload file lên Cloudinary
      */
-    @PostMapping("/api/upload")
+    @PostMapping("/upload")
     public ResponseEntity<?> uploadFile(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "folder", defaultValue = "general") String folder) {
@@ -82,7 +82,7 @@ public class FileController {
     /**
      * Xóa file từ Cloudinary bằng URL
      */
-    @DeleteMapping("/api/delete-file")
+    @DeleteMapping("/delete-file")
     public ResponseEntity<?> deleteFile(@RequestParam("url") String fileUrl) {
         try {
             cloudinaryService.deleteFileByUrl(fileUrl);

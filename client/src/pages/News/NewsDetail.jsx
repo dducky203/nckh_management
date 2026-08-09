@@ -17,7 +17,6 @@ const NewsDetail = () => {
       try {
         setLoading(true);
         const response = await newsService.getNewsById(id);
-        console.log("News detail response:", response);
         setNews(response?.data);
       } catch (err) {
         console.error("Error fetching news detail:", err);

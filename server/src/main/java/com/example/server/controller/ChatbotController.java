@@ -2,7 +2,6 @@ package com.example.server.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,10 +20,12 @@ public class ChatbotController {
 
     private static final Logger logger = LoggerFactory.getLogger(ChatbotController.class);
 
-    @Autowired
-    private GeminiChatService geminiChatService;
+    private final GeminiChatService geminiChatService;
 
-   
+    public ChatbotController(GeminiChatService geminiChatService) {
+        this.geminiChatService = geminiChatService;
+    }
+
     @PostMapping("/chat")
     public ResponseEntity<ChatResponse> chat(@Valid @RequestBody ChatRequest request) {
         if (SecurityUtils.getCurrentUserId() == null) {
@@ -33,7 +34,7 @@ public class ChatbotController {
         try {
             logger.info("Received chat request: {}", request.getMessage());
             ChatResponse response = geminiChatService.chat(
-                request.getMessage(), 
+                request.getMessage(),
                 request.getConversationId()
             );
             logger.info("Chat response generated successfully");
@@ -48,7 +49,6 @@ public class ChatbotController {
         }
     }
 
-   
     @DeleteMapping("/conversation/{conversationId}")
     public ResponseEntity<Void> clearConversation(@PathVariable String conversationId) {
         if (SecurityUtils.getCurrentUserId() == null) {

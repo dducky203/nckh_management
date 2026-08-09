@@ -20,6 +20,10 @@ import com.example.server.repository.UserRepository;
 import com.example.server.service.AddressService;
 import com.example.server.service.CloudinaryService;
 import com.example.server.service.UserService;
+import com.example.server.utils.SecurityUtils;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
@@ -42,6 +46,7 @@ public class UserController {
 
     @GetMapping("/profile")
     public ResponseEntity<?> profile(@RequestParam(name = "id") Integer userId) {
+        SecurityUtils.requireCurrentUser();
         User user = userRepository.findByIdUser(userId);
 
         if (user == null)
@@ -50,6 +55,26 @@ public class UserController {
             UserDetailsDTO userDTO = userMapper.toUserDetailDTO(user);
             return ResponseEntity.ok(new SuccessResponseDTO<>(userDTO, "Lấy thông tin người dùng thành công."));
         }
+    }
+
+    /**
+     * Quyền nghiệp vụ của user đang đăng nhập (đồng bộ FE ProtectedRoute / menu).
+     */
+    @GetMapping("/me/permissions")
+    public ResponseEntity<?> myPermissions() {
+        User user = SecurityUtils.requireCurrentUser();
+        Map<String, Object> perms = new HashMap<>();
+        perms.put("userId", user.getId());
+        perms.put("role", user.getIdRole() != null ? user.getIdRole().getName() : null);
+        perms.put("title", user.getIdTitle() != null ? user.getIdTitle().getName() : null);
+        perms.put("power", user.getPower());
+        perms.put("isAdmin", SecurityUtils.isAdmin(user));
+        perms.put("isAssistant", SecurityUtils.isAssistant(user));
+        perms.put("isStudent", SecurityUtils.isStudent(user));
+        perms.put("hasNckhStaffAccess", SecurityUtils.hasNckhStaffAccess(user));
+        perms.put("isStrictAdmin", SecurityUtils.isStrictAdminPortalUser(user));
+        perms.put("canAccessQuota", !SecurityUtils.isStudent(user) || SecurityUtils.hasNckhStaffAccess(user));
+        return ResponseEntity.ok(new SuccessResponseDTO<>(perms, "Quyền người dùng hiện tại"));
     }
 
     // Update profile with avatar

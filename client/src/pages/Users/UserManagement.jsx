@@ -74,8 +74,6 @@ const UserManagement = () => {
         params.status = filterStatus;
       }
 
-      console.log("API Parameters:", params);
-
       const response = await userService.getAllUsers(params, {
         signal: abortControllerRef.current.signal,
       });
@@ -92,7 +90,6 @@ const UserManagement = () => {
     } catch (error) {
       // Don't show error if request was aborted
       if (error.name === "AbortError") {
-        console.log("Request was aborted");
         return;
       }
 

@@ -3,7 +3,6 @@ package com.example.server.service;
 import java.util.*;
 import java.util.function.Function;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.data.repository.query.FluentQuery;
@@ -22,6 +21,7 @@ import com.example.server.helpers.CustomUserDetails;
 import com.example.server.mapper.ResumeMapper;
 import com.example.server.mapper.UserMapper;
 import com.example.server.repository.*;
+import com.example.server.service.PasswordService;
 import com.example.server.utils.DateTimeConstant;
 import com.example.server.utils.NormalizeUtils;
 
@@ -29,29 +29,37 @@ import jakarta.transaction.Transactional;
 
 @Service
 public class UserService implements UserDetailsService {
-    @Value("${password.reset-default}")
-    private String passwordDefault;
-    @Autowired
-    UserRepository userRepository;
-    @Autowired
-    GuestRepository guestRepository;
-    @Autowired
-    MemberRepository memberRepository;
-    @Autowired
-    ResumeRepository resumeRepository;
-    @Autowired
-    UserMapper userMapper;
-    @Autowired
-    ResumeMapper resumeMapper;
-    @Autowired
-    AddressService addressService;
-    @Autowired
-    PasswordService passwordService;
+   @Value("${password.reset-default}")
+    private final String passwordDefault;
+    private final UserRepository userRepository;
+    private final GuestRepository guestRepository;
+    private final MemberRepository memberRepository;
+    private final ResumeRepository resumeRepository;
+    private final UserMapper userMapper;
+    private final ResumeMapper resumeMapper;
+    private final AddressService addressService;
+    private final PasswordService passwordService;
 
-    public UserService(GuestRepository guestRepository, MemberRepository memberRepository) {
+
+    public UserService(
+            @Value("${password.reset-default}") String passwordDefault,
+            UserRepository userRepository,
+            GuestRepository guestRepository,
+            MemberRepository memberRepository,
+            ResumeRepository resumeRepository,
+            UserMapper userMapper,
+            ResumeMapper resumeMapper,
+            AddressService addressService,
+            PasswordService passwordService) {
+        this.passwordDefault = passwordDefault;
+        this.userRepository = userRepository;
         this.guestRepository = guestRepository;
         this.memberRepository = memberRepository;
-
+        this.resumeRepository = resumeRepository;
+        this.userMapper = userMapper;
+        this.resumeMapper = resumeMapper;
+        this.addressService = addressService;
+        this.passwordService = passwordService;
     }
 
     @Transactional

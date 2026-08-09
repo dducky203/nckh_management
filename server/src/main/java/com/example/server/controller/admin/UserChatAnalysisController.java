@@ -10,8 +10,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,21 +25,24 @@ import java.util.stream.Collectors;
  * Controller phân tích hành vi người dùng dựa trên lịch sử chat với chatbot AI.
  */
 @RestController
-@RequestMapping("/api/v1/admin/chat-analysis")
+@RequestMapping("/v1/admin/chat-analysis")
 @CrossOrigin(origins = "*")
 public class UserChatAnalysisController {
 
-    private static final Logger logger =
-            LoggerFactory.getLogger(UserChatAnalysisController.class);
+    private static final Logger logger =  LoggerFactory.getLogger(UserChatAnalysisController.class);
 
-    @Autowired
-    private ChatHistoryRepository chatHistoryRepository;
+    private final ChatHistoryRepository chatHistoryRepository;
+    private final GeminiChatService geminiChatService;
+    private final ObjectMapper objectMapper;
 
-    @Autowired
-    private GeminiChatService geminiChatService;
-
-    @Autowired
-    private ObjectMapper objectMapper;
+    public UserChatAnalysisController(
+            ChatHistoryRepository chatHistoryRepository,
+            GeminiChatService geminiChatService,
+            ObjectMapper objectMapper) {
+        this.chatHistoryRepository = chatHistoryRepository;
+        this.geminiChatService = geminiChatService;
+        this.objectMapper = objectMapper;
+    }
 
     /**
      * Lấy danh sách user đã từng chat

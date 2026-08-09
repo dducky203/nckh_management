@@ -57,13 +57,6 @@ const EventDashboard = () => {
           eventService.getPublicEvents("rejected", 0, 100),
         ]);
 
-      console.log("API Responses:", {
-        upcoming: upcomingRes.data,
-        completed: completedRes.data,
-        pending: pendingRes.data,
-        rejected: rejectedRes.data,
-      });
-
       // Map events inline to avoid dependency issues
       const mapEvent = (event) => {
         return {
@@ -164,16 +157,8 @@ const EventDashboard = () => {
 
   const handleViewDetails = async (event) => {
     try {
-      console.log("Fetching details for event:", event);
-      // Gọi API để lấy chi tiết đầy đủ của event
       const response = await eventService.getEventById(event.id);
-      console.log("API response:", response);
-      console.log("Event data:", response.data);
-
-      // Backend trả về {data: {data: eventDTO, message: ...}}
       const eventData = response.data?.data || response.data;
-      console.log("Setting selected event:", eventData);
-
       setSelectedEvent(eventData);
       setDetailModalOpen(true);
     } catch (error) {

@@ -102,6 +102,35 @@ public class SecurityUtils {
         return null;
     }
 
+    /** Bắt buộc đã đăng nhập (JWT hợp lệ). */
+    public static User requireCurrentUser() {
+        User user = getCurrentUser();
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Vui lòng đăng nhập");
+        }
+        return user;
+    }
+
+    /** Admin/lãnh đạo hoặc Trợ lí NCKH. */
+    public static void assertNckhStaff() {
+        User user = requireCurrentUser();
+        if (!hasNckhStaffAccess(user)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Chỉ cán bộ NCKH / quản trị viên mới được thực hiện thao tác này");
+        }
+    }
+
+    /** Quản lý user hệ thống — không gồm assistant. */
+    public static void assertStrictAdmin() {
+        User user = requireCurrentUser();
+        if (!isStrictAdminPortalUser(user)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Chỉ quản trị viên mới được quản lý người dùng");
+        }
+    }
+
     public static void assertCanAccessQuota(User user) {
         if (user != null && hasNckhStaffAccess(user)) {
             return;
@@ -114,10 +143,7 @@ public class SecurityUtils {
     }
 
     public static void assertCurrentUserCanAccessQuota() {
-        User user = getCurrentUser();
-        if (user == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Vui lòng đăng nhập");
-        }
+        User user = requireCurrentUser();
         assertCanAccessQuota(user);
     }
 

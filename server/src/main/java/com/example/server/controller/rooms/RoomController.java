@@ -1,58 +1,66 @@
 package com.example.server.controller.rooms;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import com.example.server.DTO.response.SuccessResponseDTO;
 import com.example.server.domain.Room;
 import com.example.server.repository.RoomRepository;
 
+/**
+ * API phòng/địa điểm công khai cho dropdown sự kiện.
+ * Path thực tế: /api/rooms/... (servlet path /api).
+ */
 @RestController
-@RequestMapping("/api/rooms")
+@RequestMapping("/rooms")
 @CrossOrigin(origins = "*")
 public class RoomController {
-    
-    @Autowired
-    private RoomRepository roomRepository;
-    
-    @GetMapping("/public")
-    public ResponseEntity<?> getPublicRooms() {
-        try {
-            List<Room> rooms = roomRepository.findAll();
-            
-            // Map to simple Map instead of anonymous class
-            List<Map<String, Object>> roomDTOs = rooms.stream().map(room -> {
-                Map<String, Object> roomDTO = new HashMap<>();
-                roomDTO.put("id", room.getId());
-                roomDTO.put("roomName", room.getRoomName());
-                roomDTO.put("address", room.getAddress());
-                roomDTO.put("displayName", buildDisplayName(room));
-                return roomDTO;
-            }).collect(Collectors.toList());
-            
-            return ResponseEntity.ok(roomDTOs);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Lỗi khi lấy danh sách phòng: " + e.getMessage());
-        }
+
+    private final RoomRepository roomRepository;
+
+    public RoomController(RoomRepository roomRepository) {
+        this.roomRepository = roomRepository;
     }
-    
+
+    @GetMapping("/public")
+    public ResponseEntity<SuccessResponseDTO<List<Map<String, Object>>>> getPublicRooms() {
+        List<Room> rooms = roomRepository.findAll();
+
+        List<Map<String, Object>> roomDTOs = rooms.stream().map(room -> {
+            Map<String, Object> roomDTO = new HashMap<>();
+            roomDTO.put("id", room.getId());
+            roomDTO.put("roomName", room.getRoomName());
+            roomDTO.put("address", room.getAddress());
+            roomDTO.put("displayName", buildDisplayName(room));
+            return roomDTO;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(
+                new SuccessResponseDTO<>(roomDTOs, "Lấy danh sách phòng thành công"));
+    }
+
     private String buildDisplayName(Room room) {
         StringBuilder displayName = new StringBuilder();
-        
+
         if (room.getRoomName() != null && !room.getRoomName().isBlank()) {
             displayName.append(room.getRoomName());
         }
-        
+
         if (room.getAddress() != null && !room.getAddress().isBlank()) {
             if (displayName.length() > 0) {
                 displayName.append(" - ");
             }
             displayName.append(room.getAddress());
         }
-        
-        return displayName.toString().isEmpty() ? "Phòng không tên" : displayName.toString();
+
+        return displayName.isEmpty() ? "Phòng không tên" : displayName.toString();
     }
 }

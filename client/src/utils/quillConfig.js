@@ -38,8 +38,6 @@ export const imageHandler = function () {
       // Upload to Cloudinary
       const imageUrl = await uploadToCloudinary(file, "news-content");
 
-      console.log("Upload response imageUrl:", imageUrl);
-
       // Validate imageUrl
       if (!imageUrl) {
         throw new Error("Không nhận được URL ảnh từ server");

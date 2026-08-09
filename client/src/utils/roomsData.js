@@ -1,11 +1,9 @@
 import roomService from "../services/roomService";
 
-// Global rooms data
 let roomsData = [];
 let isLoading = false;
 let isLoaded = false;
 
-// Fetch rooms from API and store in memory
 export const fetchRoomsData = async () => {
   if (isLoading || isLoaded) {
     return roomsData;
@@ -13,14 +11,11 @@ export const fetchRoomsData = async () => {
 
   try {
     isLoading = true;
-    console.log("Fetching rooms data...");
     const response = await roomService.getPublicRooms();
     roomsData = response || [];
     isLoaded = true;
-    console.log("Rooms data loaded:", roomsData);
     return roomsData;
-  } catch (error) {
-    console.error("Error fetching rooms data:", error);
+  } catch {
     roomsData = [];
     return [];
   } finally {
@@ -28,7 +23,6 @@ export const fetchRoomsData = async () => {
   }
 };
 
-// Get rooms data (fetch if not loaded)
 export const getRoomsData = async () => {
   if (!isLoaded && !isLoading) {
     await fetchRoomsData();
@@ -36,39 +30,28 @@ export const getRoomsData = async () => {
   return roomsData;
 };
 
-// Get rooms synchronously (only if already loaded)
-export const getRoomsDataSync = () => {
-  return roomsData;
-};
+export const getRoomsDataSync = () => roomsData;
 
-// Get room options for dropdown
-export const getRoomOptions = () => {
-  return roomsData.map((room) => ({
+export const getRoomOptions = () =>
+  roomsData.map((room) => ({
     value: room.id,
     label: room.displayName,
-    room: room,
+    room,
   }));
-};
 
-// Get room by ID
-export const getRoomById = (id) => {
-  return roomsData.find((room) => room.id === id);
-};
+export const getRoomById = (id) => roomsData.find((room) => room.id === id);
 
-// Get room display name
 export const getRoomDisplayName = (id) => {
   const room = getRoomById(id);
   return room ? room.displayName : "";
 };
 
-// Check if rooms are loaded
 export const isRoomsLoaded = () => isLoaded;
 
-// Force refresh rooms data
 export const refreshRoomsData = async () => {
   isLoaded = false;
   isLoading = false;
-  return await fetchRoomsData();
+  return fetchRoomsData();
 };
 
 export default {

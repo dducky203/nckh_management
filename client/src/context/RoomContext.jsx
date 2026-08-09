@@ -4,6 +4,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useRef,
 } from "react";
 import roomService from "../services/roomService";
 import { useToast } from "./ToastContext";
@@ -25,58 +26,38 @@ export const RoomProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [initialized, setInitialized] = useState(false);
   const toast = useToast();
+  const loadingRef = useRef(false);
 
-  const fetchRooms = useCallback(async () => {
-    if (loading || initialized) {
-      console.log("fetchRooms skipped:", { loading, initialized });
-      return;
-    }
+  const fetchRooms = useCallback(async (force = false) => {
+    if (loadingRef.current) return;
+    if (initialized && !force) return;
 
-    console.log("fetchRooms starting...");
+    loadingRef.current = true;
+    setLoading(true);
+    setError(null);
+
     try {
-      setLoading(true);
-      setError(null);
       const roomsData = await roomService.getPublicRooms();
-      console.log("fetchRooms API response:", roomsData);
-      console.log("Setting rooms to:", roomsData || []);
       setRooms(roomsData || []);
       setInitialized(true);
-      console.log("fetchRooms completed - initialized set to true");
-    } catch (error) {
-      console.error("Error fetching rooms:", error);
-      setError(error);
+    } catch (err) {
+      setError(err);
       setRooms([]);
-      if (toast) {
-        toast.error(ERROR_MESSAGES.LOAD_ROOM_ERROR);
-      }
+      toast?.error(ERROR_MESSAGES.LOAD_ROOM_ERROR);
     } finally {
+      loadingRef.current = false;
       setLoading(false);
-      console.log("fetchRooms finally - loading set to false");
     }
-  }, []); // Empty deps để tránh infinite loop
+  }, [initialized, toast]);
 
   const refreshRooms = useCallback(() => {
-    setInitialized(false);
-    setLoading(false);
-    setTimeout(fetchRooms, 100); // Delay to ensure state update
+    fetchRooms(true);
   }, [fetchRooms]);
 
   useEffect(() => {
-    console.log("RoomProvider useEffect triggered");
-    if (!initialized && !loading) {
-      fetchRooms();
-    }
-  }, []); // Chỉ run 1 lần khi mount
-
-  // Track rooms state changes
-  useEffect(() => {
-    console.log("Rooms state changed:", {
-      roomsLength: rooms.length,
-      rooms: rooms,
-      loading,
-      initialized,
-    });
-  }, [rooms, loading, initialized]);
+    fetchRooms(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once on mount
+  }, []);
 
   const value = {
     rooms,
@@ -86,8 +67,6 @@ export const RoomProvider = ({ children }) => {
     refreshRooms,
     fetchRooms,
   };
-
-  console.log("RoomProvider value:", value);
 
   return <RoomContext.Provider value={value}>{children}</RoomContext.Provider>;
 };
