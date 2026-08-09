@@ -27,6 +27,7 @@ import com.example.server.service.nckh.NckhGroupQuotaAggregationService;
 import com.example.server.service.nckh.NckhGroupQuotaRules;
 import com.example.server.service.nckh.NckhMemberRequiredHoursService;
 import com.example.server.service.researchgroup.ResearchGroupQuotaService;
+import com.example.server.constant.NckhTieuChiConstants;
 import com.example.server.utils.SecurityUtils;
 
 import lombok.RequiredArgsConstructor;
@@ -55,45 +56,46 @@ public class NckhGroupDashboardController {
     // -------------------------------------------------------------------
 
     private static final List<Map<String, Object>> NCM_CRITERIA = List.of(
-        crit("SEMINAR_TRINH_BAY",  "Trình bày Seminar",                                        "bài"),
-        critGroup("SEMINAR_THAM_DU", "Tham dự Seminar",                                        "buổi", "70% nhóm trình bày, chia đều"),
-        crit("HT_THAM_LUAN",        "Bài tham luận hội thảo",                                  "bài"),
-        crit("BB_WOS_SCOPUS",       "Bài báo WoS/Scopus",                                      "bài"),
-        crit("BB_TA_HOCVIEN",       "Bài báo tiếng Anh (Tạp chí HV)",                          "bài"),
-        crit("BB_TV_HOCVIEN",       "Bài báo tiếng Việt (Tạp chí HV)",                         "bài"),
-        crit("HT_THAM_LUAN_KYYEU",  "Bài tham luận hội thảo đăng kỷ yếu (giờ HT q.gia)",      "bài"),
-        crit("TU_VAN_BAN_TIN",      "Tư vấn / hướng dẫn KT / bản tin KH&CN",                  "bài"),
-        crit("QUY_TRINH_KT",        "Quy trình KT / tiêu chuẩn KT cấp cơ sở",                 "bài"),
-        crit("DE_XUAT_BO",          "Đề xuất cấp Bộ và tương đương",                           "đề xuất"),
-        crit("NHIEM_VU_BO_CHU",     "Chủ nhiệm đề tài cấp Bộ",                                 "đề tài"),
-        crit("HD_SVNCKH",           "Hướng dẫn SV NCKH / Hợp đồng KH&CN",                     "đề tài"),
-        critGroup("HOI_THAO_HOC_VIEN", "Tổ chức Hội thảo cấp Học viện",                        "hội thảo", "Bảng 2 — theo quy mô nhóm"),
-        critGroup("HOI_THAO_QUOC_GIA", "Tổ chức Hội thảo quốc gia",                             "hội thảo", "Bảng 2"),
-        critGroup("HOI_THAO_QUOC_TE",  "Tổ chức Hội thảo quốc tế",                              "hội thảo", "Bảng 2"),
-        critGroup("CONG_BO_KHOA_HOC",  "Công bố KH (TV, kỷ yếu, tổng quan)",                    "bài",      "Bảng 2"),
-        critGroup("HOI_DONG_TU_VAN",   "Tổ chức Hội đồng tư vấn KH",                             "HĐ",       "2 HĐ/năm/nhóm"),
-        critGroup("MOI_CHUYEN_GIA",    "Mời chuyên gia trình bày Seminar/chuyên đề",            "buổi",     "2 Seminar/năm/nhóm")
+        crit(NckhTieuChiConstants.SEMINAR_TRINH_BAY,  NckhTieuChiConstants.getName(NckhTieuChiConstants.SEMINAR_TRINH_BAY),  "bài"),
+        critGroup(NckhTieuChiConstants.SEMINAR_THAM_DU, NckhTieuChiConstants.getName(NckhTieuChiConstants.SEMINAR_THAM_DU),  "buổi", "70% nhóm trình bày, chia đều"),
+        crit(NckhTieuChiConstants.HT_THAM_LUAN,        NckhTieuChiConstants.getName(NckhTieuChiConstants.HT_THAM_LUAN),        "bài"),
+        crit(NckhTieuChiConstants.BB_WOS_SCOPUS,       NckhTieuChiConstants.getName(NckhTieuChiConstants.BB_WOS_SCOPUS),       "bài"),
+        crit(NckhTieuChiConstants.BB_TA_HOCVIEN,       NckhTieuChiConstants.getName(NckhTieuChiConstants.BB_TA_HOCVIEN),       "bài"),
+        crit(NckhTieuChiConstants.BB_TV_HOCVIEN,       NckhTieuChiConstants.getName(NckhTieuChiConstants.BB_TV_HOCVIEN),       "bài"),
+        crit("HT_THAM_LUAN_KYYEU",                      "Bài tham luận hội thảo đăng kỷ yếu (giờ HT q.gia)",                      "bài"),
+        crit(NckhTieuChiConstants.TU_VAN_BAN_TIN,      NckhTieuChiConstants.getName(NckhTieuChiConstants.TU_VAN_BAN_TIN),      "bài"),
+        crit(NckhTieuChiConstants.QUY_TRINH_KY_THUAT,   NckhTieuChiConstants.getName(NckhTieuChiConstants.QUY_TRINH_KY_THUAT),   "bài"),
+        crit(NckhTieuChiConstants.DE_XUAT_BO,          NckhTieuChiConstants.getName(NckhTieuChiConstants.DE_XUAT_BO),          "đề xuất"),
+        crit(NckhTieuChiConstants.DT_BO_CHUNHIEM,       NckhTieuChiConstants.getName(NckhTieuChiConstants.DT_BO_CHUNHIEM),       "đề tài"),
+        crit(NckhTieuChiConstants.HD_SVNCKH,           NckhTieuChiConstants.getName(NckhTieuChiConstants.HD_SVNCKH),           "đề tài"),
+        critGroup(NckhTieuChiConstants.HT_TC_HV,       "Tổ chức Hội thảo cấp Học viện",                                          "hội thảo", "Bảng 2 — theo quy mô nhóm"),
+        critGroup(NckhTieuChiConstants.HT_TC_QUOCGIA,   "Tổ chức Hội thảo quốc gia",                                               "hội thảo", "Bảng 2"),
+        critGroup(NckhTieuChiConstants.HT_TC_QUOCTE,    "Tổ chức Hội thảo quốc tế",                                                "hội thảo", "Bảng 2"),
+        critGroup("CONG_BO_KHOA_HOC",                  "Công bố KH (TV, kỷ yếu, tổng quan)",                                      "bài",      "Bảng 2"),
+        critGroup(NckhTieuChiConstants.HOI_DONG_TU_VAN, NckhTieuChiConstants.getName(NckhTieuChiConstants.HOI_DONG_TU_VAN),    "HĐ",       "2 HĐ/năm/nhóm"),
+        critGroup(NckhTieuChiConstants.MOI_CHUYEN_GIA,  NckhTieuChiConstants.getName(NckhTieuChiConstants.MOI_CHUYEN_GIA),     "buổi",     "2 Seminar/năm/nhóm")
     );
 
     private static final List<Map<String, Object>> XS_CRITERIA = List.of(
-        crit("BB_WOS_SCOPUS",   "Bài báo WoS/Scopus (tác giả chính)",          "bài"),
-        crit("NHIEM_VU_BO_CHU", "Đề tài cấp Bộ và tương đương (chủ nhiệm)",   "đề tài")
+        crit(NckhTieuChiConstants.BB_WOS_SCOPUS,   "Bài báo WoS/Scopus (tác giả chính)",          "bài"),
+        crit(NckhTieuChiConstants.DT_BO_CHUNHIEM,  "Đề tài cấp Bộ và tương đương (chủ nhiệm)",   "đề tài")
     );
 
     private static final List<Map<String, Object>> TH_CRITERIA = List.of(
-        crit("BB_WOS_SCOPUS",   "Bài báo WoS/Scopus (tác giả chính)",          "bài"),
-        crit("NHIEM_VU_BO_CHU", "Đề tài cấp Bộ và tương đương (chủ nhiệm)",   "đề tài")
+        crit(NckhTieuChiConstants.BB_WOS_SCOPUS,   "Bài báo WoS/Scopus (tác giả chính)",          "bài"),
+        crit(NckhTieuChiConstants.DT_BO_CHUNHIEM,  "Đề tài cấp Bộ và tương đương (chủ nhiệm)",   "đề tài")
     );
 
     private static final Map<String, String> XS_LEADER_QUOTA = Map.of(
-        "BB_WOS_SCOPUS",   "4 bài (3 WoS)",
-        "NHIEM_VU_BO_CHU", "2 đề tài/năm"
+        NckhTieuChiConstants.BB_WOS_SCOPUS,   "4 bài (3 WoS)",
+        NckhTieuChiConstants.DT_BO_CHUNHIEM,  "2 đề tài/năm"
     );
 
     private static final Map<String, String> TH_LEADER_QUOTA = Map.of(
-        "BB_WOS_SCOPUS",   "8 bài (5 WoS)",
-        "NHIEM_VU_BO_CHU", "4 đề tài/năm"
+        NckhTieuChiConstants.BB_WOS_SCOPUS,   "8 bài (5 WoS)",
+        NckhTieuChiConstants.DT_BO_CHUNHIEM,  "4 đề tài/năm"
     );
+
 
     // -------------------------------------------------------------------
     // Helper để tìm nhóm định mức của user đang đăng nhập

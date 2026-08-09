@@ -2,6 +2,7 @@
 // Activity Declaration constants
 export * from "./activityConstants.js";
 export * from "./researchGroupConstants.js";
+export * from "./nckhTieuChiConstants.js";
 
 /** Đồng bộ với `Constants.CHAT_ASSISTANT_DISPLAY_NAME` (server). */
 export const CHAT_ASSISTANT_DISPLAY_NAME = "Trợ lí NCKH";

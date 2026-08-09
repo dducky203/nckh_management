@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.server.DTO.nckh.NckhTieuChiDinhMucRequest;
+import com.example.server.constant.NckhTieuChiConstants;
 import com.google.genai.Client;
 import com.google.genai.errors.ClientException;
 import com.google.genai.types.*;
@@ -202,160 +203,151 @@ public class DinhMucAiScanService {
     private static final LinkedHashMap<String, String> TIEU_CHI_CODE_MAP = new LinkedHashMap<>();
     static {
         // ── Seminar ──────────────────────────────────────────────
-        TIEU_CHI_CODE_MAP.put("trinh bay seminar", "SEMINAR_TRINH_BAY");
-        TIEU_CHI_CODE_MAP.put("tham du seminar", "SEMINAR_THAM_DU");
-        TIEU_CHI_CODE_MAP.put("tham du seminar co phan bien", "SEMINAR_THAM_DU");
-        TIEU_CHI_CODE_MAP.put("seminar co phan bien", "SEMINAR_THAM_DU");
-        TIEU_CHI_CODE_MAP.put("trinh bay seminar chuyen de", "SEMINAR_TRINH_BAY");
+        TIEU_CHI_CODE_MAP.put("trinh bay seminar", NckhTieuChiConstants.SEMINAR_TRINH_BAY);
+        TIEU_CHI_CODE_MAP.put("trinh bay seminar chuyen de", NckhTieuChiConstants.SEMINAR_TRINH_BAY);
+        TIEU_CHI_CODE_MAP.put("tham du seminar", NckhTieuChiConstants.SEMINAR_THAM_DU);
+        TIEU_CHI_CODE_MAP.put("tham du seminar co phan bien", NckhTieuChiConstants.SEMINAR_THAM_DU);
+        TIEU_CHI_CODE_MAP.put("seminar co phan bien", NckhTieuChiConstants.SEMINAR_THAM_DU);
 
-        // ── Hội thảo ────────────────────────────────────────────
-        TIEU_CHI_CODE_MAP.put("to chuc hoi thao quoc te", "HT_TO_CHUC_QUOC_TE");
-        TIEU_CHI_CODE_MAP.put("to chuc ht quoc te", "HT_TO_CHUC_QUOC_TE");
-        TIEU_CHI_CODE_MAP.put("hoi thao quoc te", "HT_TO_CHUC_QUOC_TE");
-        TIEU_CHI_CODE_MAP.put("to chuc hoi thao quoc gia", "HT_TO_CHUC_QUOC_GIA");
-        TIEU_CHI_CODE_MAP.put("to chuc ht quoc gia", "HT_TO_CHUC_QUOC_GIA");
-        TIEU_CHI_CODE_MAP.put("hoi thao quoc gia", "HT_TO_CHUC_QUOC_GIA");
-        TIEU_CHI_CODE_MAP.put("to chuc hoi thao hoc vien", "HT_TO_CHUC_HOC_VIEN");
-        TIEU_CHI_CODE_MAP.put("to chuc ht hoc vien", "HT_TO_CHUC_HOC_VIEN");
-        TIEU_CHI_CODE_MAP.put("hoi thao hoc vien", "HT_TO_CHUC_HOC_VIEN");
-        TIEU_CHI_CODE_MAP.put("hoi thao cap hoc vien", "HT_TO_CHUC_HOC_VIEN");
-        TIEU_CHI_CODE_MAP.put("tham gia hoi thao", "HT_THAM_GIA");
-        TIEU_CHI_CODE_MAP.put("tham du hoi thao", "HT_THAM_GIA");
-        TIEU_CHI_CODE_MAP.put("bai tham luan trinh bay tai hoi thao", "HT_THAM_LUAN_QUOC_TE");
+        // ── Hội thảo (tổ chức) ─────────────────────────────────
+        TIEU_CHI_CODE_MAP.put("to chuc hoi thao quoc te", NckhTieuChiConstants.HT_TC_QUOCTE);
+        TIEU_CHI_CODE_MAP.put("to chuc ht quoc te", NckhTieuChiConstants.HT_TC_QUOCTE);
+        TIEU_CHI_CODE_MAP.put("hoi thao quoc te", NckhTieuChiConstants.HT_TC_QUOCTE);
+        TIEU_CHI_CODE_MAP.put("to chuc hoi thao quoc gia", NckhTieuChiConstants.HT_TC_QUOCGIA);
+        TIEU_CHI_CODE_MAP.put("to chuc ht quoc gia", NckhTieuChiConstants.HT_TC_QUOCGIA);
+        TIEU_CHI_CODE_MAP.put("hoi thao quoc gia", NckhTieuChiConstants.HT_TC_QUOCGIA);
+        TIEU_CHI_CODE_MAP.put("to chuc hoi thao hoc vien", NckhTieuChiConstants.HT_TC_HV);
+        TIEU_CHI_CODE_MAP.put("to chuc ht hoc vien", NckhTieuChiConstants.HT_TC_HV);
+        TIEU_CHI_CODE_MAP.put("hoi thao hoc vien", NckhTieuChiConstants.HT_TC_HV);
+        TIEU_CHI_CODE_MAP.put("hoi thao cap hoc vien", NckhTieuChiConstants.HT_TC_HV);
 
-        // ── Bài tham luận ───────────────────────────────────────
-        TIEU_CHI_CODE_MAP.put("tham luan quoc te", "HT_THAM_LUAN_QUOC_TE");
-        TIEU_CHI_CODE_MAP.put("trinh bay tai hoi thao quoc te", "HT_THAM_LUAN_QUOC_TE");
-        TIEU_CHI_CODE_MAP.put("bai tham luan quoc te", "HT_THAM_LUAN_QUOC_TE");
-        TIEU_CHI_CODE_MAP.put("tham luan quoc gia", "HT_THAM_LUAN_QUOC_GIA");
-        TIEU_CHI_CODE_MAP.put("trinh bay tai hoi thao quoc gia", "HT_THAM_LUAN_QUOC_GIA");
-        TIEU_CHI_CODE_MAP.put("bai tham luan quoc gia", "HT_THAM_LUAN_QUOC_GIA");
-        TIEU_CHI_CODE_MAP.put("tham luan hoc vien", "HT_THAM_LUAN_HOC_VIEN");
-        TIEU_CHI_CODE_MAP.put("trinh bay tai hoi thao hoc vien", "HT_THAM_LUAN_HOC_VIEN");
-        TIEU_CHI_CODE_MAP.put("bai tham luan hoc vien", "HT_THAM_LUAN_HOC_VIEN");
+        // ── Hội thảo (tham gia / tham luận) ────────────────────
+        TIEU_CHI_CODE_MAP.put("tham gia hoi thao", NckhTieuChiConstants.HT_THAM_GIA);
+        TIEU_CHI_CODE_MAP.put("tham du hoi thao", NckhTieuChiConstants.HT_THAM_GIA);
+        TIEU_CHI_CODE_MAP.put("bai tham luan trinh bay tai hoi thao", NckhTieuChiConstants.HT_THAM_LUAN);
+        TIEU_CHI_CODE_MAP.put("tham luan quoc te", NckhTieuChiConstants.HT_THAM_LUAN);
+        TIEU_CHI_CODE_MAP.put("trinh bay tai hoi thao quoc te", NckhTieuChiConstants.HT_THAM_LUAN);
+        TIEU_CHI_CODE_MAP.put("bai tham luan quoc te", NckhTieuChiConstants.HT_THAM_LUAN);
+        TIEU_CHI_CODE_MAP.put("tham luan quoc gia", NckhTieuChiConstants.HT_THAM_LUAN);
+        TIEU_CHI_CODE_MAP.put("trinh bay tai hoi thao quoc gia", NckhTieuChiConstants.HT_THAM_LUAN);
+        TIEU_CHI_CODE_MAP.put("bai tham luan quoc gia", NckhTieuChiConstants.HT_THAM_LUAN);
+        TIEU_CHI_CODE_MAP.put("tham luan hoc vien", NckhTieuChiConstants.HT_THAM_LUAN);
+        TIEU_CHI_CODE_MAP.put("trinh bay tai hoi thao hoc vien", NckhTieuChiConstants.HT_THAM_LUAN);
+        TIEU_CHI_CODE_MAP.put("bai tham luan hoc vien", NckhTieuChiConstants.HT_THAM_LUAN);
 
         // ── Bài báo quốc tế ─────────────────────────────────────
-        TIEU_CHI_CODE_MAP.put("bai bao wos", "BB_WOS");
-        TIEU_CHI_CODE_MAP.put("danh muc wos", "BB_WOS");
-        TIEU_CHI_CODE_MAP.put("bai bao wos scopus", "BB_WOS");
-        TIEU_CHI_CODE_MAP.put("bai bao quoc te danh muc wos scopus", "BB_WOS");
-        TIEU_CHI_CODE_MAP.put("bai bao quoc te wos scopus", "BB_WOS");
-        TIEU_CHI_CODE_MAP.put("la tac gia chinh wos scopus", "BB_WOS");
-        TIEU_CHI_CODE_MAP.put("bai bao scopus", "BB_SCOPUS");
-        TIEU_CHI_CODE_MAP.put("danh muc scopus", "BB_SCOPUS");
-        TIEU_CHI_CODE_MAP.put("bai bao tieng anh hoc vien", "BB_TA_HOCVIEN");
-        TIEU_CHI_CODE_MAP.put("tieng anh tap chi hoc vien", "BB_TA_HOCVIEN");
-        TIEU_CHI_CODE_MAP.put("bai bao tieng anh tap chi hoc vien", "BB_TA_HOCVIEN");
-        TIEU_CHI_CODE_MAP.put("bai bao quoc te khong wos", "BB_QUOC_TE_KHAC");
-        TIEU_CHI_CODE_MAP.put("khong thuoc danh muc wos", "BB_QUOC_TE_KHAC");
-        TIEU_CHI_CODE_MAP.put("bai bao quoc te khac", "BB_QUOC_TE_KHAC");
-        TIEU_CHI_CODE_MAP.put("trich dan bai bao", "BB_TRICH_DAN_TA");
-        TIEU_CHI_CODE_MAP.put("trich dan", "BB_TRICH_DAN_TA");
+        TIEU_CHI_CODE_MAP.put("bai bao wos", NckhTieuChiConstants.BB_WOS_SCOPUS);
+        TIEU_CHI_CODE_MAP.put("danh muc wos", NckhTieuChiConstants.BB_WOS_SCOPUS);
+        TIEU_CHI_CODE_MAP.put("bai bao wos scopus", NckhTieuChiConstants.BB_WOS_SCOPUS);
+        TIEU_CHI_CODE_MAP.put("bai bao quoc te danh muc wos scopus", NckhTieuChiConstants.BB_WOS_SCOPUS);
+        TIEU_CHI_CODE_MAP.put("bai bao quoc te wos scopus", NckhTieuChiConstants.BB_WOS_SCOPUS);
+        TIEU_CHI_CODE_MAP.put("la tac gia chinh wos scopus", NckhTieuChiConstants.BB_WOS_SCOPUS);
+        TIEU_CHI_CODE_MAP.put("bai bao scopus", NckhTieuChiConstants.BB_SCOPUS);
+        TIEU_CHI_CODE_MAP.put("danh muc scopus", NckhTieuChiConstants.BB_SCOPUS);
+        TIEU_CHI_CODE_MAP.put("bai bao tieng anh hoc vien", NckhTieuChiConstants.BB_TA_HOCVIEN);
+        TIEU_CHI_CODE_MAP.put("tieng anh tap chi hoc vien", NckhTieuChiConstants.BB_TA_HOCVIEN);
+        TIEU_CHI_CODE_MAP.put("bai bao tieng anh tap chi hoc vien", NckhTieuChiConstants.BB_TA_HOCVIEN);
+        // Bài báo quốc tế khác (không WoS) — không có code chuẩn, dùng BB_WOS_SCOPUS gần nhất
+        TIEU_CHI_CODE_MAP.put("bai bao quoc te khong wos", NckhTieuChiConstants.BB_WOS_SCOPUS);
+        TIEU_CHI_CODE_MAP.put("khong thuoc danh muc wos", NckhTieuChiConstants.BB_WOS_SCOPUS);
+        TIEU_CHI_CODE_MAP.put("bai bao quoc te khac", NckhTieuChiConstants.BB_WOS_SCOPUS);
 
         // ── Bài báo tiếng Việt ──────────────────────────────────
-        TIEU_CHI_CODE_MAP.put("bai bao tieng viet tap chi hoc vien", "BB_TV_HOCVIEN");
-        TIEU_CHI_CODE_MAP.put("tieng viet tap chi hoc vien", "BB_TV_HOCVIEN");
-        TIEU_CHI_CODE_MAP.put("bai bao tieng viet", "BB_TV_HOCVIEN");
-        TIEU_CHI_CODE_MAP.put("bai bao tieng viet tap chi khac", "BB_TV_KHAC");
-        TIEU_CHI_CODE_MAP.put("tieng viet cac tap chi khac", "BB_TV_KHAC");
-        TIEU_CHI_CODE_MAP.put("tap chi khac", "BB_TV_KHAC");
+        TIEU_CHI_CODE_MAP.put("bai bao tieng viet tap chi hoc vien", NckhTieuChiConstants.BB_TV_HOCVIEN);
+        TIEU_CHI_CODE_MAP.put("tieng viet tap chi hoc vien", NckhTieuChiConstants.BB_TV_HOCVIEN);
+        TIEU_CHI_CODE_MAP.put("bai bao tieng viet", NckhTieuChiConstants.BB_TV_HOCVIEN);
 
-        // ── Kỷ yếu (bài tham luận đăng kỷ yếu) ─────────────────
-        TIEU_CHI_CODE_MAP.put("ky yeu quoc te", "BTL_QUOC_TE");
-        TIEU_CHI_CODE_MAP.put("ky yeu hoi thao quoc te", "BTL_QUOC_TE");
-        TIEU_CHI_CODE_MAP.put("full text quoc te", "BTL_QUOC_TE");
-        TIEU_CHI_CODE_MAP.put("bai tham luan dang ky yeu quoc te", "BTL_QUOC_TE");
-        TIEU_CHI_CODE_MAP.put("gio ht quoc gia", "BTL_QUOC_GIA");
-        TIEU_CHI_CODE_MAP.put("ky yeu quoc gia", "BTL_QUOC_GIA");
-        TIEU_CHI_CODE_MAP.put("ky yeu hoi thao quoc gia", "BTL_QUOC_GIA");
-        TIEU_CHI_CODE_MAP.put("full text quoc gia", "BTL_QUOC_GIA");
-        TIEU_CHI_CODE_MAP.put("bai tham luan dang ky yeu quoc gia", "BTL_QUOC_GIA");
-        TIEU_CHI_CODE_MAP.put("ky yeu hoc vien", "BTL_HOC_VIEN");
-        TIEU_CHI_CODE_MAP.put("ky yeu hoi thao hoc vien", "BTL_HOC_VIEN");
-        TIEU_CHI_CODE_MAP.put("full text hoc vien", "BTL_HOC_VIEN");
+        // ── Bài tham luận đăng kỷ yếu (full text) ───────────────
+        TIEU_CHI_CODE_MAP.put("ky yeu quoc te", NckhTieuChiConstants.BTL_FULL_TEXT);
+        TIEU_CHI_CODE_MAP.put("ky yeu hoi thao quoc te", NckhTieuChiConstants.BTL_FULL_TEXT);
+        TIEU_CHI_CODE_MAP.put("full text quoc te", NckhTieuChiConstants.BTL_FULL_TEXT);
+        TIEU_CHI_CODE_MAP.put("bai tham luan dang ky yeu quoc te", NckhTieuChiConstants.BTL_FULL_TEXT);
+        TIEU_CHI_CODE_MAP.put("gio ht quoc gia", NckhTieuChiConstants.BTL_FULL_TEXT);
+        TIEU_CHI_CODE_MAP.put("ky yeu quoc gia", NckhTieuChiConstants.BTL_FULL_TEXT);
+        TIEU_CHI_CODE_MAP.put("ky yeu hoi thao quoc gia", NckhTieuChiConstants.BTL_FULL_TEXT);
+        TIEU_CHI_CODE_MAP.put("full text quoc gia", NckhTieuChiConstants.BTL_FULL_TEXT);
+        TIEU_CHI_CODE_MAP.put("bai tham luan dang ky yeu quoc gia", NckhTieuChiConstants.BTL_FULL_TEXT);
+        TIEU_CHI_CODE_MAP.put("ky yeu hoc vien", NckhTieuChiConstants.BTL_FULL_TEXT);
+        TIEU_CHI_CODE_MAP.put("ky yeu hoi thao hoc vien", NckhTieuChiConstants.BTL_FULL_TEXT);
+        TIEU_CHI_CODE_MAP.put("full text hoc vien", NckhTieuChiConstants.BTL_FULL_TEXT);
 
         // ── Bài tổng quan ───────────────────────────────────────
-        TIEU_CHI_CODE_MAP.put("bai tong quan", "TONG_QUAN");
-        TIEU_CHI_CODE_MAP.put("tong quan ve linh vuc", "TONG_QUAN");
-        TIEU_CHI_CODE_MAP.put("tong quan linh vuc nghien cuu", "TONG_QUAN");
+        TIEU_CHI_CODE_MAP.put("bai tong quan", NckhTieuChiConstants.TONG_QUAN);
+        TIEU_CHI_CODE_MAP.put("tong quan ve linh vuc", NckhTieuChiConstants.TONG_QUAN);
+        TIEU_CHI_CODE_MAP.put("tong quan linh vuc nghien cuu", NckhTieuChiConstants.TONG_QUAN);
 
         // ── Tư vấn / Bản tin website ────────────────────────────
-        TIEU_CHI_CODE_MAP.put("tu van", "TU_VAN_BAN_TIN");
-        TIEU_CHI_CODE_MAP.put("ban tin", "TU_VAN_BAN_TIN");
-        TIEU_CHI_CODE_MAP.put("huong dan ky thuat", "TU_VAN_BAN_TIN");
-        TIEU_CHI_CODE_MAP.put("hoat dong tu van huong dan ky thuat ban tin", "TU_VAN_BAN_TIN");
-        TIEU_CHI_CODE_MAP.put("tu van huong dan ban tin website", "TU_VAN_BAN_TIN");
-        TIEU_CHI_CODE_MAP.put("ban tin website hoc vien", "TU_VAN_BAN_TIN");
+        TIEU_CHI_CODE_MAP.put("tu van", NckhTieuChiConstants.TU_VAN_BAN_TIN);
+        TIEU_CHI_CODE_MAP.put("ban tin", NckhTieuChiConstants.TU_VAN_BAN_TIN);
+        TIEU_CHI_CODE_MAP.put("huong dan ky thuat", NckhTieuChiConstants.TU_VAN_BAN_TIN);
+        TIEU_CHI_CODE_MAP.put("hoat dong tu van huong dan ky thuat ban tin", NckhTieuChiConstants.TU_VAN_BAN_TIN);
+        TIEU_CHI_CODE_MAP.put("tu van huong dan ban tin website", NckhTieuChiConstants.TU_VAN_BAN_TIN);
+        TIEU_CHI_CODE_MAP.put("ban tin website hoc vien", NckhTieuChiConstants.TU_VAN_BAN_TIN);
 
         // ── Quy trình kỹ thuật ──────────────────────────────────
-        TIEU_CHI_CODE_MAP.put("quy trinh ky thuat", "QUY_TRINH_KY_THUAT");
-        TIEU_CHI_CODE_MAP.put("tieu bo ky thuat", "QUY_TRINH_KY_THUAT");
-        TIEU_CHI_CODE_MAP.put("tieu chuan ky thuat", "QUY_TRINH_KY_THUAT");
-        TIEU_CHI_CODE_MAP.put("tien bo ky thuat", "QUY_TRINH_KY_THUAT");
-        TIEU_CHI_CODE_MAP.put("gop y van ban quy pham phap luat", "QUY_TRINH_KY_THUAT");
-        TIEU_CHI_CODE_MAP.put("thong tin ket qua nghien cuu", "QUY_TRINH_KY_THUAT");
+        TIEU_CHI_CODE_MAP.put("quy trinh ky thuat", NckhTieuChiConstants.QUY_TRINH_KY_THUAT);
+        TIEU_CHI_CODE_MAP.put("tieu bo ky thuat", NckhTieuChiConstants.QUY_TRINH_KY_THUAT);
+        TIEU_CHI_CODE_MAP.put("tieu chuan ky thuat", NckhTieuChiConstants.QUY_TRINH_KY_THUAT);
+        TIEU_CHI_CODE_MAP.put("tien bo ky thuat", NckhTieuChiConstants.QUY_TRINH_KY_THUAT);
+        TIEU_CHI_CODE_MAP.put("gop y van ban quy pham phap luat", NckhTieuChiConstants.QUY_TRINH_KY_THUAT);
+        TIEU_CHI_CODE_MAP.put("thong tin ket qua nghien cuu", NckhTieuChiConstants.QUY_TRINH_KY_THUAT);
 
         // ── Đề xuất nhiệm vụ NCKH ──────────────────────────────
-        TIEU_CHI_CODE_MAP.put("de xuat quoc gia", "DE_XUAT_QG");
-        TIEU_CHI_CODE_MAP.put("de xuat cap quoc gia", "DE_XUAT_QG");
-        TIEU_CHI_CODE_MAP.put("de xuat cap bo", "DE_XUAT_BO");
-        TIEU_CHI_CODE_MAP.put("de xuat cap bo va tuong duong", "DE_XUAT_BO");
-        TIEU_CHI_CODE_MAP.put("danh muc tuyen chon cap bo", "DE_XUAT_BO");
-        TIEU_CHI_CODE_MAP.put("de xuat nhiem vu nckh", "DE_XUAT_BO");
+        TIEU_CHI_CODE_MAP.put("de xuat cap bo", NckhTieuChiConstants.DE_XUAT_BO);
+        TIEU_CHI_CODE_MAP.put("de xuat cap bo va tuong duong", NckhTieuChiConstants.DE_XUAT_BO);
+        TIEU_CHI_CODE_MAP.put("danh muc tuyen chon cap bo", NckhTieuChiConstants.DE_XUAT_BO);
+        TIEU_CHI_CODE_MAP.put("de xuat nhiem vu nckh", NckhTieuChiConstants.DE_XUAT_BO);
+        // Đề xuất quốc gia cũng map vào DE_XUAT_BO (không có code riêng)
+        TIEU_CHI_CODE_MAP.put("de xuat quoc gia", NckhTieuChiConstants.DE_XUAT_BO);
+        TIEU_CHI_CODE_MAP.put("de xuat cap quoc gia", NckhTieuChiConstants.DE_XUAT_BO);
 
-        // ── Nhiệm vụ KH&CN được phê duyệt ──────────────────────
-        TIEU_CHI_CODE_MAP.put("nhiem vu quoc gia chu nhiem", "NHIEM_VU_QG_CHU");
-        TIEU_CHI_CODE_MAP.put("de tai cap quoc gia chu nhiem", "NHIEM_VU_QG_CHU");
-        TIEU_CHI_CODE_MAP.put("nhiem vu quoc gia thu ky", "NHIEM_VU_QG_TK");
-        TIEU_CHI_CODE_MAP.put("nhiem vu quoc gia tham gia", "NHIEM_VU_QG_TG");
-        TIEU_CHI_CODE_MAP.put("nhiem vu cap bo chu nhiem", "NHIEM_VU_BO_CHU");
-        TIEU_CHI_CODE_MAP.put("de tai cap bo chu nhiem", "NHIEM_VU_BO_CHU");
-        TIEU_CHI_CODE_MAP.put("de tai cap bo va tuong duong chu tri", "NHIEM_VU_BO_CHU");
-        TIEU_CHI_CODE_MAP.put("nhiem vu cap bo thu ky", "NHIEM_VU_BO_TK");
-        TIEU_CHI_CODE_MAP.put("nhiem vu cap bo tham gia", "NHIEM_VU_BO_TG");
-        TIEU_CHI_CODE_MAP.put("nhiem vu hoc vien chu nhiem", "NHIEM_VU_HV_CHU");
-        TIEU_CHI_CODE_MAP.put("nhiem vu hoc vien tham gia", "NHIEM_VU_HV_TG");
-        TIEU_CHI_CODE_MAP.put("de tai cap hoc vien tham gia", "NHIEM_VU_HV_TG");
-        TIEU_CHI_CODE_MAP.put("nhiem vu khcn duoc phe duyet", "NHIEM_VU_BO_CHU");
+        // ── Đề tài / Nhiệm vụ KH&CN được phê duyệt ─────────────
+        // Cấp Bộ — chủ nhiệm → DT_BO_CHUNHIEM
+        TIEU_CHI_CODE_MAP.put("nhiem vu cap bo chu nhiem", NckhTieuChiConstants.DT_BO_CHUNHIEM);
+        TIEU_CHI_CODE_MAP.put("de tai cap bo chu nhiem", NckhTieuChiConstants.DT_BO_CHUNHIEM);
+        TIEU_CHI_CODE_MAP.put("de tai cap bo va tuong duong chu tri", NckhTieuChiConstants.DT_BO_CHUNHIEM);
+        TIEU_CHI_CODE_MAP.put("nhiem vu khcn duoc phe duyet", NckhTieuChiConstants.DT_BO_CHUNHIEM);
+        // Cấp Quốc gia / cấp Bộ — thư ký, tham gia
+        TIEU_CHI_CODE_MAP.put("nhiem vu quoc gia chu nhiem", NckhTieuChiConstants.DT_BO_CHUNHIEM);
+        TIEU_CHI_CODE_MAP.put("de tai cap quoc gia chu nhiem", NckhTieuChiConstants.DT_BO_CHUNHIEM);
+        TIEU_CHI_CODE_MAP.put("nhiem vu cap bo thu ky", NckhTieuChiConstants.DT_BO_CHUNHIEM);
+        TIEU_CHI_CODE_MAP.put("nhiem vu cap bo tham gia", NckhTieuChiConstants.DT_BO_CHUNHIEM);
+        TIEU_CHI_CODE_MAP.put("nhiem vu quoc gia thu ky", NckhTieuChiConstants.DT_BO_CHUNHIEM);
+        TIEU_CHI_CODE_MAP.put("nhiem vu quoc gia tham gia", NckhTieuChiConstants.DT_BO_CHUNHIEM);
+        // Cấp Học viện
+        TIEU_CHI_CODE_MAP.put("nhiem vu hoc vien chu nhiem", NckhTieuChiConstants.DT_BO_CHUNHIEM);
+        TIEU_CHI_CODE_MAP.put("nhiem vu hoc vien tham gia", NckhTieuChiConstants.DT_BO_CHUNHIEM);
+        TIEU_CHI_CODE_MAP.put("de tai cap hoc vien tham gia", NckhTieuChiConstants.DT_BO_CHUNHIEM);
 
         // ── Hướng dẫn SV NCKH ───────────────────────────────────
-        TIEU_CHI_CODE_MAP.put("huong dan sv nckh", "HD_SVNCKH");
-        TIEU_CHI_CODE_MAP.put("huong dan sinh vien", "HD_SVNCKH");
-        TIEU_CHI_CODE_MAP.put("huong dan nhom sinh vien nckh", "HD_SVNCKH");
-        TIEU_CHI_CODE_MAP.put("hop dong khcn tap huan", "HD_SVNCKH");
-        TIEU_CHI_CODE_MAP.put("hop dong nckh khac tap huan de an", "HD_SVNCKH");
+        TIEU_CHI_CODE_MAP.put("huong dan sv nckh", NckhTieuChiConstants.HD_SVNCKH);
+        TIEU_CHI_CODE_MAP.put("huong dan sinh vien", NckhTieuChiConstants.HD_SVNCKH);
+        TIEU_CHI_CODE_MAP.put("huong dan nhom sinh vien nckh", NckhTieuChiConstants.HD_SVNCKH);
+        TIEU_CHI_CODE_MAP.put("hop dong khcn tap huan", NckhTieuChiConstants.HD_SVNCKH);
+        TIEU_CHI_CODE_MAP.put("hop dong nckh khac tap huan de an", NckhTieuChiConstants.HD_SVNCKH);
 
         // ── Hội đồng tư vấn ─────────────────────────────────────
-        TIEU_CHI_CODE_MAP.put("hoi dong tu van", "HOI_DONG_TV");
-        TIEU_CHI_CODE_MAP.put("thanh vien hoi dong", "HOI_DONG_TV");
-        TIEU_CHI_CODE_MAP.put("to chuc hoi dong tu van khoa hoc", "HOI_DONG_TV");
-        TIEU_CHI_CODE_MAP.put("tham du hoi dong tu van khoa hoc", "HOI_DONG_TV");
-        TIEU_CHI_CODE_MAP.put("tu van dinh huong nghien cuu xay dung thuyet minh", "HOI_DONG_TV");
+        TIEU_CHI_CODE_MAP.put("hoi dong tu van", NckhTieuChiConstants.HOI_DONG_TU_VAN);
+        TIEU_CHI_CODE_MAP.put("thanh vien hoi dong", NckhTieuChiConstants.HOI_DONG_TU_VAN);
+        TIEU_CHI_CODE_MAP.put("to chuc hoi dong tu van khoa hoc", NckhTieuChiConstants.HOI_DONG_TU_VAN);
+        TIEU_CHI_CODE_MAP.put("tham du hoi dong tu van khoa hoc", NckhTieuChiConstants.HOI_DONG_TU_VAN);
+        TIEU_CHI_CODE_MAP.put("tu van dinh huong nghien cuu xay dung thuyet minh", NckhTieuChiConstants.HOI_DONG_TU_VAN);
 
-        // ── Mời chuyên gia ───────────────────────────────────────
-        TIEU_CHI_CODE_MAP.put("moi chuyen gia", "MOI_CHUYEN_GIA");
-        TIEU_CHI_CODE_MAP.put("moi chuyen gia trinh bay seminar", "MOI_CHUYEN_GIA");
-        TIEU_CHI_CODE_MAP.put("tham du seminar chuyen de do chuyen gia", "MOI_CHUYEN_GIA");
+        // ── Mời / Tham dự chuyên gia ─────────────────────────────
+        TIEU_CHI_CODE_MAP.put("moi chuyen gia", NckhTieuChiConstants.MOI_CHUYEN_GIA);
+        TIEU_CHI_CODE_MAP.put("moi chuyen gia trinh bay seminar", NckhTieuChiConstants.MOI_CHUYEN_GIA);
+        TIEU_CHI_CODE_MAP.put("tham du seminar chuyen de do chuyen gia", NckhTieuChiConstants.MOI_CHUYEN_GIA);
 
-        // ── Xuất bản sách / Giáo trình ──────────────────────────
-        TIEU_CHI_CODE_MAP.put("chuong sach", "CHUONG_SACH");
-        TIEU_CHI_CODE_MAP.put("chuong sach isbn", "CHUONG_SACH");
-        TIEU_CHI_CODE_MAP.put("giao trinh", "GIAO_TRINH");
-        TIEU_CHI_CODE_MAP.put("giao trinh xuat ban", "GIAO_TRINH");
-        TIEU_CHI_CODE_MAP.put("bai giang mon hoc moi", "GIAO_TRINH");
-        TIEU_CHI_CODE_MAP.put("bai giang moi", "GIAO_TRINH");
-        TIEU_CHI_CODE_MAP.put("sach chuyen khao", "SACH_CHUYEN_KHAO");
-        TIEU_CHI_CODE_MAP.put("sach tham khao", "SACH_THAM_KHAO");
+        // ── Xây dựng đề án Học viện ─────────────────────────────
+        TIEU_CHI_CODE_MAP.put("de an hoc vien", NckhTieuChiConstants.XD_DE_AN_HV);
+        TIEU_CHI_CODE_MAP.put("xd de an hoc vien", NckhTieuChiConstants.XD_DE_AN_HV);
+        TIEU_CHI_CODE_MAP.put("xay dung de an nhiem vu hoc vien", NckhTieuChiConstants.XD_DE_AN_HV);
 
-        // ── Hợp đồng / Đề án ────────────────────────────────────
-        TIEU_CHI_CODE_MAP.put("hop dong khcn", "HOP_DONG_KHCN");
-        TIEU_CHI_CODE_MAP.put("hop dong kh&cn", "HOP_DONG_KHCN");
-        TIEU_CHI_CODE_MAP.put("hop dong khoa hoc cong nghe", "HOP_DONG_KHCN");
-        TIEU_CHI_CODE_MAP.put("de an hoc vien", "DE_AN_HV");
-        TIEU_CHI_CODE_MAP.put("xd de an hoc vien", "DE_AN_HV");
-        TIEU_CHI_CODE_MAP.put("xay dung de an nhiem vu hoc vien", "DE_AN_HV");
-        TIEU_CHI_CODE_MAP.put("bai quang ba", "BAI_QUANG_BA");
-        TIEU_CHI_CODE_MAP.put("bai quang ba khcn", "BAI_QUANG_BA");
+        // ── Sản phẩm KH&CN thương hiệu Học viện ─────────────────
+        TIEU_CHI_CODE_MAP.put("san pham khcn hoc vien", NckhTieuChiConstants.SP_KHCN_HOCVIEN);
+        TIEU_CHI_CODE_MAP.put("san pham kh cn mang thuong hieu hoc vien", NckhTieuChiConstants.SP_KHCN_HOCVIEN);
+        TIEU_CHI_CODE_MAP.put("bai quang ba", NckhTieuChiConstants.SP_KHCN_HOCVIEN);
+        TIEU_CHI_CODE_MAP.put("bai quang ba khcn", NckhTieuChiConstants.SP_KHCN_HOCVIEN);
     }
     public List<NckhTieuChiDinhMucRequest> scanFiles(List<MultipartFile> files, String year) {
         String effectiveYear = (year != null && !year.isBlank())

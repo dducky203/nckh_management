@@ -3,6 +3,7 @@ package com.example.server.service.nckh.impl;
 import com.example.server.DTO.nckh.NckhTieuChiDinhMucImportResult;
 import com.example.server.DTO.nckh.NckhTieuChiDinhMucRequest;
 import com.example.server.DTO.nckh.NckhTieuChiDinhMucResponse;
+import com.example.server.constant.NckhTieuChiConstants;
 import com.example.server.domain.nckh.NckhTieuChiDinhMuc;
 import com.example.server.mapper.NckhTieuChiDinhMucMapper;
 import com.example.server.repository.nckh.NckhTieuChiDinhMucRepository;
@@ -29,20 +30,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Service
 public class NckhTieuChiDinhMucServiceImpl implements NckhTieuChiDinhMucService {
 
     // Cột 0: ID ẩn (người dùng không thấy, dùng để import matching)
-    private static final int COL_ID        = 0;
-    // Cột hiển thị bắt đầu từ 1
-    private static final int COL_STT       = 1;
-    private static final int COL_PHUONG_AN = 2;
-    private static final int COL_TEN_TIEU_CHI = 3;
-    private static final int COL_CHUC_DANH = 4;
-    private static final int COL_DON_VI    = 5;
-    private static final int COL_DINH_MUC  = 6;  // người dùng nhập
-    private static final int COL_GIO_QUY_DOI = 7; // người dùng nhập
+    private static final int COL_ID             = 0;
+    // Cột 1: tieu_chi_code ẩn (dùng để tự động fix code khi import)
+    private static final int COL_TIEU_CHI_CODE  = 1;
+    // Cột hiển thị bắt đầu từ 2
+    private static final int COL_STT            = 2;
+    private static final int COL_PHUONG_AN      = 3;
+    private static final int COL_TEN_TIEU_CHI   = 4;
+    private static final int COL_CHUC_DANH      = 5;
+    private static final int COL_DON_VI         = 6;
+    private static final int COL_DINH_MUC       = 7;  // người dùng nhập
+    private static final int COL_GIO_QUY_DOI    = 8;  // người dùng nhập
     // Không có cột Năm và Tổng giờ trong template
 
     private final NckhTieuChiDinhMucRepository repository;
@@ -144,56 +149,72 @@ public class NckhTieuChiDinhMucServiceImpl implements NckhTieuChiDinhMucService 
         try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Định mức");
 
-            CellStyle headerStyle = createHeaderStyle(workbook);
-            CellStyle dataStyle  = createDataStyle(workbook);
-            CellStyle emptyStyle = createEmptyInputStyle(workbook);
+            CellStyle headerStyle    = createHeaderStyle(workbook);
+            CellStyle dataStyle      = createDataStyle(workbook);
+            CellStyle emptyStyle     = createEmptyInputStyle(workbook);
             CellStyle lockedNoteStyle = createNoteStyle(workbook);
 
-            // Template: (ẩn) ID | STT | Phương án | Tên tiêu chí | Chức danh | Đơn vị | Định mức | Giờ quy đổi
+            // Template layout:
+            //  Col 0 (ẩn): ID
+            //  Col 1 (ẩn): tieu_chi_code  ← mới, dùng để fix code khi import
+            //  Col 2-8 (hiển thị): STT | Phương án | Tên tiêu chí | Chức danh | Đơn vị | Định mức (*) | Giờ quy đổi (*)
             String[] visibleHeaders = {
                     "STT", "Phương án", "Tên tiêu chí", "Chức danh", "Đơn vị",
                     "Định mức (*)", "Giờ quy đổi (*)"
             };
-            int totalVisibleCols = visibleHeaders.length; // = 7
+            int totalVisibleCols = visibleHeaders.length; // = 7, chiếm cột 2→8
 
+            // Header row
             Row headerRow = sheet.createRow(0);
             headerRow.setHeight((short) 500);
-            Cell idHeaderCell = headerRow.createCell(0);
+            // Cột ẩn 0 (ID)
+            Cell idHeaderCell = headerRow.createCell(COL_ID);
             idHeaderCell.setCellValue("ID");
             idHeaderCell.setCellStyle(headerStyle);
+            // Cột ẩn 1 (tieuChiCode)
+            Cell codeHeaderCell = headerRow.createCell(COL_TIEU_CHI_CODE);
+            codeHeaderCell.setCellValue("tieu_chi_code");
+            codeHeaderCell.setCellStyle(headerStyle);
+            // Cột hiển thị 2→8
             for (int i = 0; i < totalVisibleCols; i++) {
-                Cell cell = headerRow.createCell(i + 1);
+                Cell cell = headerRow.createCell(COL_STT + i);
                 cell.setCellValue(visibleHeaders[i]);
                 cell.setCellStyle(headerStyle);
             }
 
+            // Note row
             Row noteRow = sheet.createRow(1);
-            Cell noteCell = noteRow.createCell(1);
+            Cell noteCell = noteRow.createCell(COL_STT);
             noteCell.setCellValue(
                     "Lưu ý: Nhập giá trị vào 2 cột (*) Định mức và Giờ quy đổi. Tổng giờ tối thiểu sẽ được hệ thống tự tính = Định mức × Giờ quy đổi."
             );
             noteCell.setCellStyle(lockedNoteStyle);
-            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(1, 1, 1, totalVisibleCols));
+            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(1, 1, COL_STT, COL_STT + totalVisibleCols - 1));
 
+            // Data rows
             int rowIndex = 2;
             int stt = 1;
             for (NckhTieuChiDinhMuc r : rows) {
                 Row row = sheet.createRow(rowIndex++);
-                setCell(row, COL_ID,           r.getId() == null ? "" : r.getId().toString(), dataStyle);
-                setCell(row, COL_STT,          String.valueOf(stt++), dataStyle);
-                setCell(row, COL_PHUONG_AN,    r.getPhuongAn() == null ? "" : String.valueOf(r.getPhuongAn()), dataStyle);
-                setCell(row, COL_TEN_TIEU_CHI, r.getTieuChiName() == null ? "" : r.getTieuChiName(), dataStyle);
-                setCell(row, COL_CHUC_DANH,    r.getChucDanh() == null ? "" : r.getChucDanh().name(), dataStyle);
-                setCell(row, COL_DON_VI,       r.getDonViTinh() == null ? "" : r.getDonViTinh(), dataStyle);
-                // Định mức và Giờ quy đổi để trống để người dùng nhập
-                row.createCell(COL_DINH_MUC).setCellStyle(emptyStyle);
-                row.createCell(COL_GIO_QUY_DOI).setCellStyle(emptyStyle);
+                // Ẩn: ID và tieu_chi_code
+                setCell(row, COL_ID,            r.getId() == null ? "" : r.getId().toString(), dataStyle);
+                setCell(row, COL_TIEU_CHI_CODE, r.getTieuChiCode() == null ? "" : r.getTieuChiCode(), dataStyle);
+                // Hiển thị (khóa)
+                setCell(row, COL_STT,           String.valueOf(stt++), dataStyle);
+                setCell(row, COL_PHUONG_AN,     r.getPhuongAn() == null ? "" : String.valueOf(r.getPhuongAn()), dataStyle);
+                setCell(row, COL_TEN_TIEU_CHI,  r.getTieuChiName() == null ? "" : r.getTieuChiName(), dataStyle);
+                setCell(row, COL_CHUC_DANH,     r.getChucDanh() == null ? "" : r.getChucDanh().name(), dataStyle);
+                setCell(row, COL_DON_VI,        r.getDonViTinh() == null ? "" : r.getDonViTinh(), dataStyle);
+                // Người dùng nhập (nền vàng)
+                setInputCell(row, COL_DINH_MUC,    r.getDinhMucToiThieu(), emptyStyle);
+                setInputCell(row, COL_GIO_QUY_DOI, r.getGioQuyDoiPerUnit(), emptyStyle);
             }
 
-            // Ẩn cột 0 (ID)
-            sheet.setColumnWidth(0, 0);
-            // Auto-size cột hiển thị 1-7
-            for (int i = 1; i <= totalVisibleCols; i++) {
+            // Ẩn cột 0 (ID) và cột 1 (tieu_chi_code)
+            sheet.setColumnWidth(COL_ID, 0);
+            sheet.setColumnWidth(COL_TIEU_CHI_CODE, 0);
+            // Auto-size cột hiển thị 2→8
+            for (int i = COL_STT; i <= COL_STT + totalVisibleCols - 1; i++) {
                 sheet.autoSizeColumn(i);
                 int w = sheet.getColumnWidth(i);
                 if (w < 3000) sheet.setColumnWidth(i, 3000);
@@ -221,12 +242,11 @@ public class NckhTieuChiDinhMucServiceImpl implements NckhTieuChiDinhMucService 
 
         NckhTieuChiDinhMucImportResult result = new NckhTieuChiDinhMucImportResult();
 
-        // Đọc workbook, xử lý và ghi kết quả thẳng vào cột "Kết quả" rồi trả về
         try (InputStream in = file.getInputStream(); XSSFWorkbook workbook = new XSSFWorkbook(in)) {
             Sheet sheet = workbook.getSheetAt(0);
-            final int COL_RESULT = COL_GIO_QUY_DOI + 1; // cột 8
+            final int COL_RESULT = COL_GIO_QUY_DOI + 1; // cột 9
 
-            // Tạo style cho cột "Kết quả"
+            // Style kết quả
             CellStyle successStyle = workbook.createCellStyle();
             Font successFont = workbook.createFont();
             successFont.setColor(IndexedColors.GREEN.getIndex());
@@ -248,13 +268,12 @@ public class NckhTieuChiDinhMucServiceImpl implements NckhTieuChiDinhMucService 
             errorStyle.setBorderLeft(BorderStyle.THIN);
             errorStyle.setWrapText(true);
 
-            // Thêm header "Kết quả" vào dòng 0
+            // Thêm header "Kết quả"
             Row headerRow = sheet.getRow(0);
             if (headerRow == null) headerRow = sheet.createRow(0);
             Cell headerResultCell = headerRow.createCell(COL_RESULT);
             headerResultCell.setCellValue("Kết quả");
-            CellStyle headerStyle = createHeaderStyle(workbook);
-            headerResultCell.setCellStyle(headerStyle);
+            headerResultCell.setCellStyle(createHeaderStyle(workbook));
 
             int rowIndex = 2;
             while (true) {
@@ -278,8 +297,8 @@ public class NckhTieuChiDinhMucServiceImpl implements NckhTieuChiDinhMucService 
                         continue;
                     }
 
-                    BigDecimal dinhMuc = getDecimalValue(row, COL_DINH_MUC);
-                    BigDecimal gioQuyDoi = getDecimalValue(row, COL_GIO_QUY_DOI);
+                    BigDecimal dinhMuc    = getDecimalValue(row, COL_DINH_MUC);
+                    BigDecimal gioQuyDoi  = getDecimalValue(row, COL_GIO_QUY_DOI);
 
                     if (dinhMuc == null) {
                         result.errorCount++;
@@ -296,14 +315,40 @@ public class NckhTieuChiDinhMucServiceImpl implements NckhTieuChiDinhMucService 
                         continue;
                     }
 
+                    // ── Cập nhật định mức ──────────────────────────────────
                     entity.setDinhMucToiThieu(dinhMuc);
                     entity.setGioQuyDoiPerUnit(gioQuyDoi);
                     entity.setTongGioToiThieu(dinhMuc.multiply(gioQuyDoi));
+
+                    // ── Fix tieu_chi_code nếu đang trống hoặc không hợp lệ ──
+                    // 1) Đọc code từ cột ẩn COL_TIEU_CHI_CODE (template mới)
+                    String codeFromExcel = getStringValue(row, COL_TIEU_CHI_CODE);
+                    if (codeFromExcel != null && !codeFromExcel.isBlank()
+                            && NckhTieuChiConstants.getAllCodes().contains(codeFromExcel.trim())) {
+                        // Dùng code nhúng trong file Excel
+                        if (entity.getTieuChiCode() == null || entity.getTieuChiCode().isBlank()) {
+                            entity.setTieuChiCode(codeFromExcel.trim());
+                        }
+                    } else if (entity.getTieuChiCode() == null || entity.getTieuChiCode().isBlank()) {
+                        // 2) Fallback: suy luận từ tieuChiName qua getName reverse-lookup
+                        String name = entity.getTieuChiName();
+                        if (name != null && !name.isBlank()) {
+                            String inferredCode = NckhTieuChiConstants.getCodeByName(name);
+                            if (inferredCode != null) {
+                                entity.setTieuChiCode(inferredCode);
+                            }
+                        }
+                    }
+
                     repository.save(entity);
 
                     result.successCount++;
-                    resultCell.setCellValue("✓ Thành công");
+                    String note = (entity.getTieuChiCode() != null && !entity.getTieuChiCode().isBlank())
+                            ? " [" + entity.getTieuChiCode() + "]"
+                            : " [code chưa xác định]";
+                    resultCell.setCellValue("✓ Thành công" + note);
                     resultCell.setCellStyle(successStyle);
+
                 } catch (NumberFormatException nfe) {
                     result.errorCount++;
                     resultCell.setCellValue("ID không hợp lệ (" + idStr + ")");
@@ -316,7 +361,7 @@ public class NckhTieuChiDinhMucServiceImpl implements NckhTieuChiDinhMucService 
                 rowIndex++;
             }
 
-            // Auto-size cột "Kết quả"
+            // Auto-size cột kết quả
             sheet.autoSizeColumn(COL_RESULT);
             int w = sheet.getColumnWidth(COL_RESULT);
             if (w < 4000) sheet.setColumnWidth(COL_RESULT, 4000);
@@ -465,6 +510,17 @@ public class NckhTieuChiDinhMucServiceImpl implements NckhTieuChiDinhMucService 
         Cell cell = row.createCell(col);
         if (value != null) {
             cell.setCellValue(value.doubleValue());
+        }
+        cell.setCellStyle(style);
+    }
+
+    /**
+     * Tạo ô nhập liệu (nền vàng). Nếu đã có giá trị trong DB → pre-fill để admin xem và sửa.
+     */
+    private void setInputCell(Row row, int col, BigDecimal existingValue, CellStyle style) {
+        Cell cell = row.createCell(col);
+        if (existingValue != null) {
+            cell.setCellValue(existingValue.doubleValue());
         }
         cell.setCellStyle(style);
     }

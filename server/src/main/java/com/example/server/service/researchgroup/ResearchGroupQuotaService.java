@@ -14,6 +14,7 @@ import com.example.server.domain.User;
 import com.example.server.repository.ResearchGroupMemberRepository;
 import com.example.server.repository.ResearchGroupRepository;
 import com.example.server.repository.UserRepository;
+import com.example.server.constant.NckhTieuChiConstants;
 import com.example.server.service.nckh.NckhComputeService;
 import com.example.server.service.nckh.NckhGroupQuotaRules;
 
@@ -207,12 +208,13 @@ public class ResearchGroupQuotaService {
             return ncmTable2;
         }
         return switch (criterionCode) {
-            case "BB_WOS_SCOPUS" -> List.of("BB_WOS_SCOPUS", "BB_SCOPUS");
+            case NckhTieuChiConstants.BB_WOS_SCOPUS -> List.of(NckhTieuChiConstants.BB_WOS_SCOPUS, NckhTieuChiConstants.BB_SCOPUS);
             case "NHIEM_VU_BO_CHU" -> List.of(
                     "NHIEM_VU_BO_CHU", "NHIEM_VU_BO_TK", "NHIEM_VU_BO_TG");
-            case "HOI_DONG_TU_VAN" -> List.of("HOI_DONG_TV");
+            case NckhTieuChiConstants.HOI_DONG_TU_VAN -> List.of("HOI_DONG_TV");
             default -> List.of(criterionCode);
         };
+
     }
 
     public static double sumQtyForCriterion(
