@@ -274,7 +274,7 @@ export default function DeclarationScreen({
     if (!window.confirm(`Xóa khai báo "${item.title}"?`)) return;
     try {
       await nckhActivityService.deleteActivity(item.id, user.id);
-      toast.success("Đã xóa khai báo");
+      toast.success(SUCCESS_MESSAGES.DECLARATION.DELETED);
       await loadList();
     } catch (err) {
       toast.error(err?.message || "Xóa thất bại");

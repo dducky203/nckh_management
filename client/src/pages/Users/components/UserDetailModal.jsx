@@ -14,7 +14,7 @@ import {
   Delete,
   DeleteForever,
 } from "@mui/icons-material";
-import { formatDate, formatDateTime } from "../../../constants";
+import { formatDate, formatDateTime } from "../../../utils/dateHelpers";
 import Modal from "../../../components/common/Modal";
 
 const UserDetailModal = ({ isOpen, onClose, user, onForceDelete }) => {

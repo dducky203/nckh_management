@@ -63,7 +63,7 @@ const GroupLeaderStatsModal = ({ isOpen, onClose, group, currentUserId }) => {
       const response = await researchGroupService.exportMemberWord(group.id, selectedYear);
       const filename = `DanhSachThanhVien_${group.groupName || group.id}_${selectedYear}.docx`;
       downloadFileFromResponse(response, filename);
-      toast.success("Xuất Word thành công");
+      toast.success(SUCCESS_MESSAGES.FILE.EXPORT_WORD);
     } catch (err) {
       console.error("Export word error:", err);
       toast.error(err?.message || "Không thể xuất file Word");

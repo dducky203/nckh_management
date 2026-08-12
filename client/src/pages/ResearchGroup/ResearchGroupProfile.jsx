@@ -15,13 +15,8 @@ import Button from "../../components/common/Button";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import Modal from "../../components/common/Modal";
 import { isQuotaGroup } from "../../components/groupQuota/utils";
-import {
-  ERROR_MESSAGES,
-  formatDateTime,
-  getImageUrl,
-  getResearchGroupStatus,
-  SUCCESS_MESSAGES,
-} from "../../constants";
+import { ERROR_MESSAGES, getImageUrl, getResearchGroupStatus, SUCCESS_MESSAGES,  } from "../../constants";
+import { formatDateTime } from "../../utils/dateHelpers";
 import { AuthContext } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { canAccessQuotaPages, canEditGroup } from "../../utils/permissions";
@@ -76,7 +71,7 @@ const ResearchGroupProfile = () => {
       }
     } catch (error) {
       console.error("Error fetching groups:", error);
-      toast.error(error.message || ERROR_MESSAGES.LOAD_DATA_ERROR);
+      toast.error(error.message || ERROR_MESSAGES.DATA.LOAD_ERROR);
     } finally {
       setGroupsLoading(false);
     }
@@ -90,7 +85,7 @@ const ResearchGroupProfile = () => {
       setDocuments(unwrapList(response));
     } catch (error) {
       console.error("Error fetching documents:", error);
-      toast.error(error.message || ERROR_MESSAGES.LOAD_DATA_ERROR);
+      toast.error(error.message || ERROR_MESSAGES.DATA.LOAD_ERROR);
     } finally {
       setLoading(false);
     }
@@ -134,15 +129,15 @@ const ResearchGroupProfile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.documentName?.trim() || !formData.documentType) {
-      toast.error("Vui lòng điền đầy đủ thông tin bắt buộc");
+      toast.error(ERROR_MESSAGES.FORM.REQUIRED_FIELDS);
       return;
     }
     if (!selectedDocument && !formData.file) {
-      toast.error("Vui lòng chọn file");
+      toast.error(ERROR_MESSAGES.FILE.SELECT_FILE);
       return;
     }
     if (!currentGroup?.id) {
-      toast.error("Vui lòng chọn nhóm nghiên cứu");
+      toast.error(ERROR_MESSAGES.GROUP.SELECT_GROUP);
       return;
     }
 
@@ -166,13 +161,13 @@ const ResearchGroupProfile = () => {
           formData.description?.trim() || null,
           formData.file
         );
-        toast.success("Thêm văn bản thành công");
+        toast.success(SUCCESS_MESSAGES.FILE.ADD_DOCUMENT);
       }
       setFormModalOpen(false);
       fetchDocuments();
     } catch (error) {
       console.error("Error saving document:", error);
-      toast.error(error.message || ERROR_MESSAGES.SERVER_ERROR);
+      toast.error(error.message || ERROR_MESSAGES.SYSTEM.SERVER);
     } finally {
       setSaving(false);
     }
@@ -182,7 +177,7 @@ const ResearchGroupProfile = () => {
     if (!currentGroup?.id || !selectedDocument?.id) return;
     try {
       await researchGroupService.deleteDocument(currentGroup.id, selectedDocument.id);
-      toast.success(SUCCESS_MESSAGES.DELETE_SUCCESS);
+      toast.success(SUCCESS_MESSAGES.COMMON.DELETE);
       setDeleteModalOpen(false);
       setSelectedDocument(null);
       fetchDocuments();
@@ -194,7 +189,7 @@ const ResearchGroupProfile = () => {
   const handleDownload = (doc) => {
     const fileUrl = doc.fileUrl || doc.url;
     if (!fileUrl) {
-      toast.error("Không có liên kết tải file");
+      toast.error(ERROR_MESSAGES.FILE.NO_DOWNLOAD_LINK);
       return;
     }
     window.open(getImageUrl(fileUrl), "_blank", "noopener,noreferrer");

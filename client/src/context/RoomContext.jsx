@@ -43,7 +43,7 @@ export const RoomProvider = ({ children }) => {
     } catch (err) {
       setError(err);
       setRooms([]);
-      toast?.error(ERROR_MESSAGES.LOAD_ROOM_ERROR);
+      toast?.error(ERROR_MESSAGES.DATA.LOAD_ROOM_ERROR);
     } finally {
       loadingRef.current = false;
       setLoading(false);

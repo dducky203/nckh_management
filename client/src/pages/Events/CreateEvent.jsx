@@ -52,7 +52,7 @@ const CreateEvent = () => {
         setRooms(getRoomsDataSync());
       } catch (error) {
         console.error("Error loading data:", error);
-        toast.error(ERROR_MESSAGES.LOAD_ROOM_ERROR);
+        toast.error(ERROR_MESSAGES.DATA.LOAD_ROOM_ERROR);
       } finally {
         setRoomsLoading(false);
       }
@@ -86,13 +86,13 @@ const CreateEvent = () => {
     // Validate file type
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
     if (!validTypes.includes(file.type)) {
-      toast.error(ERROR_MESSAGES.FILE_TYPE_ERROR);
+      toast.error(ERROR_MESSAGES.FILE.TYPE_ERROR);
       return;
     }
 
     // Check file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error(ERROR_MESSAGES.FILE_SIZE_ERROR);
+      toast.error(ERROR_MESSAGES.FILE.SIZE_ERROR);
       return;
     }
 

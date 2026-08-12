@@ -83,22 +83,22 @@ const MemberManagementModal = ({
   const handleApproveJoin = async (requestId) => {
     try {
       await researchGroupService.approveJoinRequest(requestId);
-      toast.success("Đã duyệt đăng ký tham gia nhóm");
+      toast.success(SUCCESS_MESSAGES.GROUP.APPROVE_REGISTRATION);
       fetchPendingJoinRequests();
       fetchMembers();
       if (onRefresh) onRefresh();
     } catch (error) {
-      toast.error(error.message || "Không thể duyệt đăng ký");
+      toast.error(error.message || ERROR_MESSAGES.GROUP.CANNOT_APPROVE_REGISTRATION);
     }
   };
 
   const handleRejectJoin = async (requestId) => {
     try {
       await researchGroupService.rejectJoinRequest(requestId, "Trưởng nhóm từ chối");
-      toast.success("Đã từ chối đăng ký");
+      toast.success(SUCCESS_MESSAGES.GROUP.REJECT_REGISTRATION);
       fetchPendingJoinRequests();
     } catch (error) {
-      toast.error(error.message || "Không thể từ chối đăng ký");
+      toast.error(error.message || ERROR_MESSAGES.GROUP.CANNOT_REJECT_REGISTRATION);
     }
   };
 
@@ -133,7 +133,7 @@ const MemberManagementModal = ({
       setMembers(groupData.members || []);
     } catch (error) {
       console.error("Error fetching members:", error);
-      toast.error(error.message || ERROR_MESSAGES.LOAD_DATA_ERROR);
+      toast.error(error.message || ERROR_MESSAGES.DATA.LOAD_ERROR);
     } finally {
       setLoading(false);
     }
@@ -163,7 +163,7 @@ const MemberManagementModal = ({
 
       if (!users || typeof users !== "object" || typeof users.length !== "number") {
         console.error("Invalid response format:", response);
-        toast.error("Định dạng dữ liệu không hợp lệ");
+        toast.error(ERROR_MESSAGES.FORM.INVALID_DATA_FORMAT);
         return;
       }
 
@@ -231,7 +231,7 @@ const MemberManagementModal = ({
   const handleAddMember = async (userId) => {
     try {
       await researchGroupService.addMember(group.id, userId);
-      toast.success(SUCCESS_MESSAGES.MEMBER_ADDED);
+      toast.success(SUCCESS_MESSAGES.GROUP.MEMBER_ADDED);
       setShowAddMember(false);
       setSearchTerm("");
       setSearchResults([]);
@@ -256,7 +256,7 @@ const MemberManagementModal = ({
   const confirmDeleteMember = async () => {
     try {
       await researchGroupService.removeMember(group.id, deleteConfirm.memberId);
-      toast.success(SUCCESS_MESSAGES.MEMBER_REMOVED);
+      toast.success(SUCCESS_MESSAGES.GROUP.MEMBER_REMOVED);
       setDeleteConfirm({ isOpen: false, memberId: null, memberName: "" });
       fetchMembers();
       if (onRefresh) onRefresh();
@@ -280,7 +280,7 @@ const MemberManagementModal = ({
         editRole,
         editParticipationRate,
       );
-      toast.success("Cập nhật thông tin thành viên thành công");
+      toast.success(SUCCESS_MESSAGES.GROUP.UPDATE_MEMBER_INFO);
       setEditingMember(null);
       fetchMembers();
       if (onRefresh) onRefresh();
@@ -313,7 +313,7 @@ const MemberManagementModal = ({
     try {
       setLoading(true);
       await researchGroupService.importMembersFromExcel(group.id, file);
-      toast.success("Import thành viên từ Excel thành công");
+      toast.success(SUCCESS_MESSAGES.FILE.IMPORT_EXCEL);
       fetchMembers();
       if (onRefresh) onRefresh();
     } catch (error) {
@@ -335,7 +335,7 @@ const MemberManagementModal = ({
 
       downloadFileFromResponse(response, "template_import_user_research.xlsx");
 
-      toast.success("Tải file mẫu thành công");
+      toast.success(SUCCESS_MESSAGES.FILE.DOWNLOAD_TEMPLATE);
     } catch (error) {
       console.error("Error downloading template:", error);
       toast.error(error.message || "Không thể tải file mẫu");

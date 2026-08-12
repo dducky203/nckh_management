@@ -39,7 +39,7 @@ const NewsManager = () => {
   // Kiểm tra quyền admin
   useEffect(() => {
     if (!user || user.role !== "admin") {
-      toast.error("Bạn không có quyền truy cập trang này");
+      toast.error(ERROR_MESSAGES.AUTH.ACCESS_DENIED);
       navigate("/");
     }
   }, [user, navigate, toast]);
@@ -56,7 +56,7 @@ const NewsManager = () => {
       setNewsList(response?.data?.news || []);
     } catch (error) {
       console.error("Error fetching news:", error);
-      toast.error("Không thể tải danh sách tin tức");
+      toast.error(ERROR_MESSAGES.NEWS.LOAD_ERROR);
     } finally {
       setLoading(false);
     }
@@ -111,11 +111,11 @@ const NewsManager = () => {
       if (currentNews) {
         // Update
         await newsService.updateNews(currentNews.id, formData);
-        toast.success("Cập nhật tin tức thành công");
+        toast.success(SUCCESS_MESSAGES.NEWS.UPDATED);
       } else {
         // Create
         await newsService.createNews(formData);
-        toast.success("Tạo tin tức mới thành công");
+        toast.success(SUCCESS_MESSAGES.NEWS.CREATED);
       }
       handleCloseModal();
       fetchNews();
@@ -130,7 +130,7 @@ const NewsManager = () => {
 
     try {
       await newsService.deleteNews(currentNews.id);
-      toast.success("Xóa tin tức thành công");
+      toast.success(SUCCESS_MESSAGES.NEWS.DELETED);
       setIsDeleteModalOpen(false);
       setCurrentNews(null);
       fetchNews();

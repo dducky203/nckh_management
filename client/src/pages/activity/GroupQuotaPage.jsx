@@ -12,6 +12,8 @@ import researchGroupService from "../../services/researchGroupService";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useToast } from "../../context/ToastContext";
 import { AuthContext } from "../../context/AuthContext";
+import { SUCCESS_MESSAGES } from "../../constants";
+import { downloadFileFromResponse } from "../../utils/helpers";
 import PageHeader from "../../components/groupQuota/PageHeader";
 import EmptyGroupQuota from "../../components/groupQuota/EmptyGroupQuota";
 import GroupInfoCard from "../../components/groupQuota/GroupInfoCard";
@@ -51,6 +53,26 @@ export default function GroupQuotaPage() {
   const [memberModalOpen, setMemberModalOpen] = useState(false);
   const [managementGroup, setManagementGroup] = useState(null);
   const [managementLoading, setManagementLoading] = useState(false);
+  const [exportingWord, setExportingWord] = useState(false);
+
+  const handleExportWord = useCallback(async () => {
+    if (!quota?.groupId) {
+      toast.error("Không tìm thấy thông tin nhóm để xuất báo cáo");
+      return;
+    }
+    try {
+      setExportingWord(true);
+      const response = await researchGroupService.exportMemberWord(quota.groupId, academicYear);
+      const filename = `BaoCaoDinhMuc_Nhom_${quota.groupName || quota.groupId}_${academicYear}.docx`;
+      downloadFileFromResponse(response, filename);
+      toast.success(SUCCESS_MESSAGES.FILE.EXPORT_WORD || "Xuất file Word thành công!");
+    } catch (err) {
+      console.error("Export word error:", err);
+      toast.error(err?.message || "Không thể xuất file Word");
+    } finally {
+      setExportingWord(false);
+    }
+  }, [quota?.groupId, quota?.groupName, academicYear, toast]);
 
   const reloadMembersData = useCallback(async () => {
     try {
@@ -73,7 +95,7 @@ export default function GroupQuotaPage() {
         group = detail?.data ?? detail;
       }
       if (!group) {
-        toast.error("Không tìm thấy thông tin nhóm");
+        toast.error(ERROR_MESSAGES.GROUP.NOT_FOUND);
         return;
       }
       setManagementGroup(group);
@@ -152,6 +174,8 @@ export default function GroupQuotaPage() {
         isLeader={quota.isLeader}
         onManageMembers={quota.isLeader ? openMemberManagement : undefined}
         manageLoading={managementLoading}
+        onExportWord={quota.groupId ? handleExportWord : undefined}
+        exporting={exportingWord}
       />
 
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">

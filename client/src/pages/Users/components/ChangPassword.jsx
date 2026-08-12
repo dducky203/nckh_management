@@ -54,7 +54,7 @@ const ChangePassword = ({ username }) => {
 
       await userService.changePassword(username, changePasswordData);
 
-      toast.success(SUCCESS_MESSAGES.CHANGE_PASSWORD);
+      toast.success(SUCCESS_MESSAGES.USER.CHANGE_PASSWORD);
 
       // Reset form
       setPasswordData({

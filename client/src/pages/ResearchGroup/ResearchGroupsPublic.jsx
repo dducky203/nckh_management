@@ -14,7 +14,8 @@ import { useToast } from "../../context/ToastContext";
 import researchGroupService from "../../services/researchGroupService";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import Pagination from "../../components/common/Pagination";
-import { ERROR_MESSAGES, getSemesterFromDate, getResearchGroupStatusBadge } from "../../constants";
+import { ERROR_MESSAGES, getResearchGroupStatusBadge, SUCCESS_MESSAGES } from "../../constants";
+import { getSemesterFromDate } from "../../utils/dateHelpers";
 import { isStudent } from "../../utils/permissions";
 import GroupFormModal from "./components/GroupFormModal";
 import GroupDetailModal from "./components/GroupDetailModal";
@@ -96,7 +97,7 @@ const ResearchGroupsPublic = () => {
       updatePaginationData(responseData);
     } catch (error) {
       console.error("Error fetching groups:", error);
-      toast.error(error.message || ERROR_MESSAGES.LOAD_DATA_ERROR);
+      toast.error(error.message || ERROR_MESSAGES.DATA.LOAD_ERROR);
     } finally {
       setLoading(false);
     }
@@ -116,7 +117,7 @@ const ResearchGroupsPublic = () => {
 
   const handleCreateGroup = () => {
     if (!user) {
-      toast.error("Vui lòng đăng nhập để tạo nhóm nghiên cứu");
+      toast.error(ERROR_MESSAGES.AUTH.LOGIN_REQUIRED);
       return;
     }
     setFormModalOpen(true);
@@ -130,11 +131,11 @@ const ResearchGroupsPublic = () => {
   const handleSaveGroup = async (groupData) => {
     try {
       await researchGroupService.createGroup(groupData);
-      toast.success("Đăng ký nhóm thành công");
+      toast.success(SUCCESS_MESSAGES.AUTH.REGISTER_GROUP_SUCCESS);
       setFormModalOpen(false);
       return true;
     } catch (error) {
-      toast.error(error.message || ERROR_MESSAGES.SERVER_ERROR);
+      toast.error(error.message || ERROR_MESSAGES.SYSTEM.SERVER);
       throw error;
     }
   };

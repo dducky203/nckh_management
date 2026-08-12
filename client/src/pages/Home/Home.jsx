@@ -17,7 +17,7 @@ import researchGroupService from "../../services/researchGroupService";
 import Button from "../../components/common/Button";
 import Slideshow from "./components/Slideshow";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
-import { formatDateTime } from "../../constants";
+import { formatDateTime } from "../../utils/dateHelpers";
 import { isStudent } from "../../utils/permissions";
 import bannerImg from "../../assets/Banner.png";
 import logoFitaImg from "../../assets/logo_fita.png";

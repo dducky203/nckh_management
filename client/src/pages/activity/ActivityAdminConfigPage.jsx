@@ -10,8 +10,18 @@ import ArticleIcon from "@mui/icons-material/Article";
 import GroupIcon from "@mui/icons-material/Group";
 import HubIcon from "@mui/icons-material/Hub";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
 const adminCards = [
+  {
+    title: "Quản lý Trang chủ",
+    description:
+      "Tùy biến nội dung, sắp xếp vị trí khu vực và xuất bản thông tin lên Trang chủ động.",
+    to: "/admin/homepage",
+    icon: AutoAwesomeIcon,
+    tone: "from-amber-500 to-orange-500",
+    cta: "Mở quản lý trang chủ",
+  },
   {
     title: "Định mức theo năm",
     description:

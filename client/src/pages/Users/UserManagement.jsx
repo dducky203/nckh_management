@@ -187,11 +187,11 @@ const UserManagement = () => {
       setLoading(true);
       if (editingUser) {
         await userService.updateUserByAdmin(formData);
-        toast.success(SUCCESS_MESSAGES.SAVE_SUCCESS);
+        toast.success(SUCCESS_MESSAGES.COMMON.SAVE);
       } else {
         // Tạo user mới
         await userService.createUser(formData);
-        toast.success(SUCCESS_MESSAGES.SAVE_SUCCESS);
+        toast.success(SUCCESS_MESSAGES.COMMON.SAVE);
       }
       fetchUsers(); // Refresh data
       return true; // Thành công
@@ -208,11 +208,11 @@ const UserManagement = () => {
     try {
       setLoading(true);
       await userService.deleteUser(username);
-      toast.success(SUCCESS_MESSAGES.DELETE_SUCCESS);
+      toast.success(SUCCESS_MESSAGES.COMMON.DELETE);
       fetchUsers(); // Refresh data
     } catch (error) {
       console.error("Error deleting user:", error);
-      toast.error(error.message || ERROR_MESSAGES.SERVER_ERROR);
+      toast.error(error.message || ERROR_MESSAGES.SYSTEM.SERVER);
     } finally {
       setLoading(false);
     }
@@ -222,11 +222,11 @@ const UserManagement = () => {
     try {
       setLoading(true);
       await userService.deleteUser(username, force);
-      toast.success(SUCCESS_MESSAGES.DELETE_SUCCESS);
+      toast.success(SUCCESS_MESSAGES.COMMON.DELETE);
       fetchUsers(); // Refresh data
     } catch (error) {
       console.error("Error force deleting user:", error);
-      toast.error(error.message || ERROR_MESSAGES.SERVER_ERROR);
+      toast.error(error.message || ERROR_MESSAGES.SYSTEM.SERVER);
     } finally {
       setLoading(false);
     }
@@ -234,7 +234,7 @@ const UserManagement = () => {
 
   const handleExportUsers = async () => {
     if (selectedUsers.length === 0) {
-      toast.error(ERROR_MESSAGES.VALIDATION_ERROR);
+      toast.error(ERROR_MESSAGES.FORM.VALIDATION_ERROR);
       return;
     }
 
@@ -261,11 +261,11 @@ const UserManagement = () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      toast.success(SUCCESS_MESSAGES.UPLOAD_SUCCESS);
+      toast.success(SUCCESS_MESSAGES.FILE.UPLOAD);
       setSelectedUsers([]);
     } catch (error) {
       console.error("Error exporting users:", error);
-      toast.error(error.message || ERROR_MESSAGES.SERVER_ERROR);
+      toast.error(error.message || ERROR_MESSAGES.SYSTEM.SERVER);
     } finally {
       setIsExporting(false);
     }

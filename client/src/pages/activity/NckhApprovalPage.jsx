@@ -181,7 +181,7 @@ export default function NckhApprovalPage() {
     setProcessingId(item.id);
     try {
       await nckhActivityService.approveActivity(item.id, user.id);
-      toast.success("Đã duyệt khai báo thành công!");
+      toast.success(SUCCESS_MESSAGES.DECLARATION.APPROVED);
       await loadPending();
     } catch (err) {
       toast.error(err?.message || "Duyệt thất bại");
@@ -195,7 +195,7 @@ export default function NckhApprovalPage() {
     setProcessingId(item.id);
     try {
       await nckhActivityService.rejectActivity(item.id, user.id);
-      toast.success("Đã từ chối khai báo!");
+      toast.success(SUCCESS_MESSAGES.DECLARATION.REJECTED);
       await loadPending();
     } catch (err) {
       toast.error(err?.message || "Từ chối thất bại");

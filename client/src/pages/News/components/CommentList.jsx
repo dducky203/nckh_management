@@ -36,23 +36,23 @@ const CommentList = ({ comments, loading, user, onCommentsChange }) => {
 
     try {
       await newsService.updateComment(commentId, editContent);
-      toast.success(SUCCESS_MESSAGES.SAVE_SUCCESS);
+      toast.success(SUCCESS_MESSAGES.COMMON.SAVE);
       setEditingCommentId(null);
       setEditContent("");
       onCommentsChange();
     } catch (error) {
-      toast.error(error.message || ERROR_MESSAGES.SERVER_ERROR);
+      toast.error(error.message || ERROR_MESSAGES.SYSTEM.SERVER);
     }
   };
 
   const handleDeleteComment = async (commentId) => {
     try {
       await newsService.deleteComment(commentId);
-      toast.success(SUCCESS_MESSAGES.DELETE_SUCCESS);
+      toast.success(SUCCESS_MESSAGES.COMMON.DELETE);
       setOpenMenuId(null);
       onCommentsChange();
     } catch (error) {
-      toast.error(error.message || ERROR_MESSAGES.SERVER_ERROR);
+      toast.error(error.message || ERROR_MESSAGES.SYSTEM.SERVER);
     }
   };
 

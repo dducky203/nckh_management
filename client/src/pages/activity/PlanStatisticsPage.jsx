@@ -186,7 +186,7 @@ export default function PlanStatisticsPage() {
       setExportingPlanStats(true);
       const response = await nckhPlanService.exportPlanStatisticsExcel(reportYear);
       downloadFileFromResponse(response, `ThongKePhuongAnNCKH_${reportYear}.xlsx`);
-      toast.success("Đã xuất Excel thống kê phương án");
+      toast.success(SUCCESS_MESSAGES.FILE.EXPORT_EXCEL_STATS);
     } catch (e) {
       toast.error(e?.message || "Xuất Excel thống kê thất bại");
     } finally {

@@ -154,7 +154,7 @@ const ResearchGroupManagement = () => {
       }
     } catch (error) {
       console.error("Error fetching groups:", error);
-      toast.error(error.message || ERROR_MESSAGES.LOAD_DATA_ERROR);
+      toast.error(error.message || ERROR_MESSAGES.DATA.LOAD_ERROR);
     } finally {
       setLoading(false);
     }
@@ -211,12 +211,12 @@ const ResearchGroupManagement = () => {
   const confirmApprove = async () => {
     try {
       await researchGroupService.approveGroup(confirmModal.groupId);
-      toast.success(SUCCESS_MESSAGES.GROUP_APPROVED);
+      toast.success(SUCCESS_MESSAGES.GROUP.APPROVED);
       setConfirmModal({ isOpen: false, type: "", groupId: null });
       fetchGroups();
       if (isAdmin) fetchStatistics();
     } catch (error) {
-      toast.error(error.message || ERROR_MESSAGES.SERVER_ERROR);
+      toast.error(error.message || ERROR_MESSAGES.SYSTEM.SERVER);
     }
   };
 
@@ -230,12 +230,12 @@ const ResearchGroupManagement = () => {
         confirmModal.groupId,
         confirmModal.reason,
       );
-      toast.success(SUCCESS_MESSAGES.GROUP_REJECTED);
+      toast.success(SUCCESS_MESSAGES.GROUP.REJECTED);
       setConfirmModal({ isOpen: false, type: "", groupId: null, reason: "" });
       fetchGroups();
       if (isAdmin) fetchStatistics();
     } catch (error) {
-      toast.error(error.message || ERROR_MESSAGES.SERVER_ERROR);
+      toast.error(error.message || ERROR_MESSAGES.SYSTEM.SERVER);
     }
   };
 
@@ -246,12 +246,12 @@ const ResearchGroupManagement = () => {
   const confirmDelete = async () => {
     try {
       await researchGroupService.deleteGroup(confirmModal.groupId);
-      toast.success(SUCCESS_MESSAGES.DELETE_SUCCESS);
+      toast.success(SUCCESS_MESSAGES.COMMON.DELETE);
       setConfirmModal({ isOpen: false, type: "", groupId: null });
       fetchGroups();
       if (isAdmin) fetchStatistics();
     } catch (error) {
-      toast.error(error.message || ERROR_MESSAGES.SERVER_ERROR);
+      toast.error(error.message || ERROR_MESSAGES.SYSTEM.SERVER);
     }
   };
 
@@ -259,17 +259,17 @@ const ResearchGroupManagement = () => {
     try {
       if (selectedGroup) {
         await researchGroupService.updateGroup(selectedGroup.id, groupData);
-        toast.success(SUCCESS_MESSAGES.GROUP_UPDATED);
+        toast.success(SUCCESS_MESSAGES.GROUP.UPDATED);
       } else {
         await researchGroupService.createGroup(groupData);
-        toast.success(SUCCESS_MESSAGES.GROUP_CREATED);
+        toast.success(SUCCESS_MESSAGES.GROUP.CREATED);
       }
       setFormModalOpen(false);
       fetchGroups();
       if (isAdmin) fetchStatistics();
       return true;
     } catch (error) {
-      toast.error(error.message || ERROR_MESSAGES.SERVER_ERROR);
+      toast.error(error.message || ERROR_MESSAGES.SYSTEM.SERVER);
       throw error;
     }
   };

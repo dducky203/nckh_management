@@ -6,8 +6,8 @@ import java.util.*;
 
 import org.apache.poi.xwpf.usermodel.*;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
@@ -25,6 +25,7 @@ import com.example.server.repository.nckh.NckhActivityRepository;
 import com.example.server.service.nckh.NckhComputeService;
 import com.example.server.service.nckh.NckhGroupQuotaAggregationService;
 import com.example.server.service.nckh.NckhGroupQuotaRules;
+import com.example.server.service.nckh.NckhGroupQuotaWordExportService;
 import com.example.server.service.nckh.NckhMemberRequiredHoursService;
 import com.example.server.service.researchgroup.ResearchGroupQuotaService;
 import com.example.server.constant.NckhTieuChiConstants;
@@ -49,6 +50,7 @@ public class NckhGroupDashboardController {
     private final NckhGroupQuotaAggregationService aggregationService;
     private final ResearchGroupQuotaService quotaGroupService;
     private final NckhMemberRequiredHoursService memberRequiredHoursService;
+    private final NckhGroupQuotaWordExportService wordExportService;
     private final NckhActivityRepository activityRepo;
 
     // -------------------------------------------------------------------
@@ -559,7 +561,7 @@ public class NckhGroupDashboardController {
     @GetMapping("/export-word")
     public ResponseEntity<byte[]> exportMemberWord(
             @RequestParam Integer groupId,
-            @RequestParam(required = false) Integer year) throws IOException {
+            @RequestParam(required = false) Integer year) {
         SecurityUtils.assertCurrentUserCanAccessQuota();
         User currentUser = requireCurrentUser();
         ResearchGroup group = groupRepo.findById(groupId)
@@ -575,9 +577,9 @@ public class NckhGroupDashboardController {
         List<ResearchGroupMember> memberEntities = memberRepo.findByGroupId(group.getId());
         Map<String, Object> data = buildLeaderMemberStatsData(group, memberEntities, academicYear);
 
-        byte[] docBytes = buildWordDocument(group, memberEntities, data, academicYear);
+        byte[] docBytes = wordExportService.exportBytes(group, data, academicYear);
 
-        String filename = "DanhSachThanhVien_" + group.getGroupName().replaceAll("[^\\w]", "_") + "_" + academicYear + ".docx";
+        String filename = wordExportService.buildFileName(group, academicYear);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
         headers.setContentDispositionFormData("attachment", filename);

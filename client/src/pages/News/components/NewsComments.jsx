@@ -47,7 +47,7 @@ const NewsComments = ({ newsId }) => {
     }
 
     if (!user) {
-      toast.error(ERROR_MESSAGES.UNAUTHORIZED);
+      toast.error(ERROR_MESSAGES.AUTH.UNAUTHORIZED);
       return;
     }
 

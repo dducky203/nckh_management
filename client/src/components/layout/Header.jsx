@@ -20,6 +20,7 @@ import {
   SupervisorAccount,
   Psychology,
   School,
+  AutoAwesome,
 } from "@mui/icons-material";
 
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "../../constants";
@@ -98,10 +99,10 @@ const Header = () => {
       await logout();
       closeUserMenu();
       navigate("/login");
-      toast.success(SUCCESS_MESSAGES.LOGOUT);
+      toast.success(SUCCESS_MESSAGES.AUTH.LOGOUT);
     } catch (error) {
       console.error("Logout failed:", error);
-      toast.error(ERROR_MESSAGES.SERVER_ERROR);
+      toast.error(ERROR_MESSAGES.SYSTEM.SERVER);
     }
   };
 
@@ -202,34 +203,34 @@ const Header = () => {
                           <span>Nhóm NCKH</span>
                         </Link>
                         {userNckhStaff && (
+                          <Link
+                            to="/activity/admin/config"
+                            className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor font-medium"
+                            onClick={closeUserMenu}
+                          >
+                            <Settings className="w-4 h-4 mr-2 text-mainColor" />
+                            <span>Cấu hình Chức năng</span>
+                          </Link>
+                        )}
+                        {userCanAccessQuota && (
                           <>
                             <Link
-                              to="/activity/admin/config"
-                              className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                              onClick={closeUserMenu}
-                            >
-                              <Settings className="w-4 h-4 mr-2 text-gray-400" />
-                              <span>Cấu hình Chức năng</span>
-                            </Link>
-                            <Link
-                              to="/activity/admin/group-quota"
+                              to="/activity/standards"
                               className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
                               onClick={closeUserMenu}
                             >
                               <BarChart className="w-4 h-4 mr-2 text-gray-400" />
+                              <span>Định mức hoạt động</span>
+                            </Link>
+                            <Link
+                              to="/activity/group-quota"
+                              className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor font-medium"
+                              onClick={closeUserMenu}
+                            >
+                              <BarChart className="w-4 h-4 mr-2 text-mainColor" />
                               <span>Thống kê định mức nhóm</span>
                             </Link>
                           </>
-                        )}
-                        {userCanAccessQuota && (
-                          <Link
-                            to="/activity/standards"
-                            className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-purple-100 hover:text-mainColor"
-                            onClick={closeUserMenu}
-                          >
-                            <BarChart className="w-4 h-4 mr-2 text-gray-400" />
-                            <span>Định mức hoạt động</span>
-                          </Link>
                         )}
                         <Link
                           to="/research-groups/profile"
@@ -585,34 +586,34 @@ const Header = () => {
                   Hồ sơ nhóm
                 </Link>
                 {userNckhStaff && (
-                  <>
-                    <Link
-                      to="/activity/admin/config"
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-mainColor"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Cấu hình chức năng
-                    </Link>
-                    <Link
-                      to="/activity/admin/group-quota"
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-mainColor"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <BarChart className="w-4 h-4 mr-2" />
-                      Thống kê định mức nhóm
-                    </Link>
-                  </>
-                )}
-                {userCanAccessQuota && (
                   <Link
-                    to="/research-groups/advisor-approval"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-mainColor"
+                    to="/activity/admin/config"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-mainColor font-medium"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <Psychology className="w-4 h-4 mr-2" />
-                    Duyệt nhóm NCKH của Sinh viên
+                    <Settings className="w-4 h-4 mr-2 text-mainColor" />
+                    Cấu hình chức năng
                   </Link>
+                )}
+                {userCanAccessQuota && (
+                  <>
+                    <Link
+                      to="/activity/group-quota"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-mainColor font-medium"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <BarChart className="w-4 h-4 mr-2 text-mainColor" />
+                      Thống kê định mức nhóm
+                    </Link>
+                    <Link
+                      to="/research-groups/advisor-approval"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-mainColor"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <Psychology className="w-4 h-4 mr-2" />
+                      Duyệt nhóm NCKH của Sinh viên
+                    </Link>
+                  </>
                 )}
                 <button
                   onClick={() => {

@@ -116,3 +116,19 @@ export const getBadgeColorStyles = (colorStr) => {
 
   return colorStyles[colorName] || colorStyles.indigo;
 };
+
+// Helper function to strip HTML tags and get plain text
+export const stripHtml = (html) => {
+  if (!html) return "";
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || "";
+};
+
+// Helper function to validate and return safe URLs (supports http, https, relative paths, blob URLs, data URIs)
+export const safeUrl = (value) => {
+  if (!value) return "";
+  return /^(https?:\/\/|\/|blob:|data:)/i.test(value) ? value : "";
+};
+
+

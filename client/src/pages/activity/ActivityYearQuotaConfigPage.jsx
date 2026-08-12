@@ -449,7 +449,7 @@ export default function ActivityYearQuotaConfigPage() {
         dinhMucToiThieu: editingValues.dinhMucToiThieu !== "" ? Number(editingValues.dinhMucToiThieu) : null,
         gioQuyDoiPerUnit: editingValues.gioQuyDoiPerUnit !== "" ? Number(editingValues.gioQuyDoiPerUnit) : null,
       });
-      toast.success("Đã lưu thay đổi.");
+      toast.success(SUCCESS_MESSAGES.COMMON.SAVE_CHANGES);
       cancelEdit();
       await fetchData(yearInput);
     } catch (e) {
@@ -464,7 +464,7 @@ export default function ActivityYearQuotaConfigPage() {
     try {
       setEditSaving(true);
       await nckhTieuChiDinhMucService.delete(row.id);
-      toast.success("Đã xóa định mức.");
+      toast.success(SUCCESS_MESSAGES.QUOTA.DELETED);
       cancelEdit();
       await fetchData(yearInput);
     } catch (e) {
@@ -488,7 +488,7 @@ export default function ActivityYearQuotaConfigPage() {
       if (selectedPlan !== "all") params.phuongAn = selectedPlan;
       const response = await nckhTieuChiDinhMucService.downloadImportTemplate(params);
       downloadFileFromResponse(response, "template-dinh-muc.xlsx");
-      toast.success("Đã tải file mẫu.");
+      toast.success(SUCCESS_MESSAGES.FILE.DOWNLOAD_TEMPLATE_QUOTA);
     } catch (e) {
       toast.error(e?.message || "Không tải được file mẫu.");
     } finally {
@@ -524,10 +524,10 @@ export default function ActivityYearQuotaConfigPage() {
     if (!files || files.length === 0) return;
     try {
       setScanning(true);
-      toast.info("Đang gửi dữ liệu cho AI phân tích, vui lòng chờ...");
+      toast.info(INFO_MESSAGES.AI_ANALYZING);
       const data = await nckhTieuChiDinhMucService.aiScan(files, yearInput);
       if (!data || data.length === 0) {
-        toast.warning("AI không tìm thấy dữ liệu định mức hợp lệ trong các file này.");
+        toast.warning(WARNING_MESSAGES.AI_NO_VALID_DATA);
         return;
       }
       setPreviewRows(data);

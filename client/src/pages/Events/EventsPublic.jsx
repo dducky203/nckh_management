@@ -190,7 +190,7 @@ const EventsPublic = () => {
       }
     } catch (error) {
       console.error("Error fetching event details:", error);
-      toast.error(ERROR_MESSAGES.LOAD_EVENT_ERROR);
+      toast.error(ERROR_MESSAGES.EVENT.LOAD_ERROR);
     }
   };
 
@@ -203,7 +203,7 @@ const EventsPublic = () => {
 
     // Kiểm tra trạng thái sự kiện
     if (activeTab === "completed") {
-      toast.error(ERROR_MESSAGES.EVENT_ENDED);
+      toast.error(ERROR_MESSAGES.EVENT.ENDED);
       return;
     }
 
@@ -226,7 +226,7 @@ const EventsPublic = () => {
         user.id,
         formData
       );
-      toast.success(SUCCESS_MESSAGES.REGISTRATION_SUCCESS);
+      toast.success(SUCCESS_MESSAGES.EVENT.REGISTRATION);
       setRegisterModalOpen(false);
       setEventToRegister(null);
       setIsRegistered(true); // Update registration status

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
 
 export default function PageHeader({
   onBack,
@@ -9,6 +10,8 @@ export default function PageHeader({
   isLeader = false,
   onManageMembers,
   manageLoading = false,
+  onExportWord,
+  exporting = false,
 }) {
   return (
     <div className="bg-white border-b shadow-sm">
@@ -34,6 +37,17 @@ export default function PageHeader({
         </div>
         {showLinks && (
           <div className="flex flex-wrap gap-2 pl-12 sm:pl-0">
+            {onExportWord && (
+              <button
+                type="button"
+                onClick={onExportWord}
+                disabled={exporting}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 transition shadow-sm"
+              >
+                <FileDownloadIcon sx={{ fontSize: 15 }} />
+                {exporting ? "Đang xuất Word..." : "Xuất báo cáo Word"}
+              </button>
+            )}
             {isLeader && onManageMembers && (
               <button
                 type="button"

@@ -87,7 +87,7 @@ const EventRegistrationModal = ({
       } else {
         // Fallback: simulate API call
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        toast.success(SUCCESS_MESSAGES.REGISTRATION_SUCCESS);
+        toast.success(SUCCESS_MESSAGES.EVENT.REGISTRATION);
         onClose();
       }
     } catch (error) {

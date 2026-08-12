@@ -6,6 +6,7 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ArticleIcon from "@mui/icons-material/Article";
 import PersonIcon from "@mui/icons-material/Person";
 import nckhActivityService from "../../../services/nckhActivityService";
+import { formatDate } from "../../../utils/dateHelpers";
 
 const IconChevronDown = ({ className }) => (
   <KeyboardArrowDownIcon className={className} sx={{ fontSize: 18 }} />
@@ -51,20 +52,6 @@ const CATALOG_TO_DECL_PATH = {
 
 function round1(x) {
   return Math.round(x * 10) / 10;
-}
-
-function formatDate(dateStr) {
-  if (!dateStr) return null;
-  try {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  } catch {
-    return dateStr;
-  }
 }
 
 /** Một activity row với lazy-load contributors */

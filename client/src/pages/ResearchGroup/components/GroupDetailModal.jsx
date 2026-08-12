@@ -17,7 +17,8 @@ import {
   BookmarkBorder,
   PersonAdd,
 } from "@mui/icons-material";
-import { formatDateTime, getSemesterFromDate, getResearchGroupStatusBadge } from "../../../constants";
+import { getResearchGroupStatusBadge, SUCCESS_MESSAGES } from "../../../constants";
+import { formatDateTime, getSemesterFromDate } from "../../../utils/dateHelpers";
 import Button from "../../../components/common/Button";
 import researchGroupService from "../../../services/researchGroupService";
 import { useToast } from "../../../context/ToastContext";
@@ -97,7 +98,7 @@ const GroupDetailModal = ({
       setJoinLoading(true);
       await researchGroupService.requestJoinGroup(group.id);
       setMyJoinStatus("PENDING");
-      toast.success("Đã gửi đăng ký tham gia nhóm. Chờ trưởng nhóm duyệt.");
+      toast.success(SUCCESS_MESSAGES.GROUP.SEND_REGISTRATION);
     } catch (e) {
       toast.error(e?.message || "Không thể gửi đăng ký tham gia");
     } finally {

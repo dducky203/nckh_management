@@ -139,10 +139,10 @@ const UserFormModal = ({ isOpen, onClose, onSave, user }) => {
   const handleResetPasswordConfirm = async () => {
     try {
       await userService.resetPassword(user.username);
-      toast.success(SUCCESS_MESSAGES.RESET_PASSWORD);
+      toast.success(SUCCESS_MESSAGES.USER.RESET_PASSWORD);
       setResetPasswordModalOpen(false);
     } catch (error) {
-      toast.error(error.message || ERROR_MESSAGES.SERVER_ERROR);
+      toast.error(error.message || ERROR_MESSAGES.SYSTEM.SERVER);
     }
   };
 

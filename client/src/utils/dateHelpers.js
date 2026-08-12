@@ -112,3 +112,50 @@ export const getEndOfDay = (date = new Date()) => {
   dateObj.setHours(23, 59, 59, 999);
   return dateObj;
 };
+
+export const formatDateTime = (dateString) => {
+  if (!dateString) return "Không có thông tin";
+
+  try {
+    const date = new Date(dateString);
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return "Ngày giờ không hợp lệ";
+    }
+
+    return date.toLocaleString("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch (error) {
+    console.error("Error formatting datetime:", error);
+    return "Lỗi định dạng ngày giờ";
+  }
+};
+
+export const getSemesterFromDate = (dateString) => {
+  if (!dateString) return "Không có thông tin";
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Ngày không hợp lệ";
+    
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1; // 1-12
+    
+    // Học kỳ 1: Tháng 8 -> Tháng 1 năm sau
+    // Học kỳ 2: Tháng 2 -> Tháng 7 năm đó
+    if (month >= 8) {
+      return `Học kỳ 1 / ${year}-${year + 1}`;
+    } else if (month === 1) {
+      return `Học kỳ 1 / ${year - 1}-${year}`;
+    } else {
+      return `Học kỳ 2 / ${year - 1}-${year}`;
+    }
+  } catch (error) {
+    return "Lỗi định dạng";
+  }
+};

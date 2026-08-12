@@ -162,18 +162,42 @@ public class NckhActivityService {
 
         contribRepo.deleteByActivityId(activityId);
 
+        if (items == null || items.isEmpty()) {
+            a.setMainAuthorUserId(a.getCreatedByUserId());
+            a.setMemberUserIds(null);
+            activityRepo.save(a);
+            return;
+        }
+
         double qty = a.getQty();
         double S = a.getQuotaHoursSnapshot();
+        int defaultParticipantsN = (int) items.stream()
+                .filter(Objects::nonNull)
+                .map(it -> it.userId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .count();
+        if (defaultParticipantsN <= 0) {
+            defaultParticipantsN = 1;
+        }
 
         Integer mainAuthorUserId = null;
         List<Integer> memberUserIds = new ArrayList<>();
 
         for (ContributorItem it : items) {
+            if (it == null || it.userId == null) {
+                continue;
+            }
             NckhActivityContributor c = new NckhActivityContributor();
             c.setActivityId(activityId);
             c.setUserId(it.userId);
-            c.setRole(NckhActivityContributor.Role.valueOf(it.role));
-            c.setParticipantsN(it.participantsN == null ? 1 : it.participantsN);
+            String role = it.role == null || it.role.isBlank()
+                    ? NckhActivityContributor.Role.MEMBER.name()
+                    : it.role.trim().toUpperCase(Locale.ROOT);
+            c.setRole(NckhActivityContributor.Role.valueOf(role));
+            c.setParticipantsN(it.participantsN == null || it.participantsN <= 0
+                    ? defaultParticipantsN
+                    : it.participantsN);
             c.setNote(it.note);
 
             NckhComputeService.ComputeResult r = computeService.compute(qty, S, c.getParticipantsN(), c.getRole());
@@ -190,11 +214,18 @@ public class NckhActivityService {
             }
         }
 
-        if (mainAuthorUserId == null && !items.isEmpty()) {
-            mainAuthorUserId = items.get(0).userId;
+        if (mainAuthorUserId == null) {
+            mainAuthorUserId = items.stream()
+                    .filter(Objects::nonNull)
+                    .map(x -> x.userId)
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElse(a.getCreatedByUserId());
             memberUserIds = items.stream()
+                    .filter(Objects::nonNull)
                     .skip(1)
                     .map(x -> x.userId)
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList());
         }
 
@@ -411,11 +442,49 @@ public class NckhActivityService {
         if (!contribRepo.findByActivityId(a.getId()).isEmpty()) {
             return;
         }
+        Integer mainUserId = a.getMainAuthorUserId() != null
+                ? a.getMainAuthorUserId()
+                : a.getCreatedByUserId();
+        List<Integer> memberUserIds = parseMemberUserIds(a.getMemberUserIds()).stream()
+                .filter(id -> id != null && !id.equals(mainUserId))
+                .distinct()
+                .toList();
+
+        List<ContributorItem> contributors = new ArrayList<>();
         ContributorItem main = new ContributorItem();
-        main.userId = a.getCreatedByUserId();
+        main.userId = mainUserId;
         main.role = "MAIN";
-        main.participantsN = 1;
-        addContributors(a.getId(), List.of(main));
+        main.participantsN = null;
+        contributors.add(main);
+
+        for (Integer memberUserId : memberUserIds) {
+            ContributorItem member = new ContributorItem();
+            member.userId = memberUserId;
+            member.role = "MEMBER";
+            member.participantsN = null;
+            contributors.add(member);
+        }
+
+        addContributors(a.getId(), contributors);
+    }
+
+    private static List<Integer> parseMemberUserIds(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return List.of();
+        }
+        List<Integer> ids = new ArrayList<>();
+        for (String part : raw.split(",")) {
+            String value = part == null ? "" : part.trim();
+            if (value.isEmpty()) {
+                continue;
+            }
+            try {
+                ids.add(Integer.parseInt(value));
+            } catch (NumberFormatException ignored) {
+                // Ignore bad legacy values instead of blocking approval.
+            }
+        }
+        return ids;
     }
 
     @Transactional

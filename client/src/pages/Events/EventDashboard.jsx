@@ -100,7 +100,7 @@ const EventDashboard = () => {
       setApprovedEvents(approved);
     } catch (error) {
       console.error("Error loading data:", error);
-      toast.error("Không thể tải dữ liệu sự kiện");
+      toast.error(ERROR_MESSAGES.EVENT.LOAD_LIST_ERROR);
     } finally {
       setLoading(false);
     }
@@ -114,7 +114,7 @@ const EventDashboard = () => {
   const handleApprove = async (eventId, reason = "") => {
     try {
       await eventService.updateEventStatus(eventId, "approve", reason);
-      toast.success("Duyệt sự kiện thành công");
+      toast.success(SUCCESS_MESSAGES.EVENT.APPROVED);
       setApprovalModalOpen(false);
       fetchEvents();
     } catch (err) {
@@ -128,7 +128,7 @@ const EventDashboard = () => {
   const handleReject = async (eventId, reason = "") => {
     try {
       await eventService.updateEventStatus(eventId, "reject", reason);
-      toast.info("Đã từ chối sự kiện");
+      toast.info(INFO_MESSAGES.REJECTED_EVENT);
       setApprovalModalOpen(false);
       fetchEvents();
     } catch (err) {
@@ -144,7 +144,7 @@ const EventDashboard = () => {
     if (window.confirm("Bạn có chắc chắn muốn xóa sự kiện này?")) {
       try {
         await eventService.deleteEvent(eventId);
-        toast.success("Xóa sự kiện thành công");
+        toast.success(SUCCESS_MESSAGES.EVENT.DELETED);
         fetchEvents();
       } catch (err) {
         console.error("Error deleting event:", err);
@@ -163,7 +163,7 @@ const EventDashboard = () => {
       setDetailModalOpen(true);
     } catch (error) {
       console.error("Error fetching event details:", error);
-      toast.error("Không thể tải chi tiết sự kiện");
+      toast.error(ERROR_MESSAGES.EVENT.LOAD_ERROR);
     }
   };
 
@@ -186,7 +186,7 @@ const EventDashboard = () => {
         }
 
         await eventService.updateEvent(editingEvent.id, submitData);
-        toast.success("Cập nhật sự kiện thành công");
+        toast.success(SUCCESS_MESSAGES.EVENT.UPDATED);
       } else {
         // Upload ảnh lên Cloudinary trước nếu có
         let imageUrl = null;
@@ -216,7 +216,7 @@ const EventDashboard = () => {
 
         // Gọi API tạo event
         await eventService.createEvent(submitData);
-        toast.success("Tạo sự kiện thành công! Chờ phê duyệt.");
+        toast.success(SUCCESS_MESSAGES.EVENT.CREATED);
       }
       setFormModalOpen(false);
       setEditingEvent(null);

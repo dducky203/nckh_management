@@ -3,6 +3,8 @@ import PeopleIcon from "@mui/icons-material/People";
 import PersonIcon from "@mui/icons-material/Person";
 import StarIcon from "@mui/icons-material/Star";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
+import InsightsIcon from "@mui/icons-material/Insights";
+import GroupLeaderStatsModal from "../../pages/ResearchGroup/components/GroupLeaderStatsModal";
 
 function MemberCard({ member, isCurrentUser }) {
   const [expanded, setExpanded] = useState(false);
@@ -24,11 +26,18 @@ function MemberCard({ member, isCurrentUser }) {
           {member.isLeader ? <StarIcon sx={{ fontSize: 18 }} /> : <PersonIcon sx={{ fontSize: 18 }} />}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-bold text-slate-800 truncate">{member.name}</p>
-            {isCurrentUser && (
-              <span className="text-[10px] font-bold text-mainColor bg-mainColor/10 px-1.5 py-0.5 rounded">
-                Bạn
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-bold text-slate-800 truncate">{member.name}</p>
+              {isCurrentUser && (
+                <span className="text-[10px] font-bold text-mainColor bg-mainColor/10 px-1.5 py-0.5 rounded">
+                  Bạn
+                </span>
+              )}
+            </div>
+            {member.contributedHours != null && (
+              <span className="text-xs font-extrabold text-mainColor bg-mainColor/10 px-2 py-0.5 rounded-full shrink-0">
+                {member.contributedHours} giờ {member.participationPercent != null ? `(${member.participationPercent}%)` : ""}
               </span>
             )}
           </div>
@@ -47,7 +56,7 @@ function MemberCard({ member, isCurrentUser }) {
       </button>
 
       {expanded && (
-        <div className="px-5 pb-4">
+        <div className="px-5 pb-4 space-y-3">
           {member.isLeader ? (
             <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2 border border-amber-100">
               Trưởng nhóm: định mức theo sản phẩm tập thể nhóm.
@@ -56,7 +65,7 @@ function MemberCard({ member, isCurrentUser }) {
             <table className="w-full text-xs bg-slate-50 rounded-xl overflow-hidden">
               <thead>
                 <tr className="border-b border-slate-200">
-                  <th className="text-left px-3 py-2 font-bold text-slate-500">Tiêu chí</th>
+                  <th className="text-left px-3 py-2 font-bold text-slate-500">Tiêu chí áp dụng</th>
                   <th className="text-center px-3 py-2 font-bold text-slate-500 w-20">ĐM</th>
                 </tr>
               </thead>
@@ -74,6 +83,26 @@ function MemberCard({ member, isCurrentUser }) {
           ) : (
             <p className="text-xs text-slate-400">Không có định mức cá nhân áp dụng.</p>
           )}
+
+          {member.activities?.length > 0 && (
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <p className="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2">
+                Các hoạt động & khai báo đã đóng góp ({member.activities.length})
+              </p>
+              <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                {member.activities.map((act, i) => (
+                  <div key={i} className="flex items-center justify-between text-xs bg-white p-2 rounded-lg border border-slate-100">
+                    <span className="font-semibold text-slate-800 truncate pr-2">
+                      ↳ {act.title || act.catalogName || "Hoạt động NCKH"}
+                    </span>
+                    <span className="font-bold text-mainColor shrink-0">
+                      +{act.hours || act.poolQty || 0} giờ
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -87,6 +116,8 @@ export default function MembersTab({
   onManageMembers,
   manageLoading = false,
 }) {
+  const [statsModalOpen, setStatsModalOpen] = useState(false);
+
   if (!membersData?.members?.length) {
     return (
       <div className="p-8 text-center text-slate-400 text-sm">Không có dữ liệu thành viên</div>
@@ -104,23 +135,35 @@ export default function MembersTab({
                 Thành viên ({membersData.members.length})
               </h3>
             </div>
-            <p className="text-xs text-slate-400 mt-1">Định mức cá nhân theo chức danh từng người</p>
+            <p className="text-xs text-slate-400 mt-1">Định mức cá nhân & Đóng góp chi tiết từng người</p>
           </div>
-          {isLeader && onManageMembers && (
-            <button
-              type="button"
-              onClick={onManageMembers}
-              disabled={manageLoading}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-mainColor text-white hover:brightness-110 disabled:opacity-60 shrink-0"
-            >
-              <ManageAccountsIcon sx={{ fontSize: 16 }} />
-              {manageLoading ? "Đang mở..." : "Quản lý & duyệt thành viên"}
-            </button>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {isLeader && quota?.groupId && (
+              <button
+                type="button"
+                onClick={() => setStatsModalOpen(true)}
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-sm shrink-0"
+              >
+                <InsightsIcon sx={{ fontSize: 16 }} />
+                Chi tiết đóng góp & Xuất Word
+              </button>
+            )}
+            {isLeader && onManageMembers && (
+              <button
+                type="button"
+                onClick={onManageMembers}
+                disabled={manageLoading}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-mainColor text-white hover:brightness-110 disabled:opacity-60 shrink-0"
+              >
+                <ManageAccountsIcon sx={{ fontSize: 16 }} />
+                {manageLoading ? "Đang mở..." : "Quản lý & duyệt thành viên"}
+              </button>
+            )}
+          </div>
         </div>
         {isLeader && (
           <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mt-3">
-            Trưởng nhóm: thêm/xóa thành viên và duyệt đăng ký tham gia nhóm tại mục trên.
+            Trưởng nhóm: bấm "Chi tiết đóng góp & Xuất Word" để xem bảng tổng hợp đóng góp của từng thành viên hoặc xuất báo cáo chính thức.
           </p>
         )}
       </div>
@@ -133,6 +176,15 @@ export default function MembersTab({
           />
         ))}
       </div>
+
+      {statsModalOpen && quota?.groupId && (
+        <GroupLeaderStatsModal
+          isOpen={statsModalOpen}
+          onClose={() => setStatsModalOpen(false)}
+          group={{ id: quota.groupId, groupName: quota.groupName }}
+          currentUserId={quota.userId}
+        />
+      )}
     </div>
   );
 }

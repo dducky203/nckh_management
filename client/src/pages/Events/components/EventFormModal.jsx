@@ -158,7 +158,7 @@ const EventFormModal = ({ isOpen, onClose, onSave, event, currentUser }) => {
       await onSave(formData);
     } catch (err) {
       console.error("Error saving event:", err);
-      toast.error(ERROR_MESSAGES.SAVE_EVENT_ERROR);
+      toast.error(ERROR_MESSAGES.EVENT.SAVE_ERROR);
     } finally {
       setIsSubmitting(false);
     }

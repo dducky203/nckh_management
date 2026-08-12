@@ -343,7 +343,7 @@ export default function ActivityStandards() {
   const handleLockPlan = async () => {
     if (!canManagePlanAndData && !planNotSet) return;
     if (!user?.id) {
-      toast.error("Không xác định được người dùng");
+      toast.error(ERROR_MESSAGES.USER.CANNOT_IDENTIFY);
       return;
     }
 

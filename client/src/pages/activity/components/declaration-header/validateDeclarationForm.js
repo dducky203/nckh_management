@@ -167,8 +167,8 @@ export function validateDeclarationForm({
 
   if (!user?.id) {
     return {
-      message: "Không xác định được người dùng",
-      errors: { _form: "Không xác định được người dùng" },
+      message: ERROR_MESSAGES.USER.CANNOT_IDENTIFY,
+      errors: { _form: ERROR_MESSAGES.USER.CANNOT_IDENTIFY },
     };
   }
 

@@ -88,13 +88,13 @@ const Profile = () => {
 
       // Validate file type
       if (!file.type.startsWith("image/")) {
-        toast.error("Vui lòng chọn file hình ảnh");
+        toast.error(ERROR_MESSAGES.FILE.SELECT_IMAGE);
         return;
       }
 
       // Validate file size (5MB max)
       if (file.size > 5 * 1024 * 1024) {
-        toast.error("Kích thước ảnh không được vượt quá 5MB");
+        toast.error(ERROR_MESSAGES.FILE.SIZE_ERROR_LIMIT);
         return;
       }
 
@@ -114,7 +114,7 @@ const Profile = () => {
 
     // Basic validation
     if (!profileData.name || !profileData.email) {
-      toast.error(ERROR_MESSAGES.VALIDATION_ERROR);
+      toast.error(ERROR_MESSAGES.FORM.VALIDATION_ERROR);
       return;
     }
 
@@ -146,12 +146,12 @@ const Profile = () => {
             : prev.birthday,
         }));
 
-        toast.success(SUCCESS_MESSAGES.UPDATE_PROFILE);
+        toast.success(SUCCESS_MESSAGES.USER.UPDATE_PROFILE);
         setIsEditing(false);
         setAvatarPreview(null);
         setAvatarFile(null);
       } else {
-        toast.error(response.message || ERROR_MESSAGES.SERVER_ERROR);
+        toast.error(response.message || ERROR_MESSAGES.SYSTEM.SERVER);
       }
     } catch (error) {
       console.error("Update profile error:", error);
